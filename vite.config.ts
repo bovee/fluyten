@@ -1,0 +1,16 @@
+import { defineConfig } from 'vite'
+import basicSsl from '@vitejs/plugin-basic-ssl'
+import react from '@vitejs/plugin-react'
+
+// https://vite.dev/config/
+export default defineConfig({
+  base: '/fluyten/',
+  server: {
+    // @ts-expect-error rolldown-vite types don't accept `true` but it works at runtime
+    https: true,
+  },
+  plugins: [
+    basicSsl(),
+    react(),
+  ],
+})
