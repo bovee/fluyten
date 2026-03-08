@@ -29,6 +29,7 @@
   "playSong": "Reproducir canción",
   "metronome": "Metrónomo",
   "tempoLabel": "Tempo: {{tempo}} BPM",
+  "voice": "Voz",
   "abcNotation": "Notación ABC",
   "recorderType": "Tipo de flauta",
   "detect": "Detectar",
@@ -67,7 +68,8 @@
     "hot-cross-buns": "Panecillos de Pascua",
     "mary-had-a-little-lamb": "María tenía un corderito",
     "twinkle-twinkle": "Estrellita, ¿dónde estás?",
-    "frere-jacques": "Fray Santiago"
+    "frere-jacques": "Fray Santiago",
+    "row-row-row-your-boat": "Rema, Rema, Rema tu Barca"
   },
   "books": {
     "beginner-songs": "Canciones para principiantes",

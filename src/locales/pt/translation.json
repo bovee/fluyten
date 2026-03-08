@@ -29,6 +29,7 @@
   "playSong": "Tocar música",
   "metronome": "Metrônomo",
   "tempoLabel": "Andamento: {{tempo}} BPM",
+  "voice": "Voz",
   "abcNotation": "Notação ABC",
   "recorderType": "Tipo de flauta doce",
   "detect": "Detectar",
@@ -67,7 +68,8 @@
     "hot-cross-buns": "Hot Cross Buns",
     "mary-had-a-little-lamb": "Maria tinha um carneirinho",
     "twinkle-twinkle": "Brilha, Brilha, Estrelinha",
-    "frere-jacques": "Frei João"
+    "frere-jacques": "Frei João",
+    "row-row-row-your-boat": "Rema, Rema, Rema o Barco"
   },
   "books": {
     "beginner-songs": "Músicas para iniciantes",

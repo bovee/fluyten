@@ -20,6 +20,6 @@ export const BUILT_IN_BOOKS: BuiltInBook[] = [
     id: 'beginner-songs',
     title: 'Beginner Songs',
     abc: beginnerSongsAbc,
-    songKeys: ['hot-cross-buns', 'mary-had-a-little-lamb', 'twinkle-twinkle'],
+    songKeys: ['hot-cross-buns', 'mary-had-a-little-lamb', 'twinkle-twinkle', 'row-row-row-your-boat'],
   },
 ];

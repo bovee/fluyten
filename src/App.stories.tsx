@@ -5,7 +5,8 @@ import App from './App';
 import { useStore } from './store';
 import type { UserBook } from './store';
 
-const withUserBooks = (books: UserBook[]): Decorator =>
+const withUserBooks =
+  (books: UserBook[]): Decorator =>
   (Story) => {
     useStore.setState({ userBooks: books });
     return <Story />;

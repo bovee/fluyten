@@ -3,11 +3,39 @@ import type { Mock } from 'vitest';
 import { describe, it, expect, vi, beforeEach } from 'vitest';
 import {
   freqToMidiPitch,
-  fitGaussian,
   FrequencyTracker,
   type OnStartNote,
   type OnStopNote,
 } from './FrequencyTracker';
+
+/** Generate a pure sine wave buffer at the given frequency. */
+function makeSineBuffer(
+  freq: number,
+  sampleRate: number,
+  length: number,
+  amplitude = 0.5
+): Float32Array {
+  const buf = new Float32Array(length);
+  for (let i = 0; i < length; i++) {
+    buf[i] = amplitude * Math.sin((2 * Math.PI * freq * i) / sampleRate);
+  }
+  return buf;
+}
+
+/** Generate a sawtooth wave (rich in harmonics) at the given frequency. */
+function makeSawtoothBuffer(
+  freq: number,
+  sampleRate: number,
+  length: number,
+  amplitude = 0.5
+): Float32Array {
+  const buf = new Float32Array(length);
+  const period = sampleRate / freq;
+  for (let i = 0; i < length; i++) {
+    buf[i] = amplitude * (2 * ((i % period) / period) - 1);
+  }
+  return buf;
+}
 
 describe('freqToMidiPitch', () => {
   it('should convert A440 to MIDI pitch 69', () => {
@@ -44,67 +72,9 @@ describe('freqToMidiPitch', () => {
   });
 });
 
-describe('fitGaussian', () => {
-  it('should fit a perfect Gaussian', () => {
-    // Create a perfect Gaussian centered at 2 with height 100
-    const points = [
-      100 * Math.exp(-((0 - 2) ** 2) / (2 * 1 ** 2)),
-      100 * Math.exp(-((1 - 2) ** 2) / (2 * 1 ** 2)),
-      100 * Math.exp(-((2 - 2) ** 2) / (2 * 1 ** 2)),
-      100 * Math.exp(-((3 - 2) ** 2) / (2 * 1 ** 2)),
-      100 * Math.exp(-((4 - 2) ** 2) / (2 * 1 ** 2)),
-    ];
-
-    const result = fitGaussian(points);
-    expect(result).not.toBeNull();
-    const [center, height, width] = result!;
-
-    // Should return valid numbers (optimizer can be flaky)
-    expect(center).toBeTypeOf('number');
-    expect(height).toBeTypeOf('number');
-    expect(width).toBeTypeOf('number');
-    expect(center).toBeGreaterThanOrEqual(0);
-    expect(center).toBeLessThanOrEqual(4);
-  });
-
-  it('should handle peaked data', () => {
-    const points = [10, 30, 100, 30, 10];
-    const peaked = fitGaussian(points);
-    expect(peaked).not.toBeNull();
-    const [center, height, width] = peaked!;
-
-    // Should return valid numbers
-    expect(center).toBeTypeOf('number');
-    expect(height).toBeTypeOf('number');
-    expect(width).toBeTypeOf('number');
-  });
-
-  it('should handle flat data', () => {
-    const points = [50, 50, 50, 50, 50];
-    // Flat data has no distinct peak; fitGaussian returns null
-    expect(fitGaussian(points)).toBeNull();
-  });
-
-  it('should handle error cases gracefully', () => {
-    // All-zero data: logarithms of eps produce a degenerate but valid Gaussian
-    const result = fitGaussian([0, 0, 0, 0, 0]);
-    if (result !== null) {
-      expect(result[0]).toBeTypeOf('number');
-      expect(result[1]).toBeTypeOf('number');
-      expect(result[2]).toBeTypeOf('number');
-    }
-  });
-
-  it('should return fallback on optimization failure', () => {
-    // If the optimizer fails, should return [2, 0, 0]
-    const result = fitGaussian([NaN, NaN, NaN, NaN, NaN]);
-    // The function should not crash and should return valid numbers
-    expect(result).toHaveLength(3);
-  });
-});
-
 describe('FrequencyTracker', () => {
-  const instrumentType = 'SOPRANO';
+  const sampleRate = 44100;
+  const bufferSize = 4096;
   const tuning = 1.0;
   let onStartNote: Mock<OnStartNote>;
   let onStopNote: Mock<OnStopNote>;
@@ -116,21 +86,18 @@ describe('FrequencyTracker', () => {
     tracker = new FrequencyTracker(onStartNote, onStopNote);
   });
 
-  // Helpers for injecting mock audio state without calling start()
-  function makeAnalyser(freqData: Uint8Array) {
-    return {
-      connect: vi.fn(),
-      fftSize: 4096,
-      frequencyBinCount: freqData.length,
-      getByteFrequencyData: vi.fn((arr: Uint8Array) => arr.set(freqData)),
-    };
+  function injectAudioContext(currentTime = 0) {
+    tracker.audioCtx = { currentTime, sampleRate } as any;
+    tracker.source = { connect: vi.fn(), disconnect: vi.fn() } as any;
+    tracker.freqStep = (0.5 * sampleRate) / bufferSize;
   }
 
-  function injectAudioContext(currentTime = 0) {
-    tracker.audioCtx = { currentTime, sampleRate: 44100 } as any;
-    tracker.source = { connect: vi.fn(), disconnect: vi.fn() } as any;
-    // freqStep = 0.5 * sampleRate / fftSize ≈ 5.38 Hz/bin
-    tracker.freqStep = (0.5 * 44100) / 4096;
+  function makeAnalyser(pcmData: Float32Array) {
+    return {
+      connect: vi.fn(),
+      fftSize: bufferSize,
+      getFloatTimeDomainData: vi.fn((arr: Float32Array) => arr.set(pcmData)),
+    };
   }
 
   describe('start', () => {
@@ -178,99 +145,102 @@ describe('FrequencyTracker', () => {
 
   describe('checkFrequency', () => {
     it('does nothing when audio context is not set up', () => {
-      tracker.checkFrequency({ instrumentType, tuning });
+      tracker.checkFrequency({ instrumentType: 'TENOR', tuning });
       expect(onStartNote).not.toHaveBeenCalled();
       expect(onStopNote).not.toHaveBeenCalled();
     });
 
-    it('does nothing when signal is below the minimum volume threshold', () => {
+    it('returns null for silence (low RMS)', () => {
       injectAudioContext();
-      tracker.analyser = makeAnalyser(new Uint8Array(2048).fill(0)) as any;
+      tracker.analyser = makeAnalyser(new Float32Array(bufferSize).fill(0)) as any;
 
-      tracker.checkFrequency({ instrumentType, tuning });
+      tracker.checkFrequency({ instrumentType: 'TENOR', tuning });
 
       expect(onStartNote).not.toHaveBeenCalled();
     });
 
     it('calls onStopNote when a tracked note goes quiet', () => {
-      const freqData = new Uint8Array(2048).fill(0); // all silent
       injectAudioContext(2.5);
-      tracker.analyser = makeAnalyser(freqData) as any;
-      tracker.currentMaxBin = 50;
+      tracker.analyser = makeAnalyser(new Float32Array(bufferSize).fill(0)) as any;
       tracker.currentNote = 69; // A4
       tracker.currentNoteStart = 1.0;
 
-      tracker.checkFrequency({ instrumentType, tuning });
+      tracker.checkFrequency({ instrumentType: 'TENOR', tuning });
 
       expect(onStopNote).toHaveBeenCalledWith(69, 1.5);
-      expect(tracker.currentMaxBin).toBe(null);
     });
 
-    it('does not call onStopNote while the tracked note continues to sound', () => {
-      const freqData = new Uint8Array(2048).fill(0);
-      freqData[50] = 200; // still loud
+    it('detects A4 (440 Hz) as MIDI 69 for tenor', () => {
       injectAudioContext();
-      tracker.analyser = makeAnalyser(freqData) as any;
-      tracker.currentMaxBin = 50;
-      tracker.currentNoteStart = 0;
-
-      tracker.checkFrequency({ instrumentType, tuning });
-
-      expect(onStopNote).not.toHaveBeenCalled();
-    });
-
-    it('calls onStartNote with pitch shifted down an octave for soprano', () => {
-      // freqStep ≈ 5.38 Hz/bin; soprano range starts at bin ~97.
-      // Bin 106 (≈ 571 Hz) falls inside the soprano scan window and has a
-      // recorder-like overtone structure, so it is detected as the fundamental.
-      // freqToMidiPitch(571) ≈ MIDI 74; the soprano -12 shift yields ~62 (D4).
-      const freqData = new Uint8Array(2048).fill(0);
-      freqData[104] = 50;
-      freqData[105] = 150;
-      freqData[106] = 200; // fundamental inside soprano range, > MIN_VOLUME (120)
-      freqData[107] = 150;
-      freqData[108] = 50;
-      // overtone2 at 2*106 = 212, weaker than fundamental
-      freqData[212] = 150;
-      // overtone3 at 3*106 = 318, weaker than 2nd overtone
-      freqData[318] = 100;
-
-      injectAudioContext();
-      tracker.analyser = makeAnalyser(freqData) as any;
-
-      tracker.checkFrequency({ instrumentType: 'SOPRANO', tuning });
-
-      expect(onStartNote).toHaveBeenCalledTimes(1);
-      const detectedPitch: number = onStartNote.mock.calls[0][0];
-      // Raw pitch ~74, shifted down 12 semitones for soprano → ~62 (D4)
-      expect(detectedPitch).toBeGreaterThanOrEqual(60);
-      expect(detectedPitch).toBeLessThanOrEqual(64);
-    });
-
-    it('does not shift pitch for tenor', () => {
-      // freqStep ≈ 5.38 Hz/bin; tenor range covers bin ~49–206.
-      // Bin 51 (≈ 275 Hz, ~D4) is inside the tenor scan window.
-      const freqData = new Uint8Array(2048).fill(0);
-      freqData[49] = 50;
-      freqData[50] = 150;
-      freqData[51] = 200; // fundamental inside tenor range, > MIN_VOLUME (120)
-      freqData[52] = 150;
-      freqData[53] = 50;
-      // overtone2 at 2*51 = 102, weaker than fundamental
-      freqData[102] = 150;
-      // overtone3 at 3*51 = 153, weaker than 2nd overtone
-      freqData[153] = 100;
-
-      injectAudioContext();
-      tracker.analyser = makeAnalyser(freqData) as any;
+      const buf = makeSineBuffer(440, sampleRate, bufferSize);
+      tracker.analyser = makeAnalyser(buf) as any;
 
       tracker.checkFrequency({ instrumentType: 'TENOR', tuning });
 
       expect(onStartNote).toHaveBeenCalledTimes(1);
-      const detectedPitch: number = onStartNote.mock.calls[0][0];
-      // Raw pitch ~62 (D4), no octave shift applied for tenor
-      expect(detectedPitch).toBeGreaterThanOrEqual(60);
-      expect(detectedPitch).toBeLessThanOrEqual(64);
+      const pitch: number = onStartNote.mock.calls[0][0];
+      expect(pitch).toBe(69); // A4
+    });
+
+    it('detects fundamental correctly even when harmonics are present (sawtooth)', () => {
+      // Sawtooth at D4 (~293.66 Hz, MIDI 62) has strong harmonics.
+      // MPM should still lock on to the fundamental, not an octave up.
+      injectAudioContext();
+      const buf = makeSawtoothBuffer(293.66, sampleRate, bufferSize);
+      tracker.analyser = makeAnalyser(buf) as any;
+
+      tracker.checkFrequency({ instrumentType: 'TENOR', tuning });
+
+      expect(onStartNote).toHaveBeenCalledTimes(1);
+      const pitch: number = onStartNote.mock.calls[0][0];
+      expect(pitch).toBeGreaterThanOrEqual(61);
+      expect(pitch).toBeLessThanOrEqual(63);
+    });
+
+    it('applies -12 semitone shift for soprano', () => {
+      // Soprano sounds C5 (~523 Hz, MIDI 72 sounding). Written pitch = 72 - 12 = 60.
+      injectAudioContext();
+      const buf = makeSineBuffer(523.25, sampleRate, bufferSize);
+      tracker.analyser = makeAnalyser(buf) as any;
+
+      tracker.checkFrequency({ instrumentType: 'SOPRANO', tuning });
+
+      expect(onStartNote).toHaveBeenCalledTimes(1);
+      const pitch: number = onStartNote.mock.calls[0][0];
+      // Written pitch should be ~60 (C4), not 72 (C5)
+      expect(pitch).toBeGreaterThanOrEqual(58);
+      expect(pitch).toBeLessThanOrEqual(62);
+    });
+
+    it('does not shift pitch for tenor', () => {
+      // Tenor C4 (~261.63 Hz, MIDI 60)
+      injectAudioContext();
+      const buf = makeSineBuffer(261.63, sampleRate, bufferSize);
+      tracker.analyser = makeAnalyser(buf) as any;
+
+      tracker.checkFrequency({ instrumentType: 'TENOR', tuning });
+
+      expect(onStartNote).toHaveBeenCalledTimes(1);
+      const pitch: number = onStartNote.mock.calls[0][0];
+      expect(pitch).toBeGreaterThanOrEqual(59);
+      expect(pitch).toBeLessThanOrEqual(61);
+    });
+
+    it('fires onStartNote and onStopNote on successive different notes', () => {
+      injectAudioContext(0);
+      const bufA = makeSineBuffer(440, sampleRate, bufferSize);
+      tracker.analyser = makeAnalyser(bufA) as any;
+      tracker.checkFrequency({ instrumentType: 'TENOR', tuning });
+      expect(onStartNote).toHaveBeenCalledTimes(1);
+
+      // Now play D4 (~293.66 Hz)
+      (tracker.audioCtx as any).currentTime = 1.0;
+      const bufD = makeSineBuffer(293.66, sampleRate, bufferSize);
+      tracker.analyser = makeAnalyser(bufD) as any;
+      tracker.checkFrequency({ instrumentType: 'TENOR', tuning });
+
+      expect(onStopNote).toHaveBeenCalledTimes(1);
+      expect(onStartNote).toHaveBeenCalledTimes(2);
     });
   });
 });

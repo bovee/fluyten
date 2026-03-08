@@ -214,7 +214,8 @@ export function SettingsDialog({ open, onClose }: SettingsDialogProps) {
             <Slider
               value={detectedVolume}
               min={0}
-              max={255}
+              max={1}
+              step={0.01}
               disabled
               sx={{
                 '& .MuiSlider-thumb': { display: 'none' },

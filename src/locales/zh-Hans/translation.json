@@ -29,6 +29,7 @@
   "playSong": "播放歌曲",
   "metronome": "节拍器",
   "tempoLabel": "速度：{{tempo}} BPM",
+  "voice": "声部",
   "abcNotation": "ABC 记谱",
   "recorderType": "竖笛类型",
   "detect": "检测",
@@ -67,7 +68,8 @@
     "hot-cross-buns": "热十字面包",
     "mary-had-a-little-lamb": "玛丽有只小羊羔",
     "twinkle-twinkle": "一闪一闪亮晶晶",
-    "frere-jacques": "雅克兄弟"
+    "frere-jacques": "雅克兄弟",
+    "row-row-row-your-boat": "划呀划呀划小船"
   },
   "books": {
     "beginner-songs": "初学者歌曲",

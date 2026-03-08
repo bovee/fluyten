@@ -9,7 +9,7 @@
   "removeBook": "বই সরান",
   "editBook": "বই সম্পাদনা করুন",
   "deleteSong": "গান মুছুন",
-  "confirmDeleteSong": "আপনি কি \u201c{{title}}\u201d মুছতে চান?",
+  "confirmDeleteSong": "আপনি কি “{{title}}” মুছতে চান?",
   "settingsButton": "সেটিংস",
   "backToSongList": "গানের তালিকায় ফিরে যান",
   "editMusic": "স্বরলিপি সম্পাদনা করুন",
@@ -20,7 +20,7 @@
   "create": "তৈরি করুন",
   "save": "সংরক্ষণ করুন",
   "deleteBook": "বই মুছুন",
-  "confirmDeleteBook": "আপনি কি \u201c{{title}}\u201d মুছতে চান? এই কাজটি পূর্বাবস্থায় ফেরানো যাবে না।",
+  "confirmDeleteBook": "আপনি কি “{{title}}” মুছতে চান? এই কাজটি পূর্বাবস্থায় ফেরানো যাবে না।",
   "exportBook": "রপ্তানি করুন",
   "exportAbc": "বই রপ্তানি করুন",
   "fileName": "ফাইলের নাম",
@@ -29,6 +29,7 @@
   "playSong": "গান বাজান",
   "metronome": "মেট্রোনোম",
   "tempoLabel": "টেম্পো: {{tempo}} BPM",
+  "voice": "স্বর",
   "abcNotation": "ABC স্বরলিপি",
   "recorderType": "রেকর্ডারের ধরন",
   "detect": "সনাক্ত করুন",
@@ -67,7 +68,8 @@
     "hot-cross-buns": "হট ক্রস বানস",
     "mary-had-a-little-lamb": "মেরির একটি ছোট্ট ভেড়া ছিল",
     "twinkle-twinkle": "জ্বলো জ্বলো ছোট্ট তারা",
-    "frere-jacques": "ফ্রেয়ার জাক"
+    "frere-jacques": "ফ্রেয়ার জাক",
+    "row-row-row-your-boat": "চালাও চালাও তোমার নৌকা"
   },
   "books": {
     "beginner-songs": "শিক্ষার্থীদের গান",

@@ -8,11 +8,11 @@ export function computeTuning(
 ): number {
   const expectedPitch = {
     ALL: 0,
-    SOPRANINO: 76,
-    SOPRANO: 71,
-    ALTO: 64,
-    TENOR: 59,
-    BASS: 52,
+    SOPRANINO: 88,
+    SOPRANO: 83,
+    ALTO: 76,
+    TENOR: 71,
+    BASS: 64,
   }[instrument];
   const idealFreq = 440 * Math.pow(2, (expectedPitch - 69) / 12);
   const newTuning = Math.round((frequency / idealFreq) * 1000) / 1000;
@@ -23,35 +23,36 @@ const SAMPLE_RATE = 100;
 const MIN_SAMPLES = 7;
 
 const PITCH_TO_RECORDER: Record<number, RecorderType> = {
-  77: 'SOPRANINO',
-  76: 'SOPRANINO',
-  75: 'SOPRANINO',
-  74: 'SOPRANINO',
-  72: 'SOPRANO',
-  71: 'SOPRANO',
-  70: 'SOPRANO',
-  69: 'SOPRANO',
-  65: 'ALTO',
-  64: 'ALTO',
-  63: 'ALTO',
-  62: 'ALTO',
-  60: 'TENOR',
-  59: 'TENOR',
-  58: 'TENOR',
-  57: 'TENOR',
-  53: 'BASS',
-  52: 'BASS',
-  51: 'BASS',
-  50: 'BASS',
+  89: 'SOPRANINO',
+  88: 'SOPRANINO',
+  87: 'SOPRANINO',
+  86: 'SOPRANINO',
+  84: 'SOPRANO',
+  83: 'SOPRANO',
+  82: 'SOPRANO',
+  81: 'SOPRANO',
+  77: 'ALTO',
+  76: 'ALTO',
+  75: 'ALTO',
+  74: 'ALTO',
+  72: 'TENOR',
+  71: 'TENOR',
+  70: 'TENOR',
+  69: 'TENOR',
+  65: 'BASS',
+  64: 'BASS',
+  63: 'BASS',
+  62: 'BASS',
 };
 
+// Frequency of the F/B on the fourth finger
 const STEP2_FREQS: Record<RecorderType, number> = {
   ALL: 0,
-  SOPRANINO: 523.3,
-  SOPRANO: 349.2,
-  ALTO: 261.6,
-  TENOR: 174.6,
-  BASS: 130.8,
+  SOPRANINO: 1046.3,
+  SOPRANO: 698.2,
+  ALTO: 522.6,
+  TENOR: 348.6,
+  BASS: 260.8,
 };
 
 export interface DetectorCallbacks {
@@ -143,11 +144,13 @@ export class RecorderDetector {
       };
       this.callbacks.onVolume(volume);
 
-      if (Math.abs(frequency - knownFreq) > 25) return;
+      const freqDiff = Math.abs(frequency - knownFreq) / knownFreq;
+      if (freqDiff > 0.05) return;
       freqSamples.push(frequency);
       if (freqSamples.length >= MIN_SAMPLES) {
         const avg = freqSamples.reduce((a, v) => a + v, 0) / MIN_SAMPLES;
-        this.callbacks.onSystemDetected(Math.abs(avg - knownFreq) < 8);
+        const avgDiff = Math.abs(avg - knownFreq) / knownFreq;
+        this.callbacks.onSystemDetected(avgDiff < 0.02);
         this.clearInterval();
       }
     }, SAMPLE_RATE);

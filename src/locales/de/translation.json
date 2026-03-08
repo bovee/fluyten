@@ -9,7 +9,7 @@
   "removeBook": "Buch entfernen",
   "editBook": "Buch bearbeiten",
   "deleteSong": "Stück löschen",
-  "confirmDeleteSong": "„{{title}}\u201c wirklich löschen?",
+  "confirmDeleteSong": "„{{title}}“ wirklich löschen?",
   "settingsButton": "Einstellungen",
   "backToSongList": "Zurück zur Stückliste",
   "editMusic": "Noten bearbeiten",
@@ -20,7 +20,7 @@
   "create": "Erstellen",
   "save": "Speichern",
   "deleteBook": "Buch löschen",
-  "confirmDeleteBook": "„{{title}}\u201c wirklich löschen? Dies kann nicht rückgängig gemacht werden.",
+  "confirmDeleteBook": "„{{title}}“ wirklich löschen? Dies kann nicht rückgängig gemacht werden.",
   "exportBook": "Exportieren",
   "exportAbc": "Buch exportieren",
   "fileName": "Dateiname",
@@ -29,6 +29,7 @@
   "playSong": "Stück abspielen",
   "metronome": "Metronom",
   "tempoLabel": "Tempo: {{tempo}} BPM",
+  "voice": "Stimme",
   "abcNotation": "ABC-Notation",
   "recorderType": "Blockflötentyp",
   "detect": "Erkennen",
@@ -67,7 +68,8 @@
     "hot-cross-buns": "Hot Cross Buns",
     "mary-had-a-little-lamb": "Mary hatte ein kleines Lamm",
     "twinkle-twinkle": "Twinkle, Twinkle, Little Star",
-    "frere-jacques": "Bruder Jakob"
+    "frere-jacques": "Bruder Jakob",
+    "row-row-row-your-boat": "Rudere, Rudere dein Boot"
   },
   "books": {
     "beginner-songs": "Anfängerstücke",

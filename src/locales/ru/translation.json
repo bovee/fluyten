@@ -29,6 +29,7 @@
   "playSong": "Воспроизвести",
   "metronome": "Метроном",
   "tempoLabel": "Темп: {{tempo}} уд/мин",
+  "voice": "Голос",
   "abcNotation": "Нотация ABC",
   "recorderType": "Тип блокфлейты",
   "detect": "Определить",
@@ -67,7 +68,8 @@
     "hot-cross-buns": "Горячие булочки",
     "mary-had-a-little-lamb": "У Мэри был ягнёнок",
     "twinkle-twinkle": "Мерцай, мерцай, звёздочка",
-    "frere-jacques": "Фрер Жак"
+    "frere-jacques": "Фрер Жак",
+    "row-row-row-your-boat": "Греби, Греби, Греби свою Лодку"
   },
   "books": {
     "beginner-songs": "Пьесы для начинающих",

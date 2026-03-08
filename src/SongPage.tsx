@@ -2,7 +2,11 @@ import { useEffect, useRef, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import Box from '@mui/material/Box';
 import Drawer from '@mui/material/Drawer';
+import FormControl from '@mui/material/FormControl';
 import IconButton from '@mui/material/IconButton';
+import InputLabel from '@mui/material/InputLabel';
+import MenuItem from '@mui/material/MenuItem';
+import Select from '@mui/material/Select';
 import Slider from '@mui/material/Slider';
 import SpeedDial from '@mui/material/SpeedDial';
 import SpeedDialAction from '@mui/material/SpeedDialAction';
@@ -15,8 +19,8 @@ import PlayArrow from '@mui/icons-material/PlayArrow';
 import Speed from '@mui/icons-material/Speed';
 import Edit from '@mui/icons-material/Edit';
 
-import { fromAbc } from './io/abcImport';
-import { type Music } from './music';
+import { voicesFromAbc } from './io/abcImport';
+import { Music } from './music';
 import { FrequencyTracker } from './FrequencyTracker';
 import { NotePlayer } from './NotePlayer';
 import { Vexflow } from './Vexflow.tsx';
@@ -47,7 +51,10 @@ export function SongPage({
   const [speedDialOpen, setSpeedDialOpen] = useState(false);
   const [abcMusic, setAbcMusic] = useState(song.abc);
   const [currentParseError, setCurrentParseError] = useState('');
-  const [music, setMusic] = useState(fromAbc(song.abc));
+  const [voices, setVoices] = useState(() => voicesFromAbc(song.abc));
+  const [selectedVoiceIdx, setSelectedVoiceIdx] = useState(0);
+  const music =
+    voices[Math.min(selectedVoiceIdx, voices.length - 1)]?.music ?? new Music();
   const [playedNotes, setPlayedNotes] = useState(0);
   const [detectedPitch, setDetectedPitch] = useState<number | null>(null);
   const [cursor, setCursor] = useState<{ noteIdx: number } | undefined>();
@@ -203,8 +210,10 @@ export function SongPage({
 
   useEffect(() => {
     try {
+      const newVoices = voicesFromAbc(abcMusic);
       // eslint-disable-next-line react-hooks/set-state-in-effect
-      setMusic(fromAbc(abcMusic));
+      setVoices(newVoices);
+      setSelectedVoiceIdx((idx) => Math.min(idx, newVoices.length - 1));
       setCurrentParseError('');
       if (!readOnly) onAbcChange?.(abcMusic);
     } catch (error) {
@@ -374,19 +383,48 @@ export function SongPage({
         {statusMessage}
       </span>
       <Drawer variant="persistent" anchor="bottom" open={editOpen}>
-        <Box sx={{ px: 3, pt: 2, pb: 1 }}>
-          <Typography variant="caption" color="text.secondary">
-            {t('tempoLabel', { tempo })}
-          </Typography>
-          <Slider
-            aria-label="Tempo"
-            size="small"
-            value={tempo}
-            onChange={(_, v) => handleTempoChange(v as number)}
-            min={20}
-            max={200}
-            step={5}
-          />
+        <Box
+          sx={{
+            px: 3,
+            pt: 2,
+            pb: 1,
+            display: 'flex',
+            flexDirection: { xs: 'column', sm: 'row' },
+            gap: 2,
+            alignItems: { sm: 'flex-end' },
+          }}
+        >
+          <Box sx={{ flex: 1 }}>
+            <Typography variant="caption" color="text.secondary">
+              {t('tempoLabel', { tempo })}
+            </Typography>
+            <Slider
+              aria-label="Tempo"
+              size="small"
+              value={tempo}
+              onChange={(_, v) => handleTempoChange(v as number)}
+              min={20}
+              max={200}
+              step={5}
+            />
+          </Box>
+          {voices.length > 1 && (
+            <FormControl size="small" sx={{ minWidth: 140, flexShrink: 0 }}>
+              <InputLabel id="voice-select-label">{t('voice')}</InputLabel>
+              <Select
+                labelId="voice-select-label"
+                value={selectedVoiceIdx}
+                label={t('voice')}
+                onChange={(e) => setSelectedVoiceIdx(e.target.value as number)}
+              >
+                {voices.map((v, i) => (
+                  <MenuItem key={v.id} value={i}>
+                    {v.name || v.id}
+                  </MenuItem>
+                ))}
+              </Select>
+            </FormControl>
+          )}
         </Box>
         <Box sx={{ px: 3, pb: 2 }}>
           <TextField

@@ -8,7 +8,10 @@ setupAudioMocks();
 // falls back to a console.warn on every render. Stub getContext('2d') only when
 // the environment lacks a real implementation (i.e. not in a real browser).
 if (!document.createElement('canvas').getContext('2d')) {
-  HTMLCanvasElement.prototype.getContext = function (this: HTMLCanvasElement, contextId: string) {
+  HTMLCanvasElement.prototype.getContext = function (
+    this: HTMLCanvasElement,
+    contextId: string
+  ) {
     const element = this;
     if (contextId === '2d') {
       return {

@@ -29,6 +29,7 @@
   "playSong": "곡 재생",
   "metronome": "메트로놈",
   "tempoLabel": "템포: {{tempo}} BPM",
+  "voice": "성부",
   "abcNotation": "ABC 기보",
   "recorderType": "리코더 종류",
   "detect": "감지",
@@ -67,7 +68,8 @@
     "hot-cross-buns": "핫크로스번",
     "mary-had-a-little-lamb": "메리에게 작은 양이 있었네",
     "twinkle-twinkle": "반짝반짝 작은 별",
-    "frere-jacques": "프레르 자크"
+    "frere-jacques": "프레르 자크",
+    "row-row-row-your-boat": "노 저어라 노 저어라"
   },
   "books": {
     "beginner-songs": "초보자 곡",

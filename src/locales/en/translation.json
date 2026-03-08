@@ -29,6 +29,7 @@
   "playSong": "Play Song",
   "metronome": "Metronome",
   "tempoLabel": "Tempo: {{tempo}} BPM",
+  "voice": "Voice",
   "abcNotation": "ABC notation",
   "recorderType": "Recorder Type",
   "detect": "Detect",
@@ -74,7 +75,8 @@
     "hot-cross-buns": "Hot Cross Buns",
     "mary-had-a-little-lamb": "Mary Had a Little Lamb",
     "twinkle-twinkle": "Twinkle Twinkle Little Star",
-    "frere-jacques": "Frère Jacques"
+    "frere-jacques": "Frère Jacques",
+    "row-row-row-your-boat": "Row Row Row Your Boat"
   },
   "books": {
     "beginner-songs": "Beginner Songs",

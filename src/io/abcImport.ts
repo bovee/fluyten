@@ -196,6 +196,25 @@ function tokenize(score: string): ScoreToken[] {
   return tokens;
 }
 
+// ---- Broken rhythm helper ---------------------------------------------------
+
+// `>` dots the left note and halves the right; `<` is the reverse.
+function applyBrokenRhythm(
+  duration: Duration,
+  modifier: DurationModifier,
+  dir: 'dot' | 'halve'
+): [Duration, DurationModifier] {
+  let sixteenths = DURATION_SIXTEENTHS[duration];
+  if (modifier === DurationModifier.DOTTED) sixteenths = (sixteenths * 3) / 2;
+  sixteenths = dir === 'dot' ? (sixteenths * 3) / 2 : sixteenths / 2;
+  const result = SIXTEENTHS_TO_DURATION.get(sixteenths);
+  if (!result)
+    throw new Error(
+      `Broken rhythm produces an unsupported duration (${sixteenths} sixteenths)`
+    );
+  return result;
+}
+
 // ---- Score parser -----------------------------------------------------------
 
 interface ChordAccum {
@@ -216,6 +235,7 @@ function parseScore(
   let tupletCounter = 0;
   let startSlur: number | null = null;
   let chordAccum: ChordAccum | null = null;
+  let pendingBrokenRhythm: 'dot' | 'halve' | null = null;
 
   // Beam tracking: a beam group is a run of note tokens uninterrupted by beam_break.
   // beam_join (backtick) bridges a gap without closing the group.
@@ -279,6 +299,21 @@ function parseScore(
         if (noteType === 'triplet') {
           noteDurationModifier = DurationModifier.TRIPLET;
           if (--tupletCounter === 0) noteType = null;
+        }
+
+        if (pendingBrokenRhythm !== null) {
+          if (
+            noteDuration !== Duration.GRACE &&
+            noteDuration !== Duration.GRACE_SLASH &&
+            noteDurationModifier !== DurationModifier.TRIPLET
+          ) {
+            [noteDuration, noteDurationModifier] = applyBrokenRhythm(
+              noteDuration,
+              noteDurationModifier,
+              pendingBrokenRhythm
+            );
+          }
+          pendingBrokenRhythm = null;
         }
 
         const note = Note.fromAbc(
@@ -388,11 +423,24 @@ function parseScore(
         music.curves.push([music.notes.length - 1, music.notes.length]);
         break;
 
-      case 'broken_rhythm':
-        // TODO: need to handle broken rhythm e.g. a>b
-        throw new Error(
-          `Unimplement. Could not parse < or > after note ${music.notes.length}`
+      case 'broken_rhythm': {
+        const lastNote = music.notes[music.notes.length - 1];
+        if (!lastNote)
+          throw new Error(
+            `Broken rhythm '${token.dir}' with no preceding note`
+          );
+        const [lastDir, nextDir] =
+          token.dir === '>'
+            ? (['dot', 'halve'] as const)
+            : (['halve', 'dot'] as const);
+        [lastNote.duration, lastNote.durationModifier] = applyBrokenRhythm(
+          lastNote.duration,
+          lastNote.durationModifier,
+          lastDir
         );
+        pendingBrokenRhythm = nextDir;
+        break;
+      }
 
       case 'inline_field':
         throw new Error(
@@ -482,6 +530,117 @@ function parseHeaders(lines: string[], music: Music): HeaderParseResult {
 }
 
 // ---- Public API -------------------------------------------------------------
+
+export interface VoiceInfo {
+  id: string;
+  name: string;
+  music: Music;
+}
+
+/**
+ * Parses an ABC tune that may contain multiple voices (V: fields).
+ * Returns one VoiceInfo per voice, each holding its own Music object.
+ * If no V: fields are present, returns a single-element array from fromAbc().
+ */
+export function voicesFromAbc(text: string): VoiceInfo[] {
+  // Strip comments (same preprocessing as fromAbc)
+  const lines = text.split(/\r?\n/).map((l) => {
+    if (l.startsWith('%%')) return l;
+    const commentIdx = l.indexOf('%');
+    return commentIdx === -1 ? l : l.slice(0, commentIdx);
+  });
+
+  // Quick check: does this ABC use voices at all?
+  if (!lines.some((l) => /^V:\s*\S/.test(l))) {
+    return [{ id: '1', name: '', music: fromAbc(text) }];
+  }
+
+  // Collect voice definitions from V: lines (first occurrence per id wins)
+  const voiceDefs = new Map<
+    string,
+    { name: string; clef?: 'treble' | 'bass' | 'alto' }
+  >();
+  for (const line of lines) {
+    if (!line.startsWith('V:')) continue;
+    const rest = line.slice(2).trim();
+    const idMatch = rest.match(/^(\S+)/);
+    if (!idMatch) continue;
+    const id = idMatch[1];
+    if (voiceDefs.has(id)) continue;
+    const nameMatch = rest.match(/(?:name|nm)="([^"]+)"|(?:name|nm)=(\S+)/i);
+    const clefMatch = rest.match(/clef=(\w+)/i);
+    const name = nameMatch ? (nameMatch[1] ?? nameMatch[2]) : id;
+    let clef: 'treble' | 'bass' | 'alto' | undefined;
+    if (clefMatch) {
+      const c = clefMatch[1].toLowerCase();
+      clef = c === 'bass' ? 'bass' : c === 'alto' ? 'alto' : 'treble';
+    }
+    voiceDefs.set(id, { name, clef });
+  }
+
+  const firstVoiceId = voiceDefs.keys().next().value as string;
+
+  // Collect global header lines and split score text per voice
+  const globalHeaderLines: string[] = [];
+  const voiceSegments = new Map<string, string[]>();
+  for (const id of voiceDefs.keys()) voiceSegments.set(id, []);
+
+  let currentVoiceId = firstVoiceId;
+
+  for (const line of lines) {
+    // Field line: second character is ':' and not starting with '|:'
+    if (line.length >= 2 && line[1] === ':' && !line.startsWith('|:')) {
+      if (line.startsWith('V:')) {
+        const rest = line.slice(2).trim();
+        const idMatch = rest.match(/^(\S+)/);
+        if (idMatch && voiceDefs.has(idMatch[1])) {
+          currentVoiceId = idMatch[1];
+        }
+      } else {
+        globalHeaderLines.push(line);
+      }
+      continue;
+    }
+    if (line.startsWith('%%')) {
+      globalHeaderLines.push(line);
+      continue;
+    }
+    if (line.trim() === '') continue;
+
+    // Score line: split by [V:id] inline markers
+    const inlineVoiceRe = /\[V:([^\]]+)\]/g;
+    let lastIdx = 0;
+    let match: RegExpExecArray | null;
+    while ((match = inlineVoiceRe.exec(line)) !== null) {
+      const segment = line.slice(lastIdx, match.index);
+      if (segment.trim()) voiceSegments.get(currentVoiceId)?.push(segment);
+      const newId = match[1].trim();
+      if (voiceDefs.has(newId)) currentVoiceId = newId;
+      lastIdx = inlineVoiceRe.lastIndex;
+    }
+    const remaining = line.slice(lastIdx);
+    if (remaining.trim()) voiceSegments.get(currentVoiceId)?.push(remaining);
+  }
+
+  // Build Music for each voice
+  const result: VoiceInfo[] = [];
+  for (const [id, { name, clef }] of voiceDefs) {
+    const segments = voiceSegments.get(id) ?? [];
+    if (segments.length === 0) continue;
+    const voiceAbc = [...globalHeaderLines, segments.join(' ')].join('\n');
+    try {
+      const music = fromAbc(voiceAbc);
+      if (clef) music.clef = clef;
+      result.push({ id, name, music });
+    } catch {
+      // skip voices that fail to parse
+    }
+  }
+
+  return result.length > 0
+    ? result
+    : [{ id: '1', name: '', music: fromAbc(text) }];
+}
 
 /**
  * Splits a multi-tune ABC file into individual tune texts.

@@ -23,8 +23,8 @@ vi.mock('./FrequencyTracker', () => ({
     Math.round(12 * Math.log2(freq / 440) + 69),
 }));
 
-// SOPRANO expected pitch is MIDI 71 (B4); idealFreq = 440 * 2^((71-69)/12) ≈ 493.88 Hz
-const SOPRANO_IDEAL_FREQ = 440 * Math.pow(2, (71 - 69) / 12);
+// SOPRANO expected pitch is MIDI 83 (B5); idealFreq = 440 * 2^((83-69)/12) ≈ 987.77 Hz
+const SOPRANO_IDEAL_FREQ = 440 * Math.pow(2, (83 - 69) / 12);
 
 describe('computeTuning', () => {
   it('returns 1.0 for a perfectly in-tune note', () => {
@@ -52,20 +52,20 @@ describe('computeTuning', () => {
   });
 
   it('rounds to 3 decimal places', () => {
-    const result = computeTuning(441, 'SOPRANO');
+    const result = computeTuning(SOPRANO_IDEAL_FREQ * 1.001, 'SOPRANO');
     const decimals = result.toString().split('.')[1]?.length ?? 0;
     expect(decimals).toBeLessThanOrEqual(3);
   });
 
   it('computes tuning for ALTO instrument', () => {
-    // ALTO expected pitch is MIDI 64
-    const altoIdeal = 440 * Math.pow(2, (64 - 69) / 12);
+    // ALTO expected pitch is MIDI 76 (E5)
+    const altoIdeal = 440 * Math.pow(2, (76 - 69) / 12);
     expect(computeTuning(altoIdeal, 'ALTO')).toBe(1.0);
   });
 
   it('computes tuning for BASS instrument', () => {
-    // BASS expected pitch is MIDI 52
-    const bassIdeal = 440 * Math.pow(2, (52 - 69) / 12);
+    // BASS expected pitch is MIDI 64 (E4)
+    const bassIdeal = 440 * Math.pow(2, (64 - 69) / 12);
     expect(computeTuning(bassIdeal, 'BASS')).toBe(1.0);
   });
 });
@@ -106,10 +106,10 @@ describe('RecorderDetector', () => {
     const detector = new RecorderDetector(callbacks);
     await detector.start();
 
-    // SOPRANO pitches are 69-72; freq for MIDI 71 ≈ 493.88 Hz
+    // SOPRANO pitches are 81-84; freq for MIDI 83 ≈ 987.77 Hz
     mockCheckRawFrequency.mockReturnValue({
       frequency: SOPRANO_IDEAL_FREQ,
-      volume: 150,
+      volume: 0.5,
     });
 
     // Advance 7 intervals (100ms each)
@@ -130,17 +130,17 @@ describe('RecorderDetector', () => {
     await detector.start();
 
     // Alternate between SOPRANO-range and ALTO-range frequencies
-    const sopranoFreq = 493.88; // MIDI 71 → SOPRANO
-    const altoFreq = 329.63; // MIDI 64 → ALTO
+    const sopranoFreq = SOPRANO_IDEAL_FREQ; // MIDI 83 → SOPRANO
+    const altoFreq = 440 * Math.pow(2, (76 - 69) / 12); // MIDI 76 → ALTO
 
     mockCheckRawFrequency
-      .mockReturnValueOnce({ frequency: sopranoFreq, volume: 150 })
-      .mockReturnValueOnce({ frequency: sopranoFreq, volume: 150 })
-      .mockReturnValueOnce({ frequency: altoFreq, volume: 150 })
-      .mockReturnValueOnce({ frequency: sopranoFreq, volume: 150 })
-      .mockReturnValueOnce({ frequency: sopranoFreq, volume: 150 })
-      .mockReturnValueOnce({ frequency: sopranoFreq, volume: 150 })
-      .mockReturnValueOnce({ frequency: sopranoFreq, volume: 150 });
+      .mockReturnValueOnce({ frequency: sopranoFreq, volume: 0.5 })
+      .mockReturnValueOnce({ frequency: sopranoFreq, volume: 0.5 })
+      .mockReturnValueOnce({ frequency: altoFreq, volume: 0.5 })
+      .mockReturnValueOnce({ frequency: sopranoFreq, volume: 0.5 })
+      .mockReturnValueOnce({ frequency: sopranoFreq, volume: 0.5 })
+      .mockReturnValueOnce({ frequency: sopranoFreq, volume: 0.5 })
+      .mockReturnValueOnce({ frequency: sopranoFreq, volume: 0.5 });
 
     for (let i = 0; i < 7; i++) {
       vi.advanceTimersByTime(100);
@@ -159,7 +159,7 @@ describe('RecorderDetector', () => {
     const unknownFreq = 440 * Math.pow(2, (66 - 69) / 12); // ~369.99
     mockCheckRawFrequency.mockReturnValue({
       frequency: unknownFreq,
-      volume: 150,
+      volume: 0.5,
     });
 
     for (let i = 0; i < 10; i++) {
@@ -176,7 +176,7 @@ describe('RecorderDetector', () => {
 
     mockCheckRawFrequency.mockReturnValue({
       frequency: SOPRANO_IDEAL_FREQ,
-      volume: 150,
+      volume: 0.5,
     });
 
     vi.advanceTimersByTime(100);
@@ -184,7 +184,7 @@ describe('RecorderDetector', () => {
     vi.advanceTimersByTime(100);
 
     expect(callbacks.onVolume).toHaveBeenCalledTimes(3);
-    expect(callbacks.onVolume).toHaveBeenCalledWith(150);
+    expect(callbacks.onVolume).toHaveBeenCalledWith(0.5);
     detector.stop();
   });
 
@@ -202,25 +202,25 @@ describe('RecorderDetector', () => {
     detector.stop();
   });
 
-  it('step 2: freq close to known (< 8Hz) → onSystemDetected(true)', async () => {
+  it('step 2: freq close to known (< 2%) → onSystemDetected(true)', async () => {
     const detector = new RecorderDetector(callbacks);
     await detector.start();
 
     // First get through step 1 with SOPRANO
     mockCheckRawFrequency.mockReturnValue({
       frequency: SOPRANO_IDEAL_FREQ,
-      volume: 150,
+      volume: 0.5,
     });
     for (let i = 0; i < 7; i++) {
       vi.advanceTimersByTime(100);
     }
     expect(callbacks.onStep2Started).toHaveBeenCalled();
 
-    // Step 2: SOPRANO known freq is 349.2 Hz
-    // Provide frequency close to 349.2 (within 8Hz)
+    // Step 2: SOPRANO known freq is 698.2 Hz
+    // Provide frequency within 2% (~13.96 Hz)
     mockCheckRawFrequency.mockReturnValue({
-      frequency: 349.2, // Exactly the known freq
-      volume: 150,
+      frequency: 698.2,
+      volume: 0.5,
     });
     for (let i = 0; i < 7; i++) {
       vi.advanceTimersByTime(100);
@@ -230,24 +230,24 @@ describe('RecorderDetector', () => {
     detector.stop();
   });
 
-  it('step 2: freq farther from known (8-25Hz) → onSystemDetected(false)', async () => {
+  it('step 2: freq farther from known (2-5%) → onSystemDetected(false)', async () => {
     const detector = new RecorderDetector(callbacks);
     await detector.start();
 
     // Get through step 1
     mockCheckRawFrequency.mockReturnValue({
       frequency: SOPRANO_IDEAL_FREQ,
-      volume: 150,
+      volume: 0.5,
     });
     for (let i = 0; i < 7; i++) {
       vi.advanceTimersByTime(100);
     }
 
-    // Step 2: SOPRANO known freq is 349.2
-    // Provide frequency 15Hz away (within 25Hz but outside 8Hz)
+    // Step 2: SOPRANO known freq is 698.2 Hz
+    // Provide frequency 3% away (within 5% but outside 2%)
     mockCheckRawFrequency.mockReturnValue({
-      frequency: 349.2 + 15,
-      volume: 150,
+      frequency: 698.2 * 1.03,
+      volume: 0.5,
     });
     for (let i = 0; i < 7; i++) {
       vi.advanceTimersByTime(100);
@@ -257,24 +257,24 @@ describe('RecorderDetector', () => {
     detector.stop();
   });
 
-  it('step 2: freq too far (>25Hz) → ignored, no callback', async () => {
+  it('step 2: freq too far (>5%) → ignored, no callback', async () => {
     const detector = new RecorderDetector(callbacks);
     await detector.start();
 
     // Get through step 1
     mockCheckRawFrequency.mockReturnValue({
       frequency: SOPRANO_IDEAL_FREQ,
-      volume: 150,
+      volume: 0.5,
     });
     for (let i = 0; i < 7; i++) {
       vi.advanceTimersByTime(100);
     }
 
-    // Step 2: SOPRANO known freq is 349.2
-    // Provide frequency >25Hz away
+    // Step 2: SOPRANO known freq is 698.2 Hz
+    // Provide frequency > 5% away
     mockCheckRawFrequency.mockReturnValue({
-      frequency: 349.2 + 30,
-      volume: 150,
+      frequency: 698.2 * 1.06,
+      volume: 0.5,
     });
     for (let i = 0; i < 10; i++) {
       vi.advanceTimersByTime(100);
@@ -290,7 +290,7 @@ describe('RecorderDetector', () => {
 
     mockCheckRawFrequency.mockReturnValue({
       frequency: SOPRANO_IDEAL_FREQ,
-      volume: 150,
+      volume: 0.5,
     });
 
     vi.advanceTimersByTime(100);

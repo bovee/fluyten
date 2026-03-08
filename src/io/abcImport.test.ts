@@ -1,5 +1,5 @@
 import { describe, it, expect } from 'vitest';
-import { fromAbc, splitTunes } from './abcImport';
+import { fromAbc, splitTunes, voicesFromAbc } from './abcImport';
 import { Duration, DurationModifier } from '../music';
 
 describe('fromAbc', () => {
@@ -278,9 +278,39 @@ describe('fromAbc', () => {
       expect(() => fromAbc(abc)).not.toThrow();
     });
 
-    it('should throw error for broken rhythm (unimplemented)', () => {
-      const abc = `T:Test\nM:4/4\nL:1/4\nK:C\nC<D`;
-      expect(() => fromAbc(abc)).toThrow('Unimplement');
+    it('c>d equals c3/2 d/ (dotted + halved)', () => {
+      // c>d: c gets dotted (3/2 of quarter = dotted quarter), d gets halved (1/2 of quarter = eighth)
+      const abc = `T:Test\nM:4/4\nL:1/4\nK:C\nc>d`;
+      const music = fromAbc(abc);
+      expect(music.notes).toHaveLength(2);
+      expect(music.notes[0].duration).toBe(Duration.QUARTER);
+      expect(music.notes[0].durationModifier).toBe(DurationModifier.DOTTED);
+      expect(music.notes[1].duration).toBe(Duration.EIGHTH);
+      expect(music.notes[1].durationModifier).toBe(DurationModifier.NONE);
+    });
+
+    it('A2<B2 equals A B3 (halved + dotted)', () => {
+      // With L:1/8: A2 = quarter, B2 = quarter
+      // A2<B2: A gets halved (eighth), B gets dotted (dotted quarter)
+      const abc = `T:Test\nM:4/4\nL:1/8\nK:C\nA2<B2`;
+      const music = fromAbc(abc);
+      expect(music.notes).toHaveLength(2);
+      expect(music.notes[0].duration).toBe(Duration.EIGHTH);
+      expect(music.notes[0].durationModifier).toBe(DurationModifier.NONE);
+      expect(music.notes[1].duration).toBe(Duration.QUARTER);
+      expect(music.notes[1].durationModifier).toBe(DurationModifier.DOTTED);
+    });
+
+    it('multiple broken rhythms in a row', () => {
+      // c>d>e: c=dotted quarter, d=halved then re-dotted... wait, each > is independent
+      // c>d e>f: c=dotted q, d=eighth, e=dotted q, f=eighth
+      const abc = `T:Test\nM:4/4\nL:1/4\nK:C\nc>d e>f`;
+      const music = fromAbc(abc);
+      expect(music.notes).toHaveLength(4);
+      expect(music.notes[0].durationModifier).toBe(DurationModifier.DOTTED);
+      expect(music.notes[1].duration).toBe(Duration.EIGHTH);
+      expect(music.notes[2].durationModifier).toBe(DurationModifier.DOTTED);
+      expect(music.notes[3].duration).toBe(Duration.EIGHTH);
     });
   });
 
@@ -421,6 +451,63 @@ describe('fromAbc', () => {
       expect(tunes).toHaveLength(2);
       expect(tunes[0]).toContain('T:First');
       expect(tunes[1]).toContain('T:Second');
+    });
+  });
+
+  describe('voicesFromAbc', () => {
+    it('returns single voice for ABC with no V: fields', () => {
+      const abc = `T:Test\nM:4/4\nL:1/4\nK:C\nC D E F`;
+      const voices = voicesFromAbc(abc);
+      expect(voices).toHaveLength(1);
+      expect(voices[0].id).toBe('1');
+      expect(voices[0].music.notes).toHaveLength(4);
+    });
+
+    it('splits two voices from inline [V:id] markers', () => {
+      const abc = `T:Test\nM:4/4\nL:1/4\nV:1\nV:2\nK:C\n[V:1] C D E F |[V:2] G A B c |`;
+      const voices = voicesFromAbc(abc);
+      expect(voices).toHaveLength(2);
+      expect(voices[0].id).toBe('1');
+      expect(voices[1].id).toBe('2');
+      expect(voices[0].music.notes).toHaveLength(4);
+      expect(voices[1].music.notes).toHaveLength(4);
+    });
+
+    it('reads name= from V: definition line', () => {
+      const abc = `T:Test\nM:4/4\nL:1/4\nV:1 name=Soprano\nV:2 name=Alto\nK:C\n[V:1] C D |[V:2] G A |`;
+      const voices = voicesFromAbc(abc);
+      expect(voices[0].name).toBe('Soprano');
+      expect(voices[1].name).toBe('Alto');
+    });
+
+    it('reads quoted name= with spaces from V: definition line', () => {
+      const abc = `T:Test\nM:4/4\nL:1/4\nV:P1 name="Part 1"\nV:P2 name="Part 2"\nK:C\n[V:P1] C D |[V:P2] G A |`;
+      const voices = voicesFromAbc(abc);
+      expect(voices[0].name).toBe('Part 1');
+      expect(voices[1].name).toBe('Part 2');
+    });
+
+    it('splits voices from standalone V: body lines', () => {
+      const abc = `T:Test\nM:4/4\nL:1/4\nV:1\nV:2\nK:C\nV:1\nC D E F |\nV:2\nG, A, B, C, |`;
+      const voices = voicesFromAbc(abc);
+      expect(voices).toHaveLength(2);
+      expect(voices[0].music.notes).toHaveLength(4);
+      expect(voices[1].music.notes).toHaveLength(4);
+    });
+
+    it('inherits global headers (key, time, title) in each voice', () => {
+      const abc = `T:Duet\nM:3/4\nL:1/4\nV:1\nV:2\nK:G\n[V:1] G A B |[V:2] D E F# |`;
+      const voices = voicesFromAbc(abc);
+      expect(voices[0].music.title).toBe('Duet');
+      expect(voices[0].music.beatsPerBar).toBe(3);
+      expect(voices[1].music.beatsPerBar).toBe(3);
+    });
+
+    it('sets clef from V: clef= attribute', () => {
+      const abc = `T:Test\nM:4/4\nL:1/4\nV:1 clef=treble\nV:2 clef=bass\nK:C\n[V:1] C D |[V:2] C, D, |`;
+      const voices = voicesFromAbc(abc);
+      expect(voices[0].music.clef).toBe('treble');
+      expect(voices[1].music.clef).toBe('bass');
     });
   });
 

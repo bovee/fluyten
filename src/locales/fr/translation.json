@@ -9,7 +9,7 @@
   "removeBook": "Supprimer le livre",
   "editBook": "Modifier le livre",
   "deleteSong": "Supprimer la chanson",
-  "confirmDeleteSong": "Voulez-vous vraiment supprimer «\u00a0{{title}}\u00a0» ?",
+  "confirmDeleteSong": "Voulez-vous vraiment supprimer « {{title}} » ?",
   "settingsButton": "Paramètres",
   "backToSongList": "Retour à la liste des chansons",
   "editMusic": "Modifier la partition",
@@ -20,7 +20,7 @@
   "create": "Créer",
   "save": "Enregistrer",
   "deleteBook": "Supprimer le livre",
-  "confirmDeleteBook": "Voulez-vous vraiment supprimer «\u00a0{{title}}\u00a0» ? Cette action est irréversible.",
+  "confirmDeleteBook": "Voulez-vous vraiment supprimer « {{title}} » ? Cette action est irréversible.",
   "exportBook": "Exporter",
   "exportAbc": "Exporter le livre",
   "fileName": "Nom du fichier",
@@ -29,6 +29,7 @@
   "playSong": "Jouer la chanson",
   "metronome": "Métronome",
   "tempoLabel": "Tempo : {{tempo}} BPM",
+  "voice": "Voix",
   "abcNotation": "Notation ABC",
   "recorderType": "Type de flûte",
   "detect": "Détecter",
@@ -67,7 +68,8 @@
     "hot-cross-buns": "Hot Cross Buns",
     "mary-had-a-little-lamb": "Marie avait un petit agneau",
     "twinkle-twinkle": "Ah ! vous dirai-je, maman",
-    "frere-jacques": "Frère Jacques"
+    "frere-jacques": "Frère Jacques",
+    "row-row-row-your-boat": "Rame, Rame, Rame ton Bateau"
   },
   "books": {
     "beginner-songs": "Chansons pour débutants",

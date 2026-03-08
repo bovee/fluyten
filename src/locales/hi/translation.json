@@ -29,6 +29,7 @@
   "playSong": "गाना बजाएं",
   "metronome": "मेट्रोनोम",
   "tempoLabel": "गति: {{tempo}} BPM",
+  "voice": "स्वर",
   "abcNotation": "ABC संकेतन",
   "recorderType": "रिकॉर्डर प्रकार",
   "detect": "पहचानें",
@@ -67,7 +68,8 @@
     "hot-cross-buns": "हॉट क्रॉस बन्स",
     "mary-had-a-little-lamb": "मैरी का एक छोटा मेमना था",
     "twinkle-twinkle": "टिमटिम करते तारे",
-    "frere-jacques": "फ्रेर जाक"
+    "frere-jacques": "फ्रेर जाक",
+    "row-row-row-your-boat": "नाव खेओ नाव खेओ"
   },
   "books": {
     "beginner-songs": "शुरुआती गाने",

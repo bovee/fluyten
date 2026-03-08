@@ -84,18 +84,14 @@ export const PITCH_CONSTANTS = {
 
 // Frequency tracker constants
 export const FREQUENCY_TRACKER_CONSTANTS = {
-  // Minimum volume threshold for note detection
-  MIN_VOLUME: 120,
-  // Maximum frequency width (Hz) for valid note detection
-  MAX_FREQ_WIDTH: 40,
-  // FFT size for frequency analysis
+  // Buffer size for time-domain PCM data
   FFT_SIZE: 4096,
-  // Minimum decibels for analyser
-  MIN_DECIBELS: -120,
-  // Maximum decibels for analyser
-  MAX_DECIBELS: -10,
-  // Smoothing time constant for analyser
-  SMOOTHING_TIME_CONSTANT: 0.5,
+  // RMS silence threshold (0–1 float range); signals below this are ignored
+  MIN_RMS: 0.01,
+  // MPM key-maximum threshold: accept the first NSDF peak whose value is at
+  // least this fraction of the global peak. Prevents octave errors.
+  // 0.8 is the value from the original McLeod & Wyvill paper.
+  MPM_CLARITY_THRESHOLD: 0.8,
 } as const;
 
 // Note names in chromatic order (C=0 through B=11)
