@@ -1,5 +1,5 @@
 import { FrequencyTracker, freqToMidiPitch } from './FrequencyTracker';
-import { type RecorderType } from './instrument';
+import { type RecorderType } from '../instrument';
 
 /** Computes tuning ratio from a raw detected frequency and its MIDI pitch, clamped to [0.8, 1.2]. */
 export function computeTuning(

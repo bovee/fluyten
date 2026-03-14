@@ -197,8 +197,7 @@ describe('FrequencyTracker', () => {
       expect(pitch).toBeLessThanOrEqual(63);
     });
 
-    it('applies -12 semitone shift for soprano', () => {
-      // Soprano sounds C5 (~523 Hz, MIDI 72 sounding). Written pitch = 72 - 12 = 60.
+    it('detects soprano C5 (523 Hz) as MIDI 72 (sounding pitch, no shift)', () => {
       injectAudioContext();
       const buf = makeSineBuffer(523.25, sampleRate, bufferSize);
       tracker.analyser = makeAnalyser(buf) as any;
@@ -207,9 +206,8 @@ describe('FrequencyTracker', () => {
 
       expect(onStartNote).toHaveBeenCalledTimes(1);
       const pitch: number = onStartNote.mock.calls[0][0];
-      // Written pitch should be ~60 (C4), not 72 (C5)
-      expect(pitch).toBeGreaterThanOrEqual(58);
-      expect(pitch).toBeLessThanOrEqual(62);
+      expect(pitch).toBeGreaterThanOrEqual(70);
+      expect(pitch).toBeLessThanOrEqual(74);
     });
 
     it('does not shift pitch for tenor', () => {

@@ -4,7 +4,7 @@ import { SongPage } from './SongPage';
 import { useStore } from './store';
 
 // Mock audio-related classes so they don't fail in jsdom
-vi.mock('./FrequencyTracker', () => ({
+vi.mock('./audio/FrequencyTracker', () => ({
   FrequencyTracker: class {
     constructor(_onStart: unknown, _onStop: unknown) {}
     start = vi.fn().mockResolvedValue(undefined);
@@ -13,7 +13,7 @@ vi.mock('./FrequencyTracker', () => ({
   },
 }));
 
-vi.mock('./NotePlayer', () => ({
+vi.mock('./audio/NotePlayer', () => ({
   NotePlayer: class {
     audioCtx = null;
     start = vi.fn();

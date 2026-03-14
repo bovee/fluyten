@@ -481,7 +481,7 @@ describe('Note', () => {
 });
 
 describe('Music', () => {
-  describe('autobar', () => {
+  describe('reflow', () => {
     it('should create bars for 4/4 time', () => {
       const music = new Music();
       music.beatsPerBar = 4;
@@ -494,7 +494,7 @@ describe('Music', () => {
         new Note(67, Duration.QUARTER),
       ];
 
-      music.autobar();
+      music.reflow();
 
       expect(music.bars.length).toBe(2);
       expect(music.bars[0].type).toBe('begin');
@@ -517,7 +517,7 @@ describe('Music', () => {
         new Note(72, Duration.QUARTER),
       ];
 
-      music.autobar();
+      music.reflow();
 
       expect(music.bars.length).toBe(3);
       expect(music.bars[1].afterNoteNum).toBe(3);
@@ -535,18 +535,18 @@ describe('Music', () => {
         new Note(65, Duration.QUARTER),
       ];
 
-      music.autobar();
+      music.reflow();
 
       expect(music.bars.length).toBe(2);
       expect(music.bars[1].afterNoteNum).toBe(2);
     });
 
-    it('empty Music autobar: only begin bar', () => {
+    it('empty Music: only begin bar', () => {
       const music = new Music();
       music.beatsPerBar = 4;
       music.beatValue = 4;
       music.notes = [];
-      music.autobar();
+      music.reflow();
       expect(music.bars).toHaveLength(1);
       expect(music.bars[0].type).toBe('begin');
     });
@@ -555,7 +555,7 @@ describe('Music', () => {
       const music = new Music();
       music.beatsPerBar = 6;
       music.beatValue = 8;
-      // 6 eighth notes = one bar of 6/8
+      // 6 eighth notes = one bar of 6/8 (6 × 512 = 3072 ticks)
       music.notes = [
         new Note(60, Duration.EIGHTH),
         new Note(62, Duration.EIGHTH),
@@ -564,26 +564,57 @@ describe('Music', () => {
         new Note(67, Duration.EIGHTH),
         new Note(69, Duration.EIGHTH),
       ];
-      music.autobar();
-      // 6 eighths × 512 ticks = 3072 ticks per bar
-      // beatsPerBar * QUARTER ticks = 6 * 1024 = 6144 → bar after all 6 notes
-      // Wait - autobar uses DURATION_TICKS.QUARTER * beatsPerBar
-      // For 6/8: 1024 * 6 = 6144, but 6 eighths = 3072
-      // So we'd need 12 eighths to fill a bar. Let's just verify it works.
+      music.reflow();
+      expect(music.bars).toHaveLength(2);
       expect(music.bars[0].type).toBe('begin');
+      expect(music.bars[1].afterNoteNum).toBe(5);
     });
 
-    it('should throw error for overflow measures', () => {
+    it('splits a note that overflows a bar boundary with a tie', () => {
       const music = new Music();
       music.beatsPerBar = 4;
       music.beatValue = 4;
+      // Dotted half (3072 ticks) + half (2048 ticks) = 5 beats, overflows 4/4
+      // Expected: dotted-half fits bar 1, remaining quarter+half split into bar 2
+      // Actually: dotted-half = 3 beats, bar = 4 beats, remainder = 1 beat (quarter)
+      // Half note (2048) = 2 beats; crosses bar: split into quarter (1024) + quarter (1024)
       music.notes = [
         new Note(60, Duration.HALF, [], undefined, DurationModifier.DOTTED),
         new Note(62, Duration.HALF),
       ];
 
-      // Dotted half (3 beats) + half (2 beats) = 5 beats, overflows a 4/4 bar
-      expect(() => music.autobar()).toThrow("Can't auto-create ties yet");
+      music.reflow();
+
+      // dotted half fills 3 beats, then half note: 1 beat fits in bar 1, 1 beat in bar 2
+      expect(music.notes).toHaveLength(3);
+      expect(music.notes[0].duration).toBe(Duration.HALF);
+      expect(music.notes[0].durationModifier).toBe(DurationModifier.DOTTED);
+      expect(music.notes[1].duration).toBe(Duration.QUARTER);
+      expect(music.notes[2].duration).toBe(Duration.QUARTER);
+      // tie between notes[1] and notes[2]
+      expect(music.curves).toContainEqual([1, 2]);
+      // bar after note[1] (index 1)
+      expect(music.bars.some(b => b.afterNoteNum === 1)).toBe(true);
+    });
+
+    it('merges tied same-pitch notes whose combined duration is standard', () => {
+      const music = new Music();
+      music.beatsPerBar = 4;
+      music.beatValue = 4;
+      // Two quarter notes tied = half note
+      music.notes = [
+        new Note(60, Duration.QUARTER),
+        new Note(60, Duration.QUARTER),
+        new Note(62, Duration.HALF),
+      ];
+      music.curves = [[0, 1]]; // tie between the two C quarters
+
+      music.reflow();
+
+      expect(music.notes).toHaveLength(2);
+      expect(music.notes[0].duration).toBe(Duration.HALF);
+      expect(music.notes[0].pitches).toEqual([60]);
+      expect(music.curves).not.toContainEqual([0, 1]);
     });
   });
 });

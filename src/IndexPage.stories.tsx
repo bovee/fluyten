@@ -87,7 +87,7 @@ export const AddBookDialog: Story = {
   play: async ({ canvasElement }) => {
     const canvas = within(canvasElement);
     const addBookButton = await canvas.findByRole('button', {
-      name: /\+ Add Book/i,
+      name: /Add Empty Book/i,
     });
     await userEvent.click(addBookButton);
     await within(document.body).findByRole('dialog');
@@ -98,7 +98,7 @@ export const BuiltInBooksMenu: Story = {
   play: async ({ canvasElement }) => {
     const canvas = within(canvasElement);
     const dropdownButton = await canvas.findByRole('button', {
-      name: /select built-in book/i,
+      name: /add other book/i,
     });
     await userEvent.click(dropdownButton);
     await within(document.body).findByRole('menu');

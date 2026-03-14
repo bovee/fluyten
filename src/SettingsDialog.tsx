@@ -21,7 +21,7 @@ import { useTranslation } from 'react-i18next';
 import { useStore } from './store';
 import { RECORDER_TYPES } from './instrument';
 import { FingeringDiagram } from './FingeringDiagram';
-import { RecorderDetector } from './RecorderDetector';
+import { RecorderDetector } from './audio/RecorderDetector';
 import { Note } from './music';
 import i18n from './i18n';
 

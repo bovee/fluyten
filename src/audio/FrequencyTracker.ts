@@ -1,5 +1,5 @@
-import { type RecorderType, RECORDER_TYPES } from './instrument';
-import { PITCH_CONSTANTS, FREQUENCY_TRACKER_CONSTANTS } from './constants';
+import { type RecorderType, RECORDER_TYPES } from '../instrument';
+import { PITCH_CONSTANTS, FREQUENCY_TRACKER_CONSTANTS } from '../constants';
 
 export function freqToMidiPitch(freq: number): number {
   return Math.round(
@@ -150,9 +150,6 @@ export class FrequencyTracker {
     this.currentNoteStart = this.audioCtx!.currentTime;
     this.currentNote = note;
     this.currentVol = result.volume;
-    // Soprano recorders are written an octave lower than they sound
-    if (instrumentType === 'SOPRANO' || instrumentType === 'SOPRANINO')
-      note -= 12;
     this.onStartNote(note, this.currentVol);
   }
 

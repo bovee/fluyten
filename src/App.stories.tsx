@@ -75,7 +75,7 @@ export const NavigateBack: Story = {
     );
 
     // IndexPage is restored
-    await canvas.findByRole('button', { name: /\+ Add Book/i });
+    await canvas.findByRole('button', { name: /Add Empty Book/i });
   },
 };
 

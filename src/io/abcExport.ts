@@ -9,6 +9,7 @@ import {
   KEYS,
 } from '../music';
 import { PITCH_CONSTANTS } from '../constants';
+import { voicesFromAbc } from './abcImport';
 
 // https://abcnotation.com/wiki/abc:standard:v2.1
 
@@ -33,7 +34,7 @@ const PITCH_CLASS_TO_NOTE: { [key: number]: string } = {
   11: 'B',
 };
 
-function singlePitchToAbc(
+export function singlePitchToAbc(
   midiPitch: number,
   accidental: Accidental,
   keyAdjustment: { [n: string]: number }
@@ -61,9 +62,26 @@ function singlePitchToAbc(
     letter = PITCH_CLASS_TO_NOTE[pitchClass] ?? 'C';
     accidentalPrefix = '=';
   } else {
-    letter = PITCH_CLASS_TO_NOTE[pitchClass] ?? 'C';
-    // key adjustment already accounts for in-key notes — no prefix needed
-    void (keyAdjustment[letter] ?? 0);
+    const naturalLetter = PITCH_CLASS_TO_NOTE[pitchClass];
+    if (naturalLetter !== undefined) {
+      // Natural note — key adjustment already accounts for in-key sharps/flats
+      letter = naturalLetter;
+    } else {
+      // Non-natural pitch class: check if it's an in-key accidental
+      const sharpLetter = PITCH_CLASS_TO_NOTE[pitchClass - 1];
+      const flatLetter = PITCH_CLASS_TO_NOTE[(pitchClass + 1) % 12];
+      if (sharpLetter && keyAdjustment[sharpLetter] === 1) {
+        // In-key sharp — write without prefix (key signature covers it)
+        letter = sharpLetter;
+      } else if (flatLetter && keyAdjustment[flatLetter] === -1) {
+        // In-key flat — write without prefix
+        letter = flatLetter;
+      } else {
+        // Not in key — write as explicit sharp
+        letter = sharpLetter ?? flatLetter ?? 'C';
+        accidentalPrefix = '^';
+      }
+    }
   }
 
   // Octave encoding:
@@ -101,40 +119,39 @@ function noteToAbcPitch(
   return `[${inner}]`;
 }
 
-function durationToAbc(duration: Duration, modifier: DurationModifier): string {
-  // L:1/8 is the default note length, so EIGHTH = '' (omit)
-  // All durations expressed relative to EIGHTH
-  if (modifier === DurationModifier.DOTTED) {
-    switch (duration) {
-      case Duration.WHOLE:
-        return '12'; // 8 * 1.5 = 12
-      case Duration.HALF:
-        return '6';
-      case Duration.QUARTER:
-        return '3';
-      case Duration.EIGHTH:
-        return '3/2';
-      case Duration.SIXTEENTH:
-        return '3/4';
-      default:
-        return '';
-    }
-  } else {
-    switch (duration) {
-      case Duration.WHOLE:
-        return '8';
-      case Duration.HALF:
-        return '4';
-      case Duration.QUARTER:
-        return '2';
-      case Duration.EIGHTH:
-        return '';
-      case Duration.SIXTEENTH:
-        return '/2';
-      default:
-        return '';
-    }
-  }
+// Duration expressed as sixteenths of a whole note
+const NOTE_SIXTEENTHS: Partial<Record<Duration, number>> = {
+  [Duration.WHOLE]: 16,
+  [Duration.HALF]: 8,
+  [Duration.QUARTER]: 4,
+  [Duration.EIGHTH]: 2,
+  [Duration.SIXTEENTH]: 1,
+};
+
+function gcd(a: number, b: number): number {
+  return b === 0 ? a : gcd(b, a % b);
+}
+
+export function durationToAbc(
+  duration: Duration,
+  modifier: DurationModifier,
+  defaultDuration: Duration
+): string {
+  const defaultSixteenths = NOTE_SIXTEENTHS[defaultDuration];
+  const noteSixteenths = NOTE_SIXTEENTHS[duration];
+  if (defaultSixteenths === undefined || noteSixteenths === undefined) return '';
+
+  // dotted = multiply by 3/2
+  const num = modifier === DurationModifier.DOTTED ? noteSixteenths * 3 : noteSixteenths * 2;
+  const den = modifier === DurationModifier.DOTTED ? defaultSixteenths * 2 : defaultSixteenths * 2;
+  const g = gcd(num, den);
+  const rNum = num / g;
+  const rDen = den / g;
+
+  if (rNum === 1 && rDen === 1) return '';
+  if (rDen === 1) return String(rNum);
+  if (rNum === 1) return '/' + String(rDen);
+  return rNum + '/' + rDen;
 }
 
 function decorationToAbc(decoration: Decoration): string {
@@ -159,25 +176,19 @@ function decorationToAbc(decoration: Decoration): string {
   return map[decoration] ?? '';
 }
 
-export function toAbc(music: Music): string {
-  const lines: string[] = [];
-
-  if (music.title) lines.push(`T:${music.title}`);
-  if (music.composer) lines.push(`C:${music.composer}`);
-  lines.push(`M:${music.beatsPerBar}/${music.beatValue}`);
-  lines.push('L:1/8');
-  lines.push(
-    music.clef !== 'treble'
-      ? `K:${music.keySignature} clef=${music.clef}`
-      : `K:${music.keySignature}`
-  );
-
-  // Build key adjustment map for export (to know which notes are in-key)
+function buildKeyAdjustment(keySignature: string): { [n: string]: number } {
   const keyAdjustment: { [n: string]: number } = {};
-  for (const note of KEYS[music.keySignature] ?? []) {
+  for (const note of KEYS[keySignature] ?? []) {
     keyAdjustment[note[0]] = note[1] === '#' ? 1 : -1;
   }
+  return keyAdjustment;
+}
 
+function scoreToAbc(
+  music: Music,
+  keyAdjustment: { [n: string]: number },
+  defaultDuration: Duration = Duration.EIGHTH
+): string {
   // Build a sorted list of bar positions keyed by afterNoteNum
   const barAfter: Map<number, BarLineType> = new Map();
   for (const bar of music.bars) {
@@ -216,7 +227,7 @@ export function toAbc(music: Music): string {
     part += noteToAbcPitch(note, keyAdjustment);
 
     // Duration
-    part += durationToAbc(note.duration, note.durationModifier);
+    part += durationToAbc(note.duration, note.durationModifier, defaultDuration);
 
     // Slur close
     if (slurEndAt.has(noteIx)) part += ')';
@@ -246,7 +257,72 @@ export function toAbc(music: Music): string {
     }
   }
 
-  lines.push(scoreTokens.join(''));
+  return scoreTokens.join('');
+}
+
+export function toAbc(music: Music): string {
+  const lines: string[] = [];
+
+  if (music.title) lines.push(`T:${music.title}`);
+  if (music.composer) lines.push(`C:${music.composer}`);
+  lines.push(`M:${music.beatsPerBar}/${music.beatValue}`);
+  lines.push('L:1/8');
+  lines.push(
+    music.clef !== 'treble'
+      ? `K:${music.keySignature} clef=${music.clef}`
+      : `K:${music.keySignature}`
+  );
+
+  lines.push(scoreToAbc(music, buildKeyAdjustment(music.keySignature)));
 
   return lines.join('\n');
+}
+
+/**
+ * Export just the score (notes, bar lines, beams) of a Music object to ABC
+ * text, without any header lines. Useful for round-tripping a fragment.
+ */
+export function notesToAbc(
+  music: Music,
+  keySignature: string,
+  defaultDuration: Duration = Duration.EIGHTH
+): string {
+  return scoreToAbc(music, buildKeyAdjustment(keySignature), defaultDuration);
+}
+
+/**
+ * Parse an ABC tune, reflow bar lines for all voices, and re-export as ABC.
+ * Notes that cross bar boundaries are split into tied pairs; consecutive
+ * same-pitch tied notes that combine into a standard duration are merged back.
+ */
+export function reflowAbc(abc: string): string {
+  const voices = voicesFromAbc(abc);
+
+  // Single voice: full round-trip via toAbc (preserves all headers).
+  if (voices.length === 1) {
+    voices[0].music.reflow();
+    return toAbc(voices[0].music);
+  }
+
+  // Multi-voice: reflow each voice, then reconstruct with V: separators.
+  for (const v of voices) v.music.reflow();
+
+  // Extract global header lines (everything before the first score line).
+  const lines = abc.split(/\r?\n/);
+  const globalHeaders: string[] = [];
+  for (const line of lines) {
+    const isScoreLine =
+      line.trim() !== '' &&
+      !(line.length >= 2 && line[1] === ':') &&
+      !line.startsWith('%%');
+    if (isScoreLine) break;
+    globalHeaders.push(line);
+  }
+
+  const parts: string[] = [...globalHeaders];
+  for (const v of voices) {
+    parts.push(`V:${v.id}`);
+    parts.push(notesToAbc(v.music, v.music.keySignature));
+  }
+  return parts.join('\n');
 }

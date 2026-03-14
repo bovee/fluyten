@@ -28,6 +28,13 @@ describe('fromAbc', () => {
       expect(music.bars).toHaveLength(0);
     });
 
+    it('should ignore bar lines in the score when M:none', () => {
+      const abc = `T:Test\nM:none\nL:1/4\nK:C\nC D | E F |]`;
+      const music = fromAbc(abc);
+      expect(music.bars).toHaveLength(0);
+      expect(music.notes).toHaveLength(4);
+    });
+
     it('should parse notes correctly in free time', () => {
       const abc = `T:Test\nM:none\nL:1/4\nK:C\nC D E F`;
       const music = fromAbc(abc);

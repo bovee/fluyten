@@ -1,17 +1,15 @@
 import { useState } from 'react';
+import Box from '@mui/material/Box';
 import Button from '@mui/material/Button';
-import Checkbox from '@mui/material/Checkbox';
 import Dialog from '@mui/material/Dialog';
 import DialogActions from '@mui/material/DialogActions';
 import DialogContent from '@mui/material/DialogContent';
 import DialogTitle from '@mui/material/DialogTitle';
 import FormControl from '@mui/material/FormControl';
 import FormControlLabel from '@mui/material/FormControlLabel';
-import FormGroup from '@mui/material/FormGroup';
 import FormLabel from '@mui/material/FormLabel';
 import Radio from '@mui/material/Radio';
 import RadioGroup from '@mui/material/RadioGroup';
-import TextField from '@mui/material/TextField';
 import Typography from '@mui/material/Typography';
 
 import { useTranslation } from 'react-i18next';
@@ -20,7 +18,6 @@ import { useStore, type UserSong } from './store';
 
 const MAJOR_KEYS = ['C', 'G', 'F', 'D', 'Bb', 'A', 'E', 'Eb', 'Ab'];
 const MINOR_KEYS = ['Am', 'Em', 'Dm', 'Bm', 'Gm', 'Cm', 'F#m'];
-const DEFAULT_KEYS = new Set(['C', 'G', 'F', 'D', 'Bb', 'Am', 'Em', 'Dm']);
 
 function displayKey(key: string): string {
   return key.replace('#', '♯').replace('b', '♭');
@@ -29,7 +26,7 @@ function displayKey(key: string): string {
 interface ScaleDialogProps {
   open: boolean;
   onClose: () => void;
-  onCreate: (songs: UserSong[], bookName: string) => void;
+  onCreate: (song: UserSong) => void;
 }
 
 export function ScaleDialog({ open, onClose, onCreate }: ScaleDialogProps) {
@@ -39,26 +36,11 @@ export function ScaleDialog({ open, onClose, onCreate }: ScaleDialogProps) {
   const [direction, setDirection] = useState<
     'ascending' | 'descending' | 'both'
   >('both');
-  const [selectedKeys, setSelectedKeys] = useState<Set<string>>(
-    () => new Set(DEFAULT_KEYS)
-  );
-  const [bookName, setBookName] = useState(() => t('books.scales'));
-
-  const toggleKey = (key: string) => {
-    setSelectedKeys((prev) => {
-      const next = new Set(prev);
-      if (next.has(key)) {
-        next.delete(key);
-      } else {
-        next.add(key);
-      }
-      return next;
-    });
-  };
+  const [selectedKey, setSelectedKey] = useState('C');
 
   const handleCreate = () => {
     const songs = generateScaleAbc({
-      keys: [...MAJOR_KEYS, ...MINOR_KEYS].filter((k) => selectedKeys.has(k)),
+      keys: [selectedKey],
       range,
       direction,
       instrumentType,
@@ -73,20 +55,13 @@ export function ScaleDialog({ open, onClose, onCreate }: ScaleDialogProps) {
         });
       },
     });
-    onCreate(songs, bookName);
+    onCreate(songs[0]);
   };
 
   return (
     <Dialog open={open} onClose={onClose} maxWidth="sm" fullWidth>
-      <DialogTitle>{t('generateScales')}</DialogTitle>
+      <DialogTitle>{t('generateScale')}</DialogTitle>
       <DialogContent>
-        <TextField
-          label={t('bookName')}
-          value={bookName}
-          onChange={(e) => setBookName(e.target.value)}
-          fullWidth
-          sx={{ mt: 1, mb: 3 }}
-        />
         <FormControl sx={{ mb: 2 }}>
           <FormLabel>{t('range')}</FormLabel>
           <RadioGroup
@@ -136,53 +111,43 @@ export function ScaleDialog({ open, onClose, onCreate }: ScaleDialogProps) {
           </RadioGroup>
         </FormControl>
 
-        <FormControl component="fieldset">
-          <Typography variant="subtitle2" sx={{ mb: 0.5 }}>
-            {t('major')}
-          </Typography>
-          <FormGroup row>
-            {MAJOR_KEYS.map((key) => (
-              <FormControlLabel
-                key={key}
-                control={
-                  <Checkbox
-                    checked={selectedKeys.has(key)}
-                    onChange={() => toggleKey(key)}
-                    size="small"
-                  />
-                }
-                label={displayKey(key)}
-              />
-            ))}
-          </FormGroup>
-
-          <Typography variant="subtitle2" sx={{ mt: 1, mb: 0.5 }}>
-            {t('minor')}
-          </Typography>
-          <FormGroup row>
-            {MINOR_KEYS.map((key) => (
-              <FormControlLabel
-                key={key}
-                control={
-                  <Checkbox
-                    checked={selectedKeys.has(key)}
-                    onChange={() => toggleKey(key)}
-                    size="small"
-                  />
-                }
-                label={displayKey(key)}
-              />
-            ))}
-          </FormGroup>
+        <FormControl component="fieldset" sx={{ width: '100%' }}>
+          <RadioGroup
+            value={selectedKey}
+            onChange={(e) => setSelectedKey(e.target.value)}
+          >
+            <Typography variant="subtitle2" sx={{ mb: 0.5 }}>
+              {t('major')}
+            </Typography>
+            <Box sx={{ display: 'flex', flexWrap: 'wrap' }}>
+              {MAJOR_KEYS.map((key) => (
+                <FormControlLabel
+                  key={key}
+                  value={key}
+                  control={<Radio size="small" />}
+                  label={displayKey(key)}
+                />
+              ))}
+            </Box>
+            <Typography variant="subtitle2" sx={{ mt: 1, mb: 0.5 }}>
+              {t('minor')}
+            </Typography>
+            <Box sx={{ display: 'flex', flexWrap: 'wrap' }}>
+              {MINOR_KEYS.map((key) => (
+                <FormControlLabel
+                  key={key}
+                  value={key}
+                  control={<Radio size="small" />}
+                  label={displayKey(key)}
+                />
+              ))}
+            </Box>
+          </RadioGroup>
         </FormControl>
       </DialogContent>
       <DialogActions>
         <Button onClick={onClose}>{t('cancel')}</Button>
-        <Button
-          onClick={handleCreate}
-          variant="contained"
-          disabled={selectedKeys.size === 0}
-        >
+        <Button onClick={handleCreate} variant="contained">
           {t('create')}
         </Button>
       </DialogActions>

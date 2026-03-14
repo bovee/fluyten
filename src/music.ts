@@ -302,7 +302,8 @@ export class Note {
   }
 
   toVexflowPitchAndDuration(
-    useSharpSpelling: boolean = true
+    useSharpSpelling: boolean = true,
+    displayPitchOffset: number = 0
   ): [string[], string] {
     const vexDuration =
       this.duration === Duration.GRACE
@@ -317,7 +318,7 @@ export class Note {
 
     return [
       this.pitches.map((p, i) =>
-        this.pitchToVexflow(p, this.accidentals[i], useSharpSpelling)
+        this.pitchToVexflow(p + displayPitchOffset, this.accidentals[i], useSharpSpelling)
       ),
       vexDuration,
     ];
@@ -329,13 +330,32 @@ export interface BarLine {
   type: BarLineType;
 }
 
+/** Maps a tick count to [Duration, DurationModifier] if it names a standard notated value, else null. */
+export function ticksToDuration(ticks: number): [Duration, DurationModifier] | null {
+  const map: [number, Duration, DurationModifier][] = [
+    [DURATION_TICKS.WHOLE,            Duration.WHOLE,     DurationModifier.NONE],
+    [DURATION_TICKS.HALF_DOTTED,      Duration.HALF,      DurationModifier.DOTTED],
+    [DURATION_TICKS.HALF,             Duration.HALF,      DurationModifier.NONE],
+    [DURATION_TICKS.QUARTER_DOTTED,   Duration.QUARTER,   DurationModifier.DOTTED],
+    [DURATION_TICKS.QUARTER,          Duration.QUARTER,   DurationModifier.NONE],
+    [DURATION_TICKS.EIGHTH_DOTTED,    Duration.EIGHTH,    DurationModifier.DOTTED],
+    [DURATION_TICKS.EIGHTH,           Duration.EIGHTH,    DurationModifier.NONE],
+    [DURATION_TICKS.SIXTEENTH_DOTTED, Duration.SIXTEENTH, DurationModifier.DOTTED],
+    [DURATION_TICKS.SIXTEENTH,        Duration.SIXTEENTH, DurationModifier.NONE],
+  ];
+  for (const [t, d, m] of map) {
+    if (t === ticks) return [d, m];
+  }
+  return null;
+}
+
 export class Music {
   title?: string = '';
   composer?: string;
   beatsPerBar: number = 4;
   beatValue: number = 4;
   keySignature: string = 'G';
-  clef: 'treble' | 'bass' | 'alto' = 'treble';
+  clef: 'treble' | 'bass' | 'alto' | 'treble8va' = 'treble';
   notes: Note[] = [];
   beams: number[][] = [];
   curves: number[][] = [];
@@ -346,24 +366,94 @@ export class Music {
     return this;
   }
 
-  autobar(): Music {
-    this.bars = [{ afterNoteNum: undefined, type: 'begin' as BarLineType }];
-    let currentBeats = 0;
-    for (const [noteIx, note] of this.notes.entries()) {
-      currentBeats += note.ticks();
-      // TODO: this only works for 4/4; should use the beatValue too
-      if (currentBeats == DURATION_TICKS.QUARTER * this.beatsPerBar) {
-        currentBeats = 0;
-        this.bars.push({
-          afterNoteNum: noteIx,
-          type: 'standard' as BarLineType,
-        });
-      } else if (currentBeats > DURATION_TICKS.QUARTER * this.beatsPerBar) {
-        // TODO: should probably have a fudge factor in this comparison
-        throw new Error("Unimplemented. Can't auto-create ties yet.");
+  reflow(): Music {
+    const barCapacity =
+      (DURATION_TICKS.WHOLE / this.beatValue) * this.beatsPerBar;
+
+    // Phase A: merge consecutive tied same-pitch notes back into single notes
+    // where the combined duration is expressible as a single notated value.
+    const toMerge: number[] = [];
+    for (const [start, end] of this.curves) {
+      if (end !== start + 1) continue;
+      const a = this.notes[start];
+      const b = this.notes[end];
+      if (
+        a.pitches.length !== b.pitches.length ||
+        !a.pitches.every((p, i) => p === b.pitches[i])
+      )
+        continue;
+      if (ticksToDuration(a.ticks() + b.ticks()) !== null) {
+        toMerge.push(start);
       }
     }
+    for (const idx of toMerge.slice().sort((a, b) => b - a)) {
+      const a = this.notes[idx];
+      const b = this.notes[idx + 1];
+      const [dur, mod] = ticksToDuration(a.ticks() + b.ticks())!;
+      this.notes.splice(idx, 2, new Note(a.pitches, dur, a.decorations, a.accidentals, mod));
+      this.curves = this.curves
+        .filter(([s, e]) => !(s === idx && e === idx + 1))
+        .map(([s, e]) => [s > idx + 1 ? s - 1 : s, e > idx + 1 ? e - 1 : e]);
+      this.beams = this.beams.map(([s, e]) => [
+        s > idx + 1 ? s - 1 : s,
+        e > idx + 1 ? e - 1 : e,
+      ]);
+    }
+
+    // Phase B: rebuild bars, splitting any note that crosses a bar boundary
+    // into two tied notes.
+    this.bars = [{ afterNoteNum: undefined, type: 'begin' as BarLineType }];
+    let currentTicks = 0;
+    let noteIx = 0;
+    while (noteIx < this.notes.length) {
+      const note = this.notes[noteIx];
+      const noteTicks = note.ticks();
+      const total = currentTicks + noteTicks;
+
+      if (total === barCapacity) {
+        currentTicks = 0;
+        this.bars.push({ afterNoteNum: noteIx, type: 'standard' as BarLineType });
+        noteIx++;
+      } else if (total < barCapacity) {
+        currentTicks = total;
+        noteIx++;
+      } else {
+        // Note crosses the bar line — try to split it.
+        const remainingTicks = barCapacity - currentTicks;
+        const overflowTicks = noteTicks - remainingTicks;
+        const firstDur = ticksToDuration(remainingTicks);
+        const secondDur = ticksToDuration(overflowTicks);
+
+        if (firstDur && secondDur) {
+          const [d1, m1] = firstDur;
+          const [d2, m2] = secondDur;
+          const first = new Note(note.pitches, d1, note.decorations, note.accidentals, m1);
+          const second = new Note(note.pitches, d2, [], note.accidentals.map(() => undefined as Accidental), m2);
+          this.notes.splice(noteIx, 1, first, second);
+          this.curves = this.curves
+            .map(([s, e]) => [s > noteIx ? s + 1 : s, e > noteIx ? e + 1 : e]);
+          this.beams = this.beams.map(([s, e]) => [
+            s > noteIx ? s + 1 : s,
+            e > noteIx ? e + 1 : e,
+          ]);
+          this.curves.push([noteIx, noteIx + 1]);
+          this.bars.push({ afterNoteNum: noteIx, type: 'standard' as BarLineType });
+          currentTicks = 0;
+          noteIx += 2;
+        } else {
+          // Can't split cleanly (e.g. triplets) — leave as-is.
+          currentTicks = total % barCapacity;
+          noteIx++;
+        }
+      }
+    }
+
     return this;
+  }
+
+  /** @deprecated Use reflow() instead. */
+  autobar(): Music {
+    return this.reflow();
   }
 }
 

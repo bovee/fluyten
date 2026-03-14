@@ -4,7 +4,7 @@ import { IndexPage } from './IndexPage';
 import { useStore } from './store';
 
 // Mock RecorderDetector used transitively via SettingsDialog
-vi.mock('./RecorderDetector', () => ({
+vi.mock('./audio/RecorderDetector', () => ({
   RecorderDetector: class {
     start = vi.fn().mockResolvedValue(undefined);
     stop = vi.fn();
@@ -35,30 +35,30 @@ describe('IndexPage', () => {
     ).toBeInTheDocument();
   });
 
-  it('renders Add Book button', () => {
+  it('renders Add Empty Book button', () => {
     render(<IndexPage {...defaultProps()} />);
     expect(
-      screen.getByRole('button', { name: /add book/i })
+      screen.getByRole('button', { name: /add empty book/i })
     ).toBeInTheDocument();
   });
 
-  it('renders the select built-in book dropdown button', () => {
+  it('renders the add other book dropdown button', () => {
     render(<IndexPage {...defaultProps()} />);
     expect(
-      screen.getByRole('button', { name: /select built-in book/i })
+      screen.getByRole('button', { name: /add other book/i })
     ).toBeInTheDocument();
   });
 
   describe('Add Book dialog', () => {
-    it('opens when Add Book is clicked', () => {
+    it('opens when Add Empty Book is clicked', () => {
       render(<IndexPage {...defaultProps()} />);
-      fireEvent.click(screen.getByRole('button', { name: /add book/i }));
+      fireEvent.click(screen.getByRole('button', { name: /add empty book/i }));
       expect(screen.getByRole('dialog')).toBeInTheDocument();
     });
 
     it('creates a new book when title entered and Create clicked', () => {
       render(<IndexPage {...defaultProps()} />);
-      fireEvent.click(screen.getByRole('button', { name: /add book/i }));
+      fireEvent.click(screen.getByRole('button', { name: /add empty book/i }));
       const input = screen.getByRole('textbox');
       fireEvent.change(input, { target: { value: 'My New Book' } });
       fireEvent.click(screen.getByRole('button', { name: /^create$/i }));
@@ -68,14 +68,14 @@ describe('IndexPage', () => {
 
     it('does not create a book with empty title', () => {
       render(<IndexPage {...defaultProps()} />);
-      fireEvent.click(screen.getByRole('button', { name: /add book/i }));
+      fireEvent.click(screen.getByRole('button', { name: /add empty book/i }));
       fireEvent.click(screen.getByRole('button', { name: /^create$/i }));
       expect(useStore.getState().userBooks).toHaveLength(0);
     });
 
     it('creates book when Enter is pressed in title field', () => {
       render(<IndexPage {...defaultProps()} />);
-      fireEvent.click(screen.getByRole('button', { name: /add book/i }));
+      fireEvent.click(screen.getByRole('button', { name: /add empty book/i }));
       const input = screen.getByRole('textbox');
       fireEvent.change(input, { target: { value: 'Enter Book' } });
       fireEvent.keyDown(input, { key: 'Enter' });
@@ -84,7 +84,7 @@ describe('IndexPage', () => {
 
     it('clears title input when Cancel is clicked', () => {
       render(<IndexPage {...defaultProps()} />);
-      fireEvent.click(screen.getByRole('button', { name: /add book/i }));
+      fireEvent.click(screen.getByRole('button', { name: /add empty book/i }));
       const input = screen.getByRole('textbox');
       fireEvent.change(input, { target: { value: 'Abandoned Book' } });
       fireEvent.click(screen.getByRole('button', { name: /cancel/i }));
@@ -313,56 +313,31 @@ describe('IndexPage', () => {
     it('opens menu when dropdown button clicked', () => {
       render(<IndexPage {...defaultProps()} />);
       fireEvent.click(
-        screen.getByRole('button', { name: /select built-in book/i })
+        screen.getByRole('button', { name: /add other book/i })
       );
       expect(within(document.body).getByRole('menu')).toBeInTheDocument();
-    });
-
-    it('menu contains Scales option', () => {
-      render(<IndexPage {...defaultProps()} />);
-      fireEvent.click(
-        screen.getByRole('button', { name: /select built-in book/i })
-      );
-      expect(
-        within(document.body).getByRole('menuitem', { name: /scales/i })
-      ).toBeInTheDocument();
     });
 
     it('menu contains Import ABC option', () => {
       render(<IndexPage {...defaultProps()} />);
       fireEvent.click(
-        screen.getByRole('button', { name: /select built-in book/i })
+        screen.getByRole('button', { name: /add other book/i })
       );
       expect(
         within(document.body).getByRole('menuitem', { name: /import/i })
       ).toBeInTheDocument();
     });
 
-    it('clicking Scales opens ScaleDialog', () => {
-      render(<IndexPage {...defaultProps()} />);
-      fireEvent.click(
-        screen.getByRole('button', { name: /select built-in book/i })
-      );
-      fireEvent.click(
-        within(document.body).getByRole('menuitem', { name: /scales/i })
-      );
-      // ScaleDialog should be rendered (has checkboxes)
-      expect(
-        within(document.body).getAllByRole('checkbox').length
-      ).toBeGreaterThan(0);
-    });
-
     it('importing a built-in book adds it to store', () => {
       render(<IndexPage {...defaultProps()} />);
       fireEvent.click(
-        screen.getByRole('button', { name: /select built-in book/i })
+        screen.getByRole('button', { name: /add other book/i })
       );
-      // Find the first built-in book menuitem (after divider, after Scales and Import)
+      // Find the first built-in book menuitem (after Import ABC)
       const menu = within(document.body).getByRole('menu');
       const items = within(menu).getAllByRole('menuitem');
-      // Items are: Scales…, Import ABC, then built-in books
       const builtInItem = items.find(
-        (item) => !item.textContent?.match(/scales|import/i)
+        (item) => !item.textContent?.match(/import/i)
       );
       if (builtInItem) {
         fireEvent.click(builtInItem);
@@ -388,7 +363,7 @@ describe('parseAbcFile (via import built-in book)', () => {
     useStore.setState({ userBooks: [] });
     render(<IndexPage {...defaultProps()} />);
     fireEvent.click(
-      screen.getByRole('button', { name: /select built-in book/i })
+      screen.getByRole('button', { name: /add other book/i })
     );
     const menu = screen.getByRole('menu');
     const items = within(menu).getAllByRole('menuitem');

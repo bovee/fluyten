@@ -22,81 +22,49 @@ describe('ScaleDialog', () => {
     expect(screen.getByRole('dialog')).toBeInTheDocument();
   });
 
-  it('shows book name field with default value', () => {
+  it('shows all 16 key radio buttons (9 major + 7 minor)', () => {
     renderDialog();
-    const field = screen.getByRole('textbox');
-    expect((field as HTMLInputElement).value).toBeTruthy();
+    // 16 key radios + 2 range radios + 3 direction radios = 21 total
+    const radios = screen.getAllByRole('radio');
+    expect(radios.length).toBe(21);
   });
 
-  it('shows all 9 major key checkboxes', () => {
+  it('default selected key is C', () => {
     renderDialog();
-    // Total checkboxes: 9 major + 7 minor = 16
-    const checkboxes = screen.getAllByRole('checkbox');
-    expect(checkboxes.length).toBe(16);
+    const radios = screen.getAllByRole('radio');
+    const checked = radios.filter(
+      (r) => (r as HTMLInputElement).checked
+    );
+    // C key + 'traditional' range + 'both' direction = 3 checked radios
+    expect(checked.length).toBe(3);
   });
 
-  it('shows all 7 minor key checkboxes', () => {
+  it('selecting a different key updates the selection', () => {
     renderDialog();
-    const checkboxes = screen.getAllByRole('checkbox');
-    expect(checkboxes.length).toBe(16);
-  });
-
-  it('default keys are pre-checked', () => {
-    renderDialog();
-    // DEFAULT_KEYS = C, G, F, D, Bb, Am, Em, Dm — 8 keys
-    const checkedBoxes = screen
-      .getAllByRole('checkbox')
-      .filter((cb) => (cb as HTMLInputElement).checked);
-    expect(checkedBoxes.length).toBe(8);
-  });
-
-  it('toggling a key checkbox updates its state', () => {
-    renderDialog();
-    // Find the checkbox for 'A' (not checked by default among major keys)
-    const checkboxes = screen.getAllByRole('checkbox');
-    const checkedBefore = checkboxes.filter(
-      (cb) => (cb as HTMLInputElement).checked
-    ).length;
-    // Click an unchecked box
-    const unchecked = checkboxes.find(
-      (cb) => !(cb as HTMLInputElement).checked
+    const radios = screen.getAllByRole('radio');
+    // Find an unchecked key radio (skip the range/direction radios at the start)
+    const unchecked = radios.find(
+      (r) => !(r as HTMLInputElement).checked && (r as HTMLInputElement).value.length <= 3
     )!;
     fireEvent.click(unchecked);
-    const checkedAfter = screen
-      .getAllByRole('checkbox')
-      .filter((cb) => (cb as HTMLInputElement).checked).length;
-    expect(checkedAfter).toBe(checkedBefore + 1);
+    expect((unchecked as HTMLInputElement).checked).toBe(true);
   });
 
-  it('create button disabled when all keys unchecked', () => {
-    renderDialog();
-    // Uncheck all
-    const checkboxes = screen.getAllByRole('checkbox');
-    checkboxes.forEach((cb) => {
-      if ((cb as HTMLInputElement).checked) {
-        fireEvent.click(cb);
-      }
-    });
-    const createBtn = screen.getByRole('button', { name: /create/i });
-    expect(createBtn).toBeDisabled();
-  });
-
-  it('create button enabled with at least one key selected', () => {
+  it('create button is always enabled since a key is always selected', () => {
     renderDialog();
     const createBtn = screen.getByRole('button', { name: /create/i });
     expect(createBtn).not.toBeDisabled();
   });
 
-  it('clicking create calls onCreate with generated songs and book name', () => {
+  it('clicking create calls onCreate with a single UserSong', () => {
     const onCreate = vi.fn();
     renderDialog({ onCreate });
     const createBtn = screen.getByRole('button', { name: /create/i });
     fireEvent.click(createBtn);
     expect(onCreate).toHaveBeenCalledOnce();
-    const [songs, bookName] = onCreate.mock.calls[0];
-    expect(Array.isArray(songs)).toBe(true);
-    expect(songs.length).toBeGreaterThan(0);
-    expect(typeof bookName).toBe('string');
+    const song = onCreate.mock.calls[0][0];
+    expect(song).toHaveProperty('title');
+    expect(song).toHaveProperty('abc');
   });
 
   it('cancel button calls onClose', () => {

@@ -1,4 +1,4 @@
-import { Music, type Decoration } from './music';
+import { Music, type Decoration } from '../music';
 
 const METRONOME_LENGTH = 0.03;
 
@@ -82,6 +82,63 @@ export class NotePlayer {
     osc.stop(this.lastNoteTime + METRONOME_LENGTH);
   }
 
+  /**
+   * Returns true if the curve [s, e] is a tie: adjacent notes with identical pitches.
+   * Ties are always between two consecutive notes; slurs can span any range.
+   */
+  private isTieCurve(music: Music, s: number, e: number): boolean {
+    if (e !== s + 1) return false;
+    const a = music.notes[s];
+    const b = music.notes[e];
+    if (!a || !b || a.pitches.length === 0) return false;
+    return (
+      a.pitches.length === b.pitches.length &&
+      a.pitches.every((p, i) => p === b.pitches[i])
+    );
+  }
+
+  /** Returns true if note at idx is the second (or later) note of a tie — no new attack needed. */
+  private isNoteTieContinuation(music: Music, idx: number): boolean {
+    return music.curves.some(([s, e]) => e === idx && this.isTieCurve(music, s, e));
+  }
+
+  /** Sums ticks across a full tie chain starting at startIdx. */
+  private getTieChainTicks(music: Music, startIdx: number): number {
+    let totalTicks = music.notes[startIdx].ticks();
+    let currentIdx = startIdx;
+    while (true) {
+      const next =
+        music.curves.find(
+          ([s, e]) => s === currentIdx && this.isTieCurve(music, s, e)
+        )?.[1] ?? null;
+      if (next === null) break;
+      totalTicks += music.notes[next].ticks();
+      currentIdx = next;
+    }
+    return totalTicks;
+  }
+
+  /**
+   * Returns slur context for a note:
+   *   noAttack  — note is a continuation within a slur (not the first note)
+   *   noRelease — note continues into the next note within a slur (not the last note)
+   */
+  private getSlurContext(
+    music: Music,
+    idx: number
+  ): { noAttack: boolean; noRelease: boolean } {
+    let noAttack = false;
+    let noRelease = false;
+    for (const [s, e] of music.curves) {
+      if (this.isTieCurve(music, s, e)) continue; // ties handled separately
+      if (s <= idx && idx <= e) {
+        if (idx > s) noAttack = true;
+        if (idx < e) noRelease = true;
+      }
+    }
+    return { noAttack, noRelease };
+  }
+
   enqueueNote(tempo: number, music: Music) {
     if (!this.audioCtx || !this.masterGain) return;
     const lengthToTime = (length: number) =>
@@ -95,6 +152,7 @@ export class NotePlayer {
 
     this.lastNoteIx++;
     const note = music.notes[this.lastNoteIx];
+    const idx = this.lastNoteIx;
 
     // Undefined (past end of array), grace notes (0 ticks), or rests — handle
     // before touching note properties without optional chaining.
@@ -103,16 +161,25 @@ export class NotePlayer {
     // Record timing for all non-grace notes (including rests) so the cursor
     // can determine the current note purely from audioCtx.currentTime.
     this.noteTimings.push({
-      noteIdx: this.lastNoteIx,
+      noteIdx: idx,
       time: this.lastNoteTime,
       endTime: this.lastNoteTime + lengthToTime(note.ticks()),
     });
 
     if (!note.pitches.length) return;
 
-    const duration = lengthToTime(note.ticks());
+    // Tie continuation: this note's sound was already scheduled as part of the
+    // preceding tie-start note's extended duration — produce no additional sound.
+    if (this.isNoteTieContinuation(music, idx)) return;
+
+    // For ties, play a single note for the total chained duration.
+    const effectiveTicks = this.getTieChainTicks(music, idx);
+    const duration = lengthToTime(effectiveTicks);
+
     const attack = 0.04;
     const release = 0.03;
+
+    const { noAttack, noRelease } = this.getSlurContext(music, idx);
 
     // Per-note dynamics gain
     const noteGain = this.audioCtx.createGain();
@@ -122,12 +189,28 @@ export class NotePlayer {
 
     // Envelope shared across all pitches in this note/chord
     const envelope = this.audioCtx.createGain();
-    envelope.gain.setValueAtTime(0.001, this.lastNoteTime);
-    envelope.gain.linearRampToValueAtTime(1, this.lastNoteTime + attack);
-    const releaseStart =
-      this.lastNoteTime + Math.max(duration - release, attack);
-    envelope.gain.setValueAtTime(1, releaseStart);
-    envelope.gain.exponentialRampToValueAtTime(0.001, releaseStart + release);
+    const noteStart = this.lastNoteTime;
+    const noteEnd = noteStart + duration;
+
+    if (noAttack) {
+      // Slur continuation: begin at full gain immediately (no re-attack)
+      envelope.gain.setValueAtTime(1, noteStart);
+    } else {
+      envelope.gain.setValueAtTime(0.001, noteStart);
+      envelope.gain.linearRampToValueAtTime(1, noteStart + attack);
+    }
+
+    if (noRelease) {
+      // Slur into next note: hold at full gain, then a tiny 5 ms fade to
+      // prevent an audible click when the oscillator cuts off.
+      envelope.gain.setValueAtTime(1, noteEnd - 0.005);
+      envelope.gain.exponentialRampToValueAtTime(0.001, noteEnd);
+    } else {
+      const releaseStart =
+        noteStart + Math.max(duration - release, noAttack ? 0 : attack);
+      envelope.gain.setValueAtTime(1, releaseStart);
+      envelope.gain.exponentialRampToValueAtTime(0.001, releaseStart + release);
+    }
     envelope.connect(noteGain);
 
     // Additive synthesis: harmonics at 1x, 2x, 3x with decreasing amplitude
@@ -142,8 +225,8 @@ export class NotePlayer {
         osc.frequency.value = harmonic * freq;
         osc.connect(harmGain);
         harmGain.connect(envelope);
-        osc.start(this.lastNoteTime);
-        osc.stop(this.lastNoteTime + duration);
+        osc.start(noteStart);
+        osc.stop(noteEnd);
       }
     }
   }
@@ -160,6 +243,10 @@ export class NotePlayer {
       }
       while (this.lastNoteTime < endTime) {
         this.enqueueNote(tempo, music);
+        if (this.lastNoteIx >= music.notes.length) {
+          this.active = false;
+          return;
+        }
       }
     } else {
       while (this.lastNoteTime < endTime) {

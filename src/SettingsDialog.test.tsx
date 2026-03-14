@@ -10,7 +10,7 @@ const { mockStart, mockStop } = vi.hoisted(() => ({
   mockStop: vi.fn(),
 }));
 
-vi.mock('./RecorderDetector', () => ({
+vi.mock('./audio/RecorderDetector', () => ({
   RecorderDetector: class {
     callbacks: unknown;
     start = mockStart;

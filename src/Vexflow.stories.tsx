@@ -358,3 +358,19 @@ export const FreeTime: Story = {
     colorNotes: 0,
   },
 };
+
+// Verify that RTL layout (as used in Arabic) does not corrupt note stems.
+// The sheet music should look identical to Default.
+export const RtlLayout: Story = {
+  args: {
+    music: createSimpleMusic(),
+    colorNotes: 0,
+  },
+  decorators: [
+    (Story) => (
+      <div dir="rtl">
+        <Story />
+      </div>
+    ),
+  ],
+};

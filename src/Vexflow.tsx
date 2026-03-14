@@ -180,7 +180,8 @@ function toStavenotes(
   barsPerLine: number,
   freeTime: boolean,
   ticksPerLine: number,
-  clef: string
+  clef: string,
+  displayPitchOffset: number = 0
 ): {
   barredNotes: StaveNote[][];
   markings: (Beam | StaveTie | Curve | Tuplet)[];
@@ -208,7 +209,7 @@ function toStavenotes(
     ) {
       if (pendingGraceNotes.length === 0)
         pendingGraceSlash = note.duration === Duration.GRACE_SLASH;
-      const [pitches] = note.toVexflowPitchAndDuration(useSharpSpelling);
+      const [pitches] = note.toVexflowPitchAndDuration(useSharpSpelling, displayPitchOffset);
       const graceNote = new GraceNote({
         keys: [pitches[0]],
         duration: '8',
@@ -221,7 +222,7 @@ function toStavenotes(
     }
 
     const [pitches, duration] =
-      note.toVexflowPitchAndDuration(useSharpSpelling);
+      note.toVexflowPitchAndDuration(useSharpSpelling, displayPitchOffset);
     const staveNote = new StaveNote({ keys: pitches, duration, clef });
 
     if (pendingGraceNotes.length > 0) {
@@ -355,12 +356,15 @@ export function Vexflow(props: {
   const barsPerLine = Math.max(1, Math.floor((windowWidth - 12) / barWidth));
   const freeTime = music.bars.length === 0;
   const ticksPerLine = barsPerLine * music.beatsPerBar * DURATION_TICKS.QUARTER;
+  const vexClef = music.clef === 'treble8va' ? 'treble' : music.clef;
+  const displayPitchOffset = music.clef === 'treble8va' ? -12 : 0;
   const { barredNotes, markings, noteIndexMap } = toStavenotes(
     music,
     barsPerLine,
     freeTime,
     ticksPerLine,
-    music.clef
+    vexClef,
+    displayPitchOffset
   );
 
   useEffect(() => {
@@ -394,7 +398,7 @@ export function Vexflow(props: {
           extraHeightOffset + barHeight * lineIx,
           fullStaveWidth
         );
-        stave.addClef(music.clef);
+        stave.addClef(vexClef, 'default', music.clef === 'treble8va' ? '8va' : undefined);
         if (music.keySignature && music.keySignature !== 'C') {
           new KeySignature(music.keySignature).addToStave(stave);
         }
@@ -442,7 +446,7 @@ export function Vexflow(props: {
           staveWidth
         );
         if (barIx % barsPerLine === 0) {
-          stave.addClef(music.clef);
+          stave.addClef(vexClef, 'default', music.clef === 'treble8va' ? '8va' : undefined);
           if (music.keySignature && music.keySignature !== 'C') {
             new KeySignature(music.keySignature).addToStave(stave);
           }
@@ -657,7 +661,7 @@ export function Vexflow(props: {
   return (
     <>
       <figure role="img" aria-label={figureLabel} style={{ margin: 0 }}>
-        <div ref={vexDiv} className="vexflow-container" />
+        <div ref={vexDiv} className="vexflow-container" dir="ltr" aria-hidden="true" />
       </figure>
       <Popover
         open={Boolean(popoverAnchor)}

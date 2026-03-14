@@ -20,6 +20,7 @@ import Divider from '@mui/material/Divider';
 import Menu from '@mui/material/Menu';
 import MenuItem from '@mui/material/MenuItem';
 import ListSubheader from '@mui/material/ListSubheader';
+import Tooltip from '@mui/material/Tooltip';
 import ArrowDropDown from '@mui/icons-material/ArrowDropDown';
 import ExpandMore from '@mui/icons-material/ExpandMore';
 import Delete from '@mui/icons-material/Delete';
@@ -27,20 +28,11 @@ import Edit from '@mui/icons-material/Edit';
 import FileDownload from '@mui/icons-material/FileDownload';
 import Settings from '@mui/icons-material/Settings';
 
+import { parseAbcFile } from './io/abcImport';
 import { ScaleDialog } from './ScaleDialog';
 import { SettingsDialog } from './SettingsDialog';
 import { type Song, BUILT_IN_BOOKS } from './songs';
 import { useStore, type UserBook, type UserSong } from './store';
-
-function parseAbcFile(text: string): { title: string; abc: string }[] {
-  // Split into individual tunes on lines starting with X: (tune index)
-  const tuneTexts = text.split(/(?=^X:\s*\d+)/m).filter((t) => t.trim());
-  return tuneTexts.map((abc) => {
-    const titleMatch = abc.match(/^T:\s*(.+)/m);
-    const title = titleMatch ? titleMatch[1].trim() : 'Untitled';
-    return { title, abc: abc.trim() };
-  });
-}
 
 interface IndexPageProps {
   onSelectSong: (song: Song, readOnly: boolean, bookId?: string) => void;
@@ -55,7 +47,8 @@ export function IndexPage({
 }: IndexPageProps) {
   const { t } = useTranslation();
   const [settingsOpen, setSettingsOpen] = useState(false);
-  const [scaleDialogOpen, setScaleDialogOpen] = useState(false);
+  const [scaleDialogBookId, setScaleDialogBookId] = useState<string | null>(null);
+  const [addSongMenu, setAddSongMenu] = useState<{ anchor: HTMLElement; bookId: string } | null>(null);
   const [newBookDialogOpen, setNewBookDialogOpen] = useState(false);
   const [newBookTitle, setNewBookTitle] = useState('');
   const [renameBookId, setRenameBookId] = useState<string | null>(null);
@@ -206,13 +199,15 @@ export function IndexPage({
         𝄞
       </div>
 
-      <IconButton
-        onClick={() => setSettingsOpen(true)}
-        aria-label={t('settingsButton')}
-        style={{ position: 'fixed', top: 8, right: 8 }}
-      >
-        <Settings />
-      </IconButton>
+      <Tooltip title={t('settingsButton')}>
+        <IconButton
+          onClick={() => setSettingsOpen(true)}
+          aria-label={t('settingsButton')}
+          style={{ position: 'fixed', top: 8, right: 8 }}
+        >
+          <Settings />
+        </IconButton>
+      </Tooltip>
       <h1 style={{ color: '#1c3248' }}>{t('appTitle')}</h1>
 
       <div style={{ width: 'min(600px, 95vw)', margin: '0 auto' }}>
@@ -233,20 +228,22 @@ export function IndexPage({
                     key={song.id}
                     disablePadding
                     secondaryAction={
-                      <IconButton
-                        edge="end"
-                        size="small"
-                        onClick={() =>
-                          setDeleteConfirmSong({
-                            bookId: book.id,
-                            songId: song.id,
-                            title: song.title,
-                          })
-                        }
-                        aria-label={t('deleteSong')}
-                      >
-                        <Delete fontSize="small" />
-                      </IconButton>
+                      <Tooltip title={t('deleteSong')}>
+                        <IconButton
+                          edge="end"
+                          size="small"
+                          onClick={() =>
+                            setDeleteConfirmSong({
+                              bookId: book.id,
+                              songId: song.id,
+                              title: song.title,
+                            })
+                          }
+                          aria-label={t('deleteSong')}
+                        >
+                          <Delete fontSize="small" />
+                        </IconButton>
+                      </Tooltip>
                     }
                   >
                     <ListItemButton
@@ -271,29 +268,58 @@ export function IndexPage({
                   m: 1,
                 }}
               >
-                <Button size="small" onClick={() => handleAddSong(book.id)}>
-                  {t('addSong')}
-                </Button>
-                <Box>
-                  <IconButton
+                <ButtonGroup size="small">
+                  <Button onClick={() => handleAddSong(book.id)}>
+                    {t('addSong')}
+                  </Button>
+                  <Button
                     size="small"
-                    onClick={(e) => openExport(book, e)}
-                    aria-label={t('exportBook')}
+                    aria-label={t('addOtherSong')}
+                    onClick={(e) =>
+                      setAddSongMenu({ anchor: e.currentTarget, bookId: book.id })
+                    }
                   >
-                    <FileDownload fontSize="small" />
-                  </IconButton>
-                  <IconButton
-                    size="small"
-                    onClick={(e) => openRenameBook(book, e)}
-                    aria-label={t('editBook')}
-                  >
-                    <Edit fontSize="small" />
-                  </IconButton>
-                </Box>
+                    <ArrowDropDown />
+                  </Button>
+                </ButtonGroup>
+                <ButtonGroup size="small">
+                  <Tooltip title={t('exportBook')}>
+                    <Button
+                      onClick={(e) => openExport(book, e)}
+                      aria-label={t('exportBook')}
+                    >
+                      <FileDownload fontSize="small" />
+                    </Button>
+                  </Tooltip>
+                  <Tooltip title={t('editBook')}>
+                    <Button
+                      onClick={(e) => openRenameBook(book, e)}
+                      aria-label={t('editBook')}
+                    >
+                      <Edit fontSize="small" />
+                    </Button>
+                  </Tooltip>
+                </ButtonGroup>
               </Box>
             </AccordionDetails>
           </Accordion>
         ))}
+
+        <Menu
+          anchorEl={addSongMenu?.anchor}
+          open={Boolean(addSongMenu)}
+          onClose={() => setAddSongMenu(null)}
+        >
+          <MenuItem
+            onClick={() => {
+              const bookId = addSongMenu!.bookId;
+              setAddSongMenu(null);
+              setScaleDialogBookId(bookId);
+            }}
+          >
+            {t('generateScale')}
+          </MenuItem>
+        </Menu>
 
         <div
           style={{
@@ -306,12 +332,12 @@ export function IndexPage({
         >
           <ButtonGroup variant="outlined">
             <Button onClick={() => setNewBookDialogOpen(true)}>
-              {t('addBook')}
+              {t('addEmptyBook')}
             </Button>
             <Button
               size="small"
               onClick={(e) => setAddBuiltInMenuAnchor(e.currentTarget)}
-              aria-label={t('selectBuiltInBook')}
+              aria-label={t('addOtherBook')}
             >
               <ArrowDropDown />
             </Button>
@@ -324,23 +350,17 @@ export function IndexPage({
             <MenuItem
               onClick={() => {
                 setAddBuiltInMenuAnchor(null);
-                setScaleDialogOpen(true);
-              }}
-            >
-              {t('books.scales')}…
-            </MenuItem>
-            <MenuItem
-              onClick={() => {
-                setAddBuiltInMenuAnchor(null);
                 importFileRef.current?.click();
               }}
             >
               {t('importAbc')}
             </MenuItem>
-            <Divider />
-            <ListSubheader role="presentation">
-              {t('builtInBooks')}
-            </ListSubheader>
+            {availableBuiltInBooks.length > 0 && <Divider />}
+            {availableBuiltInBooks.length > 0 && (
+              <ListSubheader role="presentation">
+                {t('builtInBooks')}
+              </ListSubheader>
+            )}
             {availableBuiltInBooks.map((book) => (
               <MenuItem
                 key={book.id}
@@ -379,11 +399,11 @@ export function IndexPage({
       />
 
       <ScaleDialog
-        open={scaleDialogOpen}
-        onClose={() => setScaleDialogOpen(false)}
-        onCreate={(songs, bookName) => {
-          importUserBook(bookName, songs);
-          setScaleDialogOpen(false);
+        open={scaleDialogBookId !== null}
+        onClose={() => setScaleDialogBookId(null)}
+        onCreate={(song) => {
+          if (scaleDialogBookId) addSongToBook(scaleDialogBookId, song);
+          setScaleDialogBookId(null);
         }}
       />
 

@@ -1,6 +1,7 @@
 import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest';
 import { NotePlayer } from './NotePlayer';
-import { Music, Note, Duration } from './music';
+import { Music, Note, Duration } from '../music';
+import { fromAbc } from '../io/abcImport';
 
 describe('NotePlayer', () => {
   let player: NotePlayer;
@@ -100,6 +101,20 @@ describe('NotePlayer', () => {
 
       expect(player.active).toBe(false);
     });
+
+    it('does not loop forever when all notes fit within the lookahead window', () => {
+      player.start();
+
+      const music = new Music();
+      // Single short note — total duration (~0.5s at 120 BPM) < lookForward (1.0s)
+      music.notes = [new Note(69, Duration.QUARTER, [])];
+
+      // This would hang without the inner guard in scheduleNotes
+      player.scheduleNotes(120, music);
+
+      expect(player.active).toBe(false);
+      expect(player.lastNoteIx).toBeGreaterThanOrEqual(music.notes.length);
+    });
   });
 
   describe('enqueueNote', () => {
@@ -151,6 +166,112 @@ describe('NotePlayer', () => {
       player.enqueueNote(120, music);
 
       expect(noteGains[0].gain.value).toBe(0.7);
+    });
+  });
+
+  describe('ties', () => {
+    it('produces oscillators only for the first note of a tie, not the continuation', () => {
+      player.start();
+      const createOscSpy = vi.spyOn(player.audioCtx!, 'createOscillator');
+
+      const music = new Music();
+      // Two quarter C4s tied together
+      music.notes = [
+        new Note(60, Duration.QUARTER, []),
+        new Note(60, Duration.QUARTER, []),
+      ];
+      music.curves = [[0, 1]]; // tie
+
+      player.enqueueNote(120, music); // note 0 — should create 3 oscillators
+      player.enqueueNote(120, music); // note 1 — tie continuation, no oscillators
+
+      expect(createOscSpy).toHaveBeenCalledTimes(3); // 3 harmonics for note 0 only
+    });
+
+    it('schedules the tie-start oscillator for the combined duration', () => {
+      player.start();
+
+      const oscStops: number[] = [];
+      const origCreate = player.audioCtx!.createOscillator.bind(player.audioCtx);
+      vi.spyOn(player.audioCtx!, 'createOscillator').mockImplementation(() => {
+        const osc = origCreate();
+        const origStop = osc.stop.bind(osc);
+        osc.stop = (when?: number) => {
+          oscStops.push(when ?? 0);
+          origStop(when);
+        };
+        return osc;
+      });
+
+      const music = new Music();
+      music.notes = [
+        new Note(60, Duration.QUARTER, []),
+        new Note(60, Duration.QUARTER, []),
+      ];
+      music.curves = [[0, 1]];
+
+      // At 120 BPM, quarter = 0.5 s; two tied quarters → 1.0 s total
+      const startTime = player.audioCtx!.currentTime;
+      player.enqueueNote(120, music);
+
+      expect(oscStops.every((t) => Math.abs(t - (startTime + 1.0)) < 0.001)).toBe(true);
+    });
+
+    it('still records noteTimings for tie continuation notes (cursor tracking)', () => {
+      player.start();
+
+      const music = new Music();
+      music.notes = [
+        new Note(60, Duration.QUARTER, []),
+        new Note(60, Duration.QUARTER, []),
+      ];
+      music.curves = [[0, 1]];
+
+      player.enqueueNote(120, music);
+      player.enqueueNote(120, music);
+
+      expect(player.noteTimings).toHaveLength(2);
+      expect(player.noteTimings[1].noteIdx).toBe(1);
+    });
+  });
+
+    it('handles ties parsed from ABC notation', () => {
+      player.start();
+      const createOscSpy = vi.spyOn(player.audioCtx!, 'createOscillator');
+
+      const music = fromAbc('X:1\nT:Test\nM:C\nL:1/4\nK:C\nC-C |');
+
+      // The ABC parser should produce 2 notes and a tie curve
+      expect(music.notes).toHaveLength(2);
+      expect(music.curves).toHaveLength(1);
+      expect(music.curves[0]).toEqual([0, 1]);
+      expect(music.notes[0].pitches).toEqual(music.notes[1].pitches);
+
+      player.enqueueNote(120, music);
+      player.enqueueNote(120, music);
+
+      // Only 3 oscillators (1 pitch × 3 harmonics), not 6
+      expect(createOscSpy).toHaveBeenCalledTimes(3);
+    });
+
+  describe('slurs', () => {
+    it('produces oscillators for every note inside a slur', () => {
+      player.start();
+      const createOscSpy = vi.spyOn(player.audioCtx!, 'createOscillator');
+
+      const music = new Music();
+      // Slur over C4 → D4
+      music.notes = [
+        new Note(60, Duration.QUARTER, []),
+        new Note(62, Duration.QUARTER, []),
+      ];
+      music.curves = [[0, 1]]; // slur (pitches differ)
+
+      player.enqueueNote(120, music);
+      player.enqueueNote(120, music);
+
+      // Both notes should produce oscillators: 3 harmonics × 2 notes = 6
+      expect(createOscSpy).toHaveBeenCalledTimes(6);
     });
   });
 });

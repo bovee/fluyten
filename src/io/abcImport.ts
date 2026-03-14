@@ -9,6 +9,13 @@ import {
   Note,
 } from '../music';
 import { TIME_SIGNATURES } from '../constants';
+import { type RecorderType } from '../instrument';
+
+export function defaultClefForInstrument(instrumentType: RecorderType): Music['clef'] {
+  if (instrumentType === 'SOPRANO' || instrumentType === 'SOPRANINO') return 'treble8va';
+  if (instrumentType === 'BASS') return 'bass';
+  return 'treble';
+}
 
 // https://abcnotation.com/wiki/abc:standard:v2.1
 
@@ -146,7 +153,7 @@ const TOKEN_RE = new RegExp(
   'y' // sticky: matches only at TOKEN_RE.lastIndex
 );
 
-function tokenize(score: string): ScoreToken[] {
+export function tokenize(score: string): ScoreToken[] {
   const tokens: ScoreToken[] = [];
   TOKEN_RE.lastIndex = 0;
 
@@ -225,11 +232,12 @@ interface ChordAccum {
   decorations: Decoration[];
 }
 
-function parseScore(
+export function parseScore(
   tokens: ScoreToken[],
   music: Music,
   defaultDuration: Duration,
-  keyAdjustment: { [n: string]: number }
+  keyAdjustment: { [n: string]: number },
+  isFreeTime = false
 ): void {
   let noteType: 'grace' | 'grace_slash' | 'triplet' | 'chord' | null = null;
   let tupletCounter = 0;
@@ -345,10 +353,12 @@ function parseScore(
       }
 
       case 'bar':
-        music.bars.push({
-          afterNoteNum: music.notes.length - 1,
-          type: token.barType,
-        });
+        if (!isFreeTime) {
+          music.bars.push({
+            afterNoteNum: music.notes.length - 1,
+            type: token.barType,
+          });
+        }
         break;
 
       case 'grace_open':
@@ -456,16 +466,19 @@ function parseScore(
 
 // ---- Header parser ----------------------------------------------------------
 
-interface HeaderParseResult {
+export interface HeaderParseResult {
   defaultDuration: Duration;
   keyAdjustment: { [n: string]: number };
   scoreText: string;
+  isFreeTime: boolean;
 }
 
-function parseHeaders(lines: string[], music: Music): HeaderParseResult {
+export function parseHeaders(lines: string[], music: Music, defaultClef: Music['clef'] = 'treble'): HeaderParseResult {
   let defaultDuration: Duration = Duration.QUARTER;
   const keyAdjustment: { [n: string]: number } = {};
   const scoreLines: string[] = [];
+  let isFreeTime = false;
+  music.clef = defaultClef;
 
   for (const line of lines) {
     if (line[1] === ':' && !line.startsWith('|:')) {
@@ -482,6 +495,7 @@ function parseHeaders(lines: string[], music: Music): HeaderParseResult {
         } else if (fieldData === '' || fieldData === 'none') {
           // Free time / no meter: leave beatsPerBar/beatValue at defaults,
           // bars will remain empty which triggers free time rendering.
+          isFreeTime = true;
         } else {
           const parts = fieldData.split('/');
           if (parts.length !== 2)
@@ -492,8 +506,8 @@ function parseHeaders(lines: string[], music: Music): HeaderParseResult {
       } else if (line.startsWith('L:')) {
         defaultDuration = parseLDuration(fieldData);
       } else if (line.startsWith('K:')) {
-        const clefMatch = fieldData.match(/\bclef=(\w+)/i);
-        const keyPart = fieldData.replace(/\s*clef=\w+/i, '').trim();
+        const clefMatch = fieldData.match(/\bclef=([\w+]+)/i);
+        const keyPart = fieldData.replace(/\s*clef=[\w+]+/i, '').trim();
         if (!(keyPart in KEYS)) throw new Error(`Can't parse key: ${keyPart}`);
         music.keySignature = keyPart;
         for (const note of KEYS[keyPart]) {
@@ -506,7 +520,9 @@ function parseHeaders(lines: string[], music: Music): HeaderParseResult {
               ? 'bass'
               : clefName === 'alto'
                 ? 'alto'
-                : 'treble';
+                : clefName === 'treble+8'
+                  ? 'treble8va'
+                  : 'treble';
         }
       }
       // other information fields are ignored
@@ -515,7 +531,13 @@ function parseHeaders(lines: string[], music: Music): HeaderParseResult {
     if (line.startsWith('%%clef')) {
       const clefName = line.slice('%%clef'.length).trim().toLowerCase();
       music.clef =
-        clefName === 'bass' ? 'bass' : clefName === 'alto' ? 'alto' : 'treble';
+        clefName === 'bass'
+          ? 'bass'
+          : clefName === 'alto'
+            ? 'alto'
+            : clefName === 'treble+8'
+              ? 'treble8va'
+              : 'treble';
       continue;
     }
     // music line (with line-continuation support)
@@ -526,7 +548,7 @@ function parseHeaders(lines: string[], music: Music): HeaderParseResult {
     }
   }
 
-  return { defaultDuration, keyAdjustment, scoreText: scoreLines.join('') };
+  return { defaultDuration, keyAdjustment, scoreText: scoreLines.join(''), isFreeTime };
 }
 
 // ---- Public API -------------------------------------------------------------
@@ -542,7 +564,7 @@ export interface VoiceInfo {
  * Returns one VoiceInfo per voice, each holding its own Music object.
  * If no V: fields are present, returns a single-element array from fromAbc().
  */
-export function voicesFromAbc(text: string): VoiceInfo[] {
+export function voicesFromAbc(text: string, defaultClef: Music['clef'] = 'treble'): VoiceInfo[] {
   // Strip comments (same preprocessing as fromAbc)
   const lines = text.split(/\r?\n/).map((l) => {
     if (l.startsWith('%%')) return l;
@@ -552,13 +574,13 @@ export function voicesFromAbc(text: string): VoiceInfo[] {
 
   // Quick check: does this ABC use voices at all?
   if (!lines.some((l) => /^V:\s*\S/.test(l))) {
-    return [{ id: '1', name: '', music: fromAbc(text) }];
+    return [{ id: '1', name: '', music: fromAbc(text, defaultClef) }];
   }
 
   // Collect voice definitions from V: lines (first occurrence per id wins)
   const voiceDefs = new Map<
     string,
-    { name: string; clef?: 'treble' | 'bass' | 'alto' }
+    { name: string; clef?: 'treble' | 'bass' | 'alto' | 'treble8va' }
   >();
   for (const line of lines) {
     if (!line.startsWith('V:')) continue;
@@ -568,12 +590,19 @@ export function voicesFromAbc(text: string): VoiceInfo[] {
     const id = idMatch[1];
     if (voiceDefs.has(id)) continue;
     const nameMatch = rest.match(/(?:name|nm)="([^"]+)"|(?:name|nm)=(\S+)/i);
-    const clefMatch = rest.match(/clef=(\w+)/i);
+    const clefMatch = rest.match(/clef=([\w+]+)/i);
     const name = nameMatch ? (nameMatch[1] ?? nameMatch[2]) : id;
-    let clef: 'treble' | 'bass' | 'alto' | undefined;
+    let clef: 'treble' | 'bass' | 'alto' | 'treble8va' | undefined;
     if (clefMatch) {
       const c = clefMatch[1].toLowerCase();
-      clef = c === 'bass' ? 'bass' : c === 'alto' ? 'alto' : 'treble';
+      clef =
+        c === 'bass'
+          ? 'bass'
+          : c === 'alto'
+            ? 'alto'
+            : c === 'treble+8'
+              ? 'treble8va'
+              : 'treble';
     }
     voiceDefs.set(id, { name, clef });
   }
@@ -629,7 +658,7 @@ export function voicesFromAbc(text: string): VoiceInfo[] {
     if (segments.length === 0) continue;
     const voiceAbc = [...globalHeaderLines, segments.join(' ')].join('\n');
     try {
-      const music = fromAbc(voiceAbc);
+      const music = fromAbc(voiceAbc, defaultClef);
       if (clef) music.clef = clef;
       result.push({ id, name, music });
     } catch {
@@ -667,18 +696,59 @@ export function splitTunes(text: string): string[] {
   return tunes.length > 0 ? tunes : [text];
 }
 
-export function fromAbc(text: string): Music {
+export function fromAbc(text: string, defaultClef: Music['clef'] = 'treble'): Music {
   const music = new Music();
   const lines = text.split(/\r?\n/).map((l) => {
     if (l.startsWith('%%')) return l; // stylesheet directives: keep as-is
     const commentIdx = l.indexOf('%');
     return commentIdx === -1 ? l : l.slice(0, commentIdx);
   });
-  const { defaultDuration, keyAdjustment, scoreText } = parseHeaders(
+  const { defaultDuration, keyAdjustment, scoreText, isFreeTime } = parseHeaders(
     lines,
-    music
+    music,
+    defaultClef
   );
   const tokens = tokenize(scoreText);
-  parseScore(tokens, music, defaultDuration, keyAdjustment);
+  parseScore(tokens, music, defaultDuration, keyAdjustment, isFreeTime);
+  if (music.clef === 'treble8va') {
+    for (const note of music.notes) {
+      note.pitches = note.pitches.map((p) => p + 12);
+    }
+  }
   return music;
+}
+
+/**
+ * Parse a fragment of ABC score text (notes, bar lines, etc.) using the
+ * header context (key signature, default duration) from a full ABC tune.
+ * Returns the parsed Music object and the key signature string for export.
+ */
+export function parseFragment(
+  fragment: string,
+  fullAbc: string
+): { music: Music; keySignature: string; defaultDuration: Duration } {
+  const headerMusic = new Music();
+  const lines = fullAbc.split(/\r?\n/).map((l) => {
+    if (l.startsWith('%%')) return l;
+    const commentIdx = l.indexOf('%');
+    return commentIdx === -1 ? l : l.slice(0, commentIdx);
+  });
+  const { defaultDuration, keyAdjustment } = parseHeaders(lines, headerMusic);
+
+  const music = new Music();
+  music.keySignature = headerMusic.keySignature;
+  const tokens = tokenize(fragment);
+  parseScore(tokens, music, defaultDuration, keyAdjustment);
+
+  return { music, keySignature: headerMusic.keySignature, defaultDuration };
+}
+
+/** Split a multi-tune ABC file into individual tunes with their titles. */
+export function parseAbcFile(text: string): { title: string; abc: string }[] {
+  const tuneTexts = text.split(/(?=^X:\s*\d+)/m).filter((t) => t.trim());
+  return tuneTexts.map((abc) => {
+    const titleMatch = abc.match(/^T:\s*(.+)/m);
+    const title = titleMatch ? titleMatch[1].trim() : 'Untitled';
+    return { title, abc: abc.trim() };
+  });
 }
