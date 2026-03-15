@@ -63,6 +63,9 @@ export function IndexPage({
   } | null>(null);
   const [exportBookId, setExportBookId] = useState<string | null>(null);
   const [exportFileName, setExportFileName] = useState('');
+  const [importUrlDialogOpen, setImportUrlDialogOpen] = useState(false);
+  const [importUrlValue, setImportUrlValue] = useState('');
+  const [importUrlError, setImportUrlError] = useState<string | null>(null);
   const importFileRef = useRef<HTMLInputElement>(null);
 
   const [addBuiltInMenuAnchor, setAddBuiltInMenuAnchor] =
@@ -121,6 +124,37 @@ export function IndexPage({
     reader.readAsText(file);
     // Reset so the same file can be re-imported if needed
     e.target.value = '';
+  };
+
+  const handleImportUrl = async () => {
+    setImportUrlError(null);
+    try {
+      new URL(importUrlValue);
+    } catch {
+      setImportUrlError(t('importUrlInvalidError'));
+      return;
+    }
+    try {
+      const response = await fetch(importUrlValue);
+      if (!response.ok) {
+        setImportUrlError(t('importUrlHttpError', { status: response.status }));
+        return;
+      }
+      const text = await response.text();
+      const tunes = parseAbcFile(text);
+      const songs: UserSong[] = tunes.map(({ title, abc }) => ({
+        id: crypto.randomUUID(),
+        title,
+        abc,
+      }));
+      const filename = importUrlValue.split('/').pop() ?? 'Imported';
+      const bookTitle = filename.replace(/\.[^.]+$/, '');
+      importUserBook(bookTitle, songs);
+      setImportUrlDialogOpen(false);
+      setImportUrlValue('');
+    } catch {
+      setImportUrlError(t('importUrlCorsError'));
+    }
   };
 
   const handleAddSong = (bookId: string) => {
@@ -355,6 +389,14 @@ export function IndexPage({
             >
               {t('importAbc')}
             </MenuItem>
+            <MenuItem
+              onClick={() => {
+                setAddBuiltInMenuAnchor(null);
+                setImportUrlDialogOpen(true);
+              }}
+            >
+              {t('importAbcUrl')}
+            </MenuItem>
             {availableBuiltInBooks.length > 0 && <Divider />}
             {availableBuiltInBooks.length > 0 && (
               <ListSubheader role="presentation">
@@ -522,6 +564,49 @@ export function IndexPage({
             }
           >
             {t('deleteBook')}
+          </Button>
+        </DialogActions>
+      </Dialog>
+
+      <Dialog
+        open={importUrlDialogOpen}
+        onClose={() => {
+          setImportUrlDialogOpen(false);
+          setImportUrlValue('');
+          setImportUrlError(null);
+        }}
+      >
+        <DialogTitle>{t('importAbcUrl')}</DialogTitle>
+        <DialogContent>
+          <TextField
+            autoFocus
+            label="URL"
+            value={importUrlValue}
+            onChange={(e) => setImportUrlValue(e.target.value)}
+            onKeyDown={(e) => {
+              if (e.key === 'Enter') {
+                e.preventDefault();
+                void handleImportUrl();
+              }
+            }}
+            error={importUrlError !== null}
+            helperText={importUrlError}
+            sx={{ mt: 1 }}
+            fullWidth
+          />
+        </DialogContent>
+        <DialogActions>
+          <Button
+            onClick={() => {
+              setImportUrlDialogOpen(false);
+              setImportUrlValue('');
+              setImportUrlError(null);
+            }}
+          >
+            {t('cancel')}
+          </Button>
+          <Button onClick={() => void handleImportUrl()} variant="contained">
+            {t('import')}
           </Button>
         </DialogActions>
       </Dialog>

@@ -324,7 +324,7 @@ describe('IndexPage', () => {
         screen.getByRole('button', { name: /add other book/i })
       );
       expect(
-        within(document.body).getByRole('menuitem', { name: /import/i })
+        within(document.body).getByRole('menuitem', { name: /import file/i })
       ).toBeInTheDocument();
     });
 

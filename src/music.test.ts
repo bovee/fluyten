@@ -1,5 +1,6 @@
 import { describe, it, expect } from 'vitest';
-import { Note, Music, Duration, DurationModifier } from './music';
+import { Note, Music, Duration, DurationModifier, expandRepeats } from './music';
+import { fromAbc } from './io/abcImport';
 
 describe('Note', () => {
   describe('fromAbc', () => {
@@ -616,5 +617,204 @@ describe('Music', () => {
       expect(music.notes[0].pitches).toEqual([60]);
       expect(music.curves).not.toContainEqual([0, 1]);
     });
+  });
+});
+
+describe('expandRepeats', () => {
+  it('no bars → identity', () => {
+    const music = new Music();
+    music.notes = [new Note(60, Duration.QUARTER), new Note(62, Duration.QUARTER)];
+    music.curves = [[0, 1]];
+    music.bars = [];
+
+    const result = expandRepeats(music);
+
+    expect(result.notes).toHaveLength(2);
+    expect(result.notes[0].pitches).toEqual([60]);
+    expect(result.notes[1].pitches).toEqual([62]);
+    expect(result.curves).toEqual([[0, 1]]);
+    expect(result.originalIndices).toEqual([0, 1]);
+  });
+
+  it('standard bars only → no duplication', () => {
+    const music = new Music();
+    music.notes = [
+      new Note(60, Duration.QUARTER),
+      new Note(62, Duration.QUARTER),
+      new Note(64, Duration.QUARTER),
+      new Note(65, Duration.QUARTER),
+    ];
+    music.bars = [{ afterNoteNum: 1, type: 'standard' }];
+
+    const result = expandRepeats(music);
+
+    expect(result.notes).toHaveLength(4);
+    expect(result.originalIndices).toEqual([0, 1, 2, 3]);
+  });
+
+  it('simple |: ... :| repeats notes twice', () => {
+    const music = new Music();
+    music.notes = [
+      new Note(60, Duration.QUARTER),
+      new Note(62, Duration.QUARTER),
+    ];
+    music.bars = [
+      { afterNoteNum: -1, type: 'begin_repeat' },
+      { afterNoteNum: 1, type: 'end_repeat' },
+    ];
+
+    const result = expandRepeats(music);
+
+    expect(result.notes).toHaveLength(4);
+    expect(result.notes[0].pitches).toEqual([60]);
+    expect(result.notes[1].pitches).toEqual([62]);
+    expect(result.notes[2].pitches).toEqual([60]);
+    expect(result.notes[3].pitches).toEqual([62]);
+  });
+
+  it('|: at start (afterNoteNum < 0) repeats from 0', () => {
+    const music = new Music();
+    music.notes = [
+      new Note(60, Duration.QUARTER),
+      new Note(62, Duration.QUARTER),
+      new Note(64, Duration.QUARTER),
+    ];
+    music.bars = [
+      { afterNoteNum: -1, type: 'begin_repeat' },
+      { afterNoteNum: 2, type: 'end_repeat' },
+    ];
+
+    const result = expandRepeats(music);
+
+    expect(result.notes).toHaveLength(6);
+    expect(result.originalIndices).toEqual([0, 1, 2, 0, 1, 2]);
+  });
+
+  it(':| without matching |: repeats from start of piece', () => {
+    const music = new Music();
+    music.notes = [
+      new Note(60, Duration.QUARTER),
+      new Note(62, Duration.QUARTER),
+    ];
+    music.bars = [
+      { afterNoteNum: 1, type: 'end_repeat' },
+    ];
+
+    const result = expandRepeats(music);
+
+    expect(result.notes).toHaveLength(4);
+    expect(result.originalIndices).toEqual([0, 1, 0, 1]);
+  });
+
+  it(':: (begin_end_repeat) creates two independent repeated sections', () => {
+    const music = new Music();
+    music.notes = [
+      new Note(60, Duration.QUARTER), // 0: section A
+      new Note(62, Duration.QUARTER), // 1: section A
+      new Note(64, Duration.QUARTER), // 2: section B
+      new Note(65, Duration.QUARTER), // 3: section B
+    ];
+    music.bars = [
+      { afterNoteNum: -1, type: 'begin_repeat' },
+      { afterNoteNum: 1, type: 'begin_end_repeat' },
+      { afterNoteNum: 3, type: 'end_repeat' },
+    ];
+
+    const result = expandRepeats(music);
+
+    // Section A played twice, then section B played twice
+    expect(result.notes).toHaveLength(8);
+    expect(result.originalIndices).toEqual([0, 1, 0, 1, 2, 3, 2, 3]);
+  });
+
+  it('multiple independent repeats', () => {
+    const music = new Music();
+    music.notes = [
+      new Note(60, Duration.QUARTER), // 0
+      new Note(62, Duration.QUARTER), // 1
+      new Note(64, Duration.QUARTER), // 2
+      new Note(65, Duration.QUARTER), // 3
+    ];
+    music.bars = [
+      { afterNoteNum: -1, type: 'begin_repeat' },
+      { afterNoteNum: 1, type: 'end_repeat' },
+      { afterNoteNum: 1, type: 'begin_repeat' },
+      { afterNoteNum: 3, type: 'end_repeat' },
+    ];
+
+    const result = expandRepeats(music);
+
+    expect(result.notes).toHaveLength(8);
+    expect(result.originalIndices).toEqual([0, 1, 0, 1, 2, 3, 2, 3]);
+  });
+
+  it('curves inside repeat are duplicated with remapped indices', () => {
+    const music = new Music();
+    music.notes = [
+      new Note(60, Duration.QUARTER), // 0
+      new Note(62, Duration.QUARTER), // 1
+    ];
+    music.curves = [[0, 1]];
+    music.bars = [
+      { afterNoteNum: -1, type: 'begin_repeat' },
+      { afterNoteNum: 1, type: 'end_repeat' },
+    ];
+
+    const result = expandRepeats(music);
+
+    expect(result.curves).toHaveLength(2);
+    expect(result.curves[0]).toEqual([0, 1]);
+    expect(result.curves[1]).toEqual([2, 3]);
+  });
+
+  it('curves spanning repeat boundary are NOT duplicated', () => {
+    const music = new Music();
+    music.notes = [
+      new Note(60, Duration.QUARTER), // 0
+      new Note(62, Duration.QUARTER), // 1 — repeat ends here
+      new Note(64, Duration.QUARTER), // 2 — outside repeat
+    ];
+    // Curve from note 1 to note 2 crosses the repeat boundary
+    music.curves = [[1, 2]];
+    music.bars = [
+      { afterNoteNum: -1, type: 'begin_repeat' },
+      { afterNoteNum: 1, type: 'end_repeat' },
+    ];
+
+    const result = expandRepeats(music);
+
+    // The curve [1,2] only has the start inside the repeat, so it won't be
+    // included for either pass (it's not fully contained in either segment).
+    // Only curves fully inside a segment get duplicated.
+    expect(result.curves).toHaveLength(0);
+  });
+
+  it('originalIndices correctness for simple repeat', () => {
+    const music = new Music();
+    music.notes = [
+      new Note(60, Duration.QUARTER),
+      new Note(62, Duration.QUARTER),
+      new Note(64, Duration.QUARTER),
+      new Note(65, Duration.QUARTER),
+    ];
+    music.bars = [
+      { afterNoteNum: -1, type: 'begin_repeat' },
+      { afterNoteNum: 3, type: 'end_repeat' },
+    ];
+
+    const result = expandRepeats(music);
+
+    expect(result.originalIndices).toEqual([0, 1, 2, 3, 0, 1, 2, 3]);
+  });
+
+  it('integration: fromAbc → expandRepeats', () => {
+    const music = fromAbc('X:1\nT:Test\nM:4/4\nL:1/4\nK:C\n|: C D E F :|');
+
+    const result = expandRepeats(music);
+
+    expect(result.notes).toHaveLength(8);
+    expect(result.notes[0].pitches).toEqual([60]);
+    expect(result.notes[4].pitches).toEqual([60]);
+    expect(result.originalIndices).toEqual([0, 1, 2, 3, 0, 1, 2, 3]);
   });
 });

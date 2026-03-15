@@ -4,6 +4,7 @@ import {
   Accidental,
   Annotation,
   Articulation,
+  Barline,
   Beam,
   Curve,
   Dot,
@@ -23,6 +24,7 @@ import Popover from '@mui/material/Popover';
 import Typography from '@mui/material/Typography';
 
 import {
+  type BarLineType,
   type Decoration,
   Duration,
   DurationModifier,
@@ -186,6 +188,7 @@ function toStavenotes(
   barredNotes: StaveNote[][];
   markings: (Beam | StaveTie | Curve | Tuplet)[];
   noteIndexMap: number[];
+  usedBarTypes: BarLineType[];
 } {
   // noteIndexMap[i] = index into music.notes for the i-th stave note.
   // Grace notes are not added as standalone stave notes, so indices may diverge.
@@ -243,6 +246,7 @@ function toStavenotes(
 
   // Split notes into bars (or lines in free time).
   const barredNotes: StaveNote[][] = [];
+  const usedBarTypes: BarLineType[] = [];
   let lineOf: (barIx: number) => number;
 
   if (freeTime) {
@@ -272,6 +276,7 @@ function toStavenotes(
       }
       if (afterNoteIx === undefined) continue;
       barredNotes.push(notes.splice(0, afterNoteIx - barStartNoteIx + 1));
+      usedBarTypes.push(bar.type);
       barStartNoteIx = afterNoteIx + 1;
     }
     if (notes.length) barredNotes.push(notes);
@@ -292,7 +297,7 @@ function toStavenotes(
     noteToLine
   );
 
-  return { barredNotes, markings, noteIndexMap };
+  return { barredNotes, markings, noteIndexMap, usedBarTypes };
 }
 
 type BarBound = { x1: number; x2: number; y1: number; y2: number };
@@ -358,7 +363,7 @@ export function Vexflow(props: {
   const ticksPerLine = barsPerLine * music.beatsPerBar * DURATION_TICKS.QUARTER;
   const vexClef = music.clef === 'treble8va' ? 'treble' : music.clef;
   const displayPitchOffset = music.clef === 'treble8va' ? -12 : 0;
-  const { barredNotes, markings, noteIndexMap } = toStavenotes(
+  const { barredNotes, markings, noteIndexMap, usedBarTypes } = toStavenotes(
     music,
     barsPerLine,
     freeTime,
@@ -366,6 +371,36 @@ export function Vexflow(props: {
     vexClef,
     displayPitchOffset
   );
+
+  // Build per-bar beg/end barline type overrides from the parsed bar types.
+  const endBarTypes = new Map<number, number>();
+  const begBarTypes = new Map<number, number>();
+  if (!freeTime) {
+    for (let i = 0; i < usedBarTypes.length; i++) {
+      const type = usedBarTypes[i];
+      if (type === 'end_repeat') {
+        endBarTypes.set(i, Barline.type.REPEAT_END);
+      } else if (type === 'begin_repeat') {
+        begBarTypes.set(i + 1, Barline.type.REPEAT_BEGIN);
+      } else if (type === 'begin_end_repeat') {
+        endBarTypes.set(i, Barline.type.REPEAT_END);
+        begBarTypes.set(i + 1, Barline.type.REPEAT_BEGIN);
+      } else if (type === 'double') {
+        endBarTypes.set(i, Barline.type.DOUBLE);
+      } else if (type === 'end') {
+        endBarTypes.set(i, Barline.type.END);
+      }
+    }
+    // Handle |: at the very start (before any notes — afterNoteNum < 0, skipped by splitter).
+    const firstBar = music.bars[0];
+    if (
+      firstBar &&
+      (firstBar.afterNoteNum === undefined || firstBar.afterNoteNum < 0) &&
+      (firstBar.type === 'begin_repeat' || firstBar.type === 'begin_end_repeat')
+    ) {
+      begBarTypes.set(0, Barline.type.REPEAT_BEGIN);
+    }
+  }
 
   useEffect(() => {
     if (!vexDiv.current) return;
@@ -453,6 +488,10 @@ export function Vexflow(props: {
         }
         if (barIx === 0)
           stave.addTimeSignature(`${music.beatsPerBar}/${music.beatValue}`);
+        const begType = begBarTypes.get(barIx);
+        if (begType !== undefined) stave.setBegBarType(begType);
+        const endType = endBarTypes.get(barIx);
+        if (endType !== undefined) stave.setEndBarType(endType);
         stave.setContext(context).draw();
         staveInfoByBar.push({
           x: staveX,

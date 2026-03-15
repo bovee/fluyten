@@ -121,11 +121,11 @@ export const AbcChangePersisted: Story = {
       'X:1\nT:Edited Song\nM:C\nL:1/4\nK:G\nG A B c |'
     );
 
-    // Navigate back then return to the song
+    // Navigate back then return to the song (title was renamed to "Edited Song")
     await userEvent.click(
       await canvas.findByRole('button', { name: /back to song list/i })
     );
-    await userEvent.click(await canvas.findByText('Twinkle Twinkle'));
+    await userEvent.click(await canvas.findByText('Edited Song'));
     await userEvent.click(
       await canvas.findByRole('button', { name: /edit music/i })
     );

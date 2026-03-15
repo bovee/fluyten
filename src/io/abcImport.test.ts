@@ -230,6 +230,13 @@ describe('fromAbc', () => {
       const endBars = music.bars.filter((b) => b.type === 'end');
       expect(endBars.length).toBe(1);
     });
+
+    it('should parse :: as begin_end_repeat', () => {
+      const abc = `T:Test\nM:4/4\nL:1/4\nK:C\n|: C D E F :: G A B c :|`;
+      const music = fromAbc(abc);
+      const berBars = music.bars.filter((b) => b.type === 'begin_end_repeat');
+      expect(berBars.length).toBe(1);
+    });
   });
 
   describe('beaming', () => {

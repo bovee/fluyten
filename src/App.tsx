@@ -44,6 +44,7 @@ function App() {
   const [expandedBook, setExpandedBook] = useState<string | false>(false);
   const updateSongAbc = useStore((state) => state.updateSongAbc);
   const updateSongTempo = useStore((state) => state.updateSongTempo);
+  const renameSongInBook = useStore((state) => state.renameSongInBook);
 
   const handleSelectSong = (song: Song, readOnly: boolean, bookId?: string) => {
     setSelected({ song, readOnly, bookId });
@@ -52,7 +53,11 @@ function App() {
   if (selected) {
     const { song, readOnly, bookId } = selected;
     const onAbcChange = bookId
-      ? (abc: string) => updateSongAbc(bookId, song.id, abc)
+      ? (abc: string) => {
+          updateSongAbc(bookId, song.id, abc);
+          const titleMatch = abc.match(/^T:\s*(.+)/m);
+          if (titleMatch) renameSongInBook(bookId, song.id, titleMatch[1].trim());
+        }
       : undefined;
     const onTempoChange = bookId
       ? (tempo: number) => updateSongTempo(bookId, song.id, tempo)

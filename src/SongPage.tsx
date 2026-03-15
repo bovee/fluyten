@@ -13,7 +13,7 @@ import PlayArrow from '@mui/icons-material/PlayArrow';
 import Speed from '@mui/icons-material/Speed';
 
 import { voicesFromAbc, defaultClefForInstrument } from './io/abcImport';
-import { Music } from './music';
+import { Music, expandRepeats } from './music';
 import { FrequencyTracker } from './audio/FrequencyTracker';
 import { NotePlayer } from './audio/NotePlayer';
 import { Vexflow } from './Vexflow.tsx';
@@ -47,7 +47,7 @@ function useIntervalRef() {
 }
 
 function usePitchDetection(
-  musicRef: React.MutableRefObject<Music>,
+  expandedTrackingRef: React.MutableRefObject<{ notes: { pitches: number[] }[]; originalIndices: number[]; idx: number }>,
   setPlayedNotes: React.Dispatch<React.SetStateAction<number>>,
   setStatusMessage: (msg: string) => void,
 ) {
@@ -59,12 +59,14 @@ function usePitchDetection(
       (pitch: number) => {
         setDetectedPitch(pitch);
         setPlayedNotes((nNotes) => {
-          const currentMusic = musicRef.current;
-          if (
-            nNotes < currentMusic.notes.length &&
-            currentMusic.notes[nNotes].pitches[0] === pitch
-          ) {
-            return nNotes + 1;
+          const tracking = expandedTrackingRef.current;
+          const expandedNote = tracking.notes[tracking.idx];
+          if (expandedNote && expandedNote.pitches[0] === pitch) {
+            const origIdx = tracking.originalIndices[tracking.idx];
+            tracking.idx++;
+            // Keep colorNotes monotonically increasing so notes stay green
+            // even as the repeat loops back to earlier original indices.
+            return Math.max(nNotes, origIdx + 1);
           }
           return nNotes;
         });
@@ -87,6 +89,7 @@ function usePitchDetection(
     try {
       await freqTrackerRef.current.start();
       setPlayedNotes(0);
+      expandedTrackingRef.current.idx = 0; // reset expanded tracking position
       const id = window.setInterval(() => {
         freqTrackerRef.current?.checkFrequency({ instrumentType, tuning });
       }, RECORD_SAMPLE_RATE);
@@ -214,7 +217,13 @@ export function SongPage({
   const [speedDialOpen, setSpeedDialOpen] = useState(false);
   const [abcMusic, setAbcMusic] = useState(song.abc);
   const [currentParseError, setCurrentParseError] = useState('');
-  const [voices, setVoices] = useState(() => voicesFromAbc(song.abc, defaultClef));
+  const [voices, setVoices] = useState(() => {
+    try {
+      return voicesFromAbc(song.abc, defaultClef);
+    } catch {
+      return [];
+    }
+  });
   const [selectedVoiceIdx, setSelectedVoiceIdx] = useState(0);
   const music = voices[Math.min(selectedVoiceIdx, voices.length - 1)]?.music ?? new Music();
   const [playedNotes, setPlayedNotes] = useState(0);
@@ -226,6 +235,12 @@ export function SongPage({
   const musicRef = useRef<Music>(music);
   useEffect(() => { musicRef.current = music; }, [music]);
 
+  const expandedTrackingRef = useRef({ notes: [] as { pitches: number[] }[], originalIndices: [] as number[], idx: 0 });
+  useEffect(() => {
+    const expanded = expandRepeats(music);
+    expandedTrackingRef.current = { notes: expanded.notes, originalIndices: expanded.originalIndices, idx: 0 };
+  }, [music]);
+
   const handleTempoChange = (newTempo: number) => {
     tempoRef.current = newTempo;
     setTempo(newTempo);
@@ -233,7 +248,7 @@ export function SongPage({
   };
 
   const { detectedPitch, isRecording, startRecording } = usePitchDetection(
-    musicRef, setPlayedNotes, setStatusMessage
+    expandedTrackingRef, setPlayedNotes, setStatusMessage
   );
   const { isPlaying, startPlaying, cursor } = useAudioPlayback(
     musicRef, tempoRef, setPlayedNotes, setStatusMessage

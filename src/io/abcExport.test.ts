@@ -190,6 +190,14 @@ describe('toAbc', () => {
       music.bars = [{ afterNoteNum: 0, type: 'end_repeat' }];
       expect(toAbc(music)).toContain(':|');
     });
+
+    it('emits begin_end_repeat as ::', () => {
+      const music = new Music();
+      music.keySignature = 'C';
+      music.notes = [new Note(60, Duration.QUARTER), new Note(62, Duration.QUARTER)];
+      music.bars = [{ afterNoteNum: 0, type: 'begin_end_repeat' }];
+      expect(toAbc(music)).toContain('::');
+    });
   });
 
   describe('decorations', () => {

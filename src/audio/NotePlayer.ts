@@ -1,4 +1,4 @@
-import { Music, type Decoration } from '../music';
+import { Music, Note, type Decoration, expandRepeats } from '../music';
 
 const METRONOME_LENGTH = 0.03;
 
@@ -30,6 +30,10 @@ export class NotePlayer {
   // so the cursor can ask "which note is playing right now?" without needing
   // to replicate the tempo arithmetic independently.
   noteTimings: Array<{ noteIdx: number; time: number; endTime: number }> = [];
+  // Repeat-expanded note/curve sequence built once per playback from music.bars.
+  expandedNotes: Note[] = [];
+  expandedCurves: number[][] = [];
+  expandedOriginalIndices: number[] = [];
 
   constructor() {
     this.lastNoteTime = 0;
@@ -86,10 +90,10 @@ export class NotePlayer {
    * Returns true if the curve [s, e] is a tie: adjacent notes with identical pitches.
    * Ties are always between two consecutive notes; slurs can span any range.
    */
-  private isTieCurve(music: Music, s: number, e: number): boolean {
+  private isTieCurve(s: number, e: number): boolean {
     if (e !== s + 1) return false;
-    const a = music.notes[s];
-    const b = music.notes[e];
+    const a = this.expandedNotes[s];
+    const b = this.expandedNotes[e];
     if (!a || !b || a.pitches.length === 0) return false;
     return (
       a.pitches.length === b.pitches.length &&
@@ -98,21 +102,21 @@ export class NotePlayer {
   }
 
   /** Returns true if note at idx is the second (or later) note of a tie — no new attack needed. */
-  private isNoteTieContinuation(music: Music, idx: number): boolean {
-    return music.curves.some(([s, e]) => e === idx && this.isTieCurve(music, s, e));
+  private isNoteTieContinuation(idx: number): boolean {
+    return this.expandedCurves.some(([s, e]) => e === idx && this.isTieCurve(s, e));
   }
 
   /** Sums ticks across a full tie chain starting at startIdx. */
-  private getTieChainTicks(music: Music, startIdx: number): number {
-    let totalTicks = music.notes[startIdx].ticks();
+  private getTieChainTicks(startIdx: number): number {
+    let totalTicks = this.expandedNotes[startIdx].ticks();
     let currentIdx = startIdx;
     while (true) {
       const next =
-        music.curves.find(
-          ([s, e]) => s === currentIdx && this.isTieCurve(music, s, e)
+        this.expandedCurves.find(
+          ([s, e]) => s === currentIdx && this.isTieCurve(s, e)
         )?.[1] ?? null;
       if (next === null) break;
-      totalTicks += music.notes[next].ticks();
+      totalTicks += this.expandedNotes[next].ticks();
       currentIdx = next;
     }
     return totalTicks;
@@ -123,14 +127,11 @@ export class NotePlayer {
    *   noAttack  — note is a continuation within a slur (not the first note)
    *   noRelease — note continues into the next note within a slur (not the last note)
    */
-  private getSlurContext(
-    music: Music,
-    idx: number
-  ): { noAttack: boolean; noRelease: boolean } {
+  private getSlurContext(idx: number): { noAttack: boolean; noRelease: boolean } {
     let noAttack = false;
     let noRelease = false;
-    for (const [s, e] of music.curves) {
-      if (this.isTieCurve(music, s, e)) continue; // ties handled separately
+    for (const [s, e] of this.expandedCurves) {
+      if (this.isTieCurve(s, e)) continue; // ties handled separately
       if (s <= idx && idx <= e) {
         if (idx > s) noAttack = true;
         if (idx < e) noRelease = true;
@@ -139,19 +140,19 @@ export class NotePlayer {
     return { noAttack, noRelease };
   }
 
-  enqueueNote(tempo: number, music: Music) {
+  enqueueNote(tempo: number, beatValue: number) {
     if (!this.audioCtx || !this.masterGain) return;
     const lengthToTime = (length: number) =>
-      (60 / tempo) * (length / 1024) * (4 / (music.beatValue ?? 4));
+      (60 / tempo) * (length / 1024) * (4 / beatValue);
 
     if (this.lastNoteIx > -1) {
       // Add the previous note's duration to figure out when the current note starts
-      const pastTicks = music.notes[this.lastNoteIx]?.ticks() ?? 0;
+      const pastTicks = this.expandedNotes[this.lastNoteIx]?.ticks() ?? 0;
       this.lastNoteTime += lengthToTime(pastTicks);
     }
 
     this.lastNoteIx++;
-    const note = music.notes[this.lastNoteIx];
+    const note = this.expandedNotes[this.lastNoteIx];
     const idx = this.lastNoteIx;
 
     // Undefined (past end of array), grace notes (0 ticks), or rests — handle
@@ -160,8 +161,10 @@ export class NotePlayer {
 
     // Record timing for all non-grace notes (including rests) so the cursor
     // can determine the current note purely from audioCtx.currentTime.
+    // Use the original (pre-expansion) index so the cursor maps correctly
+    // back to music.notes on repeated passes.
     this.noteTimings.push({
-      noteIdx: idx,
+      noteIdx: this.expandedOriginalIndices[idx] ?? idx,
       time: this.lastNoteTime,
       endTime: this.lastNoteTime + lengthToTime(note.ticks()),
     });
@@ -170,16 +173,16 @@ export class NotePlayer {
 
     // Tie continuation: this note's sound was already scheduled as part of the
     // preceding tie-start note's extended duration — produce no additional sound.
-    if (this.isNoteTieContinuation(music, idx)) return;
+    if (this.isNoteTieContinuation(idx)) return;
 
     // For ties, play a single note for the total chained duration.
-    const effectiveTicks = this.getTieChainTicks(music, idx);
+    const effectiveTicks = this.getTieChainTicks(idx);
     const duration = lengthToTime(effectiveTicks);
 
     const attack = 0.04;
     const release = 0.03;
 
-    const { noAttack, noRelease } = this.getSlurContext(music, idx);
+    const { noAttack, noRelease } = this.getSlurContext(idx);
 
     // Per-note dynamics gain
     const noteGain = this.audioCtx.createGain();
@@ -237,13 +240,20 @@ export class NotePlayer {
     const endTime = this.audioCtx.currentTime + this.lookForward;
 
     if (music) {
-      if (this.lastNoteIx >= music.notes.length) {
+      // Expand repeats once at the start of playback.
+      if (this.lastNoteIx === -1) {
+        const expanded = expandRepeats(music);
+        this.expandedNotes = expanded.notes;
+        this.expandedCurves = expanded.curves;
+        this.expandedOriginalIndices = expanded.originalIndices;
+      }
+      if (this.lastNoteIx >= this.expandedNotes.length) {
         this.active = false;
         return;
       }
       while (this.lastNoteTime < endTime) {
-        this.enqueueNote(tempo, music);
-        if (this.lastNoteIx >= music.notes.length) {
+        this.enqueueNote(tempo, music.beatValue ?? 4);
+        if (this.lastNoteIx >= this.expandedNotes.length) {
           this.active = false;
           return;
         }
@@ -282,6 +292,9 @@ export class NotePlayer {
     this.lastNoteTime = this.audioCtx.currentTime;
     this.lastNoteIx = -1;
     this.noteTimings = [];
+    this.expandedNotes = [];
+    this.expandedCurves = [];
+    this.expandedOriginalIndices = [];
     this.active = true;
   }
 

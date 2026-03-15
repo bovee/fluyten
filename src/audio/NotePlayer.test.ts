@@ -10,6 +10,13 @@ describe('NotePlayer', () => {
     player = new NotePlayer();
   });
 
+  /** Populate the expanded note/curve arrays from a Music object so enqueueNote can be called directly. */
+  function setupExpanded(p: NotePlayer, music: Music) {
+    p.expandedNotes = [...music.notes];
+    p.expandedCurves = [...music.curves];
+    p.expandedOriginalIndices = music.notes.map((_, i) => i);
+  }
+
   afterEach(() => {
     if (player.active) player.stop();
   });
@@ -125,7 +132,8 @@ describe('NotePlayer', () => {
       const music = new Music();
       music.notes = [new Note(undefined, Duration.QUARTER, [])]; // rest
 
-      player.enqueueNote(120, music);
+      setupExpanded(player, music);
+      player.enqueueNote(120, 4);
 
       expect(createOscSpy).not.toHaveBeenCalled();
     });
@@ -144,7 +152,8 @@ describe('NotePlayer', () => {
       const music = new Music();
       music.notes = [new Note(69, Duration.QUARTER, ['pp'])]; // pp = 0.3
 
-      player.enqueueNote(120, music);
+      setupExpanded(player, music);
+      player.enqueueNote(120, 4);
 
       expect(noteGains[0].gain.value).toBe(0.3);
     });
@@ -163,7 +172,8 @@ describe('NotePlayer', () => {
       const music = new Music();
       music.notes = [new Note(69, Duration.QUARTER, [])];
 
-      player.enqueueNote(120, music);
+      setupExpanded(player, music);
+      player.enqueueNote(120, 4);
 
       expect(noteGains[0].gain.value).toBe(0.7);
     });
@@ -182,8 +192,9 @@ describe('NotePlayer', () => {
       ];
       music.curves = [[0, 1]]; // tie
 
-      player.enqueueNote(120, music); // note 0 — should create 3 oscillators
-      player.enqueueNote(120, music); // note 1 — tie continuation, no oscillators
+      setupExpanded(player, music);
+      player.enqueueNote(120, 4); // note 0 — should create 3 oscillators
+      player.enqueueNote(120, 4); // note 1 — tie continuation, no oscillators
 
       expect(createOscSpy).toHaveBeenCalledTimes(3); // 3 harmonics for note 0 only
     });
@@ -212,7 +223,8 @@ describe('NotePlayer', () => {
 
       // At 120 BPM, quarter = 0.5 s; two tied quarters → 1.0 s total
       const startTime = player.audioCtx!.currentTime;
-      player.enqueueNote(120, music);
+      setupExpanded(player, music);
+      player.enqueueNote(120, 4);
 
       expect(oscStops.every((t) => Math.abs(t - (startTime + 1.0)) < 0.001)).toBe(true);
     });
@@ -227,8 +239,9 @@ describe('NotePlayer', () => {
       ];
       music.curves = [[0, 1]];
 
-      player.enqueueNote(120, music);
-      player.enqueueNote(120, music);
+      setupExpanded(player, music);
+      player.enqueueNote(120, 4);
+      player.enqueueNote(120, 4);
 
       expect(player.noteTimings).toHaveLength(2);
       expect(player.noteTimings[1].noteIdx).toBe(1);
@@ -247,12 +260,56 @@ describe('NotePlayer', () => {
       expect(music.curves[0]).toEqual([0, 1]);
       expect(music.notes[0].pitches).toEqual(music.notes[1].pitches);
 
-      player.enqueueNote(120, music);
-      player.enqueueNote(120, music);
+      setupExpanded(player, music);
+      player.enqueueNote(120, 4);
+      player.enqueueNote(120, 4);
 
       // Only 3 oscillators (1 pitch × 3 harmonics), not 6
       expect(createOscSpy).toHaveBeenCalledTimes(3);
     });
+
+  describe('repeat expansion in playback', () => {
+    it('scheduleNotes expands repeats and uses original indices', () => {
+      player.start();
+      player.lookForward = 3.0; // wide enough window to schedule all 4 notes
+      const music = new Music();
+      music.notes = [
+        new Note(60, Duration.QUARTER),
+        new Note(62, Duration.QUARTER),
+      ];
+      music.bars = [
+        { afterNoteNum: -1, type: 'begin_repeat' },
+        { afterNoteNum: 1, type: 'end_repeat' },
+      ];
+
+      player.scheduleNotes(120, music);
+
+      expect(player.expandedNotes).toHaveLength(4);
+      expect(player.noteTimings.map((t) => t.noteIdx)).toEqual([0, 1, 0, 1]);
+    });
+
+    it('ties inside repeated section work on both passes', () => {
+      player.start();
+      const createOscSpy = vi.spyOn(player.audioCtx!, 'createOscillator');
+
+      const music = new Music();
+      // Two C4s tied inside a repeat
+      music.notes = [
+        new Note(60, Duration.QUARTER),
+        new Note(60, Duration.QUARTER),
+      ];
+      music.curves = [[0, 1]];
+      music.bars = [
+        { afterNoteNum: -1, type: 'begin_repeat' },
+        { afterNoteNum: 1, type: 'end_repeat' },
+      ];
+
+      player.scheduleNotes(120, music);
+
+      // 4 expanded notes, but tied pairs → 3 harmonics per attack × 2 passes = 6
+      expect(createOscSpy).toHaveBeenCalledTimes(6);
+    });
+  });
 
   describe('slurs', () => {
     it('produces oscillators for every note inside a slur', () => {
@@ -267,8 +324,9 @@ describe('NotePlayer', () => {
       ];
       music.curves = [[0, 1]]; // slur (pitches differ)
 
-      player.enqueueNote(120, music);
-      player.enqueueNote(120, music);
+      setupExpanded(player, music);
+      player.enqueueNote(120, 4);
+      player.enqueueNote(120, 4);
 
       // Both notes should produce oscillators: 3 harmonics × 2 notes = 6
       expect(createOscSpy).toHaveBeenCalledTimes(6);

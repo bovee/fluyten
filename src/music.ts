@@ -457,15 +457,72 @@ export class Music {
   }
 }
 
-// let convertedDynamicToVolume = {
-//   'pppp': 20,
-//   'ppp': 25,
-//   'pp': 35,
-//   'p': 45,
-//   'mp': 60,
-//   'mf': 70,
-//   'f': 80,
-//   'ff': 90,
-//   'fff': 95,
-//   'ffff': 100,
-// }[d[0]];
+/**
+ * Expands repeat bar lines (|: :|  ::) into a flat note/curve sequence
+ * so consumers (player, pitch tracker) can walk it linearly without
+ * knowing about repeats.
+ *
+ * Curves (ties/slurs) that fall entirely within a repeated segment are
+ * duplicated with adjusted indices.
+ *
+ * Limitation: nested repeats (e.g. |: A |: B :| C :|) are not supported.
+ * This matches ABC standard practice where nested repeats are poorly defined.
+ */
+export function expandRepeats(music: Music): { notes: Note[]; curves: number[][]; originalIndices: number[] } {
+  if (music.bars.length === 0) {
+    return {
+      notes: [...music.notes],
+      curves: [...music.curves],
+      originalIndices: music.notes.map((_, i) => i),
+    };
+  }
+
+  const resultNotes: Note[] = [];
+  const resultCurves: number[][] = [];
+  const resultOriginalIndices: number[] = [];
+
+  const addSegment = (startIdx: number, endIdx: number) => {
+    const clampedEnd = Math.min(endIdx, music.notes.length - 1);
+    if (startIdx > clampedEnd) return;
+    const offset = resultNotes.length - startIdx;
+    for (let i = startIdx; i <= clampedEnd; i++) {
+      resultNotes.push(music.notes[i]);
+      resultOriginalIndices.push(i);
+    }
+    for (const [s, e] of music.curves) {
+      if (s >= startIdx && e <= clampedEnd) {
+        resultCurves.push([s + offset, e + offset]);
+      }
+    }
+  };
+
+  let repeatStartNoteIdx = 0;
+  let prevEndIdx = -1;
+
+  for (const bar of music.bars) {
+    if (bar.afterNoteNum === undefined || bar.afterNoteNum < 0) {
+      if (bar.type === 'begin_repeat' || bar.type === 'begin_end_repeat') {
+        repeatStartNoteIdx = 0;
+      }
+      continue;
+    }
+
+    const segEnd = bar.afterNoteNum;
+    addSegment(prevEndIdx + 1, segEnd);
+
+    if (bar.type === 'end_repeat' || bar.type === 'begin_end_repeat') {
+      addSegment(repeatStartNoteIdx, segEnd);
+    }
+
+    if (bar.type === 'begin_repeat' || bar.type === 'begin_end_repeat') {
+      repeatStartNoteIdx = segEnd + 1;
+    }
+
+    prevEndIdx = segEnd;
+  }
+
+  // Notes after the last bar line
+  addSegment(prevEndIdx + 1, music.notes.length - 1);
+
+  return { notes: resultNotes, curves: resultCurves, originalIndices: resultOriginalIndices };
+}
