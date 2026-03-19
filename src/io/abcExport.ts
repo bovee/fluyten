@@ -119,13 +119,14 @@ function noteToAbcPitch(
   return `[${inner}]`;
 }
 
-// Duration expressed as sixteenths of a whole note
+// Duration expressed as thirty-seconds of a whole note (must match DURATION_SIXTEENTHS
+// in abcImport.ts so that exported duration ratios round-trip correctly).
 const NOTE_SIXTEENTHS: Partial<Record<Duration, number>> = {
-  [Duration.WHOLE]: 16,
-  [Duration.HALF]: 8,
-  [Duration.QUARTER]: 4,
-  [Duration.EIGHTH]: 2,
-  [Duration.SIXTEENTH]: 1,
+  [Duration.WHOLE]: 32,
+  [Duration.HALF]: 16,
+  [Duration.QUARTER]: 8,
+  [Duration.EIGHTH]: 4,
+  [Duration.SIXTEENTH]: 2,
 };
 
 function gcd(a: number, b: number): number {
@@ -139,11 +140,18 @@ export function durationToAbc(
 ): string {
   const defaultSixteenths = NOTE_SIXTEENTHS[defaultDuration];
   const noteSixteenths = NOTE_SIXTEENTHS[duration];
-  if (defaultSixteenths === undefined || noteSixteenths === undefined) return '';
+  if (defaultSixteenths === undefined || noteSixteenths === undefined)
+    return '';
 
   // dotted = multiply by 3/2
-  const num = modifier === DurationModifier.DOTTED ? noteSixteenths * 3 : noteSixteenths * 2;
-  const den = modifier === DurationModifier.DOTTED ? defaultSixteenths * 2 : defaultSixteenths * 2;
+  const num =
+    modifier === DurationModifier.DOTTED
+      ? noteSixteenths * 3
+      : noteSixteenths * 2;
+  const den =
+    modifier === DurationModifier.DOTTED
+      ? defaultSixteenths * 2
+      : defaultSixteenths * 2;
   const g = gcd(num, den);
   const rNum = num / g;
   const rDen = den / g;
@@ -206,9 +214,27 @@ function scoreToAbc(
     }
   }
 
-  // Build curve groups: set of slur start/end pairs
-  const slurStartAt = new Set(music.curves.map(([s]) => s));
-  const slurEndAt = new Set(music.curves.map(([, e]) => e));
+  // Build curve groups: ties use `-` notation, slurs use `(...)`
+  const tieAfterAt = new Set<number>();
+  const slurStartAt = new Set<number>();
+  const slurEndAt = new Set<number>();
+
+  for (const [start, end] of music.curves) {
+    const sNote = music.notes[start];
+    const eNote = music.notes[end];
+    const samePitch =
+      sNote &&
+      eNote &&
+      sNote.pitches.length === eNote.pitches.length &&
+      sNote.pitches.every((p, i) => p === eNote.pitches[i]);
+    if (samePitch) {
+      // Tie: add `-` after each note from start up to (not including) end
+      for (let i = start; i < end; i++) tieAfterAt.add(i);
+    } else {
+      slurStartAt.add(start);
+      slurEndAt.add(end);
+    }
+  }
 
   const noteParts: string[] = [];
   for (let noteIx = 0; noteIx < music.notes.length; noteIx++) {
@@ -227,10 +253,17 @@ function scoreToAbc(
     part += noteToAbcPitch(note, keyAdjustment);
 
     // Duration
-    part += durationToAbc(note.duration, note.durationModifier, defaultDuration);
+    part += durationToAbc(
+      note.duration,
+      note.durationModifier,
+      defaultDuration
+    );
 
-    // Slur close
+    // Slur close (before tie, per ABC convention: `a)-`)
     if (slurEndAt.has(noteIx)) part += ')';
+
+    // Tie
+    if (tieAfterAt.has(noteIx)) part += '-';
 
     noteParts.push(part);
   }

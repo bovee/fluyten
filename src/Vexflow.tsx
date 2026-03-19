@@ -212,7 +212,10 @@ function toStavenotes(
     ) {
       if (pendingGraceNotes.length === 0)
         pendingGraceSlash = note.duration === Duration.GRACE_SLASH;
-      const [pitches] = note.toVexflowPitchAndDuration(useSharpSpelling, displayPitchOffset);
+      const [pitches] = note.toVexflowPitchAndDuration(
+        useSharpSpelling,
+        displayPitchOffset
+      );
       const graceNote = new GraceNote({
         keys: [pitches[0]],
         duration: '8',
@@ -224,8 +227,10 @@ function toStavenotes(
       continue;
     }
 
-    const [pitches, duration] =
-      note.toVexflowPitchAndDuration(useSharpSpelling, displayPitchOffset);
+    const [pitches, duration] = note.toVexflowPitchAndDuration(
+      useSharpSpelling,
+      displayPitchOffset
+    );
     const staveNote = new StaveNote({ keys: pitches, duration, clef });
 
     if (pendingGraceNotes.length > 0) {
@@ -433,7 +438,11 @@ export function Vexflow(props: {
           extraHeightOffset + barHeight * lineIx,
           fullStaveWidth
         );
-        stave.addClef(vexClef, 'default', music.clef === 'treble8va' ? '8va' : undefined);
+        stave.addClef(
+          vexClef,
+          'default',
+          music.clef === 'treble8va' ? '8va' : undefined
+        );
         if (music.keySignature && music.keySignature !== 'C') {
           new KeySignature(music.keySignature).addToStave(stave);
         }
@@ -481,7 +490,11 @@ export function Vexflow(props: {
           staveWidth
         );
         if (barIx % barsPerLine === 0) {
-          stave.addClef(vexClef, 'default', music.clef === 'treble8va' ? '8va' : undefined);
+          stave.addClef(
+            vexClef,
+            'default',
+            music.clef === 'treble8va' ? '8va' : undefined
+          );
           if (music.keySignature && music.keySignature !== 'C') {
             new KeySignature(music.keySignature).addToStave(stave);
           }
@@ -700,7 +713,12 @@ export function Vexflow(props: {
   return (
     <>
       <figure role="img" aria-label={figureLabel} style={{ margin: 0 }}>
-        <div ref={vexDiv} className="vexflow-container" dir="ltr" aria-hidden="true" />
+        <div
+          ref={vexDiv}
+          className="vexflow-container"
+          dir="ltr"
+          aria-hidden="true"
+        />
       </figure>
       <Popover
         open={Boolean(popoverAnchor)}

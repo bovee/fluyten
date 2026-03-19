@@ -30,7 +30,8 @@ function scaleDuration(
 ): [Duration, DurationModifier] {
   const base = DURATION_SIXTEENTHS[duration];
   if (base === undefined) return [duration, modifier]; // grace notes — leave unchanged
-  const sixteenths = modifier === DurationModifier.DOTTED ? (base * 3) / 2 : base;
+  const sixteenths =
+    modifier === DurationModifier.DOTTED ? (base * 3) / 2 : base;
   const scaled = sixteenths * factor;
   return SIXTEENTHS_TO_DURATION.get(scaled) ?? [duration, modifier];
 }
@@ -136,7 +137,10 @@ export function transformFragment(
   const transform = TRANSFORMATIONS.find((t) => t.id === transformId);
   if (!transform) throw new Error(`Unknown transformation: ${transformId}`);
 
-  const { music, keySignature, defaultDuration } = parseFragment(fragment, fullAbc);
+  const { music, keySignature, defaultDuration } = parseFragment(
+    fragment,
+    fullAbc
+  );
   transform.apply(music);
   return notesToAbc(music, keySignature, defaultDuration);
 }

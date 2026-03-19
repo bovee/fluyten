@@ -56,7 +56,8 @@ function App() {
       ? (abc: string) => {
           updateSongAbc(bookId, song.id, abc);
           const titleMatch = abc.match(/^T:\s*(.+)/m);
-          if (titleMatch) renameSongInBook(bookId, song.id, titleMatch[1].trim());
+          if (titleMatch)
+            renameSongInBook(bookId, song.id, titleMatch[1].trim());
         }
       : undefined;
     const onTempoChange = bookId

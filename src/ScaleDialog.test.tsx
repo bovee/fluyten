@@ -32,9 +32,7 @@ describe('ScaleDialog', () => {
   it('default selected key is C', () => {
     renderDialog();
     const radios = screen.getAllByRole('radio');
-    const checked = radios.filter(
-      (r) => (r as HTMLInputElement).checked
-    );
+    const checked = radios.filter((r) => (r as HTMLInputElement).checked);
     // C key + 'traditional' range + 'both' direction = 3 checked radios
     expect(checked.length).toBe(3);
   });
@@ -44,7 +42,9 @@ describe('ScaleDialog', () => {
     const radios = screen.getAllByRole('radio');
     // Find an unchecked key radio (skip the range/direction radios at the start)
     const unchecked = radios.find(
-      (r) => !(r as HTMLInputElement).checked && (r as HTMLInputElement).value.length <= 3
+      (r) =>
+        !(r as HTMLInputElement).checked &&
+        (r as HTMLInputElement).value.length <= 3
     )!;
     fireEvent.click(unchecked);
     expect((unchecked as HTMLInputElement).checked).toBe(true);

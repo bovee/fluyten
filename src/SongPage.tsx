@@ -47,13 +47,18 @@ function useIntervalRef() {
 }
 
 function usePitchDetection(
-  expandedTrackingRef: React.MutableRefObject<{ notes: { pitches: number[] }[]; originalIndices: number[]; idx: number }>,
+  expandedTrackingRef: React.MutableRefObject<{
+    notes: { pitches: number[] }[];
+    originalIndices: number[];
+    idx: number;
+  }>,
   setPlayedNotes: React.Dispatch<React.SetStateAction<number>>,
-  setStatusMessage: (msg: string) => void,
+  setStatusMessage: (msg: string) => void
 ) {
   const { t } = useTranslation();
   const [detectedPitch, setDetectedPitch] = useState<number | null>(null);
   const freqTrackerInterval = useIntervalRef();
+  /* eslint-disable react-hooks/refs */
   const freqTrackerRef = useRef<FrequencyTracker>(
     new FrequencyTracker(
       (pitch: number) => {
@@ -74,6 +79,7 @@ function usePitchDetection(
       () => setDetectedPitch(null)
     )
   );
+  /* eslint-enable react-hooks/refs */
 
   const startRecording = async () => {
     if (freqTrackerInterval.isActive) {
@@ -103,14 +109,18 @@ function usePitchDetection(
 
   useEffect(() => () => freqTrackerInterval.clear(), []);
 
-  return { detectedPitch, isRecording: freqTrackerInterval.isActive, startRecording };
+  return {
+    detectedPitch,
+    isRecording: freqTrackerInterval.isActive,
+    startRecording,
+  };
 }
 
 function useAudioPlayback(
   musicRef: React.MutableRefObject<Music>,
   tempoRef: React.MutableRefObject<number>,
   setPlayedNotes: React.Dispatch<React.SetStateAction<number>>,
-  setStatusMessage: (msg: string) => void,
+  setStatusMessage: (msg: string) => void
 ) {
   const { t } = useTranslation();
   const musicPlayerRef = useRef<NotePlayer>(new NotePlayer());
@@ -166,7 +176,7 @@ function useAudioPlayback(
 
 function useMetronome(
   tempoRef: React.MutableRefObject<number>,
-  setStatusMessage: (msg: string) => void,
+  setStatusMessage: (msg: string) => void
 ) {
   const { t } = useTranslation();
   const metronomeRef = useRef<NotePlayer>(new NotePlayer());
@@ -225,20 +235,33 @@ export function SongPage({
     }
   });
   const [selectedVoiceIdx, setSelectedVoiceIdx] = useState(0);
-  const music = voices[Math.min(selectedVoiceIdx, voices.length - 1)]?.music ?? new Music();
+  const music =
+    voices[Math.min(selectedVoiceIdx, voices.length - 1)]?.music ?? new Music();
   const [playedNotes, setPlayedNotes] = useState(0);
   const [statusMessage, setStatusMessage] = useState('');
   const [tempo, setTempo] = useState(song.tempo ?? 120);
   const tempoRef = useRef(tempo);
-  useEffect(() => { tempoRef.current = tempo; }, [tempo]);
+  useEffect(() => {
+    tempoRef.current = tempo;
+  }, [tempo]);
 
   const musicRef = useRef<Music>(music);
-  useEffect(() => { musicRef.current = music; }, [music]);
+  useEffect(() => {
+    musicRef.current = music;
+  }, [music]);
 
-  const expandedTrackingRef = useRef({ notes: [] as { pitches: number[] }[], originalIndices: [] as number[], idx: 0 });
+  const expandedTrackingRef = useRef({
+    notes: [] as { pitches: number[] }[],
+    originalIndices: [] as number[],
+    idx: 0,
+  });
   useEffect(() => {
     const expanded = expandRepeats(music);
-    expandedTrackingRef.current = { notes: expanded.notes, originalIndices: expanded.originalIndices, idx: 0 };
+    expandedTrackingRef.current = {
+      notes: expanded.notes,
+      originalIndices: expanded.originalIndices,
+      idx: 0,
+    };
   }, [music]);
 
   const handleTempoChange = (newTempo: number) => {
@@ -248,12 +271,20 @@ export function SongPage({
   };
 
   const { detectedPitch, isRecording, startRecording } = usePitchDetection(
-    expandedTrackingRef, setPlayedNotes, setStatusMessage
+    expandedTrackingRef,
+    setPlayedNotes,
+    setStatusMessage
   );
   const { isPlaying, startPlaying, cursor } = useAudioPlayback(
-    musicRef, tempoRef, setPlayedNotes, setStatusMessage
+    musicRef,
+    tempoRef,
+    setPlayedNotes,
+    setStatusMessage
   );
-  const { isMetronomeActive, startMetronome } = useMetronome(tempoRef, setStatusMessage);
+  const { isMetronomeActive, startMetronome } = useMetronome(
+    tempoRef,
+    setStatusMessage
+  );
 
   useEffect(() => {
     try {
@@ -268,7 +299,8 @@ export function SongPage({
     }
   }, [abcMusic]);
 
-  const detectedNoteName = detectedPitch !== null ? NOTE_NAMES[detectedPitch % 12] : null;
+  const detectedNoteName =
+    detectedPitch !== null ? NOTE_NAMES[detectedPitch % 12] : null;
 
   return (
     <>
@@ -379,7 +411,9 @@ export function SongPage({
           onClick={startMetronome}
           slotProps={{
             tooltip: { title: t('metronome') },
-            fab: { sx: { bgcolor: isMetronomeActive ? 'primary.main' : 'default' } },
+            fab: {
+              sx: { bgcolor: isMetronomeActive ? 'primary.main' : 'default' },
+            },
           }}
         />
       </SpeedDial>

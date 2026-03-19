@@ -7,6 +7,11 @@ export const Hole = {
   Open: 0,
   Half: 1,
   Closed: 2,
+  // Trill holes animate between two states
+  TrilledClosedOpen: 3, // alternates: Closed ↔ Open
+  TrilledHalfOpen: 4, // alternates: Half ↔ Open
+  TrilledOpenClosed: 5, // alternates: Open ↔ Closed
+  TrilledClosedHalf: 6, // alternates: Closed ↔ Half
 } as const;
 
 export type Hole = (typeof Hole)[keyof typeof Hole];
@@ -441,6 +446,37 @@ const GERMAN_FINGERINGS: { [offset: number]: Hole[][] } = {
   ],
 };
 
+// Fingerings for trilled notes. Use Hole.TrilledClosed, Hole.TrilledHalf,
+// and Hole.TrilledOpen to mark holes that animate during the trill.
+// Keys are pitch offsets identical to FINGERINGS.
+// eslint-disable-next-line react-refresh/only-export-components
+export const TRILLED_FINGERINGS: { [offset: number]: Hole[][] } = {
+  1: [
+    [
+      Hole.Closed,
+      Hole.Closed,
+      Hole.Closed,
+      Hole.Closed,
+      Hole.Closed,
+      Hole.Closed,
+      Hole.Closed,
+      Hole.TrilledClosed,
+    ],
+  ],
+  2: [
+    [
+      Hole.Closed,
+      Hole.Closed,
+      Hole.Closed,
+      Hole.Closed,
+      Hole.Closed,
+      Hole.Closed,
+      Hole.Closed,
+      Hole.Half,
+    ],
+  ],
+};
+
 const CIRCLE_RADIUS = 8;
 const CIRCLE_SPACING = 22;
 const STROKE_WIDTH = 1.5;
@@ -464,8 +500,8 @@ const EMPTY_DIAGRAM = (
 );
 
 const INSTRUMENT_BASE_PITCH: { [key: string]: number } = {
-  SOPRANINO: 64,
-  SOPRANO: 59,
+  SOPRANINO: 76,
+  SOPRANO: 71,
   ALTO: 64,
   TENOR: 59,
   BASS: 40,
@@ -476,9 +512,11 @@ const INSTRUMENT_BASE_PITCH: { [key: string]: number } = {
 export function lookupFingerings(
   pitch: number,
   instrumentType: string,
-  german: boolean
+  german: boolean,
+  trill = false
 ): Hole[][] | undefined {
   const offset = pitch - (INSTRUMENT_BASE_PITCH[instrumentType] ?? 0);
+  if (trill) return TRILLED_FINGERINGS[offset] || FINGERINGS[offset];
   if (german && offset in GERMAN_FINGERINGS) {
     return GERMAN_FINGERINGS[offset];
   }
@@ -493,17 +531,78 @@ export function FingeringDiagram({
   forceGermanSoprano?: boolean;
 }) {
   const { t } = useTranslation();
+
   if (!note) return EMPTY_DIAGRAM;
   const { instrumentType: storeType, isGerman: storeGerman } =
     useStore.getState();
   const instrumentType = forceGermanSoprano ? 'SOPRANO' : storeType;
   const isGerman = forceGermanSoprano ? true : storeGerman;
-  const offset =
-    (note.pitches[0] ?? 0) - (INSTRUMENT_BASE_PITCH[instrumentType] ?? 0);
-  const fingerings = isGerman
-    ? (GERMAN_FINGERINGS[offset] ?? FINGERINGS[offset])
-    : FINGERINGS[offset];
+  const hasTrill = note.decorations.includes('trill');
+  const fingerings = lookupFingerings(
+    note.pitches[0] ?? 0,
+    instrumentType,
+    isGerman,
+    hasTrill
+  );
   if (!fingerings) return EMPTY_DIAGRAM;
+
+  const TRILL_HOLES = new Set([
+    Hole.TrilledClosedOpen,
+    Hole.TrilledHalfOpen,
+    Hole.TrilledOpenClosed,
+    Hole.TrilledClosedHalf,
+  ]);
+
+  function trillStates(
+    hole: Hole
+  ): [
+    Hole.Open | Hole.Half | Hole.Closed,
+    Hole.Open | Hole.Half | Hole.Closed,
+  ] {
+    if (hole === Hole.TrilledClosedOpen) return [Hole.Closed, Hole.Open];
+    if (hole === Hole.TrilledHalfOpen) return [Hole.Half, Hole.Open];
+    if (hole === Hole.TrilledClosedHalf) return [Hole.Closed, Hole.Half];
+    return [Hole.Open, Hole.Closed]; // TrilledOpen
+  }
+
+  function renderTrillHole(
+    hole: Hole,
+    cx: number,
+    cy: number,
+    key: string,
+    dim: boolean
+  ) {
+    const [stateA, stateB] = trillStates(hole);
+    return (
+      <g key={key}>
+        <g className="trill-primary">
+          {renderHole(stateA, cx, cy, `${key}-a`, dim)}
+        </g>
+        <g className="trill-secondary">
+          {renderHole(stateB, cx, cy, `${key}-b`, dim)}
+        </g>
+      </g>
+    );
+  }
+
+  function renderTrillDoubleHole(
+    hole: Hole,
+    cy: number,
+    key: string,
+    dim: boolean
+  ) {
+    const [stateA, stateB] = trillStates(hole);
+    return (
+      <g key={key}>
+        <g className="trill-primary">
+          {renderDoubleHole(stateA, cy, `${key}-a`, dim)}
+        </g>
+        <g className="trill-secondary">
+          {renderDoubleHole(stateB, cy, `${key}-b`, dim)}
+        </g>
+      </g>
+    );
+  }
 
   function renderHole(
     hole: Hole,
@@ -512,6 +611,7 @@ export function FingeringDiagram({
     key: string,
     dim: boolean
   ) {
+    if (TRILL_HOLES.has(hole)) return renderTrillHole(hole, cx, cy, key, dim);
     if (hole === Hole.Closed) {
       return (
         <circle
@@ -571,6 +671,7 @@ export function FingeringDiagram({
   }
 
   function renderDoubleHole(hole: Hole, cy: number, key: string, dim: boolean) {
+    if (TRILL_HOLES.has(hole)) return renderTrillDoubleHole(hole, cy, key, dim);
     const color = dim ? 'grey' : 'black';
     const leftFill =
       hole === Hole.Closed || hole === Hole.Half ? color : 'white';

@@ -1,5 +1,11 @@
 import { describe, it, expect } from 'vitest';
-import { Note, Music, Duration, DurationModifier, expandRepeats } from './music';
+import {
+  Note,
+  Music,
+  Duration,
+  DurationModifier,
+  expandRepeats,
+} from './music';
 import { fromAbc } from './io/abcImport';
 
 describe('Note', () => {
@@ -595,7 +601,7 @@ describe('Music', () => {
       // tie between notes[1] and notes[2]
       expect(music.curves).toContainEqual([1, 2]);
       // bar after note[1] (index 1)
-      expect(music.bars.some(b => b.afterNoteNum === 1)).toBe(true);
+      expect(music.bars.some((b) => b.afterNoteNum === 1)).toBe(true);
     });
 
     it('merges tied same-pitch notes whose combined duration is standard', () => {
@@ -623,7 +629,10 @@ describe('Music', () => {
 describe('expandRepeats', () => {
   it('no bars → identity', () => {
     const music = new Music();
-    music.notes = [new Note(60, Duration.QUARTER), new Note(62, Duration.QUARTER)];
+    music.notes = [
+      new Note(60, Duration.QUARTER),
+      new Note(62, Duration.QUARTER),
+    ];
     music.curves = [[0, 1]];
     music.bars = [];
 
@@ -696,9 +705,7 @@ describe('expandRepeats', () => {
       new Note(60, Duration.QUARTER),
       new Note(62, Duration.QUARTER),
     ];
-    music.bars = [
-      { afterNoteNum: 1, type: 'end_repeat' },
-    ];
+    music.bars = [{ afterNoteNum: 1, type: 'end_repeat' }];
 
     const result = expandRepeats(music);
 

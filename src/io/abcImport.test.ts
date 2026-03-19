@@ -1,6 +1,7 @@
 import { describe, it, expect } from 'vitest';
 import { fromAbc, splitTunes, voicesFromAbc } from './abcImport';
-import { Duration, DurationModifier } from '../music';
+import { Duration, DurationModifier, Music, Note } from '../music';
+import { toAbc } from './abcExport';
 
 describe('fromAbc', () => {
   describe('header parsing', () => {
@@ -522,6 +523,44 @@ describe('fromAbc', () => {
       const voices = voicesFromAbc(abc);
       expect(voices[0].music.clef).toBe('treble');
       expect(voices[1].music.clef).toBe('bass');
+    });
+
+    it('does not shift pitches when voice clef=treble and defaultClef is treble8va', () => {
+      const abc = `T:Test\nM:4/4\nL:1/4\nV:1 clef=treble\nK:C\n[V:1] C D E F |`;
+      const voicesDefault = voicesFromAbc(abc);
+      const voicesWithDefault = voicesFromAbc(abc, 'treble8va');
+      // Pitches should be the same regardless of defaultClef when voice has explicit clef=treble
+      expect(voicesWithDefault[0].music.clef).toBe('treble');
+      expect(voicesWithDefault[0].music.notes.map((n) => n.pitches)).toEqual(
+        voicesDefault[0].music.notes.map((n) => n.pitches)
+      );
+    });
+  });
+
+  describe('round-trip tests', () => {
+    it('dotted sixteenth round-trips through ABC export and re-import', () => {
+      // Baroque music (e.g. Lombard rhythm) uses dotted-sixteenth + thirty-second patterns.
+      // The ABC for a dotted-sixteenth with default L:1/8 is "A3/4" (3/4 of an eighth).
+      // This regresses a bug where 3/4 * 2 = 1.5 thirty-seconds had no map entry and threw.
+      const music = new Music();
+      music.keySignature = 'C';
+      music.beatsPerBar = 4;
+      music.beatValue = 4;
+      music.notes.push(
+        new Note(69, Duration.SIXTEENTH, [], undefined, DurationModifier.DOTTED)
+      );
+      music.notes.push(
+        new Note(69, Duration.EIGHTH, [], undefined, DurationModifier.NONE)
+      );
+      music.bars.push({ afterNoteNum: 1, type: 'standard' });
+
+      const abc = toAbc(music);
+      const reimported = fromAbc(abc);
+
+      expect(reimported.notes[0].duration).toBe(Duration.SIXTEENTH);
+      expect(reimported.notes[0].durationModifier).toBe(
+        DurationModifier.DOTTED
+      );
     });
   });
 

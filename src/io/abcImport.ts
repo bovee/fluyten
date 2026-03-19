@@ -11,8 +11,11 @@ import {
 import { TIME_SIGNATURES } from '../constants';
 import { type RecorderType } from '../instrument';
 
-export function defaultClefForInstrument(instrumentType: RecorderType): Music['clef'] {
-  if (instrumentType === 'SOPRANO' || instrumentType === 'SOPRANINO') return 'treble8va';
+export function defaultClefForInstrument(
+  instrumentType: RecorderType
+): Music['clef'] {
+  if (instrumentType === 'SOPRANO' || instrumentType === 'SOPRANINO')
+    return 'treble8va';
   if (instrumentType === 'BASS') return 'bass';
   return 'treble';
 }
@@ -31,28 +34,30 @@ export const BAR_MAPPINGS: { [key: string]: BarLineType } = {
 
 // ---- Duration helpers -------------------------------------------------------
 
-// Duration expressed as sixteenths of a whole note
+// Duration expressed as thirty-seconds of a whole note (2× finer than sixteenths
+// so that dotted-sixteenth = 3 thirty-seconds resolves to an integer map key).
 const DURATION_SIXTEENTHS: Record<Duration, number> = {
-  [Duration.WHOLE]: 16,
-  [Duration.HALF]: 8,
-  [Duration.QUARTER]: 4,
-  [Duration.EIGHTH]: 2,
-  [Duration.SIXTEENTH]: 1,
+  [Duration.WHOLE]: 32,
+  [Duration.HALF]: 16,
+  [Duration.QUARTER]: 8,
+  [Duration.EIGHTH]: 4,
+  [Duration.SIXTEENTH]: 2,
   [Duration.GRACE]: 0,
   [Duration.GRACE_SLASH]: 0,
 };
 
-// Maps sixteenth count → [Duration, DurationModifier]
+// Maps thirty-second count → [Duration, DurationModifier]
 const SIXTEENTHS_TO_DURATION = new Map<number, [Duration, DurationModifier]>([
-  [1, [Duration.SIXTEENTH, DurationModifier.NONE]],
-  [2, [Duration.EIGHTH, DurationModifier.NONE]],
-  [3, [Duration.EIGHTH, DurationModifier.DOTTED]],
-  [4, [Duration.QUARTER, DurationModifier.NONE]],
-  [6, [Duration.QUARTER, DurationModifier.DOTTED]],
-  [8, [Duration.HALF, DurationModifier.NONE]],
-  [12, [Duration.HALF, DurationModifier.DOTTED]],
-  [16, [Duration.WHOLE, DurationModifier.NONE]],
-  [24, [Duration.WHOLE, DurationModifier.DOTTED]],
+  [2, [Duration.SIXTEENTH, DurationModifier.NONE]],
+  [3, [Duration.SIXTEENTH, DurationModifier.DOTTED]],
+  [4, [Duration.EIGHTH, DurationModifier.NONE]],
+  [6, [Duration.EIGHTH, DurationModifier.DOTTED]],
+  [8, [Duration.QUARTER, DurationModifier.NONE]],
+  [12, [Duration.QUARTER, DurationModifier.DOTTED]],
+  [16, [Duration.HALF, DurationModifier.NONE]],
+  [24, [Duration.HALF, DurationModifier.DOTTED]],
+  [32, [Duration.WHOLE, DurationModifier.NONE]],
+  [48, [Duration.WHOLE, DurationModifier.DOTTED]],
 ]);
 
 function applyMultiplier(
@@ -473,7 +478,11 @@ export interface HeaderParseResult {
   isFreeTime: boolean;
 }
 
-export function parseHeaders(lines: string[], music: Music, defaultClef: Music['clef'] = 'treble'): HeaderParseResult {
+export function parseHeaders(
+  lines: string[],
+  music: Music,
+  defaultClef: Music['clef'] = 'treble'
+): HeaderParseResult {
   let defaultDuration: Duration = Duration.QUARTER;
   const keyAdjustment: { [n: string]: number } = {};
   const scoreLines: string[] = [];
@@ -548,7 +557,12 @@ export function parseHeaders(lines: string[], music: Music, defaultClef: Music['
     }
   }
 
-  return { defaultDuration, keyAdjustment, scoreText: scoreLines.join(''), isFreeTime };
+  return {
+    defaultDuration,
+    keyAdjustment,
+    scoreText: scoreLines.join(''),
+    isFreeTime,
+  };
 }
 
 // ---- Public API -------------------------------------------------------------
@@ -564,7 +578,10 @@ export interface VoiceInfo {
  * Returns one VoiceInfo per voice, each holding its own Music object.
  * If no V: fields are present, returns a single-element array from fromAbc().
  */
-export function voicesFromAbc(text: string, defaultClef: Music['clef'] = 'treble'): VoiceInfo[] {
+export function voicesFromAbc(
+  text: string,
+  defaultClef: Music['clef'] = 'treble'
+): VoiceInfo[] {
   // Strip comments (same preprocessing as fromAbc)
   const lines = text.split(/\r?\n/).map((l) => {
     if (l.startsWith('%%')) return l;
@@ -658,7 +675,7 @@ export function voicesFromAbc(text: string, defaultClef: Music['clef'] = 'treble
     if (segments.length === 0) continue;
     const voiceAbc = [...globalHeaderLines, segments.join(' ')].join('\n');
     try {
-      const music = fromAbc(voiceAbc, defaultClef);
+      const music = fromAbc(voiceAbc, clef ?? defaultClef);
       if (clef) music.clef = clef;
       result.push({ id, name, music });
     } catch {
@@ -696,18 +713,18 @@ export function splitTunes(text: string): string[] {
   return tunes.length > 0 ? tunes : [text];
 }
 
-export function fromAbc(text: string, defaultClef: Music['clef'] = 'treble'): Music {
+export function fromAbc(
+  text: string,
+  defaultClef: Music['clef'] = 'treble'
+): Music {
   const music = new Music();
   const lines = text.split(/\r?\n/).map((l) => {
     if (l.startsWith('%%')) return l; // stylesheet directives: keep as-is
     const commentIdx = l.indexOf('%');
     return commentIdx === -1 ? l : l.slice(0, commentIdx);
   });
-  const { defaultDuration, keyAdjustment, scoreText, isFreeTime } = parseHeaders(
-    lines,
-    music,
-    defaultClef
-  );
+  const { defaultDuration, keyAdjustment, scoreText, isFreeTime } =
+    parseHeaders(lines, music, defaultClef);
   const tokens = tokenize(scoreText);
   parseScore(tokens, music, defaultDuration, keyAdjustment, isFreeTime);
   if (music.clef === 'treble8va') {

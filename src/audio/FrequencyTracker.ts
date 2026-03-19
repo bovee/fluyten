@@ -35,12 +35,14 @@ export class FrequencyTracker {
   checkRawFrequency(instrumentType: RecorderType): RawFrequencyResult {
     if (!this.audioCtx || !this.analyser || !this.source) return null;
     const bufferSize = this.analyser.fftSize;
-    if (!this.samples) this.samples = new Float32Array(bufferSize) as Float32Array<ArrayBuffer>;
+    if (!this.samples)
+      this.samples = new Float32Array(bufferSize) as Float32Array<ArrayBuffer>;
     this.analyser.getFloatTimeDomainData(this.samples);
 
     // RMS silence gate
     let sumSq = 0;
-    for (let i = 0; i < bufferSize; i++) sumSq += this.samples[i] * this.samples[i];
+    for (let i = 0; i < bufferSize; i++)
+      sumSq += this.samples[i] * this.samples[i];
     const rms = Math.sqrt(sumSq / bufferSize);
     if (rms < FREQUENCY_TRACKER_CONSTANTS.MIN_RMS) return null;
 
@@ -98,7 +100,8 @@ export class FrequencyTracker {
     if (peaks.length === 0) return null;
 
     // Key maximum selection: first peak >= threshold * keyMax
-    const threshold = FREQUENCY_TRACKER_CONSTANTS.MPM_CLARITY_THRESHOLD * keyMax;
+    const threshold =
+      FREQUENCY_TRACKER_CONSTANTS.MPM_CLARITY_THRESHOLD * keyMax;
     const chosen = peaks.find((p) => p.value >= threshold);
     if (!chosen) return null;
 
@@ -140,7 +143,7 @@ export class FrequencyTracker {
       return;
     }
 
-    let note = freqToMidiPitch(result.frequency / tuning);
+    const note = freqToMidiPitch(result.frequency / tuning);
     if (note === this.currentNote) {
       return;
     } else if (this.currentNote !== 0) {

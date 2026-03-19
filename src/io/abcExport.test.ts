@@ -194,7 +194,10 @@ describe('toAbc', () => {
     it('emits begin_end_repeat as ::', () => {
       const music = new Music();
       music.keySignature = 'C';
-      music.notes = [new Note(60, Duration.QUARTER), new Note(62, Duration.QUARTER)];
+      music.notes = [
+        new Note(60, Duration.QUARTER),
+        new Note(62, Duration.QUARTER),
+      ];
       music.bars = [{ afterNoteNum: 0, type: 'begin_end_repeat' }];
       expect(toAbc(music)).toContain('::');
     });
@@ -271,6 +274,111 @@ describe('toAbc', () => {
       const abc = toAbc(music);
       expect(abc).toContain('(');
       expect(abc).toContain(')');
+    });
+  });
+
+  describe('ties', () => {
+    it('exports same-pitch curve as `-` not `(...)`', () => {
+      const music = new Music();
+      music.keySignature = 'C';
+      music.notes = [
+        new Note(64, Duration.QUARTER),
+        new Note(64, Duration.QUARTER),
+      ];
+      music.curves = [[0, 1]];
+      const abc = toAbc(music);
+      expect(abc).toContain('-');
+      expect(abc).not.toContain('(');
+      expect(abc).not.toContain(')');
+    });
+
+    it('exports different-pitch curve as `(...)` not `-`', () => {
+      const music = new Music();
+      music.keySignature = 'C';
+      music.notes = [
+        new Note(64, Duration.QUARTER),
+        new Note(62, Duration.QUARTER),
+      ];
+      music.curves = [[0, 1]];
+      const abc = toAbc(music);
+      expect(abc).toContain('(');
+      expect(abc).toContain(')');
+      expect(abc).not.toContain('-');
+    });
+
+    it('exports chain tie [0,2] as n-n-n', () => {
+      const music = new Music();
+      music.keySignature = 'C';
+      music.notes = [
+        new Note(64, Duration.QUARTER),
+        new Note(64, Duration.QUARTER),
+        new Note(64, Duration.QUARTER),
+      ];
+      music.curves = [[0, 2]];
+      const abc = toAbc(music);
+      const scoreLine = abc.split('\n').at(-1)!;
+      // Both notes at index 0 and 1 should have `-` after them
+      expect(scoreLine).toMatch(/E2-.*E2-.*E2/);
+    });
+
+    it('exports slur ending on tied note as `...)-` not `...-)`', () => {
+      // (c b a)-a : slur [0,2] over different pitches, tie [2,3] same pitch
+      const music = new Music();
+      music.keySignature = 'C';
+      // pitches: c5=72, b4=71, a4=69
+      music.notes = [
+        new Note(72, Duration.QUARTER),
+        new Note(71, Duration.QUARTER),
+        new Note(69, Duration.QUARTER),
+        new Note(69, Duration.QUARTER),
+      ];
+      music.curves = [
+        [0, 2], // slur c→a (different pitches)
+        [2, 3], // tie a→a (same pitch)
+      ];
+      const abc = toAbc(music);
+      const scoreLine = abc.split('\n').at(-1)!;
+      // slur close `)` must appear before tie `-` on the same note
+      expect(scoreLine).toContain(')-');
+      expect(scoreLine).not.toContain('-(');
+    });
+
+    it('exports tie into slur as `D-(D...)`', () => {
+      // D-(D E F) : tie [0,1] same pitch, slur [1,3] different pitches
+      const music = new Music();
+      music.keySignature = 'C';
+      // pitches: D4=62, E4=64, F4=65
+      music.notes = [
+        new Note(62, Duration.QUARTER),
+        new Note(62, Duration.QUARTER),
+        new Note(64, Duration.QUARTER),
+        new Note(65, Duration.QUARTER),
+      ];
+      music.curves = [
+        [0, 1], // tie D→D (same pitch)
+        [1, 3], // slur D→F (different pitches)
+      ];
+      const abc = toAbc(music);
+      const scoreLine = abc.split('\n').at(-1)!;
+      // tie `-` after first D, then `(` opens the slur before second D
+      // (there may be a space between them since the notes aren't beamed)
+      expect(scoreLine).toMatch(/-[^)]*\(/);
+      expect(scoreLine).not.toContain(')-');
+    });
+
+    it('round-trips ties: export then re-import preserves tie arcs', () => {
+      const music = new Music();
+      music.keySignature = 'C';
+      music.notes = [
+        new Note(64, Duration.QUARTER),
+        new Note(64, Duration.QUARTER),
+      ];
+      music.curves = [[0, 1]];
+      const abc = toAbc(music);
+      const music2 = fromAbc(abc);
+      expect(music2.curves.length).toBe(1);
+      expect(music2.curves[0][0]).toBe(0);
+      expect(music2.curves[0][1]).toBe(1);
     });
   });
 

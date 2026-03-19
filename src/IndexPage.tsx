@@ -29,6 +29,8 @@ import FileDownload from '@mui/icons-material/FileDownload';
 import Settings from '@mui/icons-material/Settings';
 
 import { parseAbcFile } from './io/abcImport';
+import { toAbc } from './io/abcExport';
+import { fromMusicXml, extractMxl } from './io/musicXmlImport';
 import { ScaleDialog } from './ScaleDialog';
 import { SettingsDialog } from './SettingsDialog';
 import { type Song, BUILT_IN_BOOKS } from './songs';
@@ -47,8 +49,13 @@ export function IndexPage({
 }: IndexPageProps) {
   const { t } = useTranslation();
   const [settingsOpen, setSettingsOpen] = useState(false);
-  const [scaleDialogBookId, setScaleDialogBookId] = useState<string | null>(null);
-  const [addSongMenu, setAddSongMenu] = useState<{ anchor: HTMLElement; bookId: string } | null>(null);
+  const [scaleDialogBookId, setScaleDialogBookId] = useState<string | null>(
+    null
+  );
+  const [addSongMenu, setAddSongMenu] = useState<{
+    anchor: HTMLElement;
+    bookId: string;
+  } | null>(null);
   const [newBookDialogOpen, setNewBookDialogOpen] = useState(false);
   const [newBookTitle, setNewBookTitle] = useState('');
   const [renameBookId, setRenameBookId] = useState<string | null>(null);
@@ -67,6 +74,10 @@ export function IndexPage({
   const [importUrlValue, setImportUrlValue] = useState('');
   const [importUrlError, setImportUrlError] = useState<string | null>(null);
   const importFileRef = useRef<HTMLInputElement>(null);
+  const importMusicXmlFileRef = useRef<HTMLInputElement>(null);
+  const [musicXmlImportBookId, setMusicXmlImportBookId] = useState<
+    string | null
+  >(null);
 
   const [addBuiltInMenuAnchor, setAddBuiltInMenuAnchor] =
     useState<null | HTMLElement>(null);
@@ -164,6 +175,33 @@ export function IndexPage({
       abc: `X:1\nT:New Song\nM:C\nL:1/4\nK:C\nC D E F |`,
     };
     addSongToBook(bookId, newSong);
+  };
+
+  const handleImportMusicXmlFile = async (
+    e: React.ChangeEvent<HTMLInputElement>
+  ) => {
+    const file = e.target.files?.[0];
+    if (!file || !musicXmlImportBookId) return;
+    e.target.value = '';
+    try {
+      let xmlText: string;
+      if (file.name.toLowerCase().endsWith('.mxl')) {
+        const buffer = await file.arrayBuffer();
+        xmlText = extractMxl(buffer);
+      } else {
+        xmlText = await file.text();
+      }
+      const music = fromMusicXml(xmlText);
+      const title = music.title || file.name.replace(/\.[^.]+$/, '');
+      const abc = `X:1\n${toAbc(music)}`;
+      addSongToBook(musicXmlImportBookId, {
+        id: crypto.randomUUID(),
+        title,
+        abc,
+      });
+    } catch (err) {
+      console.error('Failed to import MusicXML:', err);
+    }
   };
 
   const openRenameBook = (book: UserBook, e: React.MouseEvent) => {
@@ -310,7 +348,10 @@ export function IndexPage({
                     size="small"
                     aria-label={t('addOtherSong')}
                     onClick={(e) =>
-                      setAddSongMenu({ anchor: e.currentTarget, bookId: book.id })
+                      setAddSongMenu({
+                        anchor: e.currentTarget,
+                        bookId: book.id,
+                      })
                     }
                   >
                     <ArrowDropDown />
@@ -344,6 +385,16 @@ export function IndexPage({
           open={Boolean(addSongMenu)}
           onClose={() => setAddSongMenu(null)}
         >
+          <MenuItem
+            onClick={() => {
+              const bookId = addSongMenu!.bookId;
+              setMusicXmlImportBookId(bookId);
+              setAddSongMenu(null);
+              importMusicXmlFileRef.current?.click();
+            }}
+          >
+            {t('importMusicXml')}
+          </MenuItem>
           <MenuItem
             onClick={() => {
               const bookId = addSongMenu!.bookId;
@@ -431,6 +482,13 @@ export function IndexPage({
             accept=".abc,.txt"
             style={{ display: 'none' }}
             onChange={handleImportFile}
+          />
+          <input
+            ref={importMusicXmlFileRef}
+            type="file"
+            accept=".musicxml,.xml,.mxl"
+            style={{ display: 'none' }}
+            onChange={(e) => void handleImportMusicXmlFile(e)}
           />
         </div>
       </div>

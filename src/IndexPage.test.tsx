@@ -312,17 +312,13 @@ describe('IndexPage', () => {
   describe('Built-in books menu', () => {
     it('opens menu when dropdown button clicked', () => {
       render(<IndexPage {...defaultProps()} />);
-      fireEvent.click(
-        screen.getByRole('button', { name: /add other book/i })
-      );
+      fireEvent.click(screen.getByRole('button', { name: /add other book/i }));
       expect(within(document.body).getByRole('menu')).toBeInTheDocument();
     });
 
     it('menu contains Import ABC option', () => {
       render(<IndexPage {...defaultProps()} />);
-      fireEvent.click(
-        screen.getByRole('button', { name: /add other book/i })
-      );
+      fireEvent.click(screen.getByRole('button', { name: /add other book/i }));
       expect(
         within(document.body).getByRole('menuitem', { name: /import file/i })
       ).toBeInTheDocument();
@@ -330,9 +326,7 @@ describe('IndexPage', () => {
 
     it('importing a built-in book adds it to store', () => {
       render(<IndexPage {...defaultProps()} />);
-      fireEvent.click(
-        screen.getByRole('button', { name: /add other book/i })
-      );
+      fireEvent.click(screen.getByRole('button', { name: /add other book/i }));
       // Find the first built-in book menuitem (after Import ABC)
       const menu = within(document.body).getByRole('menu');
       const items = within(menu).getAllByRole('menuitem');
@@ -362,9 +356,7 @@ describe('parseAbcFile (via import built-in book)', () => {
     // Import a built-in book which exercises parseAbcFile
     useStore.setState({ userBooks: [] });
     render(<IndexPage {...defaultProps()} />);
-    fireEvent.click(
-      screen.getByRole('button', { name: /add other book/i })
-    );
+    fireEvent.click(screen.getByRole('button', { name: /add other book/i }));
     const menu = screen.getByRole('menu');
     const items = within(menu).getAllByRole('menuitem');
     const builtInItem = items.find(

@@ -203,7 +203,9 @@ describe('NotePlayer', () => {
       player.start();
 
       const oscStops: number[] = [];
-      const origCreate = player.audioCtx!.createOscillator.bind(player.audioCtx);
+      const origCreate = player.audioCtx!.createOscillator.bind(
+        player.audioCtx
+      );
       vi.spyOn(player.audioCtx!, 'createOscillator').mockImplementation(() => {
         const osc = origCreate();
         const origStop = osc.stop.bind(osc);
@@ -226,7 +228,9 @@ describe('NotePlayer', () => {
       setupExpanded(player, music);
       player.enqueueNote(120, 4);
 
-      expect(oscStops.every((t) => Math.abs(t - (startTime + 1.0)) < 0.001)).toBe(true);
+      expect(
+        oscStops.every((t) => Math.abs(t - (startTime + 1.0)) < 0.001)
+      ).toBe(true);
     });
 
     it('still records noteTimings for tie continuation notes (cursor tracking)', () => {
@@ -248,25 +252,25 @@ describe('NotePlayer', () => {
     });
   });
 
-    it('handles ties parsed from ABC notation', () => {
-      player.start();
-      const createOscSpy = vi.spyOn(player.audioCtx!, 'createOscillator');
+  it('handles ties parsed from ABC notation', () => {
+    player.start();
+    const createOscSpy = vi.spyOn(player.audioCtx!, 'createOscillator');
 
-      const music = fromAbc('X:1\nT:Test\nM:C\nL:1/4\nK:C\nC-C |');
+    const music = fromAbc('X:1\nT:Test\nM:C\nL:1/4\nK:C\nC-C |');
 
-      // The ABC parser should produce 2 notes and a tie curve
-      expect(music.notes).toHaveLength(2);
-      expect(music.curves).toHaveLength(1);
-      expect(music.curves[0]).toEqual([0, 1]);
-      expect(music.notes[0].pitches).toEqual(music.notes[1].pitches);
+    // The ABC parser should produce 2 notes and a tie curve
+    expect(music.notes).toHaveLength(2);
+    expect(music.curves).toHaveLength(1);
+    expect(music.curves[0]).toEqual([0, 1]);
+    expect(music.notes[0].pitches).toEqual(music.notes[1].pitches);
 
-      setupExpanded(player, music);
-      player.enqueueNote(120, 4);
-      player.enqueueNote(120, 4);
+    setupExpanded(player, music);
+    player.enqueueNote(120, 4);
+    player.enqueueNote(120, 4);
 
-      // Only 3 oscillators (1 pitch × 3 harmonics), not 6
-      expect(createOscSpy).toHaveBeenCalledTimes(3);
-    });
+    // Only 3 oscillators (1 pitch × 3 harmonics), not 6
+    expect(createOscSpy).toHaveBeenCalledTimes(3);
+  });
 
   describe('repeat expansion in playback', () => {
     it('scheduleNotes expands repeats and uses original indices', () => {

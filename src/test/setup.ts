@@ -12,7 +12,6 @@ if (!document.createElement('canvas').getContext('2d')) {
     this: HTMLCanvasElement,
     contextId: string
   ) {
-    const element = this;
     if (contextId === '2d') {
       return {
         font: '',
@@ -38,7 +37,7 @@ if (!document.createElement('canvas').getContext('2d')) {
         rotate: () => {},
         setTransform: () => {},
         createLinearGradient: () => ({ addColorStop: () => {} }),
-        canvas: element,
+        canvas: this,
       } as unknown as CanvasRenderingContext2D;
     }
     return null;

@@ -53,6 +53,7 @@
   "detectRecorderType": "Detect Recorder Type",
   "detectInstructions": "Cover the thumb and topmost finger hole on your recorder and blow.",
   "detectSystemInstructions": "Cover the thumb hole and top four holes and blow.",
+  "importMusicXml": "Import MusicXML",
   "generateScale": "Generate Scale",
   "scaleTitle": "{{key}} {{mode}} Scale",
   "range": "Range",

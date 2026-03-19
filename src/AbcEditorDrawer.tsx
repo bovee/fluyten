@@ -17,7 +17,11 @@ import Mic from '@mui/icons-material/Mic';
 import MicOff from '@mui/icons-material/MicOff';
 import SwapVert from '@mui/icons-material/SwapVert';
 
-import { parseHeaders, defaultClefForInstrument, type VoiceInfo } from './io/abcImport';
+import {
+  parseHeaders,
+  defaultClefForInstrument,
+  type VoiceInfo,
+} from './io/abcImport';
 import { singlePitchToAbc, durationToAbc, reflowAbc } from './io/abcExport';
 import { TRANSFORMATIONS, transformFragment } from './io/transformations';
 import { Music, Duration, DurationModifier } from './music';
@@ -69,8 +73,11 @@ export function AbcEditorDrawer({
   const drawerRef = useRef<HTMLDivElement>(null);
   const abcTextareaRef = useRef<HTMLTextAreaElement>(null);
   const [abcSelection, setAbcSelection] = useState({ start: 0, end: 0 });
-  const pendingSelectionRef = useRef<{ start: number; end: number } | null>(null);
-  const [transformMenuAnchor, setTransformMenuAnchor] = useState<HTMLElement | null>(null);
+  const pendingSelectionRef = useRef<{ start: number; end: number } | null>(
+    null
+  );
+  const [transformMenuAnchor, setTransformMenuAnchor] =
+    useState<HTMLElement | null>(null);
 
   useLayoutEffect(() => {
     const el = drawerRef.current;
@@ -90,11 +97,15 @@ export function AbcEditorDrawer({
   // Ref copy of abcMusic so transcription callbacks can read the latest value
   // between React renders without stale closures.
   const abcMusicRef = useRef(abcMusic);
-  useEffect(() => { abcMusicRef.current = abcMusic; }, [abcMusic]);
+  useEffect(() => {
+    abcMusicRef.current = abcMusic;
+  }, [abcMusic]);
 
   // Ref copy of tempo for transcription duration calculation.
   const tempoRef = useRef(tempo);
-  useEffect(() => { tempoRef.current = tempo; }, [tempo]);
+  useEffect(() => {
+    tempoRef.current = tempo;
+  }, [tempo]);
 
   // --- Transcription ---
   const transcribeTrackerRef = useRef<FrequencyTracker | null>(null);
@@ -133,8 +144,16 @@ export function AbcEditorDrawer({
     const { instrumentType, tuning } = useStore.getState();
     const defaultClef = defaultClefForInstrument(instrumentType);
     const tempMusic = new Music();
-    const { keyAdjustment, defaultDuration } = parseHeaders(lines, tempMusic, defaultClef);
-    transcribeContextRef.current = { keyAdjustment, defaultDuration, clef: tempMusic.clef };
+    const { keyAdjustment, defaultDuration } = parseHeaders(
+      lines,
+      tempMusic,
+      defaultClef
+    );
+    transcribeContextRef.current = {
+      keyAdjustment,
+      defaultDuration,
+      clef: tempMusic.clef,
+    };
 
     const cursorPos = Math.max(
       abcTextareaRef.current?.selectionStart ?? abcMusic.length,
@@ -149,9 +168,16 @@ export function AbcEditorDrawer({
         if (!ctx) return;
 
         const sixteenths = durationSecs * (tempoRef.current / 60) * 4;
-        let bestCandidate: [Duration, DurationModifier] = [Duration.QUARTER, DurationModifier.NONE];
+        let bestCandidate: [Duration, DurationModifier] = [
+          Duration.QUARTER,
+          DurationModifier.NONE,
+        ];
         let bestDist = Infinity;
-        for (const [candidateSixteenths, dur, mod] of TRANSCRIBE_DURATION_CANDIDATES) {
+        for (const [
+          candidateSixteenths,
+          dur,
+          mod,
+        ] of TRANSCRIBE_DURATION_CANDIDATES) {
           const dist = Math.abs(sixteenths - candidateSixteenths);
           if (dist < bestDist) {
             bestDist = dist;
@@ -160,12 +186,19 @@ export function AbcEditorDrawer({
         }
         const [dur, mod] = bestCandidate;
         const writtenPitch = ctx.clef === 'treble8va' ? pitch - 12 : pitch;
-        const pitchStr = singlePitchToAbc(writtenPitch, undefined as never, ctx.keyAdjustment);
+        const pitchStr = singlePitchToAbc(
+          writtenPitch,
+          undefined as never,
+          ctx.keyAdjustment
+        );
         const durStr = durationToAbc(dur, mod, ctx.defaultDuration);
         const noteStr = pitchStr + durStr + ' ';
 
         const pos = transcribeCursorRef.current;
-        const next = abcMusicRef.current.slice(0, pos) + noteStr + abcMusicRef.current.slice(pos);
+        const next =
+          abcMusicRef.current.slice(0, pos) +
+          noteStr +
+          abcMusicRef.current.slice(pos);
         const newPos = pos + noteStr.length;
         transcribeCursorRef.current = newPos;
         pendingSelectionRef.current = { start: newPos, end: newPos };
@@ -192,12 +225,14 @@ export function AbcEditorDrawer({
   };
 
   useEffect(() => {
+    // eslint-disable-next-line react-hooks/set-state-in-effect
     if (!open && isTranscribing) stopTranscribing();
   }, [open]);
 
   useEffect(() => {
     return () => {
-      if (transcribeIntervalRef.current) clearInterval(transcribeIntervalRef.current);
+      if (transcribeIntervalRef.current)
+        clearInterval(transcribeIntervalRef.current);
       transcribeTrackerRef.current?.stop();
     };
   }, []);
@@ -216,7 +251,10 @@ export function AbcEditorDrawer({
   const updateAbcSelection = () => {
     const textarea = abcTextareaRef.current;
     if (textarea) {
-      setAbcSelection({ start: textarea.selectionStart, end: textarea.selectionEnd });
+      setAbcSelection({
+        start: textarea.selectionStart,
+        end: textarea.selectionEnd,
+      });
     }
   };
 
@@ -230,7 +268,10 @@ export function AbcEditorDrawer({
     requestAnimationFrame(() => {
       if (abcTextareaRef.current) {
         abcTextareaRef.current.focus();
-        abcTextareaRef.current.setSelectionRange(abcSelection.start, abcSelection.end);
+        abcTextareaRef.current.setSelectionRange(
+          abcSelection.start,
+          abcSelection.end
+        );
       }
     });
   };
@@ -266,7 +307,12 @@ export function AbcEditorDrawer({
   };
 
   return (
-    <Drawer variant="persistent" anchor="bottom" open={open} PaperProps={{ ref: drawerRef }}>
+    <Drawer
+      variant="persistent"
+      anchor="bottom"
+      open={open}
+      PaperProps={{ ref: drawerRef }}
+    >
       <Box
         sx={{
           px: 3,
@@ -329,14 +375,20 @@ export function AbcEditorDrawer({
             disabled={!!readOnly}
             inputRef={abcTextareaRef}
             inputProps={{ dir: 'ltr' }}
-            sx={{ '& textarea': { fontFamily: "'Source Code Pro', ui-monospace, monospace" } }}
+            sx={{
+              '& textarea': {
+                fontFamily: "'Source Code Pro', ui-monospace, monospace",
+              },
+            }}
           />
           <Box sx={{ display: 'flex', flexDirection: 'column' }}>
             <Tooltip title={t('transcribe')}>
               <span>
                 <IconButton
                   onMouseDown={(e) => e.preventDefault()}
-                  onClick={() => isTranscribing ? stopTranscribing() : startTranscribing()}
+                  onClick={() =>
+                    isTranscribing ? stopTranscribing() : startTranscribing()
+                  }
                   disabled={!!readOnly}
                   aria-label={t('transcribe')}
                   sx={{ color: isTranscribing ? 'primary.main' : undefined }}

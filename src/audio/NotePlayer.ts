@@ -103,7 +103,9 @@ export class NotePlayer {
 
   /** Returns true if note at idx is the second (or later) note of a tie — no new attack needed. */
   private isNoteTieContinuation(idx: number): boolean {
-    return this.expandedCurves.some(([s, e]) => e === idx && this.isTieCurve(s, e));
+    return this.expandedCurves.some(
+      ([s, e]) => e === idx && this.isTieCurve(s, e)
+    );
   }
 
   /** Sums ticks across a full tie chain starting at startIdx. */
@@ -127,7 +129,10 @@ export class NotePlayer {
    *   noAttack  — note is a continuation within a slur (not the first note)
    *   noRelease — note continues into the next note within a slur (not the last note)
    */
-  private getSlurContext(idx: number): { noAttack: boolean; noRelease: boolean } {
+  private getSlurContext(idx: number): {
+    noAttack: boolean;
+    noRelease: boolean;
+  } {
     let noAttack = false;
     let noRelease = false;
     for (const [s, e] of this.expandedCurves) {

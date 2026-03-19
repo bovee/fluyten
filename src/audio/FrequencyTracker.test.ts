@@ -152,7 +152,9 @@ describe('FrequencyTracker', () => {
 
     it('returns null for silence (low RMS)', () => {
       injectAudioContext();
-      tracker.analyser = makeAnalyser(new Float32Array(bufferSize).fill(0)) as any;
+      tracker.analyser = makeAnalyser(
+        new Float32Array(bufferSize).fill(0)
+      ) as any;
 
       tracker.checkFrequency({ instrumentType: 'TENOR', tuning });
 
@@ -161,7 +163,9 @@ describe('FrequencyTracker', () => {
 
     it('calls onStopNote when a tracked note goes quiet', () => {
       injectAudioContext(2.5);
-      tracker.analyser = makeAnalyser(new Float32Array(bufferSize).fill(0)) as any;
+      tracker.analyser = makeAnalyser(
+        new Float32Array(bufferSize).fill(0)
+      ) as any;
       tracker.currentNote = 69; // A4
       tracker.currentNoteStart = 1.0;
 

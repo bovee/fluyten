@@ -47,6 +47,42 @@
   }
 }
 
+@keyframes trill-primary {
+  0%,
+  40% {
+    opacity: 1;
+  }
+  50%,
+  90% {
+    opacity: 0;
+  }
+  100% {
+    opacity: 1;
+  }
+}
+
+@keyframes trill-secondary {
+  0%,
+  40% {
+    opacity: 0;
+  }
+  50%,
+  90% {
+    opacity: 1;
+  }
+  100% {
+    opacity: 0;
+  }
+}
+
+.trill-primary {
+  animation: trill-primary 2s linear infinite;
+}
+
+.trill-secondary {
+  animation: trill-secondary 2s linear infinite;
+}
+
 @media print {
   .MuiSpeedDial-root,
   .MuiDrawer-root,

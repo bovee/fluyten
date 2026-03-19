@@ -318,7 +318,11 @@ export class Note {
 
     return [
       this.pitches.map((p, i) =>
-        this.pitchToVexflow(p + displayPitchOffset, this.accidentals[i], useSharpSpelling)
+        this.pitchToVexflow(
+          p + displayPitchOffset,
+          this.accidentals[i],
+          useSharpSpelling
+        )
       ),
       vexDuration,
     ];
@@ -331,17 +335,23 @@ export interface BarLine {
 }
 
 /** Maps a tick count to [Duration, DurationModifier] if it names a standard notated value, else null. */
-export function ticksToDuration(ticks: number): [Duration, DurationModifier] | null {
+export function ticksToDuration(
+  ticks: number
+): [Duration, DurationModifier] | null {
   const map: [number, Duration, DurationModifier][] = [
-    [DURATION_TICKS.WHOLE,            Duration.WHOLE,     DurationModifier.NONE],
-    [DURATION_TICKS.HALF_DOTTED,      Duration.HALF,      DurationModifier.DOTTED],
-    [DURATION_TICKS.HALF,             Duration.HALF,      DurationModifier.NONE],
-    [DURATION_TICKS.QUARTER_DOTTED,   Duration.QUARTER,   DurationModifier.DOTTED],
-    [DURATION_TICKS.QUARTER,          Duration.QUARTER,   DurationModifier.NONE],
-    [DURATION_TICKS.EIGHTH_DOTTED,    Duration.EIGHTH,    DurationModifier.DOTTED],
-    [DURATION_TICKS.EIGHTH,           Duration.EIGHTH,    DurationModifier.NONE],
-    [DURATION_TICKS.SIXTEENTH_DOTTED, Duration.SIXTEENTH, DurationModifier.DOTTED],
-    [DURATION_TICKS.SIXTEENTH,        Duration.SIXTEENTH, DurationModifier.NONE],
+    [DURATION_TICKS.WHOLE, Duration.WHOLE, DurationModifier.NONE],
+    [DURATION_TICKS.HALF_DOTTED, Duration.HALF, DurationModifier.DOTTED],
+    [DURATION_TICKS.HALF, Duration.HALF, DurationModifier.NONE],
+    [DURATION_TICKS.QUARTER_DOTTED, Duration.QUARTER, DurationModifier.DOTTED],
+    [DURATION_TICKS.QUARTER, Duration.QUARTER, DurationModifier.NONE],
+    [DURATION_TICKS.EIGHTH_DOTTED, Duration.EIGHTH, DurationModifier.DOTTED],
+    [DURATION_TICKS.EIGHTH, Duration.EIGHTH, DurationModifier.NONE],
+    [
+      DURATION_TICKS.SIXTEENTH_DOTTED,
+      Duration.SIXTEENTH,
+      DurationModifier.DOTTED,
+    ],
+    [DURATION_TICKS.SIXTEENTH, Duration.SIXTEENTH, DurationModifier.NONE],
   ];
   for (const [t, d, m] of map) {
     if (t === ticks) return [d, m];
@@ -390,7 +400,11 @@ export class Music {
       const a = this.notes[idx];
       const b = this.notes[idx + 1];
       const [dur, mod] = ticksToDuration(a.ticks() + b.ticks())!;
-      this.notes.splice(idx, 2, new Note(a.pitches, dur, a.decorations, a.accidentals, mod));
+      this.notes.splice(
+        idx,
+        2,
+        new Note(a.pitches, dur, a.decorations, a.accidentals, mod)
+      );
       this.curves = this.curves
         .filter(([s, e]) => !(s === idx && e === idx + 1))
         .map(([s, e]) => [s > idx + 1 ? s - 1 : s, e > idx + 1 ? e - 1 : e]);
@@ -412,7 +426,10 @@ export class Music {
 
       if (total === barCapacity) {
         currentTicks = 0;
-        this.bars.push({ afterNoteNum: noteIx, type: 'standard' as BarLineType });
+        this.bars.push({
+          afterNoteNum: noteIx,
+          type: 'standard' as BarLineType,
+        });
         noteIx++;
       } else if (total < barCapacity) {
         currentTicks = total;
@@ -427,17 +444,34 @@ export class Music {
         if (firstDur && secondDur) {
           const [d1, m1] = firstDur;
           const [d2, m2] = secondDur;
-          const first = new Note(note.pitches, d1, note.decorations, note.accidentals, m1);
-          const second = new Note(note.pitches, d2, [], note.accidentals.map(() => undefined as Accidental), m2);
+          const first = new Note(
+            note.pitches,
+            d1,
+            note.decorations,
+            note.accidentals,
+            m1
+          );
+          const second = new Note(
+            note.pitches,
+            d2,
+            [],
+            note.accidentals.map(() => undefined as Accidental),
+            m2
+          );
           this.notes.splice(noteIx, 1, first, second);
-          this.curves = this.curves
-            .map(([s, e]) => [s > noteIx ? s + 1 : s, e > noteIx ? e + 1 : e]);
+          this.curves = this.curves.map(([s, e]) => [
+            s > noteIx ? s + 1 : s,
+            e > noteIx ? e + 1 : e,
+          ]);
           this.beams = this.beams.map(([s, e]) => [
             s > noteIx ? s + 1 : s,
             e > noteIx ? e + 1 : e,
           ]);
           this.curves.push([noteIx, noteIx + 1]);
-          this.bars.push({ afterNoteNum: noteIx, type: 'standard' as BarLineType });
+          this.bars.push({
+            afterNoteNum: noteIx,
+            type: 'standard' as BarLineType,
+          });
           currentTicks = 0;
           noteIx += 2;
         } else {
@@ -468,7 +502,11 @@ export class Music {
  * Limitation: nested repeats (e.g. |: A |: B :| C :|) are not supported.
  * This matches ABC standard practice where nested repeats are poorly defined.
  */
-export function expandRepeats(music: Music): { notes: Note[]; curves: number[][]; originalIndices: number[] } {
+export function expandRepeats(music: Music): {
+  notes: Note[];
+  curves: number[][];
+  originalIndices: number[];
+} {
   if (music.bars.length === 0) {
     return {
       notes: [...music.notes],
@@ -524,5 +562,9 @@ export function expandRepeats(music: Music): { notes: Note[]; curves: number[][]
   // Notes after the last bar line
   addSegment(prevEndIdx + 1, music.notes.length - 1);
 
-  return { notes: resultNotes, curves: resultCurves, originalIndices: resultOriginalIndices };
+  return {
+    notes: resultNotes,
+    curves: resultCurves,
+    originalIndices: resultOriginalIndices,
+  };
 }
