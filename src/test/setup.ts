@@ -1,6 +1,7 @@
 import '@testing-library/jest-dom';
 import '../i18n';
 import { setupAudioMocks } from './audioMocks';
+import { useStore } from '../store';
 
 setupAudioMocks();
 
@@ -44,9 +45,10 @@ if (!document.createElement('canvas').getContext('2d')) {
   } as typeof HTMLCanvasElement.prototype.getContext;
 }
 
-// Setup global test utilities
+// Default to onboarded so the OnboardingDialog doesn't block tests that
+// aren't specifically testing the onboarding flow.
 beforeEach(() => {
-  // Clear any mocks or state between tests
+  useStore.setState({ onboarded: true });
 });
 
 afterEach(() => {

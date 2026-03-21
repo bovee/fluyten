@@ -1,5 +1,5 @@
-import { type RecorderType } from './instrument';
-import { type UserSong } from './store';
+import { type RecorderType } from '../instrument';
+import { type UserSong } from '../store';
 
 export interface ScaleOptions {
   keys: string[];

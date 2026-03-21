@@ -415,7 +415,7 @@ export function Vexflow(props: {
     renderer.current.getContext().clear();
     const totalLines = freeTime
       ? barredNotes.length
-      : Math.ceil(music.bars.length / barsPerLine);
+      : Math.ceil(barredNotes.length / barsPerLine);
     renderer.current.resize(
       windowWidth,
       extraHeightOffset + totalLines * barHeight

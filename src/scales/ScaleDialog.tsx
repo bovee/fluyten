@@ -14,7 +14,7 @@ import Typography from '@mui/material/Typography';
 
 import { useTranslation } from 'react-i18next';
 import { generateScaleAbc } from './scaleGenerator';
-import { useStore, type UserSong } from './store';
+import { useStore, type UserSong } from '../store';
 
 const MAJOR_KEYS = ['C', 'G', 'F', 'D', 'Bb', 'A', 'E', 'Eb', 'Ab'];
 const MINOR_KEYS = ['Am', 'Em', 'Dm', 'Bm', 'Gm', 'Cm', 'F#m'];

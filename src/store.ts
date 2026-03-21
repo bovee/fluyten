@@ -18,6 +18,8 @@ export interface UserBook {
 }
 
 interface SettingsState {
+  onboarded: boolean;
+  setOnboarded: () => void;
   instrumentType: RecorderType;
   setInstrumentType: (type: RecorderType) => void;
   tuning: number;
@@ -41,6 +43,8 @@ interface SettingsState {
 export const useStore = create<SettingsState>()(
   persist(
     (set) => ({
+      onboarded: false,
+      setOnboarded: () => set({ onboarded: true }),
       instrumentType: 'SOPRANO',
       setInstrumentType: (instrumentType) => set({ instrumentType }),
       tuning: 1.0,

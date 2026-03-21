@@ -1,0 +1,34 @@
+X:1
+T:Hot Cross Buns
+M:C
+L:1/4
+K:F
+e2 d2 | c4 | e2 d2 | c4 |
+c c c c | d d d d | e2 d2 | c4 |
+
+X:2
+T:Mary Had a Little Lamb
+M:C
+L:1/4
+K:F
+e2 d2 | c2 d2 | e2 e2 | e4 |
+d2 d2 | d4 | e2 g2 | g4 |
+e2 d2 | c2 d2 | e2 e2 | e2 e2 |
+d2 d2 | e2 d2 | c4 |
+
+X:3
+T:Twinkle Twinkle Little Star
+M:C
+L:1/4
+K:F
+F F c c | d d c2 | B B A A | G G F2 |
+c c B B | A A G2 | c c B B | A A G2 |
+F F c c | d d c2 | B B A A | G G F2 |
+
+X:4
+T:Row Row Row Your Boat
+M:3/4
+L:1/4
+K:F
+F3 | F3 | F2 G | A3 | A2 G | A2 B | c3 |
+f f f | c c c | A A A | F F F | c2 B | A2 G | F3

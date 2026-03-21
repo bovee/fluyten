@@ -3,6 +3,7 @@ import { ThemeProvider, createTheme, CssBaseline } from '@mui/material';
 import React, { useEffect } from 'react';
 import { setupAudioMocks } from '../src/test/audioMocks';
 import i18n, { RTL_LANGUAGES } from '../src/i18n';
+import { useStore } from '../src/store';
 
 setupAudioMocks();
 
@@ -88,6 +89,9 @@ const preview: Preview = {
         i18n.changeLanguage(locale);
         document.documentElement.dir = RTL_LANGUAGES.has(locale) ? 'rtl' : 'ltr';
       }, [locale]);
+      // Default to onboarded so the OnboardingDialog doesn't block stories that
+      // aren't specifically testing the onboarding flow.
+      useStore.setState({ onboarded: true });
       return (
         <ThemeProvider theme={theme}>
           <CssBaseline />

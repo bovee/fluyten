@@ -1,7 +1,7 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest';
 import { render, screen, fireEvent } from '@testing-library/react';
 import { ScaleDialog } from './ScaleDialog';
-import { useStore } from './store';
+import { useStore } from '../store';
 
 beforeEach(() => {
   useStore.setState({ instrumentType: 'SOPRANO', userBooks: [] });

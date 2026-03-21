@@ -329,6 +329,13 @@ export class Note {
   }
 }
 
+export interface Song {
+  id: string;
+  title: string;
+  abc: string;
+  tempo?: number;
+}
+
 export interface BarLine {
   afterNoteNum?: number;
   type: BarLineType;

@@ -18,7 +18,7 @@ import { FrequencyTracker } from './audio/FrequencyTracker';
 import { NotePlayer } from './audio/NotePlayer';
 import { Vexflow } from './Vexflow.tsx';
 import { useStore } from './store';
-import { type Song } from './songs';
+import { type Song } from './music';
 import { NOTE_NAMES } from './constants';
 import { AbcEditorDrawer } from './AbcEditorDrawer';
 

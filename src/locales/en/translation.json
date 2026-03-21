@@ -5,6 +5,7 @@
   "addOtherSong": "Add Other Song",
   "addEmptyBook": "Add Empty Book",
   "importAbc": "Import File",
+  "importFromFile": "Import from File",
   "importAbcUrl": "Import from URL",
   "importUrlInvalidError": "Invalid URL.",
   "importUrlCorsError": "Download failed. The remote server does not support direct imports (CORS).",
@@ -53,7 +54,14 @@
   "detectRecorderType": "Detect Recorder Type",
   "detectInstructions": "Cover the thumb and topmost finger hole on your recorder and blow.",
   "detectSystemInstructions": "Cover the thumb hole and top four holes and blow.",
-  "importMusicXml": "Import MusicXML",
+  "onboardingWelcomeTitle": "Welcome to Fluyten",
+  "onboardingWelcomeBody": "Let's get you set up. First, choose your language.",
+  "onboardingRecorderTitle": "Your Recorder",
+  "onboardingRecorderBody": "What type of recorder do you play?",
+  "skip": "Skip",
+  "next": "Next",
+  "getStarted": "Get Started",
+  "beginnerSongsBook": "Beginner Songs",
   "generateScale": "Generate Scale",
   "scaleTitle": "{{key}} {{mode}} Scale",
   "range": "Range",
@@ -95,9 +103,5 @@
     "twinkle-twinkle": "Twinkle Twinkle Little Star",
     "frere-jacques": "Frère Jacques",
     "row-row-row-your-boat": "Row Row Row Your Boat"
-  },
-  "books": {
-    "beginner-songs": "Beginner Songs",
-    "scales": "Scales"
   }
 }

@@ -5,8 +5,9 @@ import { CacheProvider } from '@emotion/react';
 import createCache from '@emotion/cache';
 import rtlPlugin from 'stylis-plugin-rtl';
 import { prefixer } from 'stylis';
-import { type Song } from './songs';
+import { type Song } from './music';
 import { IndexPage } from './IndexPage';
+import { OnboardingDialog } from './OnboardingDialog';
 import { SongPage } from './SongPage';
 import { useStore } from './store';
 
@@ -39,6 +40,9 @@ function App() {
       },
     },
   });
+
+  const onboarded = useStore((state) => state.onboarded);
+  const setOnboarded = useStore((state) => state.setOnboarded);
 
   const [selected, setSelected] = useState<SelectedSong | null>(null);
   const [expandedBook, setExpandedBook] = useState<string | false>(false);
@@ -81,6 +85,7 @@ function App() {
   return (
     <CacheProvider value={isRtl ? cacheRtl : cacheLtr}>
       <ThemeProvider theme={theme}>
+        <OnboardingDialog open={!onboarded} onComplete={setOnboarded} />
         <IndexPage
           expandedBook={expandedBook}
           onExpandedBookChange={setExpandedBook}

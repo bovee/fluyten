@@ -16,10 +16,8 @@ import DialogActions from '@mui/material/DialogActions';
 import DialogContent from '@mui/material/DialogContent';
 import DialogTitle from '@mui/material/DialogTitle';
 import ButtonGroup from '@mui/material/ButtonGroup';
-import Divider from '@mui/material/Divider';
 import Menu from '@mui/material/Menu';
 import MenuItem from '@mui/material/MenuItem';
-import ListSubheader from '@mui/material/ListSubheader';
 import Tooltip from '@mui/material/Tooltip';
 import ArrowDropDown from '@mui/icons-material/ArrowDropDown';
 import ExpandMore from '@mui/icons-material/ExpandMore';
@@ -31,9 +29,10 @@ import Settings from '@mui/icons-material/Settings';
 import { parseAbcFile } from './io/abcImport';
 import { toAbc } from './io/abcExport';
 import { fromMusicXml, extractMxl } from './io/musicXmlImport';
-import { ScaleDialog } from './ScaleDialog';
+import { getStarterBookUrl } from './instrument';
+import { ScaleDialog } from './scales/ScaleDialog';
 import { SettingsDialog } from './SettingsDialog';
-import { type Song, BUILT_IN_BOOKS } from './songs';
+import { type Song } from './music';
 import { useStore, type UserBook, type UserSong } from './store';
 
 interface IndexPageProps {
@@ -73,29 +72,19 @@ export function IndexPage({
   const [importUrlDialogOpen, setImportUrlDialogOpen] = useState(false);
   const [importUrlValue, setImportUrlValue] = useState('');
   const [importUrlError, setImportUrlError] = useState<string | null>(null);
+  const [importUrlBookId, setImportUrlBookId] = useState<string | null>(null);
   const importFileRef = useRef<HTMLInputElement>(null);
-  const importMusicXmlFileRef = useRef<HTMLInputElement>(null);
-  const [musicXmlImportBookId, setMusicXmlImportBookId] = useState<
-    string | null
-  >(null);
-
-  const [addBuiltInMenuAnchor, setAddBuiltInMenuAnchor] =
-    useState<null | HTMLElement>(null);
+  const [importFileBookId, setImportFileBookId] = useState<string | null>(null);
+  const [addBookMenuAnchor, setAddBookMenuAnchor] =
+    useState<HTMLElement | null>(null);
+  const importNewBookFileRef = useRef<HTMLInputElement>(null);
 
   const userBooks = useStore((state) => state.userBooks);
   const addUserBook = useStore((state) => state.addUserBook);
-  const importUserBook = useStore((state) => state.importUserBook);
   const removeUserBook = useStore((state) => state.removeUserBook);
   const renameUserBook = useStore((state) => state.renameUserBook);
   const addSongToBook = useStore((state) => state.addSongToBook);
   const removeSongFromBook = useStore((state) => state.removeSongFromBook);
-
-  const importedSourceIds = new Set(
-    userBooks.map((b) => b.sourceId).filter(Boolean)
-  );
-  const availableBuiltInBooks = BUILT_IN_BOOKS.filter(
-    (b) => !importedSourceIds.has(b.id)
-  );
 
   const handleAccordionChange =
     (bookId: string) => (_: React.SyntheticEvent, isExpanded: boolean) => {
@@ -117,28 +106,103 @@ export function IndexPage({
     setRenameBookTitle('');
   };
 
-  const handleImportFile = (e: React.ChangeEvent<HTMLInputElement>) => {
+  const handleImportFile = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file || !importFileBookId) return;
+    e.target.value = '';
+    const name = file.name.toLowerCase();
+    const isMusicXml =
+      name.endsWith('.musicxml') ||
+      name.endsWith('.xml') ||
+      name.endsWith('.mxl');
+    if (isMusicXml) {
+      try {
+        let xmlText: string;
+        if (name.endsWith('.mxl')) {
+          const buffer = await file.arrayBuffer();
+          xmlText = extractMxl(buffer);
+        } else {
+          xmlText = await file.text();
+        }
+        const music = fromMusicXml(xmlText);
+        const title = music.title || file.name.replace(/\.[^.]+$/, '');
+        addSongToBook(importFileBookId, {
+          id: crypto.randomUUID(),
+          title,
+          abc: `X:1\n${toAbc(music)}`,
+        });
+      } catch (err) {
+        console.error('Failed to import MusicXML:', err);
+      }
+    } else {
+      const reader = new FileReader();
+      reader.onload = () => {
+        const text = reader.result as string;
+        const tunes = parseAbcFile(text);
+        tunes.forEach(({ title, abc }) => {
+          addSongToBook(importFileBookId!, {
+            id: crypto.randomUUID(),
+            title,
+            abc,
+          });
+        });
+      };
+      reader.readAsText(file);
+    }
+  };
+
+  const handleImportNewBookFile = async (
+    e: React.ChangeEvent<HTMLInputElement>
+  ) => {
     const file = e.target.files?.[0];
     if (!file) return;
-    const bookTitle = file.name.replace(/\.[^.]+$/, '');
-    const reader = new FileReader();
-    reader.onload = () => {
-      const text = reader.result as string;
-      const tunes = parseAbcFile(text);
-      const songs: UserSong[] = tunes.map(({ title, abc }) => ({
-        id: crypto.randomUUID(),
-        title,
-        abc,
-      }));
-      importUserBook(bookTitle, songs);
-    };
-    reader.readAsText(file);
-    // Reset so the same file can be re-imported if needed
     e.target.value = '';
+    const bookTitle = file.name.replace(/\.[^.]+$/, '');
+    const name = file.name.toLowerCase();
+    const isMusicXml =
+      name.endsWith('.musicxml') ||
+      name.endsWith('.xml') ||
+      name.endsWith('.mxl');
+    if (isMusicXml) {
+      try {
+        let xmlText: string;
+        if (name.endsWith('.mxl')) {
+          const buffer = await file.arrayBuffer();
+          xmlText = extractMxl(buffer);
+        } else {
+          xmlText = await file.text();
+        }
+        const music = fromMusicXml(xmlText);
+        const title = music.title || bookTitle;
+        addUserBook(title);
+        const newBookId = useStore.getState().userBooks.at(-1)!.id;
+        addSongToBook(newBookId, {
+          id: crypto.randomUUID(),
+          title,
+          abc: `X:1\n${toAbc(music)}`,
+        });
+      } catch (err) {
+        console.error('Failed to import MusicXML:', err);
+      }
+    } else {
+      const reader = new FileReader();
+      reader.onload = () => {
+        const text = reader.result as string;
+        const tunes = parseAbcFile(text);
+        if (tunes.length === 0) return;
+        addUserBook(tunes[0].title || bookTitle);
+        const newBookId = useStore.getState().userBooks.at(-1)!.id;
+        tunes.forEach(({ title, abc }) => {
+          addSongToBook(newBookId, { id: crypto.randomUUID(), title, abc });
+        });
+      };
+      reader.readAsText(file);
+    }
   };
 
   const handleImportUrl = async () => {
     setImportUrlError(null);
+    if (!importUrlBookId) return;
     try {
       new URL(importUrlValue);
     } catch {
@@ -151,18 +215,36 @@ export function IndexPage({
         setImportUrlError(t('importUrlHttpError', { status: response.status }));
         return;
       }
-      const text = await response.text();
-      const tunes = parseAbcFile(text);
-      const songs: UserSong[] = tunes.map(({ title, abc }) => ({
-        id: crypto.randomUUID(),
-        title,
-        abc,
-      }));
-      const filename = importUrlValue.split('/').pop() ?? 'Imported';
-      const bookTitle = filename.replace(/\.[^.]+$/, '');
-      importUserBook(bookTitle, songs);
+      const urlPath = new URL(importUrlValue).pathname.toLowerCase();
+      const isMusicXml =
+        urlPath.endsWith('.musicxml') ||
+        urlPath.endsWith('.xml') ||
+        urlPath.endsWith('.mxl');
+      if (isMusicXml) {
+        const text = await response.text();
+        const music = fromMusicXml(text);
+        const filename =
+          importUrlValue.split('/').pop()?.split('?')[0] ?? 'Imported';
+        const title = music.title || filename.replace(/\.[^.]+$/, '');
+        addSongToBook(importUrlBookId, {
+          id: crypto.randomUUID(),
+          title,
+          abc: `X:1\n${toAbc(music)}`,
+        });
+      } else {
+        const text = await response.text();
+        const tunes = parseAbcFile(text);
+        tunes.forEach(({ title, abc }) => {
+          addSongToBook(importUrlBookId!, {
+            id: crypto.randomUUID(),
+            title,
+            abc,
+          });
+        });
+      }
       setImportUrlDialogOpen(false);
       setImportUrlValue('');
+      setImportUrlBookId(null);
     } catch {
       setImportUrlError(t('importUrlCorsError'));
     }
@@ -175,33 +257,6 @@ export function IndexPage({
       abc: `X:1\nT:New Song\nM:C\nL:1/4\nK:C\nC D E F |`,
     };
     addSongToBook(bookId, newSong);
-  };
-
-  const handleImportMusicXmlFile = async (
-    e: React.ChangeEvent<HTMLInputElement>
-  ) => {
-    const file = e.target.files?.[0];
-    if (!file || !musicXmlImportBookId) return;
-    e.target.value = '';
-    try {
-      let xmlText: string;
-      if (file.name.toLowerCase().endsWith('.mxl')) {
-        const buffer = await file.arrayBuffer();
-        xmlText = extractMxl(buffer);
-      } else {
-        xmlText = await file.text();
-      }
-      const music = fromMusicXml(xmlText);
-      const title = music.title || file.name.replace(/\.[^.]+$/, '');
-      const abc = `X:1\n${toAbc(music)}`;
-      addSongToBook(musicXmlImportBookId, {
-        id: crypto.randomUUID(),
-        title,
-        abc,
-      });
-    } catch (err) {
-      console.error('Failed to import MusicXML:', err);
-    }
   };
 
   const openRenameBook = (book: UserBook, e: React.MouseEvent) => {
@@ -388,12 +443,25 @@ export function IndexPage({
           <MenuItem
             onClick={() => {
               const bookId = addSongMenu!.bookId;
-              setMusicXmlImportBookId(bookId);
+              setImportFileBookId(bookId);
               setAddSongMenu(null);
-              importMusicXmlFileRef.current?.click();
+              importFileRef.current?.click();
             }}
           >
-            {t('importMusicXml')}
+            {t('importFromFile')}
+          </MenuItem>
+          <MenuItem
+            onClick={() => {
+              const bookId = addSongMenu!.bookId;
+              setImportUrlBookId(bookId);
+              setImportUrlValue(
+                getStarterBookUrl(useStore.getState().instrumentType)
+              );
+              setAddSongMenu(null);
+              setImportUrlDialogOpen(true);
+            }}
+          >
+            {t('importAbcUrl')}
           </MenuItem>
           <MenuItem
             onClick={() => {
@@ -420,77 +488,42 @@ export function IndexPage({
               {t('addEmptyBook')}
             </Button>
             <Button
-              size="small"
-              onClick={(e) => setAddBuiltInMenuAnchor(e.currentTarget)}
               aria-label={t('addOtherBook')}
+              onClick={(e) => setAddBookMenuAnchor(e.currentTarget)}
             >
               <ArrowDropDown />
             </Button>
           </ButtonGroup>
-          <Menu
-            anchorEl={addBuiltInMenuAnchor}
-            open={Boolean(addBuiltInMenuAnchor)}
-            onClose={() => setAddBuiltInMenuAnchor(null)}
-          >
-            <MenuItem
-              onClick={() => {
-                setAddBuiltInMenuAnchor(null);
-                importFileRef.current?.click();
-              }}
-            >
-              {t('importAbc')}
-            </MenuItem>
-            <MenuItem
-              onClick={() => {
-                setAddBuiltInMenuAnchor(null);
-                setImportUrlDialogOpen(true);
-              }}
-            >
-              {t('importAbcUrl')}
-            </MenuItem>
-            {availableBuiltInBooks.length > 0 && <Divider />}
-            {availableBuiltInBooks.length > 0 && (
-              <ListSubheader role="presentation">
-                {t('builtInBooks')}
-              </ListSubheader>
-            )}
-            {availableBuiltInBooks.map((book) => (
-              <MenuItem
-                key={book.id}
-                onClick={() => {
-                  const tunes = parseAbcFile(book.abc);
-                  const songs: UserSong[] = tunes.map(({ title, abc }, i) => ({
-                    id: crypto.randomUUID(),
-                    title: t(`songs.${book.songKeys[i]}`, title),
-                    abc,
-                  }));
-                  importUserBook(
-                    t(`books.${book.id}`, book.title),
-                    songs,
-                    book.id
-                  );
-                  setAddBuiltInMenuAnchor(null);
-                }}
-              >
-                {t(`books.${book.id}`, book.title)}
-              </MenuItem>
-            ))}
-          </Menu>
           <input
             ref={importFileRef}
             type="file"
-            accept=".abc,.txt"
+            accept=".abc,.txt,.musicxml,.xml,.mxl"
             style={{ display: 'none' }}
-            onChange={handleImportFile}
+            onChange={(e) => void handleImportFile(e)}
           />
           <input
-            ref={importMusicXmlFileRef}
+            ref={importNewBookFileRef}
             type="file"
-            accept=".musicxml,.xml,.mxl"
+            accept=".abc,.txt,.musicxml,.xml,.mxl"
             style={{ display: 'none' }}
-            onChange={(e) => void handleImportMusicXmlFile(e)}
+            onChange={(e) => void handleImportNewBookFile(e)}
           />
         </div>
+
+        <Menu
+          anchorEl={addBookMenuAnchor}
+          open={Boolean(addBookMenuAnchor)}
+          onClose={() => setAddBookMenuAnchor(null)}
+        >
+          <MenuItem
+            onClick={() => {
+              setAddBookMenuAnchor(null);
+              importNewBookFileRef.current?.click();
+            }}
+          >
+            {t('importAbc')}
+          </MenuItem>
+        </Menu>
       </div>
 
       <SettingsDialog
@@ -632,6 +665,7 @@ export function IndexPage({
           setImportUrlDialogOpen(false);
           setImportUrlValue('');
           setImportUrlError(null);
+          setImportUrlBookId(null);
         }}
       >
         <DialogTitle>{t('importAbcUrl')}</DialogTitle>
@@ -659,6 +693,7 @@ export function IndexPage({
               setImportUrlDialogOpen(false);
               setImportUrlValue('');
               setImportUrlError(null);
+              setImportUrlBookId(null);
             }}
           >
             {t('cancel')}
