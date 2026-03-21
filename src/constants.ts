@@ -33,24 +33,6 @@ export const NOTE_VALUES = {
   Z: -1,
 } as const;
 
-// Maps duration ticks to Vexflow duration strings
-export const VEXFLOW_DURATION_MAP: { [key: number]: string } = {
-  [DURATION_TICKS.WHOLE]: 'w',
-  [DURATION_TICKS.HALF_DOTTED]: 'hd',
-  [DURATION_TICKS.HALF]: 'h',
-  [DURATION_TICKS.QUARTER_DOTTED]: 'qd',
-  [DURATION_TICKS.QUARTER]: 'q',
-  [DURATION_TICKS.EIGHTH_DOTTED]: '8d',
-  [DURATION_TICKS.EIGHTH]: '8',
-  [DURATION_TICKS.SIXTEENTH_DOTTED]: '16d',
-  [DURATION_TICKS.SIXTEENTH]: '16',
-  // Triplet notes
-  [DURATION_TICKS.HALF_TRIPLET]: 'h',
-  [DURATION_TICKS.QUARTER_TRIPLET]: 'q',
-  [DURATION_TICKS.EIGHTH_TRIPLET]: '8',
-  [DURATION_TICKS.SIXTEENTH_TRIPLET]: '16',
-};
-
 // Pitch to Vexflow note name mapping (chromatic scale)
 export const PITCH_TO_VEXFLOW = {
   0: 'c',

@@ -229,6 +229,179 @@ describe('transformFragment - halve-duration', () => {
   });
 });
 
+const FULL_ABC_Bb = 'T:Test\nM:4/4\nL:1/4\nK:Bb\nBcd e |]';
+
+describe('transformFragment - simplify-accidentals', () => {
+  describe('G major (F#)', () => {
+    it('removes explicit sharp from in-key F#', () => {
+      const result = transformFragment(
+        '^F',
+        FULL_ABC_G,
+        'simplify-accidentals'
+      );
+      expect(result).toBe('F');
+    });
+
+    it('leaves in-key F# (no explicit accidental) unchanged', () => {
+      const result = transformFragment('F', FULL_ABC_G, 'simplify-accidentals');
+      expect(result).toBe('F');
+    });
+
+    it('keeps natural sign on F natural (overrides key)', () => {
+      const result = transformFragment(
+        '=F',
+        FULL_ABC_G,
+        'simplify-accidentals'
+      );
+      expect(result).toBe('=F');
+    });
+
+    it('keeps explicit sharp on non-key black key D#', () => {
+      const result = transformFragment(
+        '^D',
+        FULL_ABC_G,
+        'simplify-accidentals'
+      );
+      expect(result).toBe('^D');
+    });
+
+    it('normalizes Eb to D# (sharp key direction)', () => {
+      const result = transformFragment(
+        '_E',
+        FULL_ABC_G,
+        'simplify-accidentals'
+      );
+      expect(result).toBe('^D');
+    });
+
+    it('leaves white keys unchanged', () => {
+      const result = transformFragment('G', FULL_ABC_G, 'simplify-accidentals');
+      expect(result).toBe('G');
+    });
+  });
+
+  describe('C major (no accidentals)', () => {
+    it('keeps explicit sharp on non-key F# (sharp convention)', () => {
+      const result = transformFragment(
+        '^F',
+        FULL_ABC_C,
+        'simplify-accidentals'
+      );
+      expect(result).toBe('^F');
+    });
+
+    it('keeps explicit flat on non-key Bb (flat convention)', () => {
+      const result = transformFragment(
+        '_B',
+        FULL_ABC_C,
+        'simplify-accidentals'
+      );
+      expect(result).toBe('_B');
+    });
+
+    it('removes unnecessary natural sign in C major', () => {
+      const result = transformFragment(
+        '=F',
+        FULL_ABC_C,
+        'simplify-accidentals'
+      );
+      expect(result).toBe('F');
+    });
+
+    it('leaves white key F unchanged', () => {
+      const result = transformFragment('F', FULL_ABC_C, 'simplify-accidentals');
+      expect(result).toBe('F');
+    });
+  });
+
+  describe('Bb major (Bb, Eb)', () => {
+    it('removes explicit flat from in-key Bb', () => {
+      const result = transformFragment(
+        '_B',
+        FULL_ABC_Bb,
+        'simplify-accidentals'
+      );
+      expect(result).toBe('B');
+    });
+
+    it('keeps natural sign on B natural (overrides key)', () => {
+      const result = transformFragment(
+        '=B',
+        FULL_ABC_Bb,
+        'simplify-accidentals'
+      );
+      expect(result).toBe('=B');
+    });
+  });
+
+  it('preserves rests', () => {
+    const result = transformFragment('z', FULL_ABC_G, 'simplify-accidentals');
+    expect(result).toBe('z');
+  });
+});
+
+describe('transformFragment - add-all-accidentals', () => {
+  describe('G major (F#)', () => {
+    it('adds explicit sharp to in-key F# (written without)', () => {
+      const result = transformFragment('F', FULL_ABC_G, 'add-all-accidentals');
+      expect(result).toBe('^F');
+    });
+
+    it('leaves already-explicit F# unchanged', () => {
+      const result = transformFragment('^F', FULL_ABC_G, 'add-all-accidentals');
+      expect(result).toBe('^F');
+    });
+
+    it('keeps natural sign on F natural', () => {
+      const result = transformFragment('=F', FULL_ABC_G, 'add-all-accidentals');
+      expect(result).toBe('=F');
+    });
+
+    it('leaves white key G unchanged', () => {
+      const result = transformFragment('G', FULL_ABC_G, 'add-all-accidentals');
+      expect(result).toBe('G');
+    });
+  });
+
+  describe('C major (no accidentals)', () => {
+    it('adds explicit sharp to F#', () => {
+      const result = transformFragment('^F', FULL_ABC_C, 'add-all-accidentals');
+      expect(result).toBe('^F');
+    });
+
+    it('removes unnecessary natural sign in C major', () => {
+      const result = transformFragment('=F', FULL_ABC_C, 'add-all-accidentals');
+      expect(result).toBe('F');
+    });
+
+    it('leaves white key F unchanged', () => {
+      const result = transformFragment('F', FULL_ABC_C, 'add-all-accidentals');
+      expect(result).toBe('F');
+    });
+  });
+
+  describe('Bb major (Bb, Eb)', () => {
+    it('adds explicit flat to in-key Bb (written without)', () => {
+      const result = transformFragment('B', FULL_ABC_Bb, 'add-all-accidentals');
+      expect(result).toBe('_B');
+    });
+
+    it('keeps natural sign on B natural', () => {
+      const result = transformFragment(
+        '=B',
+        FULL_ABC_Bb,
+        'add-all-accidentals'
+      );
+      expect(result).toBe('=B');
+    });
+  });
+
+  it('preserves rests', () => {
+    const result = transformFragment('z', FULL_ABC_G, 'add-all-accidentals');
+    expect(result).toBe('z');
+  });
+});
+
 describe('transformFragment - errors', () => {
   it('throws for unknown transform id', () => {
     expect(() => transformFragment('c', FULL_ABC_C, 'invalid')).toThrow(

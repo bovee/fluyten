@@ -1,6 +1,6 @@
 import { describe, it, expect } from 'vitest';
 import { fromMusicXml } from './musicXmlImport';
-import { Duration, DurationModifier } from '../music';
+import { Duration, DurationModifier, expandRepeats } from '../music';
 
 // ---------------------------------------------------------------------------
 // XML helpers
@@ -533,6 +533,85 @@ describe('fromMusicXml', () => {
       const types = music.bars.map((b) => b.type);
       expect(types).toContain('begin_end_repeat');
       expect(types).not.toContain('end_repeat');
+    });
+
+    describe('volta brackets', () => {
+      // Build XML for: |: C D E F |1 G A B c :|2 d e f g |]
+      // measure 1: |: with C D E F
+      // measure 2: first ending G A B c, ends with :|
+      // measure 3: second ending d e f g, ends with |]
+      function voltaXml(): string {
+        return makeScore(`
+          <measure number="1">
+            ${defaultAttrs()}
+            <barline location="left">
+              <bar-style>heavy-light</bar-style>
+              <repeat direction="forward"/>
+            </barline>
+            ${note('C', 4, 'quarter')}
+            ${note('D', 4, 'quarter')}
+            ${note('E', 4, 'quarter')}
+            ${note('F', 4, 'quarter')}
+          </measure>
+          <measure number="2">
+            <barline location="left">
+              <ending number="1" type="start"/>
+            </barline>
+            ${note('G', 4, 'quarter')}
+            ${note('A', 4, 'quarter')}
+            ${note('B', 4, 'quarter')}
+            ${note('C', 5, 'quarter')}
+            <barline location="right">
+              <bar-style>light-heavy</bar-style>
+              <repeat direction="backward"/>
+              <ending number="1" type="stop"/>
+            </barline>
+          </measure>
+          <measure number="3">
+            <barline location="left">
+              <ending number="2" type="start"/>
+            </barline>
+            ${note('D', 5, 'quarter')}
+            ${note('E', 5, 'quarter')}
+            ${note('F', 5, 'quarter')}
+            ${note('G', 5, 'quarter')}
+            <barline location="right">
+              <bar-style>light-heavy</bar-style>
+              <ending number="2" type="stop"/>
+            </barline>
+          </measure>
+        `);
+      }
+
+      it('attaches volta:1 to the bar before the first ending', () => {
+        const music = fromMusicXml(voltaXml());
+        const volta1Bars = music.bars.filter((b) => b.volta === 1);
+        expect(volta1Bars).toHaveLength(1);
+        expect(volta1Bars[0].type).toBe('standard');
+        // The bar after note index 3 (F) should have volta:1
+        expect(volta1Bars[0].afterNoteNum).toBe(3);
+      });
+
+      it('attaches volta:2 to the end_repeat bar before the second ending', () => {
+        const music = fromMusicXml(voltaXml());
+        const volta2Bars = music.bars.filter((b) => b.volta === 2);
+        expect(volta2Bars).toHaveLength(1);
+        expect(volta2Bars[0].type).toBe('end_repeat');
+        // The end_repeat bar is after note index 7 (c5)
+        expect(volta2Bars[0].afterNoteNum).toBe(7);
+      });
+
+      it('expandRepeats plays common+volta1 then common+volta2', () => {
+        const music = fromMusicXml(voltaXml());
+        const result = expandRepeats(music);
+        // Pass 1: C D E F G A B c  (8 notes)
+        // Pass 2: C D E F d e f g  (8 notes)
+        expect(result.notes).toHaveLength(16);
+        expect(result.notes[0].pitches[0]).toBe(60); // C4
+        expect(result.notes[4].pitches[0]).toBe(67); // G4 (volta 1)
+        expect(result.notes[8].pitches[0]).toBe(60); // C4 (repeated common)
+        expect(result.notes[12].pitches[0]).toBe(74); // D5 (volta 2)
+      });
     });
   });
 

@@ -25,7 +25,7 @@ const createSimpleMusic = () => {
     new Note(64, Duration.QUARTER),
     new Note(65, Duration.QUARTER),
   ];
-  music.autobar();
+  music.reflow();
   return music;
 };
 
@@ -54,7 +54,7 @@ const createAccidentalsMusic = () => {
     new Note(62, Duration.QUARTER, [], undefined),
     new Note(61, Duration.QUARTER, [], 'b'),
   ];
-  music.autobar();
+  music.reflow();
   return music;
 };
 
@@ -76,7 +76,7 @@ const createKeySignatureMusic = () => {
     new Note(71, Duration.QUARTER),
     new Note(72, Duration.QUARTER),
   ];
-  music.autobar();
+  music.reflow();
   return music;
 };
 
@@ -97,7 +97,7 @@ const createDecorationsMusic = () => {
     new Note(64, Duration.QUARTER, ['fermata']),
     new Note(65, Duration.QUARTER, ['staccato', 'trill']),
   ];
-  music.autobar();
+  music.reflow();
   return music;
 };
 
@@ -120,7 +120,7 @@ const createGraceNotesMusic = () => {
     new Note(64, Duration.QUARTER),
     new Note(62, Duration.QUARTER),
   ];
-  music.autobar();
+  music.reflow();
   return music;
 };
 
@@ -144,7 +144,7 @@ const createTripletsMusic = () => {
     new Note(64, Duration.QUARTER, [], undefined, DurationModifier.TRIPLET),
     new Note(62, Duration.QUARTER, [], undefined, DurationModifier.TRIPLET),
   ];
-  // Manually define bars since autobar doesn't handle triplet rounding
+  // Manually define bars since reflow doesn't handle triplet rounding
   music.bars = [
     { afterNoteNum: undefined, type: 'standard' },
     { afterNoteNum: 5, type: 'standard' },
@@ -216,7 +216,7 @@ const createCrossLineTieMusic = () => {
     ...bar([67, 65, 64, 62]),
   ];
   music.curves = [[11, 12]];
-  music.autobar();
+  music.reflow();
   return music;
 };
 
@@ -243,7 +243,7 @@ const createBeamsMusic = () => {
   ];
   // Beam all 8 notes together
   music.beams = [[0, 7]];
-  music.autobar();
+  music.reflow();
   return music;
 };
 
@@ -264,7 +264,7 @@ const createRestsMusic = () => {
     new Note(64, Duration.QUARTER),
     new Note(undefined, Duration.QUARTER), // quarter rest
   ];
-  music.autobar();
+  music.reflow();
   return music;
 };
 
@@ -283,7 +283,7 @@ const createDottedNotesMusic = () => {
     new Note(60, Duration.HALF, [], undefined, DurationModifier.DOTTED),
     new Note(62, Duration.QUARTER),
   ];
-  music.autobar();
+  music.reflow();
   return music;
 };
 
@@ -308,7 +308,7 @@ const createSlursMusic = () => {
     [0, 1],
     [2, 3],
   ];
-  music.autobar();
+  music.reflow();
   return music;
 };
 

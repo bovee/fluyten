@@ -1,5 +1,6 @@
 import {
   type Accidental,
+  type BarLine,
   type BarLineType,
   Duration,
   DurationModifier,
@@ -198,10 +199,10 @@ function scoreToAbc(
   defaultDuration: Duration = Duration.EIGHTH
 ): string {
   // Build a sorted list of bar positions keyed by afterNoteNum
-  const barAfter: Map<number, BarLineType> = new Map();
+  const barAfter: Map<number, BarLine> = new Map();
   for (const bar of music.bars) {
     if (bar.afterNoteNum !== undefined) {
-      barAfter.set(bar.afterNoteNum, bar.type);
+      barAfter.set(bar.afterNoteNum, bar);
     }
   }
 
@@ -284,9 +285,11 @@ function scoreToAbc(
     scoreTokens.push(noteParts[noteIx]);
 
     // Bar line after this note
-    const barType = barAfter.get(noteIx);
-    if (barType !== undefined) {
-      scoreTokens.push(' ' + BAR_TYPE_TO_ABC[barType]);
+    const bar = barAfter.get(noteIx);
+    if (bar !== undefined) {
+      let barStr = BAR_TYPE_TO_ABC[bar.type];
+      if (bar.volta !== undefined) barStr += bar.volta;
+      scoreTokens.push(' ' + barStr);
     }
   }
 

@@ -237,6 +237,20 @@ export function fromMusicXml(xmlText: string): Music {
       }
     }
 
+    // Volta (first/second endings): <ending number="N" type="start"> on the
+    // left barline means the notes in this measure belong to ending N.
+    // We attach the volta number to the bar that immediately precedes this
+    // measure (i.e., the most recently pushed bar), which matches the ABC
+    // model where `volta` on a bar means "notes after this bar are in volta N".
+    const leftEnding = leftBarline?.querySelector('ending');
+    if (leftEnding?.getAttribute('type') === 'start') {
+      const voltaNum = parseInt(leftEnding.getAttribute('number') ?? '0', 10);
+      if (voltaNum > 0) {
+        const lastBar = music.bars.at(-1);
+        if (lastBar) lastBar.volta = voltaNum;
+      }
+    }
+
     // Attributes (key, time, clef, divisions) — may appear in any measure
     const attributes =
       Array.from(measure.children).find((c) => c.tagName === 'attributes') ??

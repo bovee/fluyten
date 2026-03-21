@@ -12,7 +12,11 @@ import MusicNote from '@mui/icons-material/MusicNote';
 import PlayArrow from '@mui/icons-material/PlayArrow';
 import Speed from '@mui/icons-material/Speed';
 
-import { voicesFromAbc, defaultClefForInstrument, type VoiceInfo } from './io/abcImport';
+import {
+  voicesFromAbc,
+  defaultClefForInstrument,
+  type VoiceInfo,
+} from './io/abcImport';
 import { Music, expandRepeats } from './music';
 import { FrequencyTracker } from './audio/FrequencyTracker';
 import { NotePlayer } from './audio/NotePlayer';
@@ -158,9 +162,11 @@ function useAudioPlayback(
     const entries: PlayerEntry[] = voices
       .map((v, i) => {
         const audible =
-          playbackVoices === 'selected' ? i === selectedIdx :
-          playbackVoices === 'others'   ? i !== selectedIdx :
-          true; // 'all'
+          playbackVoices === 'selected'
+            ? i === selectedIdx
+            : playbackVoices === 'others'
+              ? i !== selectedIdx
+              : true; // 'all'
         if (!audible && i !== selectedIdx) return null;
         const player = new NotePlayer();
         if (!audible) player.setVolume(0);
@@ -279,9 +285,13 @@ export function SongPage({
   }, [tempo]);
 
   const voicesRef = useRef<VoiceInfo[]>(voices);
-  useEffect(() => { voicesRef.current = voices; }, [voices]);
+  useEffect(() => {
+    voicesRef.current = voices;
+  }, [voices]);
   const selectedVoiceIdxRef = useRef(selectedVoiceIdx);
-  useEffect(() => { selectedVoiceIdxRef.current = selectedVoiceIdx; }, [selectedVoiceIdx]);
+  useEffect(() => {
+    selectedVoiceIdxRef.current = selectedVoiceIdx;
+  }, [selectedVoiceIdx]);
 
   const expandedTrackingRef = useRef({
     notes: [] as { pitches: number[] }[],

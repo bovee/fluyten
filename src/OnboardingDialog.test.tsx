@@ -19,14 +19,17 @@ const mockFetch = vi.fn().mockResolvedValue({
 vi.stubGlobal('fetch', mockFetch);
 
 beforeEach(() => {
-  useStore.setState({ instrumentType: 'SOPRANO', isGerman: false, language: 'en' });
+  useStore.setState({
+    instrumentType: 'SOPRANO',
+    isGerman: false,
+    language: 'en',
+  });
   mockFetch.mockClear();
 });
 
-const renderDialog = (props?: Partial<Parameters<typeof OnboardingDialog>[0]>) =>
-  render(
-    <OnboardingDialog open={true} onComplete={vi.fn()} {...props} />
-  );
+const renderDialog = (
+  props?: Partial<Parameters<typeof OnboardingDialog>[0]>
+) => render(<OnboardingDialog open={true} onComplete={vi.fn()} {...props} />);
 
 describe('OnboardingDialog', () => {
   it('renders when open is true', () => {
@@ -93,7 +96,9 @@ describe('OnboardingDialog', () => {
     });
 
     it('shows the Detect button', () => {
-      expect(screen.getByRole('button', { name: /detect/i })).toBeInTheDocument();
+      expect(
+        screen.getByRole('button', { name: /detect/i })
+      ).toBeInTheDocument();
     });
 
     it('shows a Get Started button', () => {

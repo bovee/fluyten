@@ -101,7 +101,9 @@ export function OnboardingDialog({ open, onComplete }: OnboardingDialogProps) {
       })
       .catch((err) => {
         console.error('Failed to fetch beginner songs:', err);
-        alert('Could not download the beginner songs book. You can add it later via "Add Other Book".');
+        alert(
+          'Could not download the beginner songs book. You can add it later via "Add Other Book".'
+        );
       });
   };
 

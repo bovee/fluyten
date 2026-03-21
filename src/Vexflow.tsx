@@ -19,6 +19,7 @@ import {
   StaveTie,
   Tuplet,
   Voice,
+  Volta,
 } from 'vexflow';
 import Popover from '@mui/material/Popover';
 import Typography from '@mui/material/Typography';
@@ -189,6 +190,7 @@ function toStavenotes(
   markings: (Beam | StaveTie | Curve | Tuplet)[];
   noteIndexMap: number[];
   usedBarTypes: BarLineType[];
+  usedVoltas: (number | undefined)[];
 } {
   // noteIndexMap[i] = index into music.notes for the i-th stave note.
   // Grace notes are not added as standalone stave notes, so indices may diverge.
@@ -252,6 +254,7 @@ function toStavenotes(
   // Split notes into bars (or lines in free time).
   const barredNotes: StaveNote[][] = [];
   const usedBarTypes: BarLineType[] = [];
+  const usedVoltas: (number | undefined)[] = [];
   let lineOf: (barIx: number) => number;
 
   if (freeTime) {
@@ -282,6 +285,7 @@ function toStavenotes(
       if (afterNoteIx === undefined) continue;
       barredNotes.push(notes.splice(0, afterNoteIx - barStartNoteIx + 1));
       usedBarTypes.push(bar.type);
+      usedVoltas.push(bar.volta);
       barStartNoteIx = afterNoteIx + 1;
     }
     if (notes.length) barredNotes.push(notes);
@@ -302,7 +306,7 @@ function toStavenotes(
     noteToLine
   );
 
-  return { barredNotes, markings, noteIndexMap, usedBarTypes };
+  return { barredNotes, markings, noteIndexMap, usedBarTypes, usedVoltas };
 }
 
 type BarBound = { x1: number; x2: number; y1: number; y2: number };
@@ -368,18 +372,22 @@ export function Vexflow(props: {
   const ticksPerLine = barsPerLine * music.beatsPerBar * DURATION_TICKS.QUARTER;
   const vexClef = music.clef === 'treble8va' ? 'treble' : music.clef;
   const displayPitchOffset = music.clef === 'treble8va' ? -12 : 0;
-  const { barredNotes, markings, noteIndexMap, usedBarTypes } = toStavenotes(
-    music,
-    barsPerLine,
-    freeTime,
-    ticksPerLine,
-    vexClef,
-    displayPitchOffset
-  );
+  const { barredNotes, markings, noteIndexMap, usedBarTypes, usedVoltas } =
+    toStavenotes(
+      music,
+      barsPerLine,
+      freeTime,
+      ticksPerLine,
+      vexClef,
+      displayPitchOffset
+    );
 
   // Build per-bar beg/end barline type overrides from the parsed bar types.
   const endBarTypes = new Map<number, number>();
   const begBarTypes = new Map<number, number>();
+  // Map from bar index (the bar AFTER the current one) to volta type+label.
+  // barIx N receives a volta bracket when bar N-1 has a volta annotation.
+  const voltaBrackets = new Map<number, { vexType: number; label: string }>();
   if (!freeTime) {
     for (let i = 0; i < usedBarTypes.length; i++) {
       const type = usedBarTypes[i];
@@ -394,6 +402,24 @@ export function Vexflow(props: {
         endBarTypes.set(i, Barline.type.DOUBLE);
       } else if (type === 'end') {
         endBarTypes.set(i, Barline.type.END);
+      }
+
+      // Volta bracket: bar i ends with a volta annotation, so bar i+1 gets the bracket.
+      const voltaNum = usedVoltas[i];
+      if (voltaNum !== undefined) {
+        const prevVolta = i > 0 ? usedVoltas[i - 1] : undefined;
+        const nextVolta = usedVoltas[i + 1];
+        let vexType: number;
+        if (prevVolta === voltaNum && nextVolta === voltaNum) {
+          vexType = Volta.type.MID;
+        } else if (prevVolta === voltaNum) {
+          vexType = Volta.type.END;
+        } else if (nextVolta === voltaNum) {
+          vexType = Volta.type.BEGIN;
+        } else {
+          vexType = Volta.type.BEGIN_END;
+        }
+        voltaBrackets.set(i + 1, { vexType, label: `${voltaNum}.` });
       }
     }
     // Handle |: at the very start (before any notes — afterNoteNum < 0, skipped by splitter).
@@ -505,6 +531,8 @@ export function Vexflow(props: {
         if (begType !== undefined) stave.setBegBarType(begType);
         const endType = endBarTypes.get(barIx);
         if (endType !== undefined) stave.setEndBarType(endType);
+        const volta = voltaBrackets.get(barIx);
+        if (volta) stave.setVoltaType(volta.vexType, volta.label, -5);
         stave.setContext(context).draw();
         staveInfoByBar.push({
           x: staveX,

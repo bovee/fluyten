@@ -94,17 +94,6 @@ export const AddBookDialog: Story = {
   },
 };
 
-export const BuiltInBooksMenu: Story = {
-  play: async ({ canvasElement }) => {
-    const canvas = within(canvasElement);
-    const dropdownButton = await canvas.findByRole('button', {
-      name: /add other book/i,
-    });
-    await userEvent.click(dropdownButton);
-    await within(document.body).findByRole('menu');
-  },
-};
-
 const oneBook = [
   {
     id: BOOK_1_ID,

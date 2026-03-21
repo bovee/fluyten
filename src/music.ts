@@ -339,6 +339,7 @@ export interface Song {
 export interface BarLine {
   afterNoteNum?: number;
   type: BarLineType;
+  volta?: number; // 1 = first ending, 2 = second ending, etc.
 }
 
 /** Maps a tick count to [Duration, DurationModifier] if it names a standard notated value, else null. */
@@ -377,11 +378,6 @@ export class Music {
   beams: number[][] = [];
   curves: number[][] = [];
   bars: BarLine[] = [];
-
-  markAccidentals(): Music {
-    // TODO: update the displayed accidentals in accordance with the current key
-    return this;
-  }
 
   reflow(): Music {
     const barCapacity =
@@ -491,11 +487,6 @@ export class Music {
 
     return this;
   }
-
-  /** @deprecated Use reflow() instead. */
-  autobar(): Music {
-    return this.reflow();
-  }
 }
 
 /**
@@ -505,6 +496,9 @@ export class Music {
  *
  * Curves (ties/slurs) that fall entirely within a repeated segment are
  * duplicated with adjusted indices.
+ *
+ * Supports first/second endings (volta brackets): |1 ... :|2 or [1 ... :|2.
+ * On the first pass the volta-1 bars play; on the repeat the volta-2 bars play.
  *
  * Limitation: nested repeats (e.g. |: A |: B :| C :|) are not supported.
  * This matches ABC standard practice where nested repeats are poorly defined.
@@ -543,27 +537,114 @@ export function expandRepeats(music: Music): {
 
   let repeatStartNoteIdx = 0;
   let prevEndIdx = -1;
+  let i = 0;
 
-  for (const bar of music.bars) {
+  while (i < music.bars.length) {
+    const bar = music.bars[i];
+
     if (bar.afterNoteNum === undefined || bar.afterNoteNum < 0) {
       if (bar.type === 'begin_repeat' || bar.type === 'begin_end_repeat') {
         repeatStartNoteIdx = 0;
       }
+      i++;
       continue;
     }
 
     const segEnd = bar.afterNoteNum;
-    addSegment(prevEndIdx + 1, segEnd);
 
     if (bar.type === 'end_repeat' || bar.type === 'begin_end_repeat') {
+      // Look back to find a volta-1 bar within this repeat section.
+      let volta1BarIdx = -1;
+      for (let j = 0; j <= i; j++) {
+        const b = music.bars[j];
+        if (
+          b.volta === 1 &&
+          b.afterNoteNum !== undefined &&
+          b.afterNoteNum >= repeatStartNoteIdx - 1
+        ) {
+          volta1BarIdx = j;
+          break;
+        }
+      }
+
+      if (volta1BarIdx !== -1) {
+        // Volta bracket detected.
+        const volta1Bar = music.bars[volta1BarIdx];
+        const commonEnd = volta1Bar.afterNoteNum!; // last note of common section
+        const volta1Start = commonEnd + 1;
+        const volta1End = segEnd; // notes before end_repeat are volta 1
+
+        // Volta 2 may be on the end_repeat bar itself (:|2) or the next bar ([2 / |2).
+        let volta2Start: number;
+        let volta2End: number;
+        let consumed = 0; // extra bars consumed for volta 2
+
+        if (bar.volta === 2) {
+          // :|2 — second ending notes follow this bar
+          volta2Start = segEnd + 1;
+          const nextBar = music.bars[i + 1];
+          volta2End =
+            nextBar?.afterNoteNum !== undefined
+              ? nextBar.afterNoteNum
+              : music.notes.length - 1;
+          consumed = 1; // consume the bar that closes volta 2
+        } else {
+          // Look for a separate [2 / |2 bar immediately after this end_repeat
+          const nextBar = music.bars[i + 1];
+          if (nextBar?.volta === 2 && nextBar.afterNoteNum !== undefined) {
+            volta2Start = segEnd + 1;
+            const barAfterVolta2 = music.bars[i + 2];
+            volta2End =
+              barAfterVolta2?.afterNoteNum !== undefined
+                ? barAfterVolta2.afterNoteNum
+                : music.notes.length - 1;
+            consumed = 2; // consume volta-2 bar and the bar that closes it
+          } else {
+            // No volta 2 found — fall back to simple repeat
+            addSegment(prevEndIdx + 1, segEnd);
+            addSegment(repeatStartNoteIdx, segEnd);
+            if (bar.type === 'begin_end_repeat')
+              repeatStartNoteIdx = segEnd + 1;
+            prevEndIdx = segEnd;
+            i++;
+            continue;
+          }
+        }
+
+        // Pass 1: common + volta 1
+        addSegment(prevEndIdx + 1, commonEnd);
+        addSegment(volta1Start, volta1End);
+        // Pass 2: common (repeated) + volta 2
+        addSegment(repeatStartNoteIdx, commonEnd);
+        addSegment(volta2Start, volta2End);
+
+        if (bar.type === 'begin_end_repeat') repeatStartNoteIdx = volta2End + 1;
+        prevEndIdx = volta2End;
+        i += 1 + consumed;
+        continue;
+      }
+
+      // No volta — simple repeat (existing behaviour)
+      addSegment(prevEndIdx + 1, segEnd);
       addSegment(repeatStartNoteIdx, segEnd);
+      if (bar.type === 'begin_end_repeat') repeatStartNoteIdx = segEnd + 1;
+      prevEndIdx = segEnd;
+    } else {
+      // Standard / double / begin / end bar.
+      // Volta-annotated bars are deferred: the end_repeat handler will emit them.
+      if (bar.volta === undefined) {
+        addSegment(prevEndIdx + 1, segEnd);
+        prevEndIdx = segEnd;
+      }
+      // For volta bars, prevEndIdx intentionally stays where it was so the
+      // end_repeat handler can emit from prevEndIdx+1 through commonEnd.
+
+      if (bar.type === 'begin_repeat') {
+        repeatStartNoteIdx = segEnd + 1;
+      }
     }
 
-    if (bar.type === 'begin_repeat' || bar.type === 'begin_end_repeat') {
-      repeatStartNoteIdx = segEnd + 1;
-    }
-
-    prevEndIdx = segEnd;
+    i++;
   }
 
   // Notes after the last bar line

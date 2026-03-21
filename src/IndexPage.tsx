@@ -46,20 +46,30 @@ export function IndexPage({
 }: IndexPageProps) {
   const { t } = useTranslation();
   const [settingsOpen, setSettingsOpen] = useState(false);
-  const [scaleDialogBookId, setScaleDialogBookId] = useState<string | null>(null);
+  const [scaleDialogBookId, setScaleDialogBookId] = useState<string | null>(
+    null
+  );
   const [addSongMenu, setAddSongMenu] = useState<{
     anchor: HTMLElement;
     bookId: string;
   } | null>(null);
   const [newBook, setNewBook] = useState<{ title: string } | null>(null);
-  const [renameBook, setRenameBook] = useState<{ id: string; title: string } | null>(null);
-  const [deleteConfirmBookId, setDeleteConfirmBookId] = useState<string | null>(null);
+  const [renameBook, setRenameBook] = useState<{
+    id: string;
+    title: string;
+  } | null>(null);
+  const [deleteConfirmBookId, setDeleteConfirmBookId] = useState<string | null>(
+    null
+  );
   const [deleteConfirmSong, setDeleteConfirmSong] = useState<{
     bookId: string;
     songId: string;
     title: string;
   } | null>(null);
-  const [exportBook, setExportBook] = useState<{ id: string; fileName: string } | null>(null);
+  const [exportBook, setExportBook] = useState<{
+    id: string;
+    fileName: string;
+  } | null>(null);
   const [importUrl, setImportUrl] = useState<{
     bookId: string;
     value: string;
@@ -141,11 +151,9 @@ export function IndexPage({
         return;
       }
       const urlPath = new URL(current.value).pathname;
-      const fallbackTitle =
-        (urlPath.split('/').pop()?.split('?')[0] ?? 'Imported').replace(
-          /\.[^.]+$/,
-          ''
-        );
+      const fallbackTitle = (
+        urlPath.split('/').pop()?.split('?')[0] ?? 'Imported'
+      ).replace(/\.[^.]+$/, '');
       const text = await response.text();
       const songs = parseSongsFromText(text, urlPath, fallbackTitle);
       songs.forEach((song) => addSongToBook(current.bookId, song));
@@ -246,13 +254,24 @@ export function IndexPage({
             key={book.id}
             expanded={expandedBook === book.id}
             onChange={handleAccordionChange(book.id)}
-            onDragOver={(e) => { e.preventDefault(); e.dataTransfer.dropEffect = 'copy'; }}
-            onDragEnter={(e) => { e.preventDefault(); setDragOverBookId(book.id); }}
-            onDragLeave={(e) => { if (!e.currentTarget.contains(e.relatedTarget as Node)) setDragOverBookId(null); }}
+            onDragOver={(e) => {
+              e.preventDefault();
+              e.dataTransfer.dropEffect = 'copy';
+            }}
+            onDragEnter={(e) => {
+              e.preventDefault();
+              setDragOverBookId(book.id);
+            }}
+            onDragLeave={(e) => {
+              if (!e.currentTarget.contains(e.relatedTarget as Node))
+                setDragOverBookId(null);
+            }}
             onDrop={(e) => void handleDropOnBook(book.id, e)}
             sx={{
-              backgroundColor: dragOverBookId === book.id ? '#e8f4fd' : '#fffef9',
-              outline: dragOverBookId === book.id ? '2px dashed #1976d2' : 'none',
+              backgroundColor:
+                dragOverBookId === book.id ? '#e8f4fd' : '#fffef9',
+              outline:
+                dragOverBookId === book.id ? '2px dashed #1976d2' : 'none',
               transition: 'background-color 0.15s, outline 0.15s',
             }}
           >
@@ -405,7 +424,6 @@ export function IndexPage({
             onChange={(e) => void handleImportFile(e)}
           />
         </div>
-
       </div>
 
       <SettingsDialog
@@ -458,7 +476,9 @@ export function IndexPage({
             label={t('bookName')}
             value={renameBook?.title ?? ''}
             onChange={(e) =>
-              setRenameBook((prev) => prev && { ...prev, title: e.target.value })
+              setRenameBook(
+                (prev) => prev && { ...prev, title: e.target.value }
+              )
             }
             onKeyDown={(e) => e.key === 'Enter' && handleRenameBook()}
             sx={{ mt: 1 }}
@@ -468,9 +488,7 @@ export function IndexPage({
         <DialogActions sx={{ justifyContent: 'space-between' }}>
           <Button
             color="error"
-            onClick={() =>
-              renameBook && setDeleteConfirmBookId(renameBook.id)
-            }
+            onClick={() => renameBook && setDeleteConfirmBookId(renameBook.id)}
           >
             {t('deleteBook')}
           </Button>
@@ -577,7 +595,9 @@ export function IndexPage({
             label={t('fileName')}
             value={exportBook?.fileName ?? ''}
             onChange={(e) =>
-              setExportBook((prev) => prev && { ...prev, fileName: e.target.value })
+              setExportBook(
+                (prev) => prev && { ...prev, fileName: e.target.value }
+              )
             }
             onKeyDown={(e) => e.key === 'Enter' && handleExport()}
             sx={{ mt: 1 }}

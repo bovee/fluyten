@@ -1,4 +1,4 @@
-import { type Music, Duration, DurationModifier } from '../music';
+import { type Music, Duration, DurationModifier, KEYS } from '../music';
 import { parseFragment } from './abcImport';
 import { notesToAbc } from './abcExport';
 
@@ -34,6 +34,64 @@ function scaleDuration(
     modifier === DurationModifier.DOTTED ? (base * 3) / 2 : base;
   const scaled = sixteenths * factor;
   return SIXTEENTHS_TO_DURATION.get(scaled) ?? [duration, modifier];
+}
+
+// --- Accidental normalization helpers ---
+
+const BLACK_KEY_PITCH_CLASSES = new Set([1, 3, 6, 8, 10]);
+
+// For C major / no-accidental key: C/F/G → sharp, B/E → flat
+// pitch: 1(C#)→#, 3(Eb)→b, 6(F#)→#, 8(G#)→#, 10(Bb)→b
+const C_MAJOR_BLACK_KEY_SPELLINGS: Record<number, '#' | 'b'> = {
+  1: '#',
+  3: 'b',
+  6: '#',
+  8: '#',
+  10: 'b',
+};
+
+const LETTER_PITCH_CLASSES: Record<string, number> = {
+  C: 0,
+  D: 2,
+  E: 4,
+  F: 5,
+  G: 7,
+  A: 9,
+  B: 11,
+};
+
+interface KeyAccidentalMaps {
+  inKeyPitchClasses: Map<number, '#' | 'b'>; // adjusted pitch class → accidental type
+  naturalPitchClasses: Set<number>; // "natural" pitch class of each key-adjusted letter
+  keyDirection: '#' | 'b' | null; // dominant accidental direction (null = C major / Am)
+}
+
+function buildKeyAccidentalMaps(keySignature: string): KeyAccidentalMaps {
+  const keyNotes = KEYS[keySignature] ?? [];
+  const inKeyPitchClasses = new Map<number, '#' | 'b'>();
+  const naturalPitchClasses = new Set<number>();
+
+  for (const keyNote of keyNotes) {
+    const letter = keyNote[0];
+    const isSharp = keyNote[1] === '#';
+    const basePitchClass = LETTER_PITCH_CLASSES[letter];
+    const adjustedPitchClass = (basePitchClass + (isSharp ? 1 : -1) + 12) % 12;
+    inKeyPitchClasses.set(adjustedPitchClass, isSharp ? '#' : 'b');
+    naturalPitchClasses.add(basePitchClass);
+  }
+
+  const keyDirection: '#' | 'b' | null =
+    keyNotes.length === 0 ? null : keyNotes[0].includes('#') ? '#' : 'b';
+
+  return { inKeyPitchClasses, naturalPitchClasses, keyDirection };
+}
+
+function preferredBlackKeyAccidental(
+  pitchClass: number,
+  keyDirection: '#' | 'b' | null
+): '#' | 'b' {
+  if (keyDirection !== null) return keyDirection;
+  return C_MAJOR_BLACK_KEY_SPELLINGS[pitchClass] ?? '#';
 }
 
 export interface Transformation {
@@ -120,6 +178,53 @@ export const TRANSFORMATIONS: Transformation[] = [
           note.durationModifier,
           0.5
         );
+      }
+    },
+  },
+  {
+    id: 'simplify-accidentals',
+    labelKey: 'transformSimplifyAccidentals',
+    apply: (music) => {
+      const { inKeyPitchClasses, naturalPitchClasses, keyDirection } =
+        buildKeyAccidentalMaps(music.keySignature);
+      for (const note of music.notes) {
+        for (let i = 0; i < note.pitches.length; i++) {
+          const pitchClass = note.pitches[i] % 12;
+          if (inKeyPitchClasses.has(pitchClass)) {
+            note.accidentals[i] = undefined;
+          } else if (naturalPitchClasses.has(pitchClass)) {
+            note.accidentals[i] = 'n';
+          } else if (BLACK_KEY_PITCH_CLASSES.has(pitchClass)) {
+            note.accidentals[i] = preferredBlackKeyAccidental(
+              pitchClass,
+              keyDirection
+            );
+          } else {
+            note.accidentals[i] = undefined;
+          }
+        }
+      }
+    },
+  },
+  {
+    id: 'add-all-accidentals',
+    labelKey: 'transformAddAllAccidentals',
+    apply: (music) => {
+      const { inKeyPitchClasses, naturalPitchClasses, keyDirection } =
+        buildKeyAccidentalMaps(music.keySignature);
+      for (const note of music.notes) {
+        for (let i = 0; i < note.pitches.length; i++) {
+          const pitchClass = note.pitches[i] % 12;
+          if (BLACK_KEY_PITCH_CLASSES.has(pitchClass)) {
+            note.accidentals[i] =
+              inKeyPitchClasses.get(pitchClass) ??
+              preferredBlackKeyAccidental(pitchClass, keyDirection);
+          } else if (naturalPitchClasses.has(pitchClass)) {
+            note.accidentals[i] = 'n';
+          } else {
+            note.accidentals[i] = undefined;
+          }
+        }
       }
     },
   },

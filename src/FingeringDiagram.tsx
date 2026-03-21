@@ -16,466 +16,85 @@ export const Hole = {
 
 export type Hole = (typeof Hole)[keyof typeof Hole];
 
-const FINGERINGS: { [offset: number]: Hole[][] } = {
-  1: [
-    [
-      Hole.Closed,
-      Hole.Closed,
-      Hole.Closed,
-      Hole.Closed,
-      Hole.Closed,
-      Hole.Closed,
-      Hole.Closed,
-      Hole.Closed,
-    ],
-  ],
-  2: [
-    [
-      Hole.Closed,
-      Hole.Closed,
-      Hole.Closed,
-      Hole.Closed,
-      Hole.Closed,
-      Hole.Closed,
-      Hole.Closed,
-      Hole.Half,
-    ],
-  ],
-  3: [
-    [
-      Hole.Closed,
-      Hole.Closed,
-      Hole.Closed,
-      Hole.Closed,
-      Hole.Closed,
-      Hole.Closed,
-      Hole.Closed,
-      Hole.Open,
-    ],
-  ],
-  4: [
-    [
-      Hole.Closed,
-      Hole.Closed,
-      Hole.Closed,
-      Hole.Closed,
-      Hole.Closed,
-      Hole.Closed,
-      Hole.Half,
-      Hole.Open,
-    ],
-  ],
-  5: [
-    [
-      Hole.Closed,
-      Hole.Closed,
-      Hole.Closed,
-      Hole.Closed,
-      Hole.Closed,
-      Hole.Closed,
-      Hole.Open,
-      Hole.Open,
-    ],
-  ],
-  6: [
-    [
-      Hole.Closed,
-      Hole.Closed,
-      Hole.Closed,
-      Hole.Closed,
-      Hole.Closed,
-      Hole.Open,
-      Hole.Closed,
-      Hole.Closed,
-    ],
-  ],
-  7: [
-    [
-      Hole.Closed,
-      Hole.Closed,
-      Hole.Closed,
-      Hole.Closed,
-      Hole.Open,
-      Hole.Closed,
-      Hole.Closed,
-      Hole.Open,
-    ],
-  ],
-  8: [
-    [
-      Hole.Closed,
-      Hole.Closed,
-      Hole.Closed,
-      Hole.Closed,
-      Hole.Open,
-      Hole.Open,
-      Hole.Open,
-      Hole.Open,
-    ],
-  ],
-  9: [
-    [
-      Hole.Closed,
-      Hole.Closed,
-      Hole.Closed,
-      Hole.Open,
-      Hole.Closed,
-      Hole.Closed,
-      Hole.Half,
-      Hole.Open,
-    ],
-  ],
-  10: [
-    [
-      Hole.Closed,
-      Hole.Closed,
-      Hole.Closed,
-      Hole.Open,
-      Hole.Open,
-      Hole.Open,
-      Hole.Open,
-      Hole.Open,
-    ],
-  ],
-  11: [
-    [
-      Hole.Closed,
-      Hole.Closed,
-      Hole.Open,
-      Hole.Closed,
-      Hole.Closed,
-      Hole.Open,
-      Hole.Open,
-      Hole.Open,
-    ],
-    [
-      Hole.Closed,
-      Hole.Open,
-      Hole.Closed,
-      Hole.Closed,
-      Hole.Closed,
-      Hole.Open,
-      Hole.Open,
-      Hole.Open,
-    ],
-  ],
-  12: [
-    [
-      Hole.Closed,
-      Hole.Closed,
-      Hole.Open,
-      Hole.Open,
-      Hole.Open,
-      Hole.Open,
-      Hole.Open,
-      Hole.Open,
-    ],
-    [
-      Hole.Closed,
-      Hole.Open,
-      Hole.Closed,
-      Hole.Closed,
-      Hole.Open,
-      Hole.Open,
-      Hole.Open,
-      Hole.Open,
-    ],
-  ],
-  13: [
-    [
-      Hole.Closed,
-      Hole.Open,
-      Hole.Closed,
-      Hole.Open,
-      Hole.Open,
-      Hole.Open,
-      Hole.Open,
-      Hole.Open,
-    ],
-  ],
-  14: [
-    [
-      Hole.Open,
-      Hole.Closed,
-      Hole.Closed,
-      Hole.Open,
-      Hole.Open,
-      Hole.Open,
-      Hole.Open,
-      Hole.Open,
-    ],
-    [
-      Hole.Closed,
-      Hole.Open,
-      Hole.Open,
-      Hole.Open,
-      Hole.Open,
-      Hole.Open,
-      Hole.Open,
-      Hole.Open,
-    ],
-  ],
-  15: [
-    [
-      Hole.Open,
-      Hole.Open,
-      Hole.Closed,
-      Hole.Open,
-      Hole.Open,
-      Hole.Open,
-      Hole.Open,
-      Hole.Open,
-    ],
-  ],
-  16: [
-    [
-      Hole.Open,
-      Hole.Open,
-      Hole.Closed,
-      Hole.Closed,
-      Hole.Closed,
-      Hole.Closed,
-      Hole.Closed,
-      Hole.Open,
-    ],
-  ],
-  17: [
-    [
-      Hole.Half,
-      Hole.Closed,
-      Hole.Closed,
-      Hole.Closed,
-      Hole.Closed,
-      Hole.Closed,
-      Hole.Open,
-      Hole.Open,
-    ],
-  ],
-  18: [
-    [
-      Hole.Half,
-      Hole.Closed,
-      Hole.Closed,
-      Hole.Closed,
-      Hole.Closed,
-      Hole.Open,
-      Hole.Closed,
-      Hole.Open,
-    ],
-  ],
-  19: [
-    [
-      Hole.Half,
-      Hole.Closed,
-      Hole.Closed,
-      Hole.Closed,
-      Hole.Open,
-      Hole.Closed,
-      Hole.Open,
-      Hole.Open,
-    ],
-  ],
-  20: [
-    [
-      Hole.Half,
-      Hole.Closed,
-      Hole.Closed,
-      Hole.Closed,
-      Hole.Open,
-      Hole.Open,
-      Hole.Open,
-      Hole.Open,
-    ],
-  ],
-  21: [
-    [
-      Hole.Half,
-      Hole.Closed,
-      Hole.Closed,
-      Hole.Open,
-      Hole.Closed,
-      Hole.Open,
-      Hole.Open,
-      Hole.Open,
-    ],
-  ],
-  22: [
-    [
-      Hole.Half,
-      Hole.Closed,
-      Hole.Closed,
-      Hole.Open,
-      Hole.Open,
-      Hole.Open,
-      Hole.Open,
-      Hole.Open,
-    ],
-  ],
-  23: [
-    [
-      Hole.Half,
-      Hole.Closed,
-      Hole.Closed,
-      Hole.Open,
-      Hole.Closed,
-      Hole.Closed,
-      Hole.Closed,
-      Hole.Open,
-    ],
-  ],
-  24: [
-    [
-      Hole.Half,
-      Hole.Closed,
-      Hole.Closed,
-      Hole.Open,
-      Hole.Closed,
-      Hole.Closed,
-      Hole.Open,
-      Hole.Open,
-    ],
-  ],
-  25: [
-    [
-      Hole.Half,
-      Hole.Closed,
-      Hole.Open,
-      Hole.Open,
-      Hole.Closed,
-      Hole.Closed,
-      Hole.Open,
-      Hole.Open,
-    ],
-  ],
-  26: [
-    [
-      Hole.Half,
-      Hole.Closed,
-      Hole.Half,
-      Hole.Closed,
-      Hole.Closed,
-      Hole.Open,
-      Hole.Closed,
-      Hole.Closed,
-    ],
-  ],
-  27: [
-    [
-      Hole.Half,
-      Hole.Closed,
-      Hole.Open,
-      Hole.Closed,
-      Hole.Closed,
-      Hole.Open,
-      Hole.Closed,
-      Hole.Half,
-    ],
-  ],
-};
+// Fingering strings: each character is one hole (thumb first).
+function parseFingerings(raw: { [offset: number]: string[] }): {
+  [offset: number]: Hole[][];
+} {
+  return Object.fromEntries(
+    Object.entries(raw).map(([k, v]) => [
+      k,
+      v.map((s) =>
+        s.split('').map((c) => {
+          switch (c) {
+            case 'O':
+              return Hole.Open;
+            case 'H':
+              return Hole.Half;
+            case 'C':
+              return Hole.Closed;
+            case 'T':
+              return Hole.TrilledClosedOpen;
+            case 'U':
+              return Hole.TrilledOpenClosed;
+            case 'V':
+              return Hole.TrilledClosedHalf;
+            case 'W':
+              return Hole.TrilledHalfOpen;
+            default:
+              throw new Error(`Unknown hole character: ${c}`);
+          }
+        })
+      ),
+    ])
+  );
+}
 
-const GERMAN_FINGERINGS: { [offset: number]: Hole[][] } = {
-  6: [
-    [
-      Hole.Closed,
-      Hole.Closed,
-      Hole.Closed,
-      Hole.Closed,
-      Hole.Closed,
-      Hole.Open,
-      Hole.Open,
-      Hole.Open,
-    ],
-  ],
-  7: [
-    [
-      Hole.Closed,
-      Hole.Closed,
-      Hole.Closed,
-      Hole.Closed,
-      Hole.Open,
-      Hole.Closed,
-      Hole.Closed,
-      Hole.Closed,
-    ],
-  ],
-  18: [
-    [
-      Hole.Half,
-      Hole.Closed,
-      Hole.Closed,
-      Hole.Closed,
-      Hole.Closed,
-      Hole.Open,
-      Hole.Open,
-      Hole.Open,
-    ],
-  ],
-  19: [
-    [
-      Hole.Half,
-      Hole.Closed,
-      Hole.Closed,
-      Hole.Closed,
-      Hole.Open,
-      Hole.Closed,
-      Hole.Open,
-      Hole.Closed,
-    ],
-    [
-      Hole.Half,
-      Hole.Closed,
-      Hole.Closed,
-      Hole.Closed,
-      Hole.Open,
-      Hole.Closed,
-      Hole.Half,
-      Hole.Open,
-    ],
-  ],
-  21: [
-    [
-      Hole.Half,
-      Hole.Closed,
-      Hole.Closed,
-      Hole.Closed,
-      Hole.Open,
-      Hole.Closed,
-      Hole.Closed,
-      Hole.Closed,
-    ],
-  ],
-};
+const FINGERINGS: { [offset: number]: Hole[][] } = parseFingerings({
+  1: ['CCCCCCCC'],
+  2: ['CCCCCCCH'],
+  3: ['CCCCCCCO'],
+  4: ['CCCCCCHO'],
+  5: ['CCCCCCOO'],
+  6: ['CCCCCOCC'],
+  7: ['CCCCOCCO'],
+  8: ['CCCCOOOO'],
+  9: ['CCCOCCHO'],
+  10: ['CCCOOOOO'],
+  11: ['CCOCCOOO', 'COCCCOOO'],
+  12: ['CCOOOOOO', 'COCCOOOO'],
+  13: ['COCOOOOO'],
+  14: ['OCCOOOOO', 'COOOOOOO'],
+  15: ['OOCOOOOO'],
+  16: ['OOCCCCCO'],
+  17: ['HCCCCCOO'],
+  18: ['HCCCCOCO'],
+  19: ['HCCCOCOO'],
+  20: ['HCCCOOOO'],
+  21: ['HCCOCOOO'],
+  22: ['HCCOOOOO'],
+  23: ['HCCOCCCO'],
+  24: ['HCCOCCOO'],
+  25: ['HCOOCCOO'],
+  26: ['HCHCCOCC'],
+  27: ['HCOCCOCH'],
+});
 
-// Fingerings for trilled notes. Use Hole.TrilledClosed, Hole.TrilledHalf,
-// and Hole.TrilledOpen to mark holes that animate during the trill.
-// Keys are pitch offsets identical to FINGERINGS.
+const GERMAN_FINGERINGS: { [offset: number]: Hole[][] } = parseFingerings({
+  6: ['CCCCCOOO'],
+  7: ['CCCCOCCC'],
+  18: ['HCCCCOOO'],
+  19: ['HCCCOCOC', 'HCCCOCHO'],
+  21: ['HCCCOCCC'],
+});
+
+// Fingerings for trilled notes. Use T/U/V/W characters to mark holes that
+// animate during the trill. Keys are pitch offsets identical to FINGERINGS.
 // eslint-disable-next-line react-refresh/only-export-components
-export const TRILLED_FINGERINGS: { [offset: number]: Hole[][] } = {
-  1: [
-    [
-      Hole.Closed,
-      Hole.Closed,
-      Hole.Closed,
-      Hole.Closed,
-      Hole.Closed,
-      Hole.Closed,
-      Hole.Closed,
-      Hole.TrilledClosedOpen,
-    ],
-  ],
-  2: [
-    [
-      Hole.Closed,
-      Hole.Closed,
-      Hole.Closed,
-      Hole.Closed,
-      Hole.Closed,
-      Hole.Closed,
-      Hole.Closed,
-      Hole.Half,
-    ],
-  ],
-};
+export const TRILLED_FINGERINGS: { [offset: number]: Hole[][] } =
+  parseFingerings({
+    1: ['CCCCCCCT'],
+    2: ['CCCCCCCH'],
+  });
 
 const CIRCLE_RADIUS = 8;
 const CIRCLE_SPACING = 22;

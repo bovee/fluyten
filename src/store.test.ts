@@ -73,13 +73,6 @@ describe('store', () => {
       expect(books).toHaveLength(1);
       expect(books[0].title).toBe('Imported Book');
       expect(books[0].songs).toEqual(songs);
-      expect(books[0].sourceId).toBeUndefined();
-    });
-
-    it('imports a book with sourceId', () => {
-      useStore.getState().importUserBook('Imported', [], 'source-123');
-      const books = useStore.getState().userBooks;
-      expect(books[0].sourceId).toBe('source-123');
     });
   });
 

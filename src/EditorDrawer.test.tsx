@@ -58,7 +58,9 @@ describe('EditorDrawer', () => {
   });
 
   it('shows a parse error message when parseError is non-empty', () => {
-    render(<EditorDrawer {...defaultProps({ parseError: 'Bad key signature' })} />);
+    render(
+      <EditorDrawer {...defaultProps({ parseError: 'Bad key signature' })} />
+    );
     expect(screen.getByText('Bad key signature')).toBeInTheDocument();
   });
 
@@ -115,7 +117,9 @@ describe('EditorDrawer', () => {
 
     it('disables the transcribe button when readOnly', () => {
       render(<EditorDrawer {...defaultProps({ readOnly: true })} />);
-      expect(screen.getByRole('button', { name: /transcribe/i })).toBeDisabled();
+      expect(
+        screen.getByRole('button', { name: /transcribe/i })
+      ).toBeDisabled();
     });
 
     it('renders the reflow button', () => {
@@ -146,9 +150,7 @@ describe('EditorDrawer', () => {
 
     it('transform button is disabled when there is no text selection', () => {
       render(<EditorDrawer {...defaultProps()} />);
-      expect(
-        screen.getByRole('button', { name: /transform/i })
-      ).toBeDisabled();
+      expect(screen.getByRole('button', { name: /transform/i })).toBeDisabled();
     });
 
     it('transform button is enabled when notes are selected', () => {
@@ -181,9 +183,7 @@ describe('EditorDrawer', () => {
         configurable: true,
       });
       fireEvent.select(textarea);
-      expect(
-        screen.getByRole('button', { name: /transform/i })
-      ).toBeDisabled();
+      expect(screen.getByRole('button', { name: /transform/i })).toBeDisabled();
     });
 
     it('clicking transform button opens the transform menu', () => {
@@ -205,12 +205,22 @@ describe('EditorDrawer', () => {
     it('transform menu contains octave shift options', () => {
       render(<EditorDrawer {...defaultProps()} />);
       const textarea = screen.getByRole('textbox') as HTMLTextAreaElement;
-      Object.defineProperty(textarea, 'selectionStart', { value: 15, configurable: true });
-      Object.defineProperty(textarea, 'selectionEnd', { value: 20, configurable: true });
+      Object.defineProperty(textarea, 'selectionStart', {
+        value: 15,
+        configurable: true,
+      });
+      Object.defineProperty(textarea, 'selectionEnd', {
+        value: 20,
+        configurable: true,
+      });
       fireEvent.select(textarea);
       fireEvent.click(screen.getByRole('button', { name: /transform/i }));
-      expect(screen.getByRole('menuitem', { name: /octave up/i })).toBeInTheDocument();
-      expect(screen.getByRole('menuitem', { name: /octave down/i })).toBeInTheDocument();
+      expect(
+        screen.getByRole('menuitem', { name: /octave up/i })
+      ).toBeInTheDocument();
+      expect(
+        screen.getByRole('menuitem', { name: /octave down/i })
+      ).toBeInTheDocument();
     });
   });
 });

@@ -16,7 +16,6 @@ export interface UserBook {
   id: string;
   title: string;
   songs: UserSong[];
-  sourceId?: string;
 }
 
 interface SettingsState {
@@ -34,7 +33,7 @@ interface SettingsState {
   setPlaybackVoices: (v: PlaybackVoices) => void;
   userBooks: UserBook[];
   addUserBook: (title: string) => void;
-  importUserBook: (title: string, songs: UserSong[], sourceId?: string) => void;
+  importUserBook: (title: string, songs: UserSong[]) => void;
   removeUserBook: (bookId: string) => void;
   renameUserBook: (bookId: string, title: string) => void;
   addSongToBook: (bookId: string, song: UserSong) => void;
@@ -67,11 +66,11 @@ export const useStore = create<SettingsState>()(
             { id: crypto.randomUUID(), title, songs: [] },
           ],
         })),
-      importUserBook: (title, songs, sourceId) =>
+      importUserBook: (title, songs) =>
         set((state) => ({
           userBooks: [
             ...state.userBooks,
-            { id: crypto.randomUUID(), title, songs, sourceId },
+            { id: crypto.randomUUID(), title, songs },
           ],
         })),
       removeUserBook: (bookId) =>

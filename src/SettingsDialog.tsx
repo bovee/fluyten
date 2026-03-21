@@ -189,7 +189,9 @@ export function SettingsDialog({ open, onClose }: SettingsDialogProps) {
 
             <Box>
               <FormControl fullWidth>
-                <InputLabel id="playback-voices-label">{t('playbackVoices')}</InputLabel>
+                <InputLabel id="playback-voices-label">
+                  {t('playbackVoices')}
+                </InputLabel>
                 <Select
                   labelId="playback-voices-label"
                   value={playbackVoices}
@@ -198,8 +200,12 @@ export function SettingsDialog({ open, onClose }: SettingsDialogProps) {
                     setPlaybackVoices(e.target.value as typeof playbackVoices)
                   }
                 >
-                  <MenuItem value="selected">{t('playbackVoicesSelected')}</MenuItem>
-                  <MenuItem value="others">{t('playbackVoicesOthers')}</MenuItem>
+                  <MenuItem value="selected">
+                    {t('playbackVoicesSelected')}
+                  </MenuItem>
+                  <MenuItem value="others">
+                    {t('playbackVoicesOthers')}
+                  </MenuItem>
                   <MenuItem value="all">{t('playbackVoicesAll')}</MenuItem>
                 </Select>
               </FormControl>

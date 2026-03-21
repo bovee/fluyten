@@ -238,6 +238,45 @@ describe('fromAbc', () => {
       const berBars = music.bars.filter((b) => b.type === 'begin_end_repeat');
       expect(berBars.length).toBe(1);
     });
+
+    describe('volta brackets', () => {
+      it('should parse |1 as standard bar with volta 1', () => {
+        const music = fromAbc(
+          `T:Test\nM:4/4\nL:1/4\nK:C\n|: C D E F |1 G A B c :|`
+        );
+        const volta1Bars = music.bars.filter((b) => b.volta === 1);
+        expect(volta1Bars).toHaveLength(1);
+        expect(volta1Bars[0].type).toBe('standard');
+      });
+
+      it('should parse :|2 as end_repeat bar with volta 2', () => {
+        const music = fromAbc(
+          `T:Test\nM:4/4\nL:1/4\nK:C\n|: C D E F |1 G A B c :|2 d e f g |]`
+        );
+        const volta2Bars = music.bars.filter((b) => b.volta === 2);
+        expect(volta2Bars).toHaveLength(1);
+        expect(volta2Bars[0].type).toBe('end_repeat');
+      });
+
+      it('should parse [1 as standard bar with volta 1', () => {
+        const music = fromAbc(
+          `T:Test\nM:4/4\nL:1/4\nK:C\n|: C D E F [1 G A B c :|2 d e f g |]`
+        );
+        const volta1Bars = music.bars.filter((b) => b.volta === 1);
+        expect(volta1Bars).toHaveLength(1);
+        expect(volta1Bars[0].type).toBe('standard');
+      });
+
+      it('round-trips volta bracket through export and re-import', () => {
+        const music = fromAbc(
+          `T:Test\nM:4/4\nL:1/4\nK:C\n|: C D E F |1 G A B c :|2 d e f g |]`
+        );
+        const exported = toAbc(music);
+        const reimported = fromAbc(exported);
+        expect(reimported.bars.filter((b) => b.volta === 1)).toHaveLength(1);
+        expect(reimported.bars.filter((b) => b.volta === 2)).toHaveLength(1);
+      });
+    });
   });
 
   describe('beaming', () => {

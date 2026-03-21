@@ -102,6 +102,7 @@ interface NoteGroups {
 type ScoreToken =
   | { type: 'note'; groups: NoteGroups }
   | { type: 'bar'; barType: BarLineType }
+  | { type: 'volta'; number: number }
   | { type: 'grace_open' | 'grace_open_slash' | 'grace_close' }
   | { type: 'chord_open' | 'chord_close' }
   | { type: 'tuplet3' }
@@ -128,12 +129,15 @@ const TOKEN_RE = new RegExp(
   [
     NOTE_PATTERN_SRC,
     // bars — longest first so "|:" isn't consumed as "|" + ":"
+    // Volta variants (e.g. :|2, |1) must precede their non-volta counterparts
     '::',
     '\\|\\|',
     '\\[\\|',
     '\\|\\]',
     '\\|:',
+    ':\\|\\d', // :|1, :|2 — end repeat with volta number
     ':\\|',
+    '\\|\\d', // |1, |2 — standard bar with volta number
     '\\|',
     // grace notes
     '\\{/',
@@ -141,6 +145,8 @@ const TOKEN_RE = new RegExp(
     '\\}',
     // inline fields like [K:C] — consume "[X:" so the "[" isn't mistaken for chord
     '\\[[A-Z]:',
+    // volta bracket [1, [2 — must precede chord bracket "["
+    '\\[\\d',
     // chord brackets
     '\\[',
     '\\]',
@@ -174,6 +180,18 @@ export function tokenize(score: string): ScoreToken[] {
 
     if (raw in BAR_MAPPINGS) {
       tokens.push({ type: 'bar', barType: BAR_MAPPINGS[raw] });
+    } else if (/^:\|\d$/.test(raw)) {
+      // :|1, :|2 — end repeat bar followed by volta number
+      tokens.push({ type: 'bar', barType: 'end_repeat' });
+      tokens.push({ type: 'volta', number: parseInt(raw[2], 10) });
+    } else if (/^\|\d$/.test(raw)) {
+      // |1, |2 — standard bar followed by volta number
+      tokens.push({ type: 'bar', barType: 'standard' });
+      tokens.push({ type: 'volta', number: parseInt(raw[1], 10) });
+    } else if (/^\[\d$/.test(raw)) {
+      // [1, [2 — volta bracket without an explicit preceding bar
+      tokens.push({ type: 'bar', barType: 'standard' });
+      tokens.push({ type: 'volta', number: parseInt(raw[1], 10) });
     } else if (raw === '{/') {
       tokens.push({ type: 'grace_open_slash' });
     } else if (raw === '{') {
@@ -365,6 +383,13 @@ export function parseScore(
           });
         }
         break;
+
+      case 'volta': {
+        // Attach the volta number to the most recently pushed bar line.
+        const lastBar = music.bars[music.bars.length - 1];
+        if (lastBar) lastBar.volta = token.number;
+        break;
+      }
 
       case 'grace_open':
         if (noteType !== null)

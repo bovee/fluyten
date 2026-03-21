@@ -1,5 +1,9 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest';
-import { isMusicXmlPath, parseSongsFromFile, parseSongsFromText } from './fileImport';
+import {
+  isMusicXmlPath,
+  parseSongsFromFile,
+  parseSongsFromText,
+} from './fileImport';
 import { fromMusicXml, extractMxl } from './musicXmlImport';
 import { toAbc } from './abcExport';
 
@@ -23,9 +27,8 @@ beforeEach(() => {
 // isMusicXmlPath
 // ---------------------------------------------------------------------------
 describe('isMusicXmlPath', () => {
-  it.each(['.xml', '.musicxml', '.mxl'])(
-    'returns true for %s',
-    (ext) => expect(isMusicXmlPath(`song${ext}`)).toBe(true)
+  it.each(['.xml', '.musicxml', '.mxl'])('returns true for %s', (ext) =>
+    expect(isMusicXmlPath(`song${ext}`)).toBe(true)
   );
 
   it('is case-insensitive', () => {
@@ -33,9 +36,8 @@ describe('isMusicXmlPath', () => {
     expect(isMusicXmlPath('Song.MusicXML')).toBe(true);
   });
 
-  it.each(['.abc', '.txt', '.mid', ''])(
-    'returns false for %s',
-    (ext) => expect(isMusicXmlPath(`song${ext}`)).toBe(false)
+  it.each(['.abc', '.txt', '.mid', ''])('returns false for %s', (ext) =>
+    expect(isMusicXmlPath(`song${ext}`)).toBe(false)
   );
 });
 
@@ -92,11 +94,9 @@ describe('parseSongsFromText', () => {
 // ---------------------------------------------------------------------------
 describe('parseSongsFromFile', () => {
   it('parses an ABC .abc file', async () => {
-    const file = new File(
-      ['X:1\nT:Test Song\nK:C\nC D E F |'],
-      'test.abc',
-      { type: 'text/plain' }
-    );
+    const file = new File(['X:1\nT:Test Song\nK:C\nC D E F |'], 'test.abc', {
+      type: 'text/plain',
+    });
     const songs = await parseSongsFromFile(file);
     expect(songs).toHaveLength(1);
     expect(songs[0].title).toBe('Test Song');

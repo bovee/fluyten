@@ -1,9 +1,3 @@
-export interface Instrument {
-  lowNote: number;
-  highNote: number;
-  tuning: number;
-}
-
 export type RecorderType = keyof typeof RECORDER_TYPES;
 
 export const RECORDER_TYPES = {

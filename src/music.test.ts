@@ -824,4 +824,86 @@ describe('expandRepeats', () => {
     expect(result.notes[4].pitches).toEqual([60]);
     expect(result.originalIndices).toEqual([0, 1, 2, 3, 0, 1, 2, 3]);
   });
+
+  describe('volta brackets', () => {
+    // Helper to get pitch from expanded note index
+    const p = (result: ReturnType<typeof expandRepeats>, i: number) =>
+      result.notes[i].pitches[0];
+
+    it('|1 ... :|2 plays common+volta1 then common+volta2', () => {
+      // |: C D E F |1 G A B c :|2 d e f g |]
+      // notes: C=60 D=62 E=64 F=65 | G=67 A=69 B=71 c=72 | d=74 e=76 f=77 g=79
+      const music = fromAbc(
+        'X:1\nT:Test\nM:4/4\nL:1/4\nK:C\n|: C D E F |1 G A B c :|2 d e f g |]'
+      );
+      const result = expandRepeats(music);
+      // Pass 1: C D E F G A B c  (8 notes)
+      // Pass 2: C D E F d e f g  (8 notes)
+      expect(result.notes).toHaveLength(16);
+      // Pass 1
+      expect(p(result, 0)).toBe(60); // C
+      expect(p(result, 3)).toBe(65); // F
+      expect(p(result, 4)).toBe(67); // G (volta 1)
+      expect(p(result, 7)).toBe(72); // c
+      // Pass 2
+      expect(p(result, 8)).toBe(60); // C
+      expect(p(result, 11)).toBe(65); // F
+      expect(p(result, 12)).toBe(74); // d (volta 2)
+      expect(p(result, 15)).toBe(79); // g
+      expect(result.originalIndices).toEqual([
+        0,
+        1,
+        2,
+        3,
+        4,
+        5,
+        6,
+        7, // pass 1: common + volta 1
+        0,
+        1,
+        2,
+        3,
+        8,
+        9,
+        10,
+        11, // pass 2: common + volta 2
+      ]);
+    });
+
+    it('[1 ... :|2 (bracket form) works the same as |1 ... :|2', () => {
+      const music = fromAbc(
+        'X:1\nT:Test\nM:4/4\nL:1/4\nK:C\n|: C D E F [1 G A B c :|2 d e f g |]'
+      );
+      const result = expandRepeats(music);
+      expect(result.notes).toHaveLength(16);
+      expect(p(result, 4)).toBe(67); // G in volta 1
+      expect(p(result, 12)).toBe(74); // d in volta 2
+    });
+
+    it('volta 1 bar is correctly marked in parsed bars', () => {
+      const music = fromAbc(
+        'X:1\nT:Test\nM:4/4\nL:1/4\nK:C\n|: C D E F |1 G A :|2 B c |]'
+      );
+      const volta1Bars = music.bars.filter((b) => b.volta === 1);
+      const volta2Bars = music.bars.filter((b) => b.volta === 2);
+      expect(volta1Bars).toHaveLength(1);
+      expect(volta1Bars[0].type).toBe('standard');
+      expect(volta2Bars).toHaveLength(1);
+      expect(volta2Bars[0].type).toBe('end_repeat');
+    });
+
+    it('curves inside volta 1 are duplicated on the repeat', () => {
+      const music = fromAbc(
+        'X:1\nT:Test\nM:4/4\nL:1/4\nK:C\n|: C D |1 E F :|2 G A |]'
+      );
+      // notes: C(0) D(1) | E(2) F(3) | G(4) A(5)
+      // Add a curve within the common section
+      music.curves = [[0, 1]];
+      const result = expandRepeats(music);
+      // Pass 1: C D E F, Pass 2: C D G A
+      // Curve [0,1] (C-D) is in common section → should appear in both passes
+      expect(result.curves).toContainEqual([0, 1]); // pass 1 common
+      expect(result.curves).toContainEqual([4, 5]); // pass 2 common (offset 4)
+    });
+  });
 });

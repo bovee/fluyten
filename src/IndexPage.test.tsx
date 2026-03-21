@@ -42,13 +42,6 @@ describe('IndexPage', () => {
     ).toBeInTheDocument();
   });
 
-  it('renders the add other book dropdown button', () => {
-    render(<IndexPage {...defaultProps()} />);
-    expect(
-      screen.getByRole('button', { name: /add other book/i })
-    ).toBeInTheDocument();
-  });
-
   describe('Add Book dialog', () => {
     it('opens when Add Empty Book is clicked', () => {
       render(<IndexPage {...defaultProps()} />);
@@ -309,37 +302,6 @@ describe('IndexPage', () => {
     });
   });
 
-  describe('Built-in books menu', () => {
-    it('opens menu when dropdown button clicked', () => {
-      render(<IndexPage {...defaultProps()} />);
-      fireEvent.click(screen.getByRole('button', { name: /add other book/i }));
-      expect(within(document.body).getByRole('menu')).toBeInTheDocument();
-    });
-
-    it('menu contains Import ABC option', () => {
-      render(<IndexPage {...defaultProps()} />);
-      fireEvent.click(screen.getByRole('button', { name: /add other book/i }));
-      expect(
-        within(document.body).getByRole('menuitem', { name: /import file/i })
-      ).toBeInTheDocument();
-    });
-
-    it('importing a built-in book adds it to store', () => {
-      render(<IndexPage {...defaultProps()} />);
-      fireEvent.click(screen.getByRole('button', { name: /add other book/i }));
-      // Find the first built-in book menuitem (after Import ABC)
-      const menu = within(document.body).getByRole('menu');
-      const items = within(menu).getAllByRole('menuitem');
-      const builtInItem = items.find(
-        (item) => !item.textContent?.match(/import/i)
-      );
-      if (builtInItem) {
-        fireEvent.click(builtInItem);
-        expect(useStore.getState().userBooks.length).toBeGreaterThan(0);
-      }
-    });
-  });
-
   describe('Settings dialog', () => {
     it('opens when settings button clicked', () => {
       render(<IndexPage {...defaultProps()} />);
@@ -348,24 +310,5 @@ describe('IndexPage', () => {
         screen.getByRole('dialog', { name: /settings/i })
       ).toBeInTheDocument();
     });
-  });
-});
-
-describe('parseAbcFile (via import built-in book)', () => {
-  it('handles multi-tune ABC with X: headers when importing built-in', () => {
-    // Import a built-in book which exercises parseAbcFile
-    useStore.setState({ userBooks: [] });
-    render(<IndexPage {...defaultProps()} />);
-    fireEvent.click(screen.getByRole('button', { name: /add other book/i }));
-    const menu = screen.getByRole('menu');
-    const items = within(menu).getAllByRole('menuitem');
-    const builtInItem = items.find(
-      (item) => !item.textContent?.match(/scales|import/i)
-    );
-    if (builtInItem) {
-      fireEvent.click(builtInItem);
-      const books = useStore.getState().userBooks;
-      expect(books[0].songs.length).toBeGreaterThan(0);
-    }
   });
 });

@@ -31,10 +31,13 @@ vi.mock('./audio/RecorderDetector', () => ({
   },
 }));
 
-vi.stubGlobal('fetch', vi.fn().mockResolvedValue({
-  ok: true,
-  text: () => Promise.resolve(''),
-}));
+vi.stubGlobal(
+  'fetch',
+  vi.fn().mockResolvedValue({
+    ok: true,
+    text: () => Promise.resolve(''),
+  })
+);
 
 const bookId = 'book-1';
 const songId = 'song-1';
@@ -94,7 +97,9 @@ describe('App', () => {
       render(<App />);
       fireEvent.click(screen.getByText('My Songs'));
       fireEvent.click(screen.getByText('Twinkle Twinkle'));
-      fireEvent.click(screen.getByRole('button', { name: /back to song list/i }));
+      fireEvent.click(
+        screen.getByRole('button', { name: /back to song list/i })
+      );
       expect(
         screen.getByRole('button', { name: /add empty book/i })
       ).toBeInTheDocument();
@@ -146,9 +151,9 @@ describe('App', () => {
       // Access via onSelectSong with readOnly=true by rendering directly
       // This is tested via the read-only editor path in SongPage.test.tsx;
       // here we just verify the initial ABC is unchanged when no editing occurs.
-      expect(
-        useStore.getState().userBooks[0].songs[0].abc
-      ).toBe(userBook.songs[0].abc);
+      expect(useStore.getState().userBooks[0].songs[0].abc).toBe(
+        userBook.songs[0].abc
+      );
     });
   });
 });
