@@ -1,97 +1,68 @@
 # Fluyten
 
-A web app for learning and practicing recorder music. Fluyten parses [ABC notation](https://abcnotation.com/wiki/abc:standard:v2.1), renders sheet music, tracks notes you play via microphone, and can play back pieces with a metronome.
+A free, open-source web app for learning and practicing recorder music.
 
-**[Live demo](https://bovee.github.io/fluyten/)**
+**[Try it now at bovee.github.io/fluyten](https://bovee.github.io/fluyten/)**
+
+## What it does
+
+Fluyten shows you sheet music, listens to you play through your microphone, and highlights each note green as you play it correctly. It also plays back pieces so you can hear how they should sound.
 
 ## Features
 
-- Renders sheet music from ABC notation using [VexFlow](https://www.vexflow.com/)
-- Listens to your recorder via microphone and highlights notes as you play
-- Tracks your progress through a piece (how many notes played correctly in sequence)
-- Plays back music with a built-in synthesizer and metronome
-- Supports soprano, alto, tenor, bass, and sopranino recorders
-- Adjustable tuning ratio (for recorders not at A=440 Hz)
+**Practice with real-time feedback**
+- Listens via your microphone and tracks which notes you play correctly
+- Highlights notes green as you progress through a piece
+- Adjustable tempo for playing at your own speed
+- Built-in metronome
+
+**Sheet music rendering**
+- Renders standard music notation from [ABC notation](https://abcnotation.com/wiki/abc:standard:v2.1)
+- Supports key signatures, time signatures, accidentals, decorations, lyrics, repeat bars, and multi-voice parts
+- Tap any note to see its fingering diagram
+
+**Recorder support**
+- Soprano, sopranino, alto, tenor, and bass recorders
 - Baroque and German fingering diagrams
-- Import/export songs as ABC notation files
-- Built-in library of practice pieces
-- Scale generator
-- Multilingual UI (English, Arabic, Bengali, French, German, Hindi, Indonesian, Japanese, Korean, Portuguese, Russian, Spanish, Urdu, Chinese)
+- Auto-detect wizard that identifies your recorder type and fingering system from mic input
+- Adjustable tuning ratio for instruments not at A=440 Hz
 
-## Getting started
+**Song management**
+- Organize songs into books (collections)
+- Built-in beginner song library
+- Import songs from ABC files, MusicXML files, or URLs
+- Drag and drop files directly into the app
+- Export books as ABC files
+- Inline ABC notation editor with live preview
 
-### Prerequisites
+**Music tools**
+- Scale generator (any key, major/minor, ascending/descending/both, one octave or full instrument range)
+- Note transformations: transpose by octave, fifth, or semitone; double or halve durations; simplify or add accidentals
 
-- [Node.js](https://nodejs.org/) 18 or later
-- A microphone (for note detection)
+**Multilingual**
+- Available in 14 languages: English, Arabic, Bengali, Chinese (Simplified), French, German, Hindi, Indonesian, Japanese, Korean, Portuguese, Russian, Spanish, and Urdu
+- Full right-to-left support for Arabic and Urdu
 
-### Install & run
+## Running locally
+
+You need [Node.js](https://nodejs.org/) 18+ and a microphone.
 
 ```bash
 npm install
 npm run dev
 ```
 
-The app runs at `https://localhost:5173` (HTTPS is required for microphone access).
-
-> **Note:** The dev server uses a self-signed certificate. Your browser will warn you about this — accept the exception to proceed.
-
-## Development
-
-```bash
-npm run dev          # Start dev server
-npm run build        # TypeScript check + production build
-npm run test         # Run all tests (Vitest)
-npm run test:ui      # Interactive test UI
-npm run test:coverage  # Tests with coverage report
-npm run lint         # ESLint
-npm run format       # Prettier (formats src/)
-npm run storybook    # Storybook dev server (port 6006)
-```
-
-To run a single test file:
-
-```bash
-npx vitest run src/abc.test.ts
-```
-
-### Project structure
-
-| Path | Description |
-|------|-------------|
-| `src/abc.ts` | ABC notation parser — entry point `fromAbc()` |
-| `src/music.ts` | Core data models: `Note`, `Music`, `BarLine`, `Decoration` |
-| `src/constants.ts` | MIDI/frequency mappings, VexFlow duration/pitch maps |
-| `src/FrequencyTracker.ts` | Microphone input → FFT → MIDI pitch detection |
-| `src/NotePlayer.ts` | Web Audio API synthesizer and metronome |
-| `src/Vexflow.tsx` | React component that renders `Music` to sheet music |
-| `src/store.ts` | Zustand store (persisted to localStorage) |
-| `src/instrument.ts` | Recorder type definitions and frequency ranges |
-
-### Architecture
-
-```
-ABC text  →  fromAbc()  →  Music object  →  Vexflow (render)
-                                         →  NotePlayer (playback)
-Microphone  →  FrequencyTracker  →  MIDI pitch  →  App state
-```
-
-### Testing
-
-Tests live alongside source files (e.g. `src/abc.test.ts`). The test suite runs in two projects:
-
-- **normal** — unit tests with happy-dom
-- **storybook** / **visual** — browser tests via Playwright (screenshot regression)
+Open `https://localhost:5173`. The dev server uses a self-signed certificate (HTTPS is required for microphone access), so accept the browser's security warning.
 
 ## Contributing
 
-Contributions are welcome! Please open an issue or pull request on GitHub.
+Contributions are welcome! Please open an issue or pull request on [GitHub](https://github.com/bovee/fluyten).
 
-When submitting a pull request:
-1. Run `npm run build` and `npm test` to ensure everything passes
-2. Run `npm run lint` to check for style issues
+Before submitting:
+1. `npm run build` and `npm test` should both pass
+2. `npm run lint` should report no issues
 3. Add tests for new functionality where practical
 
 ## License
 
-MIT — see [LICENSE](./LICENSE).
+MIT -- see [LICENSE](./LICENSE).

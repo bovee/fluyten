@@ -296,6 +296,34 @@ function scoreToAbc(
   return scoreTokens.join('');
 }
 
+function buildWLine(music: Music, verse: (string | undefined)[]): string {
+  const tokens: string[] = [];
+  for (let i = 0; i < music.notes.length; i++) {
+    const note = music.notes[i];
+    if (
+      note.duration === Duration.GRACE ||
+      note.duration === Duration.GRACE_SLASH
+    ) {
+      continue; // grace notes are skipped during alignment
+    }
+    tokens.push(verse[i] ?? '*');
+  }
+
+  // Trim trailing '*'s (no lyric at end of verse)
+  while (tokens.length > 0 && tokens[tokens.length - 1] === '*') {
+    tokens.pop();
+  }
+  if (tokens.length === 0) return '';
+
+  // Join: no space before a token that follows a hyphen-ending syllable
+  const parts: string[] = [tokens[0]];
+  for (let i = 1; i < tokens.length; i++) {
+    if (!tokens[i - 1].endsWith('-')) parts.push(' ');
+    parts.push(tokens[i]);
+  }
+  return parts.join('');
+}
+
 export function toAbc(music: Music): string {
   const lines: string[] = [];
 
@@ -310,6 +338,17 @@ export function toAbc(music: Music): string {
   );
 
   lines.push(scoreToAbc(music, buildKeyAdjustment(music.keySignature)));
+
+  for (const verse of music.lyrics) {
+    const wLine = buildWLine(music, verse);
+    if (wLine) lines.push(`w:${wLine}`);
+  }
+
+  if (music.endLyrics) {
+    for (const l of music.endLyrics.split('\n')) {
+      lines.push(`W:${l}`);
+    }
+  }
 
   return lines.join('\n');
 }

@@ -342,29 +342,49 @@ export interface BarLine {
   volta?: number; // 1 = first ending, 2 = second ending, etc.
 }
 
+const TICKS_ORDERED: [number, Duration, DurationModifier][] = [
+  [DURATION_TICKS.WHOLE, Duration.WHOLE, DurationModifier.NONE],
+  [DURATION_TICKS.HALF_DOTTED, Duration.HALF, DurationModifier.DOTTED],
+  [DURATION_TICKS.HALF, Duration.HALF, DurationModifier.NONE],
+  [DURATION_TICKS.QUARTER_DOTTED, Duration.QUARTER, DurationModifier.DOTTED],
+  [DURATION_TICKS.QUARTER, Duration.QUARTER, DurationModifier.NONE],
+  [DURATION_TICKS.EIGHTH_DOTTED, Duration.EIGHTH, DurationModifier.DOTTED],
+  [DURATION_TICKS.EIGHTH, Duration.EIGHTH, DurationModifier.NONE],
+  [
+    DURATION_TICKS.SIXTEENTH_DOTTED,
+    Duration.SIXTEENTH,
+    DurationModifier.DOTTED,
+  ],
+  [DURATION_TICKS.SIXTEENTH, Duration.SIXTEENTH, DurationModifier.NONE],
+];
+
 /** Maps a tick count to [Duration, DurationModifier] if it names a standard notated value, else null. */
 export function ticksToDuration(
   ticks: number
 ): [Duration, DurationModifier] | null {
-  const map: [number, Duration, DurationModifier][] = [
-    [DURATION_TICKS.WHOLE, Duration.WHOLE, DurationModifier.NONE],
-    [DURATION_TICKS.HALF_DOTTED, Duration.HALF, DurationModifier.DOTTED],
-    [DURATION_TICKS.HALF, Duration.HALF, DurationModifier.NONE],
-    [DURATION_TICKS.QUARTER_DOTTED, Duration.QUARTER, DurationModifier.DOTTED],
-    [DURATION_TICKS.QUARTER, Duration.QUARTER, DurationModifier.NONE],
-    [DURATION_TICKS.EIGHTH_DOTTED, Duration.EIGHTH, DurationModifier.DOTTED],
-    [DURATION_TICKS.EIGHTH, Duration.EIGHTH, DurationModifier.NONE],
-    [
-      DURATION_TICKS.SIXTEENTH_DOTTED,
-      Duration.SIXTEENTH,
-      DurationModifier.DOTTED,
-    ],
-    [DURATION_TICKS.SIXTEENTH, Duration.SIXTEENTH, DurationModifier.NONE],
-  ];
-  for (const [t, d, m] of map) {
+  for (const [t, d, m] of TICKS_ORDERED) {
     if (t === ticks) return [d, m];
   }
   return null;
+}
+
+/** Greedily decompose a tick count into the fewest standard [Duration, DurationModifier] pairs. */
+function splitTicks(ticks: number): [Duration, DurationModifier][] {
+  const result: [Duration, DurationModifier][] = [];
+  let rem = ticks;
+  while (rem >= DURATION_TICKS.SIXTEENTH) {
+    let placed = false;
+    for (const [t, dur, mod] of TICKS_ORDERED) {
+      if (t <= rem) {
+        result.push([dur, mod]);
+        rem -= t;
+        placed = true;
+        break;
+      }
+    }
+    if (!placed) break;
+  }
+  return result;
 }
 
 export class Music {
@@ -378,6 +398,10 @@ export class Music {
   beams: number[][] = [];
   curves: number[][] = [];
   bars: BarLine[] = [];
+  // Aligned lyrics from w: fields. lyrics[verse][noteIndex] = syllable or undefined.
+  lyrics: (string | undefined)[][] = [];
+  // Unaligned lyrics from W: fields, newline-separated.
+  endLyrics?: string;
 
   reflow(): Music {
     const barCapacity =
@@ -442,11 +466,12 @@ export class Music {
         const remainingTicks = barCapacity - currentTicks;
         const overflowTicks = noteTicks - remainingTicks;
         const firstDur = ticksToDuration(remainingTicks);
-        const secondDur = ticksToDuration(overflowTicks);
+        // Decompose overflow into one or more standard durations (handles
+        // cases like z8 in 3/8 where overflow isn't a single notated value).
+        const overflowDurs = splitTicks(overflowTicks);
 
-        if (firstDur && secondDur) {
+        if (firstDur && overflowDurs.length > 0) {
           const [d1, m1] = firstDur;
-          const [d2, m2] = secondDur;
           const first = new Note(
             note.pitches,
             d1,
@@ -454,31 +479,40 @@ export class Music {
             note.accidentals,
             m1
           );
-          const second = new Note(
-            note.pitches,
-            d2,
-            [],
-            note.accidentals.map(() => undefined as Accidental),
-            m2
+          const overflowNotes = overflowDurs.map(
+            ([d, m]) =>
+              new Note(
+                note.pitches,
+                d,
+                [],
+                note.accidentals.map(() => undefined as Accidental),
+                m
+              )
           );
-          this.notes.splice(noteIx, 1, first, second);
+          const insertCount = overflowNotes.length;
+          this.notes.splice(noteIx, 1, first, ...overflowNotes);
           this.curves = this.curves.map(([s, e]) => [
-            s > noteIx ? s + 1 : s,
-            e > noteIx ? e + 1 : e,
+            s > noteIx ? s + insertCount : s,
+            e > noteIx ? e + insertCount : e,
           ]);
           this.beams = this.beams.map(([s, e]) => [
-            s > noteIx ? s + 1 : s,
-            e > noteIx ? e + 1 : e,
+            s > noteIx ? s + insertCount : s,
+            e > noteIx ? e + insertCount : e,
           ]);
-          this.curves.push([noteIx, noteIx + 1]);
+          // Tie first → overflow[0] → overflow[1] → … → overflow[N-1]
+          for (let i = 0; i < insertCount; i++) {
+            this.curves.push([noteIx + i, noteIx + i + 1]);
+          }
           this.bars.push({
             afterNoteNum: noteIx,
             type: 'standard' as BarLineType,
           });
           currentTicks = 0;
-          noteIx += 2;
+          // Advance past `first`; overflow[0] will be re-evaluated so it can
+          // be split further if it also crosses the next bar boundary.
+          noteIx++;
         } else {
-          // Can't split cleanly (e.g. triplets) — leave as-is.
+          // Can't split cleanly (e.g. triplets or sub-sixteenth) — leave as-is.
           currentTicks = total % barCapacity;
           noteIx++;
         }
@@ -537,6 +571,7 @@ export function expandRepeats(music: Music): {
 
   let repeatStartNoteIdx = 0;
   let prevEndIdx = -1;
+  let inVolta1 = false; // true after seeing a volta=1 bar, until the end_repeat clears it
   let i = 0;
 
   while (i < music.bars.length) {
@@ -545,6 +580,7 @@ export function expandRepeats(music: Music): {
     if (bar.afterNoteNum === undefined || bar.afterNoteNum < 0) {
       if (bar.type === 'begin_repeat' || bar.type === 'begin_end_repeat') {
         repeatStartNoteIdx = 0;
+        inVolta1 = false;
       }
       i++;
       continue;
@@ -553,6 +589,7 @@ export function expandRepeats(music: Music): {
     const segEnd = bar.afterNoteNum;
 
     if (bar.type === 'end_repeat' || bar.type === 'begin_end_repeat') {
+      inVolta1 = false;
       // Look back to find a volta-1 bar within this repeat section.
       let volta1BarIdx = -1;
       for (let j = 0; j <= i; j++) {
@@ -603,8 +640,9 @@ export function expandRepeats(music: Music): {
             // No volta 2 found — fall back to simple repeat
             addSegment(prevEndIdx + 1, segEnd);
             addSegment(repeatStartNoteIdx, segEnd);
-            if (bar.type === 'begin_end_repeat')
+            if (bar.type === 'begin_end_repeat') {
               repeatStartNoteIdx = segEnd + 1;
+            }
             prevEndIdx = segEnd;
             i++;
             continue;
@@ -631,16 +669,21 @@ export function expandRepeats(music: Music): {
       prevEndIdx = segEnd;
     } else {
       // Standard / double / begin / end bar.
-      // Volta-annotated bars are deferred: the end_repeat handler will emit them.
-      if (bar.volta === undefined) {
+      // Volta-annotated bars and bars inside a volta-1 bracket are deferred:
+      // the end_repeat handler will emit them.
+      if (bar.volta === 1) {
+        inVolta1 = true;
+      } else if (bar.volta === undefined && !inVolta1) {
         addSegment(prevEndIdx + 1, segEnd);
         prevEndIdx = segEnd;
       }
-      // For volta bars, prevEndIdx intentionally stays where it was so the
-      // end_repeat handler can emit from prevEndIdx+1 through commonEnd.
+      // For volta bars and bars inside a volta-1 bracket, prevEndIdx stays
+      // where it was so the end_repeat handler can emit from prevEndIdx+1
+      // through commonEnd correctly.
 
       if (bar.type === 'begin_repeat') {
         repeatStartNoteIdx = segEnd + 1;
+        inVolta1 = false;
       }
     }
 

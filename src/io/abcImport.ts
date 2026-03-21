@@ -8,7 +8,7 @@ import {
   Music,
   Note,
 } from '../music';
-import { TIME_SIGNATURES } from '../constants';
+import { PITCH_CONSTANTS, TIME_SIGNATURES } from '../constants';
 import { type RecorderType } from '../instrument';
 
 export function defaultClefForInstrument(
@@ -60,15 +60,40 @@ const SIXTEENTHS_TO_DURATION = new Map<number, [Duration, DurationModifier]>([
   [48, [Duration.WHOLE, DurationModifier.DOTTED]],
 ]);
 
-function applyMultiplier(
-  base: Duration,
-  numer: number,
-  denom: number
-): [Duration, DurationModifier] {
-  const sixteenths = (DURATION_SIXTEENTHS[base] * numer) / denom;
-  const result = SIXTEENTHS_TO_DURATION.get(sixteenths);
-  if (!result)
-    throw new Error(`Invalid duration: ${numer}/${denom} of ${base}`);
+/** Split a duration (in sixteenth-note units) into the fewest standard
+ *  [Duration, DurationModifier] pairs, largest first. Used to expand
+ *  durations that exceed a dotted whole note (e.g. z8 with L:1/4). */
+function splitSixteenths(sixteenths: number): [Duration, DurationModifier][] {
+  const direct = SIXTEENTHS_TO_DURATION.get(sixteenths);
+  if (direct) return [direct];
+  // Prefer non-dotted durations first so that e.g. 64 sixteenths → whole+whole
+  // rather than dotted-whole+half, which aligns better with bar boundaries.
+  const ORDERED: [number, Duration, DurationModifier][] = [
+    [32, Duration.WHOLE, DurationModifier.NONE],
+    [48, Duration.WHOLE, DurationModifier.DOTTED],
+    [16, Duration.HALF, DurationModifier.NONE],
+    [24, Duration.HALF, DurationModifier.DOTTED],
+    [8, Duration.QUARTER, DurationModifier.NONE],
+    [12, Duration.QUARTER, DurationModifier.DOTTED],
+    [4, Duration.EIGHTH, DurationModifier.NONE],
+    [6, Duration.EIGHTH, DurationModifier.DOTTED],
+    [2, Duration.SIXTEENTH, DurationModifier.NONE],
+    [3, Duration.SIXTEENTH, DurationModifier.DOTTED],
+  ];
+  const result: [Duration, DurationModifier][] = [];
+  let rem = sixteenths;
+  while (rem >= 2) {
+    let placed = false;
+    for (const [s, dur, mod] of ORDERED) {
+      if (s <= rem) {
+        result.push([dur, mod]);
+        rem -= s;
+        placed = true;
+        break;
+      }
+    }
+    if (!placed) break;
+  }
   return result;
 }
 
@@ -104,7 +129,8 @@ type ScoreToken =
   | { type: 'bar'; barType: BarLineType }
   | { type: 'volta'; number: number }
   | { type: 'grace_open' | 'grace_open_slash' | 'grace_close' }
-  | { type: 'chord_open' | 'chord_close' }
+  | { type: 'chord_open' }
+  | { type: 'chord_close'; duration: string }
   | { type: 'tuplet3' }
   | { type: 'slur_open' | 'slur_close' }
   | { type: 'tie' }
@@ -149,7 +175,7 @@ const TOKEN_RE = new RegExp(
     '\\[\\d',
     // chord brackets
     '\\[',
-    '\\]',
+    '\\](?<chordDur>\\d*(?:\\/\\/?)?\\d*)',
     // tuplets — "(3" before "(" so the digit isn't lost
     '\\(3',
     // slurs / ties / broken rhythm
@@ -169,7 +195,13 @@ export function tokenize(score: string): ScoreToken[] {
   TOKEN_RE.lastIndex = 0;
 
   let m: RegExpExecArray | null;
-  while ((m = TOKEN_RE.exec(score)) !== null) {
+  while (TOKEN_RE.lastIndex < score.length) {
+    const pos = TOKEN_RE.lastIndex;
+    m = TOKEN_RE.exec(score);
+    if (m === null) {
+      TOKEN_RE.lastIndex = pos + 1;
+      continue;
+    }
     const raw = m[0];
     const g = m.groups!;
 
@@ -203,8 +235,8 @@ export function tokenize(score: string): ScoreToken[] {
       tokens.push({ type: 'inline_field' });
     } else if (raw === '[') {
       tokens.push({ type: 'chord_open' });
-    } else if (raw === ']') {
-      tokens.push({ type: 'chord_close' });
+    } else if (raw[0] === ']') {
+      tokens.push({ type: 'chord_close', duration: g.chordDur ?? '' });
     } else if (raw === '(3') {
       tokens.push({ type: 'tuplet3' });
     } else if (raw === '(') {
@@ -245,6 +277,39 @@ function applyBrokenRhythm(
   return result;
 }
 
+// ---- Duration parser --------------------------------------------------------
+
+/** Parse an ABC duration string (e.g. "", "2", "/2", "//", "3/2") into one or
+ *  more [Duration, DurationModifier] pairs relative to `defaultDuration`.
+ *  Returns null if the string is empty (caller should use defaultDuration).
+ *  Returns multiple pairs when the total duration exceeds a dotted whole note
+ *  (e.g. z8 with L:1/4 → two whole-note pairs). */
+function parseAbcDuration(
+  abcDuration: string,
+  defaultDuration: Duration
+): [Duration, DurationModifier][] | null {
+  if (!abcDuration) return null;
+  let sixteenths: number;
+  if (abcDuration === '//') {
+    sixteenths = (DURATION_SIXTEENTHS[defaultDuration] * 1) / 4;
+  } else if (!abcDuration.includes('/')) {
+    sixteenths =
+      DURATION_SIXTEENTHS[defaultDuration] * parseInt(abcDuration, 10);
+  } else {
+    const parts = abcDuration.split('/');
+    if (parts.length !== 2) throw new Error(`Invalid duration: ${abcDuration}`);
+    const [numer, denom] = parts;
+    sixteenths =
+      (DURATION_SIXTEENTHS[defaultDuration] * (parseInt(numer, 10) || 1)) /
+      (parseInt(denom, 10) || 2);
+  }
+  const single = SIXTEENTHS_TO_DURATION.get(sixteenths);
+  if (single) return [single];
+  const split = splitSixteenths(sixteenths);
+  if (split.length > 0) return split;
+  throw new Error(`Invalid duration: ${abcDuration} of ${defaultDuration}`);
+}
+
 // ---- Score parser -----------------------------------------------------------
 
 interface ChordAccum {
@@ -275,12 +340,13 @@ export function parseScore(
 
   function closeBeam() {
     if (inBeam && music.notes.length > beamStart + 1) {
-      for (let i = beamStart; i < music.notes.length; i++) {
-        const { duration } = music.notes[i];
-        if (duration !== Duration.EIGHTH && duration !== Duration.SIXTEENTH)
-          throw new Error(`Note ${i} has too long a duration to be beamed.`);
+      const allBeamable = Array.from(
+        { length: music.notes.length - beamStart },
+        (_, i) => music.notes[beamStart + i].duration
+      ).every((d) => d === Duration.EIGHTH || d === Duration.SIXTEENTH);
+      if (allBeamable) {
+        music.beams.push([beamStart, music.notes.length - 1]);
       }
-      music.beams.push([beamStart, music.notes.length - 1]);
     }
     inBeam = false;
   }
@@ -294,31 +360,34 @@ export function parseScore(
         const { groups } = token;
         const abcDuration = groups.duration;
 
+        // Z (uppercase) = multimeasure rest: Zn means n full bars of rest.
+        if (groups.note === 'Z' && !isFreeTime) {
+          closeBeam();
+          const barCount = abcDuration ? parseInt(abcDuration, 10) || 1 : 1;
+          // Compute one bar's duration in thirtyseconds (each unit = SIXTEENTH/2 = 128 ticks)
+          const barThirtyseconds = (music.beatsPerBar * 32) / music.beatValue;
+          const barDurations = splitSixteenths(barThirtyseconds);
+          for (let b = 0; b < barCount; b++) {
+            for (const [dur, mod] of barDurations) {
+              music.notes.push(new Note(undefined, dur, [], [], mod));
+            }
+            if (b < barCount - 1) {
+              music.bars.push({
+                afterNoteNum: music.notes.length - 1,
+                type: 'standard',
+              });
+            }
+          }
+          break;
+        }
+
         let noteDuration: Duration;
         let noteDurationModifier: DurationModifier = DurationModifier.NONE;
 
-        if (abcDuration === '//') {
-          [noteDuration, noteDurationModifier] = applyMultiplier(
-            defaultDuration,
-            1,
-            4
-          );
-        } else if (abcDuration && !abcDuration.includes('/')) {
-          [noteDuration, noteDurationModifier] = applyMultiplier(
-            defaultDuration,
-            parseInt(abcDuration, 10),
-            1
-          );
-        } else if (abcDuration) {
-          const parts = abcDuration.split('/');
-          if (parts.length !== 2)
-            throw new Error(`Invalid duration: ${abcDuration}`);
-          const [numer, denom] = parts;
-          [noteDuration, noteDurationModifier] = applyMultiplier(
-            defaultDuration,
-            parseInt(numer, 10) || 1,
-            parseInt(denom, 10) || 2
-          );
+        const parsedDur = parseAbcDuration(abcDuration, defaultDuration);
+        const parsedDurs = parsedDur ?? null;
+        if (parsedDurs && parsedDurs.length > 0) {
+          [noteDuration, noteDurationModifier] = parsedDurs[0];
         } else if (noteType === 'grace') {
           noteDuration = Duration.GRACE;
         } else if (noteType === 'grace_slash') {
@@ -371,6 +440,20 @@ export function parseScore(
             inBeam = true;
           }
           music.notes.push(note);
+          // If the duration was split (e.g. z8 with L:1/4), emit extra notes
+          if (parsedDurs && parsedDurs.length > 1) {
+            for (const [dur, mod] of parsedDurs.slice(1)) {
+              music.notes.push(
+                new Note(
+                  note.pitches,
+                  dur,
+                  note.decorations,
+                  note.accidentals,
+                  mod
+                )
+              );
+            }
+          }
         }
         break;
       }
@@ -424,6 +507,11 @@ export function parseScore(
 
       case 'chord_close':
         if (chordAccum) {
+          // Duration after ']' overrides the duration taken from the first note inside
+          const trailingDur = parseAbcDuration(token.duration, defaultDuration);
+          if (trailingDur && trailingDur.length > 0) {
+            [chordAccum.duration, chordAccum.durationModifier] = trailingDur[0];
+          }
           const chordNote = new Note(
             chordAccum.pitches,
             chordAccum.duration,
@@ -436,6 +524,19 @@ export function parseScore(
             inBeam = true;
           }
           music.notes.push(chordNote);
+          if (trailingDur && trailingDur.length > 1) {
+            for (const [dur, mod] of trailingDur.slice(1)) {
+              music.notes.push(
+                new Note(
+                  chordAccum.pitches,
+                  dur,
+                  chordAccum.decorations,
+                  chordAccum.accidentals,
+                  mod
+                )
+              );
+            }
+          }
           chordAccum = null;
         }
         noteType = null;
@@ -496,11 +597,52 @@ export function parseScore(
 
 // ---- Header parser ----------------------------------------------------------
 
+// Semitone offsets within an octave for each letter name
+const LETTER_SEMITONES: Record<string, number> = {
+  C: 0,
+  D: 2,
+  E: 4,
+  F: 5,
+  G: 7,
+  A: 9,
+  B: 11,
+};
+
+/**
+ * Parse an ABC note name (e.g. "B", "D,", "c", "c'") to a MIDI pitch.
+ * Returns undefined if the note string is not valid.
+ */
+function parseMidNote(note: string): number | undefined {
+  if (!note) return undefined;
+  const letter = note[0];
+  const suffix = note.slice(1);
+  const upper = letter.toUpperCase();
+  const semitone = LETTER_SEMITONES[upper];
+  if (semitone === undefined) return undefined;
+  let octave = letter === upper ? 3 : 4; // uppercase = octave 3, lowercase = octave 4
+  for (const ch of suffix) {
+    if (ch === ',') octave--;
+    else if (ch === "'") octave++;
+  }
+  return PITCH_CONSTANTS.OCTAVE_OFFSET + octave * 12 + semitone;
+}
+
+// Default MIDI pitch of the middle line for each clef type.
+// treble middle line = B4 (MIDI 71); bass = D3 (MIDI 50); alto = A4 (MIDI 69).
+// treble+8 shares the treble default (the extra octave is handled separately).
+const DEFAULT_CLEF_MIDDLE: Record<string, number> = {
+  treble: parseMidNote('B') ?? 71, // B4
+  'treble+8': parseMidNote('B') ?? 71, // B4
+  bass: parseMidNote('D,') ?? 50, // D3
+  alto: parseMidNote('A') ?? 69, // A4
+};
+
 export interface HeaderParseResult {
   defaultDuration: Duration;
   keyAdjustment: { [n: string]: number };
   scoreText: string;
   isFreeTime: boolean;
+  pitchShift: number;
 }
 
 export function parseHeaders(
@@ -512,6 +654,7 @@ export function parseHeaders(
   const keyAdjustment: { [n: string]: number } = {};
   const scoreLines: string[] = [];
   let isFreeTime = false;
+  let pitchShift = 0;
   music.clef = defaultClef;
 
   for (const line of lines) {
@@ -536,12 +679,18 @@ export function parseHeaders(
             throw new Error(`Can't understand meter: ${fieldData}`);
           music.beatsPerBar = parseInt(parts[0], 10);
           music.beatValue = parseInt(parts[1], 10);
+          if (isNaN(music.beatsPerBar) || isNaN(music.beatValue))
+            throw new Error(`Can't understand meter: ${fieldData}`);
         }
       } else if (line.startsWith('L:')) {
         defaultDuration = parseLDuration(fieldData);
       } else if (line.startsWith('K:')) {
         const clefMatch = fieldData.match(/\bclef=([\w+]+)/i);
-        const keyPart = fieldData.replace(/\s*clef=[\w+]+/i, '').trim();
+        const middleMatch = fieldData.match(/\bmiddle=([A-Ga-g][,'']*)/);
+        const keyPart = fieldData
+          .replace(/\s*clef=[\w+]+/i, '')
+          .replace(/\s*middle=[A-Ga-g][,']*/i, '')
+          .trim();
         if (!(keyPart in KEYS)) throw new Error(`Can't parse key: ${keyPart}`);
         music.keySignature = keyPart;
         for (const note of KEYS[keyPart]) {
@@ -557,6 +706,15 @@ export function parseHeaders(
                 : clefName === 'treble+8'
                   ? 'treble8va'
                   : 'treble';
+        }
+        if (middleMatch) {
+          const clefKey = music.clef === 'treble8va' ? 'treble+8' : music.clef;
+          const defaultMidi =
+            DEFAULT_CLEF_MIDDLE[clefKey] ?? DEFAULT_CLEF_MIDDLE.treble;
+          const specifiedMidi = parseMidNote(middleMatch[1]);
+          if (specifiedMidi !== undefined) {
+            pitchShift = defaultMidi - specifiedMidi;
+          }
         }
       }
       // other information fields are ignored
@@ -587,6 +745,7 @@ export function parseHeaders(
     keyAdjustment,
     scoreText: scoreLines.join(''),
     isFreeTime,
+    pitchShift,
   };
 }
 
@@ -738,6 +897,164 @@ export function splitTunes(text: string): string[] {
   return tunes.length > 0 ? tunes : [text];
 }
 
+// ---- Lyrics helpers ---------------------------------------------------------
+
+interface LyricSection {
+  scoreLines: string[];
+  verseLyrics: string[]; // verseLyrics[v] = raw text of verse v+1 w: line
+}
+
+/**
+ * Splits pre-processed (comment-stripped) lines into sections, each grouping
+ * music score lines with the consecutive w: lines that follow them.
+ * W: lines and other header lines are returned separately.
+ */
+function buildSections(lines: string[]): {
+  sections: LyricSection[];
+  headerLines: string[];
+  endLyricLines: string[];
+} {
+  const sections: LyricSection[] = [];
+  const headerLines: string[] = [];
+  const endLyricLines: string[] = [];
+
+  let currentScoreLines: string[] = [];
+  let inWBlock = false;
+
+  for (const line of lines) {
+    if (line.startsWith('w:')) {
+      // Start or continue a w: block for the current section
+      if (!inWBlock && currentScoreLines.length > 0) {
+        sections.push({ scoreLines: currentScoreLines, verseLyrics: [] });
+        currentScoreLines = [];
+      }
+      inWBlock = true;
+      const verseText = line.slice(2);
+      const target = sections.length > 0 ? sections[sections.length - 1] : null;
+      if (target) target.verseLyrics.push(verseText);
+    } else if (line.startsWith('W:')) {
+      endLyricLines.push(line.slice(2));
+      inWBlock = false;
+    } else {
+      const isHeaderOrDirective =
+        line.startsWith('%%') ||
+        line.trim() === '' ||
+        (line.length >= 2 && line[1] === ':' && !line.startsWith('|:'));
+      if (isHeaderOrDirective) {
+        headerLines.push(line);
+        inWBlock = false;
+      } else {
+        // Score line — start a new section if we just left a w: block
+        if (inWBlock) inWBlock = false;
+        const scoreLine = line.endsWith('\\') ? line.slice(0, -1) : line;
+        currentScoreLines.push(scoreLine);
+      }
+    }
+  }
+
+  // Flush any remaining score lines as a final section
+  if (currentScoreLines.length > 0) {
+    sections.push({ scoreLines: currentScoreLines, verseLyrics: [] });
+  }
+
+  return { sections, headerLines, endLyricLines };
+}
+
+type LyricToken =
+  | { type: 'syllable'; text: string }
+  | { type: 'hold' }
+  | { type: 'skip' }
+  | { type: 'bar' };
+
+function parseLyricTokens(text: string): LyricToken[] {
+  const tokens: LyricToken[] = [];
+  const words = text.trim().split(/\s+/);
+  for (const word of words) {
+    if (!word) continue;
+    if (word === '_') {
+      tokens.push({ type: 'hold' });
+    } else if (word === '*') {
+      tokens.push({ type: 'skip' });
+    } else if (word === '|') {
+      tokens.push({ type: 'bar' });
+    } else if (word.includes('-')) {
+      // Split on hyphens: "hel-lo" → [{syllable:"hel-"}, {syllable:"lo"}]
+      // Treat tilde within a hyphen-split word as a regular character
+      const parts = word.split('-');
+      for (let i = 0; i < parts.length; i++) {
+        const part = parts[i];
+        if (!part && i === parts.length - 1) continue; // trailing hyphen already on prev
+        const syllable = i < parts.length - 1 ? part + '-' : part;
+        // Split tilde within each part: "hel~lo" → two syllables
+        for (const s of syllable.split('~')) {
+          if (s) tokens.push({ type: 'syllable', text: s });
+        }
+      }
+    } else if (word.includes('~')) {
+      for (const s of word.split('~')) {
+        if (s) tokens.push({ type: 'syllable', text: s });
+      }
+    } else {
+      tokens.push({ type: 'syllable', text: word });
+    }
+  }
+  return tokens;
+}
+
+function assignLyricsToNotes(
+  music: Music,
+  tokens: LyricToken[],
+  verse: number,
+  noteStart: number,
+  noteEnd: number
+): void {
+  // Ensure the verse row exists
+  while (music.lyrics.length <= verse) {
+    music.lyrics.push(new Array(music.notes.length).fill(undefined));
+  }
+  // Ensure all rows have the right length (notes may have been added)
+  for (const row of music.lyrics) {
+    while (row.length < music.notes.length) row.push(undefined);
+  }
+
+  let noteIdx = noteStart;
+  let tokenIdx = 0;
+
+  // Advance past any leading grace notes
+  function skipGraceNotes() {
+    while (
+      noteIdx <= noteEnd &&
+      (music.notes[noteIdx]?.duration === Duration.GRACE ||
+        music.notes[noteIdx]?.duration === Duration.GRACE_SLASH)
+    ) {
+      noteIdx++;
+    }
+  }
+
+  skipGraceNotes();
+
+  while (tokenIdx < tokens.length && noteIdx <= noteEnd) {
+    const token = tokens[tokenIdx++];
+    if (token.type === 'syllable') {
+      music.lyrics[verse][noteIdx] = token.text;
+      noteIdx++;
+      skipGraceNotes();
+    } else if (token.type === 'skip' || token.type === 'hold') {
+      noteIdx++;
+      skipGraceNotes();
+    } else if (token.type === 'bar') {
+      // Advance noteIdx to the first note after the next bar line
+      for (const bar of music.bars) {
+        if (bar.afterNoteNum !== undefined && bar.afterNoteNum >= noteIdx) {
+          noteIdx = bar.afterNoteNum + 1;
+          skipGraceNotes();
+          break;
+        }
+      }
+    }
+  }
+}
+
 export function fromAbc(
   text: string,
   defaultClef: Music['clef'] = 'treble'
@@ -748,13 +1065,41 @@ export function fromAbc(
     const commentIdx = l.indexOf('%');
     return commentIdx === -1 ? l : l.slice(0, commentIdx);
   });
-  const { defaultDuration, keyAdjustment, scoreText, isFreeTime } =
-    parseHeaders(lines, music, defaultClef);
-  const tokens = tokenize(scoreText);
-  parseScore(tokens, music, defaultDuration, keyAdjustment, isFreeTime);
-  if (music.clef === 'treble8va') {
+
+  const { sections, headerLines, endLyricLines } = buildSections(lines);
+
+  const { defaultDuration, keyAdjustment, isFreeTime, pitchShift } =
+    parseHeaders(headerLines, music, defaultClef);
+
+  // Parse each section's score lines, tracking the note range produced
+  const sectionNoteRanges: [number, number][] = [];
+  for (const section of sections) {
+    const noteStart = music.notes.length;
+    const tokens = tokenize(section.scoreLines.join(''));
+    parseScore(tokens, music, defaultDuration, keyAdjustment, isFreeTime);
+    sectionNoteRanges.push([noteStart, music.notes.length - 1]);
+  }
+
+  // Assign lyrics verse by verse across all sections
+  const maxVerses = Math.max(...sections.map((s) => s.verseLyrics.length), 0);
+  for (let verse = 0; verse < maxVerses; verse++) {
+    for (let si = 0; si < sections.length; si++) {
+      const verseText = sections[si].verseLyrics[verse];
+      if (!verseText) continue;
+      const [noteStart, noteEnd] = sectionNoteRanges[si];
+      const lyricTokens = parseLyricTokens(verseText);
+      assignLyricsToNotes(music, lyricTokens, verse, noteStart, noteEnd);
+    }
+  }
+
+  if (endLyricLines.length > 0) {
+    music.endLyrics = endLyricLines.join('\n');
+  }
+
+  const totalShift = pitchShift + (music.clef === 'treble8va' ? 12 : 0);
+  if (totalShift !== 0) {
     for (const note of music.notes) {
-      note.pitches = note.pitches.map((p) => p + 12);
+      note.pitches = note.pitches.map((p) => p + totalShift);
     }
   }
   return music;
@@ -775,12 +1120,21 @@ export function parseFragment(
     const commentIdx = l.indexOf('%');
     return commentIdx === -1 ? l : l.slice(0, commentIdx);
   });
-  const { defaultDuration, keyAdjustment } = parseHeaders(lines, headerMusic);
+  const { defaultDuration, keyAdjustment, pitchShift } = parseHeaders(
+    lines,
+    headerMusic
+  );
 
   const music = new Music();
   music.keySignature = headerMusic.keySignature;
   const tokens = tokenize(fragment);
   parseScore(tokens, music, defaultDuration, keyAdjustment);
+
+  if (pitchShift !== 0) {
+    for (const note of music.notes) {
+      note.pitches = note.pitches.map((p) => p + pitchShift);
+    }
+  }
 
   return { music, keySignature: headerMusic.keySignature, defaultDuration };
 }

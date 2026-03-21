@@ -385,6 +385,23 @@ export function fromMusicXml(xmlText: string): Music {
 
       const noteIndex = music.notes.length - 1;
 
+      // Lyrics
+      for (const lyricEl of noteEl.querySelectorAll('lyric')) {
+        const verseNum =
+          parseInt(lyricEl.getAttribute('number') ?? '1', 10) - 1;
+        const text = lyricEl.querySelector('text')?.textContent?.trim() ?? '';
+        const syllabic =
+          lyricEl.querySelector('syllabic')?.textContent?.trim() ?? 'single';
+        if (text) {
+          while (music.lyrics.length <= verseNum) music.lyrics.push([]);
+          const syllable =
+            syllabic === 'begin' || syllabic === 'middle'
+              ? text + '-'
+              : text + ' ';
+          music.lyrics[verseNum][noteIndex] = syllable;
+        }
+      }
+
       // Ties — chained ties (stop + start on the same note) extend an open chain
       // rather than closing and reopening it, so the whole chain becomes one curve.
       let hasTieStop = false;

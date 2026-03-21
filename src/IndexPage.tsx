@@ -26,7 +26,12 @@ import Edit from '@mui/icons-material/Edit';
 import FileDownload from '@mui/icons-material/FileDownload';
 import Settings from '@mui/icons-material/Settings';
 
-import { parseSongsFromFile, parseSongsFromText } from './io/fileImport';
+import {
+  parseSongsFromFile,
+  parseSongsFromText,
+  parseSongsFromBuffer,
+  isMidiPath,
+} from './io/fileImport';
 import { getStarterBookUrl } from './instrument';
 import { ScaleDialog } from './scales/ScaleDialog';
 import { SettingsDialog } from './SettingsDialog';
@@ -154,8 +159,14 @@ export function IndexPage({
       const fallbackTitle = (
         urlPath.split('/').pop()?.split('?')[0] ?? 'Imported'
       ).replace(/\.[^.]+$/, '');
-      const text = await response.text();
-      const songs = parseSongsFromText(text, urlPath, fallbackTitle);
+      let songs;
+      if (isMidiPath(urlPath)) {
+        const buffer = await response.arrayBuffer();
+        songs = parseSongsFromBuffer(buffer, urlPath, fallbackTitle);
+      } else {
+        const text = await response.text();
+        songs = parseSongsFromText(text, urlPath, fallbackTitle);
+      }
       songs.forEach((song) => addSongToBook(current.bookId, song));
       setImportUrl(null);
     } catch {
@@ -419,7 +430,7 @@ export function IndexPage({
           <input
             ref={importFileRef}
             type="file"
-            accept=".abc,.txt,.musicxml,.xml,.mxl"
+            accept=".abc,.txt,.musicxml,.xml,.mxl,.mid,.midi"
             style={{ display: 'none' }}
             onChange={(e) => void handleImportFile(e)}
           />

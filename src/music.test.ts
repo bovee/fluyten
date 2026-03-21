@@ -604,6 +604,43 @@ describe('Music', () => {
       expect(music.bars.some((b) => b.afterNoteNum === 1)).toBe(true);
     });
 
+    it('splits a whole-note rest across multiple 3/8 bars', () => {
+      // z8 (whole = 4096 ticks) in 3/8 (bar = 1536 ticks): overflow of 2560 is
+      // not a single standard duration — should still split correctly.
+      const music = new Music();
+      music.beatsPerBar = 3;
+      music.beatValue = 8;
+      music.notes = [new Note(undefined, Duration.WHOLE)];
+      music.reflow();
+      // whole rest should have been split into multiple notes across bars
+      expect(music.notes.length).toBeGreaterThan(1);
+      // all bars (except begin) should have valid afterNoteNum
+      const realBars = music.bars.filter((b) => b.afterNoteNum !== undefined);
+      expect(realBars.length).toBeGreaterThan(0);
+      // total ticks should be preserved
+      const totalTicks = music.notes.reduce((s, n) => s + n.ticks(), 0);
+      expect(totalTicks).toBe(4096);
+    });
+
+    it('splits a note spanning more than two bars in 4/4', () => {
+      // A whole note crossing a bar boundary when the bar is already half full:
+      // currentTicks=2048 (half), whole(4096) overflows by 6144-4096=... let's
+      // use a simpler case: two whole notes in 3/8 (each spans ~2.67 bars).
+      const music = new Music();
+      music.beatsPerBar = 3;
+      music.beatValue = 8;
+      music.notes = [
+        new Note(undefined, Duration.WHOLE),
+        new Note(undefined, Duration.WHOLE),
+      ];
+      music.reflow();
+      const realBars = music.bars.filter((b) => b.afterNoteNum !== undefined);
+      // 8192 ticks / 1536 per bar ≈ 5.33 bars → at least 5 bar lines
+      expect(realBars.length).toBeGreaterThanOrEqual(5);
+      const totalTicks = music.notes.reduce((s, n) => s + n.ticks(), 0);
+      expect(totalTicks).toBe(8192);
+    });
+
     it('merges tied same-pitch notes whose combined duration is standard', () => {
       const music = new Music();
       music.beatsPerBar = 4;
@@ -890,6 +927,29 @@ describe('expandRepeats', () => {
       expect(volta1Bars[0].type).toBe('standard');
       expect(volta2Bars).toHaveLength(1);
       expect(volta2Bars[0].type).toBe('end_repeat');
+    });
+
+    it('multi-bar first ending plays common+volta1 then common+volta2', () => {
+      // |: A B |1 C | D :|2 E |]
+      // The first ending spans two bars: C and D.
+      // The intermediate | bar (after C) has no volta annotation and must not
+      // be processed as part of the common section.
+      const music = fromAbc(
+        'X:1\nT:Test\nM:4/4\nL:1/4\nK:C\n|: A B |1 C D | E F :|2 G |]'
+      );
+      const result = expandRepeats(music);
+      // notes: A(0) B(1) C(2) D(3) E(4) F(5) G(6)
+      // Pass 1: A B (common) + C D E F (volta 1) = 6 notes
+      // Pass 2: A B (common) + G (volta 2) = 3 notes → total 9
+      // MIDI (uppercase): A=69 B=71 C=60 D=62 E=64 F=65 G=67
+      expect(result.notes).toHaveLength(9);
+      expect(p(result, 0)).toBe(69); // A
+      expect(p(result, 1)).toBe(71); // B
+      expect(p(result, 2)).toBe(60); // C (volta 1 start)
+      expect(p(result, 5)).toBe(65); // F (volta 1 end)
+      expect(p(result, 6)).toBe(69); // A (repeat)
+      expect(p(result, 7)).toBe(71); // B
+      expect(p(result, 8)).toBe(67); // G (volta 2)
     });
 
     it('curves inside volta 1 are duplicated on the repeat', () => {

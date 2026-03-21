@@ -65,6 +65,75 @@ describe('fromAbc', () => {
       expect(music.clef).toBe('bass');
     });
 
+    // middle= — MIDI 60 is `C` (uppercase), MIDI 50 is `D,` (bass default), MIDI 62 is `D` (uppercase)
+    describe('K: middle= parameter', () => {
+      it('no middle= leaves pitches unchanged', () => {
+        const music = fromAbc(`T:Test\nM:4/4\nL:1/4\nK:C clef=bass\nC`);
+        expect(music.notes[0].pitches[0]).toBe(60); // C4 unchanged
+      });
+
+      it('middle=D on bass clef shifts notes down one octave', () => {
+        // bass default middle = D, (MIDI 50); middle=D specifies D (MIDI 62); shift = 50-62 = -12
+        const music = fromAbc(
+          `T:Test\nM:4/4\nL:1/4\nK:C clef=bass middle=D\nC`
+        );
+        expect(music.notes[0].pitches[0]).toBe(48); // C4 - 12 = C3
+      });
+
+      it('middle=D, on bass clef (the default) produces no shift', () => {
+        // middle=D, is the default for bass, so shift = 0
+        const music = fromAbc(
+          `T:Test\nM:4/4\nL:1/4\nK:C clef=bass middle=D,\nC`
+        );
+        expect(music.notes[0].pitches[0]).toBe(60);
+      });
+
+      it('middle=B on treble clef (the default) produces no shift', () => {
+        const music = fromAbc(
+          `T:Test\nM:4/4\nL:1/4\nK:C clef=treble middle=B\nC`
+        );
+        expect(music.notes[0].pitches[0]).toBe(60);
+      });
+
+      it('middle=b on treble clef shifts notes down one octave', () => {
+        // treble default = B (MIDI 71); middle=b specifies b (MIDI 83); shift = 71-83 = -12
+        const music = fromAbc(`T:Test\nM:4/4\nL:1/4\nK:C middle=b\nC`);
+        expect(music.notes[0].pitches[0]).toBe(48); // C4 - 12 = C3
+      });
+
+      it('middle= shift stacks with treble+8 shift', () => {
+        // clef=treble+8 adds +12; middle=B (default) adds 0; net = +12
+        const music = fromAbc(
+          `T:Test\nM:4/4\nL:1/4\nK:C clef=treble+8 middle=B\nC`
+        );
+        expect(music.notes[0].pitches[0]).toBe(72); // C4 + 12 = C5
+      });
+
+      it('treble+8 with middle=b cancels the 8va shift', () => {
+        // treble+8 adds +12; middle=b shifts -12; net = 0
+        const music = fromAbc(
+          `T:Test\nM:4/4\nL:1/4\nK:C clef=treble+8 middle=b\nC`
+        );
+        expect(music.notes[0].pitches[0]).toBe(60); // no net shift
+      });
+
+      it('multiple notes are all shifted', () => {
+        const music = fromAbc(
+          `T:Test\nM:4/4\nL:1/4\nK:C clef=bass middle=D\nC D E F`
+        );
+        const expected = [48, 50, 52, 53]; // C3, D3, E3, F3 (each -12 from C4,D4,E4,F4)
+        expect(music.notes.map((n) => n.pitches[0])).toEqual(expected);
+      });
+
+      it('keySignature is not affected by middle=', () => {
+        const music = fromAbc(
+          `T:Test\nM:4/4\nL:1/4\nK:G clef=bass middle=D\nG`
+        );
+        expect(music.keySignature).toBe('G');
+        expect(music.clef).toBe('bass');
+      });
+    });
+
     it('should parse common time (C)', () => {
       const abc = `T:Test\nM:C\nL:1/4\nK:C\nC`;
       const music = fromAbc(abc);
@@ -288,7 +357,8 @@ describe('fromAbc', () => {
 
     it('should not beam quarter notes', () => {
       const abc = `T:Test\nM:4/4\nL:1/4\nK:C\nCDEF |`;
-      expect(() => fromAbc(abc)).toThrow('too long a duration to be beamed');
+      const music = fromAbc(abc);
+      expect(music.beams).toHaveLength(0);
     });
   });
 
@@ -472,6 +542,54 @@ describe('fromAbc', () => {
     });
   });
 
+  describe('long rests and multimeasure rests', () => {
+    it('z8 with L:1/8 = whole note rest', () => {
+      const music = fromAbc(`M:4/4\nL:1/8\nK:C\nz8`);
+      expect(music.notes).toHaveLength(1);
+      expect(music.notes[0].pitches).toEqual([]);
+      expect(music.notes[0].duration).toBe(Duration.WHOLE);
+    });
+
+    it('z8 with L:1/4 splits into two whole rests', () => {
+      const music = fromAbc(`M:4/4\nL:1/4\nK:C\nz8`);
+      expect(music.notes).toHaveLength(2);
+      expect(music.notes[0].duration).toBe(Duration.WHOLE);
+      expect(music.notes[1].duration).toBe(Duration.WHOLE);
+    });
+
+    it('Z4 in 4/4 produces 4 whole rests with bar lines', () => {
+      const music = fromAbc(`M:4/4\nL:1/8\nK:C\nZ4`);
+      expect(music.notes).toHaveLength(4);
+      expect(music.notes.every((n) => n.pitches.length === 0)).toBe(true);
+      expect(music.notes.every((n) => n.duration === Duration.WHOLE)).toBe(
+        true
+      );
+      expect(music.bars).toHaveLength(3); // 3 bars between 4 measures
+    });
+
+    it('Z1 in 3/4 produces a dotted half rest', () => {
+      const music = fromAbc(`M:3/4\nL:1/8\nK:C\nZ`);
+      expect(music.notes).toHaveLength(1);
+      expect(music.notes[0].duration).toBe(Duration.HALF);
+      expect(music.notes[0].durationModifier).toBe(DurationModifier.DOTTED);
+    });
+
+    it('Z2 in 3/4 produces 2 dotted-half rests with a bar line', () => {
+      const music = fromAbc(`M:3/4\nL:1/8\nK:C\nZ2`);
+      expect(music.notes).toHaveLength(2);
+      expect(music.bars).toHaveLength(1);
+    });
+
+    it('Z followed by notes emits correct bar count', () => {
+      const music = fromAbc(`M:4/4\nL:1/8\nK:C\nZ2 | c4`);
+      const restCount = music.notes.filter(
+        (n) => n.pitches.length === 0
+      ).length;
+      expect(restCount).toBe(2);
+      expect(music.notes[music.notes.length - 1].pitches).toEqual([72]);
+    });
+  });
+
   describe('edge cases', () => {
     it('empty input string: returns Music with no notes', () => {
       const music = fromAbc('');
@@ -621,5 +739,167 @@ E D C2 | E D C2 | C/2 C/2 C/2 C/2 D/2 D/2 D/2 D/2 | E D C2 |]`;
       expect(music.keySignature).toBe('C');
       expect(music.notes.length).toBeGreaterThan(0);
     });
+  });
+});
+
+// ---- Lyrics -----------------------------------------------------------------
+
+const BASE_HEADERS = 'T:Test\nM:4/4\nL:1/4\nK:C\n';
+
+describe('lyrics — w: aligned', () => {
+  it('parses a single-verse w: line', () => {
+    const abc = BASE_HEADERS + 'C D E F\nw:do re mi fa';
+    const music = fromAbc(abc);
+    expect(music.lyrics).toHaveLength(1);
+    expect(music.lyrics[0][0]).toBe('do');
+    expect(music.lyrics[0][1]).toBe('re');
+    expect(music.lyrics[0][2]).toBe('mi');
+    expect(music.lyrics[0][3]).toBe('fa');
+  });
+
+  it('parses hyphenated syllables across notes', () => {
+    const abc = BASE_HEADERS + 'C D\nw:hel-lo';
+    const music = fromAbc(abc);
+    expect(music.lyrics[0][0]).toBe('hel-');
+    expect(music.lyrics[0][1]).toBe('lo');
+  });
+
+  it('* skip leaves note without lyric', () => {
+    const abc = BASE_HEADERS + 'C D E\nw:one * three';
+    const music = fromAbc(abc);
+    expect(music.lyrics[0][0]).toBe('one');
+    expect(music.lyrics[0][1]).toBeUndefined();
+    expect(music.lyrics[0][2]).toBe('three');
+  });
+
+  it('_ hold advances note index without assigning lyric', () => {
+    const abc = BASE_HEADERS + 'C D E\nw:held _';
+    const music = fromAbc(abc);
+    expect(music.lyrics[0][0]).toBe('held');
+    expect(music.lyrics[0][1]).toBeUndefined();
+    expect(music.lyrics[0][2]).toBeUndefined();
+  });
+
+  it('~ tilde splits a word into two syllables', () => {
+    const abc = BASE_HEADERS + 'C D\nw:hel~lo';
+    const music = fromAbc(abc);
+    expect(music.lyrics[0][0]).toBe('hel');
+    expect(music.lyrics[0][1]).toBe('lo');
+  });
+
+  it('| bar token advances to next bar start', () => {
+    // 4 notes per bar; | skips to bar 2; next syllable lands on note 4
+    const abc = BASE_HEADERS + 'C D E F | G A B c\nw:one | five';
+    const music = fromAbc(abc);
+    expect(music.lyrics[0][0]).toBe('one');
+    // notes 1,2,3 have no lyric (skipped by |)
+    expect(music.lyrics[0][1]).toBeUndefined();
+    expect(music.lyrics[0][2]).toBeUndefined();
+    expect(music.lyrics[0][3]).toBeUndefined();
+    expect(music.lyrics[0][4]).toBe('five');
+  });
+
+  it('excess syllables beyond note count are ignored', () => {
+    const abc = BASE_HEADERS + 'C D\nw:one two three four five';
+    const music = fromAbc(abc);
+    expect(music.lyrics[0]).toHaveLength(music.notes.length);
+  });
+
+  it('fewer syllables than notes leaves trailing notes without lyric', () => {
+    const abc = BASE_HEADERS + 'C D E F\nw:one two';
+    const music = fromAbc(abc);
+    expect(music.lyrics[0][0]).toBe('one');
+    expect(music.lyrics[0][1]).toBe('two');
+    expect(music.lyrics[0][2]).toBeUndefined();
+    expect(music.lyrics[0][3]).toBeUndefined();
+  });
+
+  it('parses multi-verse w: lines', () => {
+    const abc = BASE_HEADERS + 'C D E F\nw:do re mi fa\nw:one two three four';
+    const music = fromAbc(abc);
+    expect(music.lyrics).toHaveLength(2);
+    expect(music.lyrics[0][0]).toBe('do');
+    expect(music.lyrics[1][0]).toBe('one');
+    expect(music.lyrics[1][3]).toBe('four');
+  });
+
+  it('grace notes are skipped during lyric alignment', () => {
+    // {G}C D — the grace note G should not consume a lyric slot
+    const abc = BASE_HEADERS + '{G}C D\nw:one two';
+    const music = fromAbc(abc);
+    // Find the non-grace notes
+    const realNoteIndices = music.notes
+      .map((n, i) => ({ n, i }))
+      .filter(
+        ({ n }) =>
+          n.duration !== Duration.GRACE && n.duration !== Duration.GRACE_SLASH
+      )
+      .map(({ i }) => i);
+    expect(music.lyrics[0][realNoteIndices[0]]).toBe('one');
+    expect(music.lyrics[0][realNoteIndices[1]]).toBe('two');
+  });
+
+  it('lyrics default to empty array when no w: lines present', () => {
+    const abc = BASE_HEADERS + 'C D E F';
+    const music = fromAbc(abc);
+    expect(music.lyrics).toEqual([]);
+  });
+});
+
+describe('lyrics — W: unaligned', () => {
+  it('stores W: text in endLyrics', () => {
+    const abc = BASE_HEADERS + 'C D E F\nW:Some unaligned text';
+    const music = fromAbc(abc);
+    expect(music.endLyrics).toBe('Some unaligned text');
+  });
+
+  it('joins multiple W: lines with newline', () => {
+    const abc = BASE_HEADERS + 'C D\nW:Line one\nW:Line two';
+    const music = fromAbc(abc);
+    expect(music.endLyrics).toBe('Line one\nLine two');
+  });
+
+  it('endLyrics is undefined when no W: lines present', () => {
+    const abc = BASE_HEADERS + 'C D E F';
+    const music = fromAbc(abc);
+    expect(music.endLyrics).toBeUndefined();
+  });
+});
+
+describe('lyrics — round-trip', () => {
+  it('round-trips single-verse aligned lyrics through toAbc/fromAbc', () => {
+    const abc = BASE_HEADERS + 'C D E F\nw:do re mi fa';
+    const music = fromAbc(abc);
+    const exported = toAbc(music);
+    const reimported = fromAbc(exported);
+    expect(reimported.lyrics[0][0]).toBe('do');
+    expect(reimported.lyrics[0][3]).toBe('fa');
+  });
+
+  it('round-trips multi-verse lyrics', () => {
+    const abc = BASE_HEADERS + 'C D E F\nw:do re mi fa\nw:one two three four';
+    const music = fromAbc(abc);
+    const exported = toAbc(music);
+    const reimported = fromAbc(exported);
+    expect(reimported.lyrics).toHaveLength(2);
+    expect(reimported.lyrics[1][0]).toBe('one');
+    expect(reimported.lyrics[1][3]).toBe('four');
+  });
+
+  it('round-trips W: unaligned lyrics', () => {
+    const abc = BASE_HEADERS + 'C D E F\nW:Verse text here';
+    const music = fromAbc(abc);
+    const exported = toAbc(music);
+    const reimported = fromAbc(exported);
+    expect(reimported.endLyrics).toBe('Verse text here');
+  });
+
+  it('round-trips hyphenated syllables', () => {
+    const abc = BASE_HEADERS + 'C D\nw:hel-lo';
+    const music = fromAbc(abc);
+    const exported = toAbc(music);
+    const reimported = fromAbc(exported);
+    expect(reimported.lyrics[0][0]).toBe('hel-');
+    expect(reimported.lyrics[0][1]).toBe('lo');
   });
 });

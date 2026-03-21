@@ -184,7 +184,8 @@ function toStavenotes(
   freeTime: boolean,
   ticksPerLine: number,
   clef: string,
-  displayPitchOffset: number = 0
+  displayPitchOffset: number = 0,
+  lyrics: (string | undefined)[][] = []
 ): {
   barredNotes: StaveNote[][];
   markings: (Beam | StaveTie | Curve | Tuplet)[];
@@ -245,6 +246,19 @@ function toStavenotes(
     }
 
     addNoteModifiers(staveNote, note, duration);
+
+    for (let verse = 0; verse < lyrics.length; verse++) {
+      const syllable = lyrics[verse][musicIx];
+      if (syllable !== undefined) {
+        staveNote.addModifier(
+          new Annotation(syllable)
+            .setVerticalJustification(Annotation.VerticalJustify.BOTTOM)
+            .setTextLine(verse)
+            .setFont('serif', 10, 'normal', 'normal'),
+          0
+        );
+      }
+    }
 
     musicIndexToNoteIndex.set(musicIx, notes.length);
     noteIndexMap.push(musicIx);
@@ -364,7 +378,7 @@ export function Vexflow(props: {
     (KEYS[music.keySignature] ?? [])[0].includes('#');
 
   const barWidth = 250;
-  const barHeight = 120;
+  const barHeight = 120 + music.lyrics.length * 18;
   const extraHeightOffset = 20;
 
   const barsPerLine = Math.max(1, Math.floor((windowWidth - 12) / barWidth));
@@ -379,7 +393,8 @@ export function Vexflow(props: {
       freeTime,
       ticksPerLine,
       vexClef,
-      displayPitchOffset
+      displayPitchOffset,
+      music.lyrics
     );
 
   // Build per-bar beg/end barline type overrides from the parsed bar types.
@@ -747,6 +762,22 @@ export function Vexflow(props: {
           dir="ltr"
           aria-hidden="true"
         />
+        {music.endLyrics && (
+          <Typography
+            variant="body2"
+            component="div"
+            sx={{
+              whiteSpace: 'pre-wrap',
+              px: 2,
+              pt: 1,
+              pb: 1,
+              fontStyle: 'italic',
+              color: 'text.secondary',
+            }}
+          >
+            {music.endLyrics}
+          </Typography>
+        )}
       </figure>
       <Popover
         open={Boolean(popoverAnchor)}

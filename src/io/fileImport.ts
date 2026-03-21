@@ -1,6 +1,8 @@
 import { parseAbcFile } from './abcImport';
 import { toAbc } from './abcExport';
+
 import { fromMusicXml, extractMxl } from './musicXmlImport';
+import { fromMidiToAbc } from './midiImport';
 import type { UserSong } from '../store';
 
 export function isMusicXmlPath(path: string): boolean {
@@ -12,14 +14,25 @@ export function isMusicXmlPath(path: string): boolean {
   );
 }
 
+export function isMidiPath(path: string): boolean {
+  const lower = path.toLowerCase();
+  return lower.endsWith('.mid') || lower.endsWith('.midi');
+}
+
 /**
  * Parse a File into UserSong objects.
- * Handles .abc/.txt (via FileReader) and .musicxml/.xml/.mxl.
+ * Handles .abc/.txt, .musicxml/.xml/.mxl, and .mid/.midi.
  * Throws on parse failure.
  */
 export async function parseSongsFromFile(file: File): Promise<UserSong[]> {
   const name = file.name.toLowerCase();
   const fallbackTitle = file.name.replace(/\.[^.]+$/, '');
+
+  if (isMidiPath(name)) {
+    const buffer = await file.arrayBuffer();
+    const { title, abc } = fromMidiToAbc(buffer);
+    return [{ id: crypto.randomUUID(), title: title || fallbackTitle, abc }];
+  }
 
   if (isMusicXmlPath(name)) {
     let xmlText: string;
@@ -81,4 +94,20 @@ export function parseSongsFromText(
     title: title === 'Untitled' ? fallbackTitle : title,
     abc,
   }));
+}
+
+/**
+ * Parse already-fetched binary content into UserSong objects.
+ * Used for MIDI URL imports where the response must be read as ArrayBuffer.
+ */
+export function parseSongsFromBuffer(
+  buffer: ArrayBuffer,
+  pathForExtension: string,
+  fallbackTitle: string
+): UserSong[] {
+  if (isMidiPath(pathForExtension)) {
+    const { title, abc } = fromMidiToAbc(buffer);
+    return [{ id: crypto.randomUUID(), title: title || fallbackTitle, abc }];
+  }
+  throw new Error(`Binary import not supported for: ${pathForExtension}`);
 }
