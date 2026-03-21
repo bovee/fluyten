@@ -40,6 +40,8 @@ export function SettingsDialog({ open, onClose }: SettingsDialogProps) {
   const setIsGerman = useStore((state) => state.setIsGerman);
   const language = useStore((state) => state.language);
   const setLanguage = useStore((state) => state.setLanguage);
+  const playbackVoices = useStore((state) => state.playbackVoices);
+  const setPlaybackVoices = useStore((state) => state.setPlaybackVoices);
 
   const [detectOpen, setDetectOpen] = useState(false);
   const [detectStep, setDetectStep] = useState<0 | 1>(0);
@@ -183,6 +185,24 @@ export function SettingsDialog({ open, onClose }: SettingsDialogProps) {
                 }
                 label={t('germanFingering')}
               />
+            </Box>
+
+            <Box>
+              <FormControl fullWidth>
+                <InputLabel id="playback-voices-label">{t('playbackVoices')}</InputLabel>
+                <Select
+                  labelId="playback-voices-label"
+                  value={playbackVoices}
+                  label={t('playbackVoices')}
+                  onChange={(e) =>
+                    setPlaybackVoices(e.target.value as typeof playbackVoices)
+                  }
+                >
+                  <MenuItem value="selected">{t('playbackVoicesSelected')}</MenuItem>
+                  <MenuItem value="others">{t('playbackVoicesOthers')}</MenuItem>
+                  <MenuItem value="all">{t('playbackVoicesAll')}</MenuItem>
+                </Select>
+              </FormControl>
             </Box>
           </Box>
         </DialogContent>

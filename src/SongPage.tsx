@@ -12,7 +12,7 @@ import MusicNote from '@mui/icons-material/MusicNote';
 import PlayArrow from '@mui/icons-material/PlayArrow';
 import Speed from '@mui/icons-material/Speed';
 
-import { voicesFromAbc, defaultClefForInstrument } from './io/abcImport';
+import { voicesFromAbc, defaultClefForInstrument, type VoiceInfo } from './io/abcImport';
 import { Music, expandRepeats } from './music';
 import { FrequencyTracker } from './audio/FrequencyTracker';
 import { NotePlayer } from './audio/NotePlayer';
@@ -20,7 +20,7 @@ import { Vexflow } from './Vexflow.tsx';
 import { useStore } from './store';
 import { type Song } from './music';
 import { NOTE_NAMES } from './constants';
-import { AbcEditorDrawer } from './AbcEditorDrawer';
+import { EditorDrawer } from './EditorDrawer';
 
 const PLAY_SAMPLE_RATE = 1000;
 const RECORD_SAMPLE_RATE = 50;
@@ -116,21 +116,25 @@ function usePitchDetection(
   };
 }
 
+type PlayerEntry = { player: NotePlayer; music: Music; voiceIdx: number };
+
 function useAudioPlayback(
-  musicRef: React.MutableRefObject<Music>,
+  voicesRef: React.MutableRefObject<VoiceInfo[]>,
+  selectedVoiceIdxRef: React.MutableRefObject<number>,
   tempoRef: React.MutableRefObject<number>,
   setPlayedNotes: React.Dispatch<React.SetStateAction<number>>,
   setStatusMessage: (msg: string) => void
 ) {
   const { t } = useTranslation();
-  const musicPlayerRef = useRef<NotePlayer>(new NotePlayer());
+  const musicPlayersRef = useRef<PlayerEntry[]>([]);
   const musicPlayerInterval = useIntervalRef();
   const [cursor, setCursor] = useState<{ noteIdx: number } | undefined>();
   const cursorRafRef = useRef<number | null>(null);
 
   const clearMusicPlayer = () => {
     musicPlayerInterval.clear();
-    musicPlayerRef.current?.stop();
+    for (const { player } of musicPlayersRef.current) player.stop();
+    musicPlayersRef.current = [];
     if (cursorRafRef.current !== null) {
       cancelAnimationFrame(cursorRafRef.current);
       cursorRafRef.current = null;
@@ -145,24 +149,53 @@ function useAudioPlayback(
       return;
     }
 
+    const { playbackVoices } = useStore.getState();
+    const voices = voicesRef.current;
+    const selectedIdx = selectedVoiceIdxRef.current;
+
+    // For each voice: include it if audible, or silently (for cursor tracking)
+    // if it's the selected voice. Skip voices that are neither.
+    const entries: PlayerEntry[] = voices
+      .map((v, i) => {
+        const audible =
+          playbackVoices === 'selected' ? i === selectedIdx :
+          playbackVoices === 'others'   ? i !== selectedIdx :
+          true; // 'all'
+        if (!audible && i !== selectedIdx) return null;
+        const player = new NotePlayer();
+        if (!audible) player.setVolume(0);
+        player.start();
+        player.scheduleNotes(tempoRef.current, v.music);
+        return { player, music: v.music, voiceIdx: i };
+      })
+      .filter((e): e is PlayerEntry => e !== null);
+
+    musicPlayersRef.current = entries;
     setPlayedNotes(0);
-    musicPlayerRef.current?.start();
-    musicPlayerRef.current?.scheduleNotes(tempoRef.current, musicRef.current);
+
     const id = window.setInterval(() => {
-      musicPlayerRef.current?.scheduleNotes(tempoRef.current, musicRef.current);
-      if (musicPlayerRef.current && !musicPlayerRef.current.isPlaying()) {
+      for (const entry of musicPlayersRef.current) {
+        entry.player.scheduleNotes(tempoRef.current, entry.music);
+      }
+      if (musicPlayersRef.current.every(({ player }) => !player.isPlaying())) {
         clearMusicPlayer();
       }
     }, PLAY_SAMPLE_RATE);
     musicPlayerInterval.set(id);
     setStatusMessage(t('playbackStarted'));
 
-    // requestAnimationFrame loop: ask the player which note is scheduled at
-    // currentTime — no independent timing math required.
+    // requestAnimationFrame cursor: track the selected voice player (if playing).
     const animateCursor = () => {
-      const player = musicPlayerRef.current;
-      if (!player?.audioCtx) return;
-      const noteIdx = player.getNoteIdxAtTime(player.audioCtx.currentTime);
+      const selectedEntry = musicPlayersRef.current.find(
+        (e) => e.voiceIdx === selectedVoiceIdxRef.current
+      );
+      if (!selectedEntry?.player.audioCtx) {
+        cursorRafRef.current = requestAnimationFrame(animateCursor);
+        return;
+      }
+      const noteIdx = selectedEntry.player.getNoteIdxAtTime(
+        selectedEntry.player.audioCtx.currentTime
+      );
       setCursor({ noteIdx });
       cursorRafRef.current = requestAnimationFrame(animateCursor);
     };
@@ -245,10 +278,10 @@ export function SongPage({
     tempoRef.current = tempo;
   }, [tempo]);
 
-  const musicRef = useRef<Music>(music);
-  useEffect(() => {
-    musicRef.current = music;
-  }, [music]);
+  const voicesRef = useRef<VoiceInfo[]>(voices);
+  useEffect(() => { voicesRef.current = voices; }, [voices]);
+  const selectedVoiceIdxRef = useRef(selectedVoiceIdx);
+  useEffect(() => { selectedVoiceIdxRef.current = selectedVoiceIdx; }, [selectedVoiceIdx]);
 
   const expandedTrackingRef = useRef({
     notes: [] as { pitches: number[] }[],
@@ -276,7 +309,8 @@ export function SongPage({
     setStatusMessage
   );
   const { isPlaying, startPlaying, cursor } = useAudioPlayback(
-    musicRef,
+    voicesRef,
+    selectedVoiceIdxRef,
     tempoRef,
     setPlayedNotes,
     setStatusMessage
@@ -443,7 +477,7 @@ export function SongPage({
       >
         {statusMessage}
       </span>
-      <AbcEditorDrawer
+      <EditorDrawer
         open={editOpen}
         onHeightChange={setDrawerHeight}
         readOnly={readOnly}

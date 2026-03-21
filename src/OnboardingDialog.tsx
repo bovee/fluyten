@@ -99,7 +99,10 @@ export function OnboardingDialog({ open, onComplete }: OnboardingDialogProps) {
         }));
         importUserBook(bookTitle, songs);
       })
-      .catch((err) => console.error('Failed to fetch beginner songs:', err));
+      .catch((err) => {
+        console.error('Failed to fetch beginner songs:', err);
+        alert('Could not download the beginner songs book. You can add it later via "Add Other Book".');
+      });
   };
 
   return (

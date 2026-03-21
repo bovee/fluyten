@@ -460,7 +460,7 @@ export const TRILLED_FINGERINGS: { [offset: number]: Hole[][] } = {
       Hole.Closed,
       Hole.Closed,
       Hole.Closed,
-      Hole.TrilledClosed,
+      Hole.TrilledClosedOpen,
     ],
   ],
   2: [
@@ -546,19 +546,14 @@ export function FingeringDiagram({
   );
   if (!fingerings) return EMPTY_DIAGRAM;
 
-  const TRILL_HOLES = new Set([
+  const TRILL_HOLES = new Set<Hole>([
     Hole.TrilledClosedOpen,
     Hole.TrilledHalfOpen,
     Hole.TrilledOpenClosed,
     Hole.TrilledClosedHalf,
   ]);
 
-  function trillStates(
-    hole: Hole
-  ): [
-    Hole.Open | Hole.Half | Hole.Closed,
-    Hole.Open | Hole.Half | Hole.Closed,
-  ] {
+  function trillStates(hole: Hole): [Hole, Hole] {
     if (hole === Hole.TrilledClosedOpen) return [Hole.Closed, Hole.Open];
     if (hole === Hole.TrilledHalfOpen) return [Hole.Half, Hole.Open];
     if (hole === Hole.TrilledClosedHalf) return [Hole.Closed, Hole.Half];

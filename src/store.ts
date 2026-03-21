@@ -3,6 +3,8 @@ import { persist, createJSONStorage } from 'zustand/middleware';
 
 import { type RecorderType } from './instrument';
 
+export type PlaybackVoices = 'selected' | 'others' | 'all';
+
 export interface UserSong {
   id: string;
   title: string;
@@ -28,6 +30,8 @@ interface SettingsState {
   setIsGerman: (isGerman: boolean) => void;
   language: string;
   setLanguage: (language: string) => void;
+  playbackVoices: PlaybackVoices;
+  setPlaybackVoices: (v: PlaybackVoices) => void;
   userBooks: UserBook[];
   addUserBook: (title: string) => void;
   importUserBook: (title: string, songs: UserSong[], sourceId?: string) => void;
@@ -53,6 +57,8 @@ export const useStore = create<SettingsState>()(
       setIsGerman: (isGerman) => set({ isGerman }),
       language: '',
       setLanguage: (language) => set({ language }),
+      playbackVoices: 'selected',
+      setPlaybackVoices: (playbackVoices) => set({ playbackVoices }),
       userBooks: [],
       addUserBook: (title) =>
         set((state) => ({

@@ -42,7 +42,7 @@ const TRANSCRIBE_DURATION_CANDIDATES: [number, Duration, DurationModifier][] = [
   [24, Duration.WHOLE, DurationModifier.DOTTED],
 ];
 
-interface AbcEditorDrawerProps {
+interface EditorDrawerProps {
   open: boolean;
   readOnly?: boolean;
   abcMusic: string;
@@ -56,7 +56,7 @@ interface AbcEditorDrawerProps {
   onHeightChange?: (height: number) => void;
 }
 
-export function AbcEditorDrawer({
+export function EditorDrawer({
   open,
   readOnly,
   abcMusic,
@@ -68,7 +68,7 @@ export function AbcEditorDrawer({
   onVoiceChange,
   parseError,
   onHeightChange,
-}: AbcEditorDrawerProps) {
+}: EditorDrawerProps) {
   const { t } = useTranslation();
   const drawerRef = useRef<HTMLDivElement>(null);
   const abcTextareaRef = useRef<HTMLTextAreaElement>(null);
@@ -282,6 +282,7 @@ export function AbcEditorDrawer({
       onAbcChange(newAbc);
     } catch (e) {
       console.error('Reflow failed:', e);
+      alert(`Reflow failed: ${(e as Error).message}`);
     }
   };
 

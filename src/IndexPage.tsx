@@ -26,9 +26,7 @@ import Edit from '@mui/icons-material/Edit';
 import FileDownload from '@mui/icons-material/FileDownload';
 import Settings from '@mui/icons-material/Settings';
 
-import { parseAbcFile } from './io/abcImport';
-import { toAbc } from './io/abcExport';
-import { fromMusicXml, extractMxl } from './io/musicXmlImport';
+import { parseSongsFromFile, parseSongsFromText } from './io/fileImport';
 import { getStarterBookUrl } from './instrument';
 import { ScaleDialog } from './scales/ScaleDialog';
 import { SettingsDialog } from './SettingsDialog';
@@ -48,36 +46,28 @@ export function IndexPage({
 }: IndexPageProps) {
   const { t } = useTranslation();
   const [settingsOpen, setSettingsOpen] = useState(false);
-  const [scaleDialogBookId, setScaleDialogBookId] = useState<string | null>(
-    null
-  );
+  const [scaleDialogBookId, setScaleDialogBookId] = useState<string | null>(null);
   const [addSongMenu, setAddSongMenu] = useState<{
     anchor: HTMLElement;
     bookId: string;
   } | null>(null);
-  const [newBookDialogOpen, setNewBookDialogOpen] = useState(false);
-  const [newBookTitle, setNewBookTitle] = useState('');
-  const [renameBookId, setRenameBookId] = useState<string | null>(null);
-  const [renameBookTitle, setRenameBookTitle] = useState('');
-  const [deleteConfirmBookId, setDeleteConfirmBookId] = useState<string | null>(
-    null
-  );
+  const [newBook, setNewBook] = useState<{ title: string } | null>(null);
+  const [renameBook, setRenameBook] = useState<{ id: string; title: string } | null>(null);
+  const [deleteConfirmBookId, setDeleteConfirmBookId] = useState<string | null>(null);
   const [deleteConfirmSong, setDeleteConfirmSong] = useState<{
     bookId: string;
     songId: string;
     title: string;
   } | null>(null);
-  const [exportBookId, setExportBookId] = useState<string | null>(null);
-  const [exportFileName, setExportFileName] = useState('');
-  const [importUrlDialogOpen, setImportUrlDialogOpen] = useState(false);
-  const [importUrlValue, setImportUrlValue] = useState('');
-  const [importUrlError, setImportUrlError] = useState<string | null>(null);
-  const [importUrlBookId, setImportUrlBookId] = useState<string | null>(null);
+  const [exportBook, setExportBook] = useState<{ id: string; fileName: string } | null>(null);
+  const [importUrl, setImportUrl] = useState<{
+    bookId: string;
+    value: string;
+    error: string | null;
+  } | null>(null);
   const importFileRef = useRef<HTMLInputElement>(null);
   const [importFileBookId, setImportFileBookId] = useState<string | null>(null);
-  const [addBookMenuAnchor, setAddBookMenuAnchor] =
-    useState<HTMLElement | null>(null);
-  const importNewBookFileRef = useRef<HTMLInputElement>(null);
+  const [dragOverBookId, setDragOverBookId] = useState<string | null>(null);
 
   const userBooks = useStore((state) => state.userBooks);
   const addUserBook = useStore((state) => state.addUserBook);
@@ -92,161 +82,76 @@ export function IndexPage({
     };
 
   const handleCreateBook = () => {
-    if (!newBookTitle.trim()) return;
-    addUserBook(newBookTitle.trim());
-    setNewBookTitle('');
-    setNewBookDialogOpen(false);
+    if (!newBook?.title.trim()) return;
+    addUserBook(newBook.title.trim());
+    setNewBook(null);
   };
 
   const handleRenameBook = () => {
-    if (renameBookId && renameBookTitle.trim()) {
-      renameUserBook(renameBookId, renameBookTitle.trim());
+    if (renameBook?.title.trim()) {
+      renameUserBook(renameBook.id, renameBook.title.trim());
     }
-    setRenameBookId(null);
-    setRenameBookTitle('');
+    setRenameBook(null);
   };
 
   const handleImportFile = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
-    if (!file || !importFileBookId) return;
+    const bookId = importFileBookId;
+    if (!file || !bookId) return;
     e.target.value = '';
-    const name = file.name.toLowerCase();
-    const isMusicXml =
-      name.endsWith('.musicxml') ||
-      name.endsWith('.xml') ||
-      name.endsWith('.mxl');
-    if (isMusicXml) {
-      try {
-        let xmlText: string;
-        if (name.endsWith('.mxl')) {
-          const buffer = await file.arrayBuffer();
-          xmlText = extractMxl(buffer);
-        } else {
-          xmlText = await file.text();
-        }
-        const music = fromMusicXml(xmlText);
-        const title = music.title || file.name.replace(/\.[^.]+$/, '');
-        addSongToBook(importFileBookId, {
-          id: crypto.randomUUID(),
-          title,
-          abc: `X:1\n${toAbc(music)}`,
-        });
-      } catch (err) {
-        console.error('Failed to import MusicXML:', err);
-      }
-    } else {
-      const reader = new FileReader();
-      reader.onload = () => {
-        const text = reader.result as string;
-        const tunes = parseAbcFile(text);
-        tunes.forEach(({ title, abc }) => {
-          addSongToBook(importFileBookId!, {
-            id: crypto.randomUUID(),
-            title,
-            abc,
-          });
-        });
-      };
-      reader.readAsText(file);
+    try {
+      const songs = await parseSongsFromFile(file);
+      songs.forEach((song) => addSongToBook(bookId, song));
+    } catch (err) {
+      alert(`Failed to import file: ${(err as Error).message}`);
     }
   };
 
-  const handleImportNewBookFile = async (
-    e: React.ChangeEvent<HTMLInputElement>
-  ) => {
-    const file = e.target.files?.[0];
+  const handleDropOnBook = async (bookId: string, e: React.DragEvent) => {
+    e.preventDefault();
+    setDragOverBookId(null);
+    const file = e.dataTransfer.files[0];
     if (!file) return;
-    e.target.value = '';
-    const bookTitle = file.name.replace(/\.[^.]+$/, '');
-    const name = file.name.toLowerCase();
-    const isMusicXml =
-      name.endsWith('.musicxml') ||
-      name.endsWith('.xml') ||
-      name.endsWith('.mxl');
-    if (isMusicXml) {
-      try {
-        let xmlText: string;
-        if (name.endsWith('.mxl')) {
-          const buffer = await file.arrayBuffer();
-          xmlText = extractMxl(buffer);
-        } else {
-          xmlText = await file.text();
-        }
-        const music = fromMusicXml(xmlText);
-        const title = music.title || bookTitle;
-        addUserBook(title);
-        const newBookId = useStore.getState().userBooks.at(-1)!.id;
-        addSongToBook(newBookId, {
-          id: crypto.randomUUID(),
-          title,
-          abc: `X:1\n${toAbc(music)}`,
-        });
-      } catch (err) {
-        console.error('Failed to import MusicXML:', err);
-      }
-    } else {
-      const reader = new FileReader();
-      reader.onload = () => {
-        const text = reader.result as string;
-        const tunes = parseAbcFile(text);
-        if (tunes.length === 0) return;
-        addUserBook(tunes[0].title || bookTitle);
-        const newBookId = useStore.getState().userBooks.at(-1)!.id;
-        tunes.forEach(({ title, abc }) => {
-          addSongToBook(newBookId, { id: crypto.randomUUID(), title, abc });
-        });
-      };
-      reader.readAsText(file);
+    if (!/\.(abc|txt|musicxml|xml|mxl)$/i.test(file.name)) return;
+    try {
+      const songs = await parseSongsFromFile(file);
+      songs.forEach((song) => addSongToBook(bookId, song));
+    } catch (err) {
+      alert(`Failed to import file: ${(err as Error).message}`);
     }
   };
 
   const handleImportUrl = async () => {
-    setImportUrlError(null);
-    if (!importUrlBookId) return;
+    const current = importUrl;
+    if (!current) return;
+    setImportUrl({ ...current, error: null });
     try {
-      new URL(importUrlValue);
+      new URL(current.value);
     } catch {
-      setImportUrlError(t('importUrlInvalidError'));
+      setImportUrl({ ...current, error: t('importUrlInvalidError') });
       return;
     }
     try {
-      const response = await fetch(importUrlValue);
+      const response = await fetch(current.value);
       if (!response.ok) {
-        setImportUrlError(t('importUrlHttpError', { status: response.status }));
+        setImportUrl({
+          ...current,
+          error: t('importUrlHttpError', { status: response.status }),
+        });
         return;
       }
-      const urlPath = new URL(importUrlValue).pathname.toLowerCase();
-      const isMusicXml =
-        urlPath.endsWith('.musicxml') ||
-        urlPath.endsWith('.xml') ||
-        urlPath.endsWith('.mxl');
-      if (isMusicXml) {
-        const text = await response.text();
-        const music = fromMusicXml(text);
-        const filename =
-          importUrlValue.split('/').pop()?.split('?')[0] ?? 'Imported';
-        const title = music.title || filename.replace(/\.[^.]+$/, '');
-        addSongToBook(importUrlBookId, {
-          id: crypto.randomUUID(),
-          title,
-          abc: `X:1\n${toAbc(music)}`,
-        });
-      } else {
-        const text = await response.text();
-        const tunes = parseAbcFile(text);
-        tunes.forEach(({ title, abc }) => {
-          addSongToBook(importUrlBookId!, {
-            id: crypto.randomUUID(),
-            title,
-            abc,
-          });
-        });
-      }
-      setImportUrlDialogOpen(false);
-      setImportUrlValue('');
-      setImportUrlBookId(null);
+      const urlPath = new URL(current.value).pathname;
+      const fallbackTitle =
+        (urlPath.split('/').pop()?.split('?')[0] ?? 'Imported').replace(
+          /\.[^.]+$/,
+          ''
+        );
+      const text = await response.text();
+      const songs = parseSongsFromText(text, urlPath, fallbackTitle);
+      songs.forEach((song) => addSongToBook(current.bookId, song));
+      setImportUrl(null);
     } catch {
-      setImportUrlError(t('importUrlCorsError'));
+      setImportUrl({ ...current, error: t('importUrlCorsError') });
     }
   };
 
@@ -261,25 +166,23 @@ export function IndexPage({
 
   const openRenameBook = (book: UserBook, e: React.MouseEvent) => {
     e.stopPropagation();
-    setRenameBookId(book.id);
-    setRenameBookTitle(book.title);
+    setRenameBook({ id: book.id, title: book.title });
   };
 
   const handleDeleteBook = (bookId: string) => {
     removeUserBook(bookId);
-    setRenameBookId(null);
-    setRenameBookTitle('');
+    setRenameBook(null);
     setDeleteConfirmBookId(null);
   };
 
   const openExport = (book: UserBook, e: React.MouseEvent) => {
     e.stopPropagation();
-    setExportBookId(book.id);
-    setExportFileName(book.title);
+    setExportBook({ id: book.id, fileName: book.title });
   };
 
   const handleExport = () => {
-    const book = userBooks.find((b) => b.id === exportBookId);
+    if (!exportBook) return;
+    const book = userBooks.find((b) => b.id === exportBook.id);
     if (!book) return;
     const content = book.songs
       .map((song, i) => song.abc.replace(/^X:\s*\d+/m, `X:${i + 1}`))
@@ -288,10 +191,10 @@ export function IndexPage({
     const url = URL.createObjectURL(blob);
     const a = document.createElement('a');
     a.href = url;
-    a.download = `${exportFileName || book.title}.abc`;
+    a.download = `${exportBook.fileName || book.title}.abc`;
     a.click();
     URL.revokeObjectURL(url);
-    setExportBookId(null);
+    setExportBook(null);
   };
 
   return (
@@ -343,7 +246,15 @@ export function IndexPage({
             key={book.id}
             expanded={expandedBook === book.id}
             onChange={handleAccordionChange(book.id)}
-            sx={{ backgroundColor: '#fffef9' }}
+            onDragOver={(e) => { e.preventDefault(); e.dataTransfer.dropEffect = 'copy'; }}
+            onDragEnter={(e) => { e.preventDefault(); setDragOverBookId(book.id); }}
+            onDragLeave={(e) => { if (!e.currentTarget.contains(e.relatedTarget as Node)) setDragOverBookId(null); }}
+            onDrop={(e) => void handleDropOnBook(book.id, e)}
+            sx={{
+              backgroundColor: dragOverBookId === book.id ? '#e8f4fd' : '#fffef9',
+              outline: dragOverBookId === book.id ? '2px dashed #1976d2' : 'none',
+              transition: 'background-color 0.15s, outline 0.15s',
+            }}
           >
             <AccordionSummary expandIcon={<ExpandMore />}>
               <strong>{book.title}</strong>
@@ -453,12 +364,12 @@ export function IndexPage({
           <MenuItem
             onClick={() => {
               const bookId = addSongMenu!.bookId;
-              setImportUrlBookId(bookId);
-              setImportUrlValue(
-                getStarterBookUrl(useStore.getState().instrumentType)
-              );
+              setImportUrl({
+                bookId,
+                value: getStarterBookUrl(useStore.getState().instrumentType),
+                error: null,
+              });
               setAddSongMenu(null);
-              setImportUrlDialogOpen(true);
             }}
           >
             {t('importAbcUrl')}
@@ -483,17 +394,9 @@ export function IndexPage({
             justifyContent: 'center',
           }}
         >
-          <ButtonGroup variant="outlined">
-            <Button onClick={() => setNewBookDialogOpen(true)}>
-              {t('addEmptyBook')}
-            </Button>
-            <Button
-              aria-label={t('addOtherBook')}
-              onClick={(e) => setAddBookMenuAnchor(e.currentTarget)}
-            >
-              <ArrowDropDown />
-            </Button>
-          </ButtonGroup>
+          <Button variant="outlined" onClick={() => setNewBook({ title: '' })}>
+            {t('addEmptyBook')}
+          </Button>
           <input
             ref={importFileRef}
             type="file"
@@ -501,29 +404,8 @@ export function IndexPage({
             style={{ display: 'none' }}
             onChange={(e) => void handleImportFile(e)}
           />
-          <input
-            ref={importNewBookFileRef}
-            type="file"
-            accept=".abc,.txt,.musicxml,.xml,.mxl"
-            style={{ display: 'none' }}
-            onChange={(e) => void handleImportNewBookFile(e)}
-          />
         </div>
 
-        <Menu
-          anchorEl={addBookMenuAnchor}
-          open={Boolean(addBookMenuAnchor)}
-          onClose={() => setAddBookMenuAnchor(null)}
-        >
-          <MenuItem
-            onClick={() => {
-              setAddBookMenuAnchor(null);
-              importNewBookFileRef.current?.click();
-            }}
-          >
-            {t('importAbc')}
-          </MenuItem>
-        </Menu>
       </div>
 
       <SettingsDialog
@@ -540,17 +422,16 @@ export function IndexPage({
         }}
       />
 
-      <Dialog
-        open={newBookDialogOpen}
-        onClose={() => setNewBookDialogOpen(false)}
-      >
+      <Dialog open={newBook !== null} onClose={() => setNewBook(null)}>
         <DialogTitle>{t('createNewEmptyBook')}</DialogTitle>
         <DialogContent>
           <TextField
             autoFocus
             label={t('bookName')}
-            value={newBookTitle}
-            onChange={(e) => setNewBookTitle(e.target.value)}
+            value={newBook?.title ?? ''}
+            onChange={(e) =>
+              setNewBook((prev) => prev && { title: e.target.value })
+            }
             onKeyDown={(e) => {
               if (e.key === 'Enter') {
                 e.preventDefault();
@@ -562,26 +443,23 @@ export function IndexPage({
           />
         </DialogContent>
         <DialogActions>
-          <Button onClick={() => setNewBookDialogOpen(false)}>
-            {t('cancel')}
-          </Button>
+          <Button onClick={() => setNewBook(null)}>{t('cancel')}</Button>
           <Button onClick={handleCreateBook} variant="contained">
             {t('create')}
           </Button>
         </DialogActions>
       </Dialog>
 
-      <Dialog
-        open={renameBookId !== null}
-        onClose={() => setRenameBookId(null)}
-      >
+      <Dialog open={renameBook !== null} onClose={() => setRenameBook(null)}>
         <DialogTitle>{t('editBook_title')}</DialogTitle>
         <DialogContent>
           <TextField
             autoFocus
             label={t('bookName')}
-            value={renameBookTitle}
-            onChange={(e) => setRenameBookTitle(e.target.value)}
+            value={renameBook?.title ?? ''}
+            onChange={(e) =>
+              setRenameBook((prev) => prev && { ...prev, title: e.target.value })
+            }
             onKeyDown={(e) => e.key === 'Enter' && handleRenameBook()}
             sx={{ mt: 1 }}
             fullWidth
@@ -590,12 +468,14 @@ export function IndexPage({
         <DialogActions sx={{ justifyContent: 'space-between' }}>
           <Button
             color="error"
-            onClick={() => renameBookId && setDeleteConfirmBookId(renameBookId)}
+            onClick={() =>
+              renameBook && setDeleteConfirmBookId(renameBook.id)
+            }
           >
             {t('deleteBook')}
           </Button>
           <div>
-            <Button onClick={() => setRenameBookId(null)}>{t('cancel')}</Button>
+            <Button onClick={() => setRenameBook(null)}>{t('cancel')}</Button>
             <Button onClick={handleRenameBook} variant="contained">
               {t('save')}
             </Button>
@@ -659,62 +539,46 @@ export function IndexPage({
         </DialogActions>
       </Dialog>
 
-      <Dialog
-        open={importUrlDialogOpen}
-        onClose={() => {
-          setImportUrlDialogOpen(false);
-          setImportUrlValue('');
-          setImportUrlError(null);
-          setImportUrlBookId(null);
-        }}
-      >
+      <Dialog open={importUrl !== null} onClose={() => setImportUrl(null)}>
         <DialogTitle>{t('importAbcUrl')}</DialogTitle>
         <DialogContent>
           <TextField
             autoFocus
             label="URL"
-            value={importUrlValue}
-            onChange={(e) => setImportUrlValue(e.target.value)}
+            value={importUrl?.value ?? ''}
+            onChange={(e) =>
+              setImportUrl((prev) => prev && { ...prev, value: e.target.value })
+            }
             onKeyDown={(e) => {
               if (e.key === 'Enter') {
                 e.preventDefault();
                 void handleImportUrl();
               }
             }}
-            error={importUrlError !== null}
-            helperText={importUrlError}
+            error={importUrl?.error != null}
+            helperText={importUrl?.error}
             sx={{ mt: 1 }}
             fullWidth
           />
         </DialogContent>
         <DialogActions>
-          <Button
-            onClick={() => {
-              setImportUrlDialogOpen(false);
-              setImportUrlValue('');
-              setImportUrlError(null);
-              setImportUrlBookId(null);
-            }}
-          >
-            {t('cancel')}
-          </Button>
+          <Button onClick={() => setImportUrl(null)}>{t('cancel')}</Button>
           <Button onClick={() => void handleImportUrl()} variant="contained">
             {t('import')}
           </Button>
         </DialogActions>
       </Dialog>
 
-      <Dialog
-        open={exportBookId !== null}
-        onClose={() => setExportBookId(null)}
-      >
+      <Dialog open={exportBook !== null} onClose={() => setExportBook(null)}>
         <DialogTitle>{t('exportAbc')}</DialogTitle>
         <DialogContent>
           <TextField
             autoFocus
             label={t('fileName')}
-            value={exportFileName}
-            onChange={(e) => setExportFileName(e.target.value)}
+            value={exportBook?.fileName ?? ''}
+            onChange={(e) =>
+              setExportBook((prev) => prev && { ...prev, fileName: e.target.value })
+            }
             onKeyDown={(e) => e.key === 'Enter' && handleExport()}
             sx={{ mt: 1 }}
             fullWidth
@@ -722,7 +586,7 @@ export function IndexPage({
           />
         </DialogContent>
         <DialogActions>
-          <Button onClick={() => setExportBookId(null)}>{t('cancel')}</Button>
+          <Button onClick={() => setExportBook(null)}>{t('cancel')}</Button>
           <Button onClick={handleExport} variant="contained">
             {t('download')}
           </Button>
