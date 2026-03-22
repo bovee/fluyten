@@ -330,6 +330,10 @@ export function toAbc(music: Music): string {
   if (music.title) lines.push(`T:${music.title}`);
   if (music.composer) lines.push(`C:${music.composer}`);
   lines.push(`M:${music.beatsPerBar}/${music.beatValue}`);
+  if (music.tempo !== undefined) {
+    const label = music.tempoText ? `"${music.tempoText}" ` : '';
+    lines.push(`Q:${label}1/4=${music.tempo}`);
+  }
   lines.push('L:1/8');
   lines.push(
     music.clef !== 'treble'

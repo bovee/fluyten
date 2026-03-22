@@ -50,33 +50,31 @@ function parseFingerings(raw: { [offset: number]: string[] }): {
 }
 
 const FINGERINGS: { [offset: number]: Hole[][] } = parseFingerings({
-  1: ['CCCCCCCC'],
+  1: ['CCCCCCCC'], // C
   2: ['CCCCCCCH'],
   3: ['CCCCCCCO'],
   4: ['CCCCCCHO'],
-  5: ['CCCCCCOO'],
+  5: ['CCCCCCOO'], // E
   6: ['CCCCCOCC'],
   7: ['CCCCOCCO'],
-  8: ['CCCCOOOO'],
+  8: ['CCCCOOOO'], // G
   9: ['CCCOCCHO'],
   10: ['CCCOOOOO'],
   11: ['CCOCCOOO', 'COCCCOOO'],
-  12: ['CCOOOOOO', 'COCCOOOO'],
+  12: ['CCOOOOOO', 'COCCOOOO'], // B
   13: ['COCOOOOO'],
   14: ['OCCOOOOO', 'COOOOOOO'],
-  15: ['OOCOOOOO'],
-  16: ['OOCCCCCO'],
+  15: ['OOCOOOOO'], // D
+  16: ['OOCCCCCO', 'HCCCCCOO'],
   17: ['HCCCCCOO'],
-  18: ['HCCCCOCO'],
+  18: ['HCCCCOCO'], // F
   19: ['HCCCOCOO'],
   20: ['HCCCOOOO'],
   21: ['HCCOCOOO'],
-  22: ['HCCOOOOO'],
+  22: ['HCCOOOOO'], // A
   23: ['HCCOCCCO'],
   24: ['HCCOCCOO'],
-  25: ['HCOOCCOO'],
-  26: ['HCHCCOCC'],
-  27: ['HCOCCOCH'],
+  25: ['HCOOCCOO'], // C
 });
 
 const GERMAN_FINGERINGS: { [offset: number]: Hole[][] } = parseFingerings({
@@ -92,8 +90,11 @@ const GERMAN_FINGERINGS: { [offset: number]: Hole[][] } = parseFingerings({
 // eslint-disable-next-line react-refresh/only-export-components
 export const TRILLED_FINGERINGS: { [offset: number]: Hole[][] } =
   parseFingerings({
-    1: ['CCCCCCCT'],
-    2: ['CCCCCCCH'],
+    5: ['CCCCCVOO'], // E
+    11: ['CTOCCOOO'],
+    12: ['COCTOOOO', 'CTOOOOOO'], // B
+    15: ['OCCCCTCC'], // D
+    17: ['HCCCCVOO'],
   });
 
 const CIRCLE_RADIUS = 8;

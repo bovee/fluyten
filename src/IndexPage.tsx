@@ -162,10 +162,10 @@ export function IndexPage({
       let songs;
       if (isMidiPath(urlPath)) {
         const buffer = await response.arrayBuffer();
-        songs = parseSongsFromBuffer(buffer, urlPath, fallbackTitle);
+        songs = await parseSongsFromBuffer(buffer, urlPath, fallbackTitle);
       } else {
         const text = await response.text();
-        songs = parseSongsFromText(text, urlPath, fallbackTitle);
+        songs = await parseSongsFromText(text, urlPath, fallbackTitle);
       }
       songs.forEach((song) => addSongToBook(current.bookId, song));
       setImportUrl(null);

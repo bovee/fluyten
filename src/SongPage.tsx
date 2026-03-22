@@ -20,6 +20,7 @@ import {
 import { Music, expandRepeats } from './music';
 import { FrequencyTracker } from './audio/FrequencyTracker';
 import { NotePlayer } from './audio/NotePlayer';
+import { MusicTimeline } from './audio/MusicTimeline';
 import { Vexflow } from './Vexflow.tsx';
 import { useStore } from './store';
 import { type Song } from './music';
@@ -120,6 +121,178 @@ function usePitchDetection(
   };
 }
 
+function useInTempoChecking(
+  musicRef: React.MutableRefObject<Music>,
+  tempoRef: React.MutableRefObject<number>,
+  setStatusMessage: (msg: string) => void
+) {
+  const { t } = useTranslation();
+  const [detectedPitch, setDetectedPitch] = useState<number | null>(null);
+  const [noteResults, setNoteResults] = useState<
+    ReadonlyMap<number, 'correct' | 'wrong'>
+  >(new Map());
+  const [cursor, setCursor] = useState<{ noteIdx: number } | undefined>();
+  const [countdown, setCountdown] = useState<number | null>(null);
+  const freqInterval = useIntervalRef();
+  // Track the current note index (original) being evaluated, and whether the
+  // correct pitch was detected at any point during that note's time window.
+  const currentNoteIdxRef = useRef(-1);
+  const correctSeenRef = useRef(false);
+  const noteResultsMapRef = useRef(new Map<number, 'correct' | 'wrong'>());
+  const timelineRef = useRef<MusicTimeline | null>(null);
+  const rafRef = useRef<number | null>(null);
+  const countdownTimeoutsRef = useRef<number[]>([]);
+
+  /* eslint-disable react-hooks/refs */
+  const freqTrackerRef = useRef<FrequencyTracker>(
+    new FrequencyTracker(
+      (pitch: number) => {
+        setDetectedPitch(pitch);
+        // Check if this pitch matches the current expected note.
+        const noteIdx = currentNoteIdxRef.current;
+        if (noteIdx >= 0) {
+          const note = musicRef.current.notes[noteIdx];
+          if (note && note.pitches[0] === pitch) {
+            correctSeenRef.current = true;
+          }
+        }
+      },
+      () => setDetectedPitch(null)
+    )
+  );
+  /* eslint-enable react-hooks/refs */
+
+  const stopAll = () => {
+    for (const id of countdownTimeoutsRef.current) clearTimeout(id);
+    countdownTimeoutsRef.current = [];
+    setCountdown(null);
+    freqInterval.clear();
+    freqTrackerRef.current.stop();
+    timelineRef.current = null;
+    if (rafRef.current !== null) {
+      cancelAnimationFrame(rafRef.current);
+      rafRef.current = null;
+    }
+    setCursor(undefined);
+  };
+
+  const startRecording = async () => {
+    if (freqInterval.isActive) {
+      stopAll();
+      setStatusMessage(t('recordingStopped'));
+      return;
+    }
+
+    const { instrumentType, tuning } = useStore.getState();
+    const music = musicRef.current;
+
+    try {
+      await freqTrackerRef.current.start();
+    } catch (error) {
+      console.error('Failed to start recording:', error);
+      alert(`Failed to start recording: ${(error as Error).message}`);
+      return;
+    }
+
+    const freqId = window.setInterval(() => {
+      freqTrackerRef.current.checkFrequency({ instrumentType, tuning });
+    }, RECORD_SAMPLE_RATE);
+    freqInterval.set(freqId);
+
+    currentNoteIdxRef.current = -1;
+    correctSeenRef.current = false;
+    noteResultsMapRef.current = new Map();
+    setNoteResults(new Map());
+    setStatusMessage(t('recordingStarted'));
+
+    // 3-2-1 countdown: schedule audible beeps at the song's tempo, then start
+    // the player and cursor only after all 3 beats have elapsed.
+    const beatMs = (60 / tempoRef.current) * 1000;
+
+    // Schedule 3 click beeps via a short-lived AudioContext so they don't
+    // interfere with the silent NotePlayer's AudioContext.
+    const clickCtx = new AudioContext();
+    const beatSec = 60 / tempoRef.current;
+    for (let i = 0; i < 3; i++) {
+      const t = clickCtx.currentTime + i * beatSec + 0.02;
+      const osc = clickCtx.createOscillator();
+      const gain = clickCtx.createGain();
+      osc.connect(gain);
+      gain.connect(clickCtx.destination);
+      osc.type = 'sine';
+      osc.frequency.value = i === 0 ? 880 : 660;
+      gain.gain.setValueAtTime(0.35, t);
+      gain.gain.exponentialRampToValueAtTime(0.001, t + 0.06);
+      osc.start(t);
+      osc.stop(t + 0.07);
+    }
+    const closeClick = window.setTimeout(
+      () => clickCtx.close(),
+      beatMs * 3 + 500
+    );
+
+    setCountdown(3);
+    const id2 = window.setTimeout(() => setCountdown(2), beatMs);
+    const id1 = window.setTimeout(() => setCountdown(1), beatMs * 2);
+    const id0 = window.setTimeout(() => {
+      setCountdown(null);
+
+      const timeline = new MusicTimeline(music, tempoRef.current);
+      timeline.start();
+      timelineRef.current = timeline;
+
+      const animate = () => {
+        const tl = timelineRef.current;
+        if (!tl) return;
+
+        if (tl.isFinished()) {
+          stopAll();
+          return;
+        }
+
+        const now = tl.getCurrentTime();
+        const noteIdx = tl.getNoteIdxAtTime(now);
+        const floorIdx = Math.floor(noteIdx);
+
+        // When the note index advances, evaluate the note that just finished.
+        if (
+          floorIdx !== currentNoteIdxRef.current &&
+          currentNoteIdxRef.current >= 0
+        ) {
+          const prevIdx = currentNoteIdxRef.current;
+          const prevNote = music.notes[prevIdx];
+          if (prevNote && prevNote.pitches.length > 0) {
+            noteResultsMapRef.current.set(
+              prevIdx,
+              correctSeenRef.current ? 'correct' : 'wrong'
+            );
+            setNoteResults(new Map(noteResultsMapRef.current));
+          }
+          correctSeenRef.current = false;
+        }
+        currentNoteIdxRef.current = floorIdx;
+
+        setCursor({ noteIdx });
+        rafRef.current = requestAnimationFrame(animate);
+      };
+      rafRef.current = requestAnimationFrame(animate);
+    }, beatMs * 3);
+
+    countdownTimeoutsRef.current = [closeClick, id2, id1, id0];
+  };
+
+  useEffect(() => () => stopAll(), []);
+
+  return {
+    detectedPitch,
+    isRecording: freqInterval.isActive,
+    startRecording,
+    noteResults,
+    cursor,
+    countdown,
+  };
+}
+
 type PlayerEntry = { player: NotePlayer; music: Music; voiceIdx: number };
 
 function useAudioPlayback(
@@ -131,6 +304,7 @@ function useAudioPlayback(
 ) {
   const { t } = useTranslation();
   const musicPlayersRef = useRef<PlayerEntry[]>([]);
+  const cursorTimelineRef = useRef<MusicTimeline | null>(null);
   const musicPlayerInterval = useIntervalRef();
   const [cursor, setCursor] = useState<{ noteIdx: number } | undefined>();
   const cursorRafRef = useRef<number | null>(null);
@@ -139,6 +313,7 @@ function useAudioPlayback(
     musicPlayerInterval.clear();
     for (const { player } of musicPlayersRef.current) player.stop();
     musicPlayersRef.current = [];
+    cursorTimelineRef.current = null;
     if (cursorRafRef.current !== null) {
       cancelAnimationFrame(cursorRafRef.current);
       cursorRafRef.current = null;
@@ -157,8 +332,8 @@ function useAudioPlayback(
     const voices = voicesRef.current;
     const selectedIdx = selectedVoiceIdxRef.current;
 
-    // For each voice: include it if audible, or silently (for cursor tracking)
-    // if it's the selected voice. Skip voices that are neither.
+    // Only create audible players. The selected voice cursor is handled
+    // separately by a MusicTimeline when that voice has no audible player.
     const entries: PlayerEntry[] = voices
       .map((v, i) => {
         const audible =
@@ -167,9 +342,8 @@ function useAudioPlayback(
             : playbackVoices === 'others'
               ? i !== selectedIdx
               : true; // 'all'
-        if (!audible && i !== selectedIdx) return null;
+        if (!audible) return null;
         const player = new NotePlayer();
-        if (!audible) player.setVolume(0);
         player.start();
         player.scheduleNotes(tempoRef.current, v.music);
         return { player, music: v.music, voiceIdx: i };
@@ -178,6 +352,17 @@ function useAudioPlayback(
 
     musicPlayersRef.current = entries;
     setPlayedNotes(0);
+
+    // If the selected voice has no audible player, use a MusicTimeline for cursor.
+    const selectedVoice = voices[selectedIdx];
+    const selectedIsAudible = entries.some((e) => e.voiceIdx === selectedIdx);
+    if (selectedVoice && !selectedIsAudible) {
+      const tl = new MusicTimeline(selectedVoice.music, tempoRef.current);
+      tl.start();
+      cursorTimelineRef.current = tl;
+    } else {
+      cursorTimelineRef.current = null;
+    }
 
     const id = window.setInterval(() => {
       for (const entry of musicPlayersRef.current) {
@@ -190,8 +375,20 @@ function useAudioPlayback(
     musicPlayerInterval.set(id);
     setStatusMessage(t('playbackStarted'));
 
-    // requestAnimationFrame cursor: track the selected voice player (if playing).
+    // requestAnimationFrame cursor: prefer the timeline (when selected voice is
+    // silent), otherwise read from the audible selected-voice player.
     const animateCursor = () => {
+      const tl = cursorTimelineRef.current;
+      if (tl) {
+        if (tl.isFinished()) {
+          cursorRafRef.current = null;
+          return;
+        }
+        setCursor({ noteIdx: tl.getNoteIdxAtTime(tl.getCurrentTime()) });
+        cursorRafRef.current = requestAnimationFrame(animateCursor);
+        return;
+      }
+
       const selectedEntry = musicPlayersRef.current.find(
         (e) => e.voiceIdx === selectedVoiceIdxRef.current
       );
@@ -278,7 +475,7 @@ export function SongPage({
     voices[Math.min(selectedVoiceIdx, voices.length - 1)]?.music ?? new Music();
   const [playedNotes, setPlayedNotes] = useState(0);
   const [statusMessage, setStatusMessage] = useState('');
-  const [tempo, setTempo] = useState(song.tempo ?? 120);
+  const [tempo, setTempo] = useState(song.tempo ?? music.tempo ?? 120);
   const tempoRef = useRef(tempo);
   useEffect(() => {
     tempoRef.current = tempo;
@@ -292,6 +489,10 @@ export function SongPage({
   useEffect(() => {
     selectedVoiceIdxRef.current = selectedVoiceIdx;
   }, [selectedVoiceIdx]);
+  const musicRef = useRef(music);
+  useEffect(() => {
+    musicRef.current = music;
+  }, [music]);
 
   const expandedTrackingRef = useRef({
     notes: [] as { pitches: number[] }[],
@@ -313,12 +514,34 @@ export function SongPage({
     onTempoChange?.(newTempo);
   };
 
-  const { detectedPitch, isRecording, startRecording } = usePitchDetection(
-    expandedTrackingRef,
-    setPlayedNotes,
-    setStatusMessage
-  );
-  const { isPlaying, startPlaying, cursor } = useAudioPlayback(
+  const checkPlayingMode = useStore((s) => s.checkPlayingMode);
+
+  const {
+    detectedPitch: pitchA,
+    isRecording: isRecordingA,
+    startRecording: startRecordingA,
+  } = usePitchDetection(expandedTrackingRef, setPlayedNotes, setStatusMessage);
+
+  const {
+    detectedPitch: pitchB,
+    isRecording: isRecordingB,
+    startRecording: startRecordingB,
+    noteResults,
+    cursor: inTempoCursor,
+    countdown,
+  } = useInTempoChecking(musicRef, tempoRef, setStatusMessage);
+
+  const detectedPitch = checkPlayingMode === 'in-tempo' ? pitchB : pitchA;
+  const isRecording =
+    checkPlayingMode === 'in-tempo' ? isRecordingB : isRecordingA;
+  const startRecording =
+    checkPlayingMode === 'in-tempo' ? startRecordingB : startRecordingA;
+
+  const {
+    isPlaying,
+    startPlaying,
+    cursor: playbackCursor,
+  } = useAudioPlayback(
     voicesRef,
     selectedVoiceIdxRef,
     tempoRef,
@@ -405,7 +628,38 @@ export function SongPage({
           <Edit />
         </IconButton>
       </Tooltip>
-      <Vexflow music={music} colorNotes={playedNotes} cursor={cursor} />
+      <Vexflow
+        music={music}
+        colorNotes={isRecordingB ? 0 : playedNotes}
+        noteResults={isRecordingB ? noteResults : undefined}
+        cursor={isRecordingB ? inTempoCursor : playbackCursor}
+      />
+      {countdown !== null && (
+        <div
+          style={{
+            position: 'fixed',
+            inset: 0,
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'center',
+            pointerEvents: 'none',
+            zIndex: 10,
+          }}
+        >
+          <span
+            style={{
+              fontSize: '30vw',
+              fontWeight: 'bold',
+              color: 'rgba(28, 50, 72, 0.18)',
+              lineHeight: 1,
+              userSelect: 'none',
+              fontFamily: "'EB Garamond', Georgia, serif",
+            }}
+          >
+            {countdown}
+          </span>
+        </div>
+      )}
       <SpeedDial
         ariaLabel="Play"
         open={speedDialOpen}

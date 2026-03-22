@@ -258,6 +258,19 @@ export function EditorDrawer({
     }
   };
 
+  // `onSelect` on the textarea doesn't fire reliably on iOS/iPadOS for
+  // touch-based selection (long-press + drag handles). The document-level
+  // `selectionchange` event fires consistently across all browsers.
+  useEffect(() => {
+    const handler = () => {
+      if (document.activeElement === abcTextareaRef.current) {
+        updateAbcSelection();
+      }
+    };
+    document.addEventListener('selectionchange', handler);
+    return () => document.removeEventListener('selectionchange', handler);
+  }, []);
+
   const transformEnabled =
     !readOnly &&
     !isTranscribing &&

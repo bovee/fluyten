@@ -1,8 +1,5 @@
 import { parseAbcFile } from './abcImport';
 import { toAbc } from './abcExport';
-
-import { fromMusicXml, extractMxl } from './musicXmlImport';
-import { fromMidiToAbc } from './midiImport';
 import type { UserSong } from '../store';
 
 export function isMusicXmlPath(path: string): boolean {
@@ -29,12 +26,14 @@ export async function parseSongsFromFile(file: File): Promise<UserSong[]> {
   const fallbackTitle = file.name.replace(/\.[^.]+$/, '');
 
   if (isMidiPath(name)) {
+    const { fromMidiToAbc } = await import('./midiImport');
     const buffer = await file.arrayBuffer();
     const { title, abc } = fromMidiToAbc(buffer);
     return [{ id: crypto.randomUUID(), title: title || fallbackTitle, abc }];
   }
 
   if (isMusicXmlPath(name)) {
+    const { fromMusicXml, extractMxl } = await import('./musicXmlImport');
     let xmlText: string;
     if (name.endsWith('.mxl')) {
       const buffer = await file.arrayBuffer();
@@ -74,12 +73,13 @@ export async function parseSongsFromFile(file: File): Promise<UserSong[]> {
  * Parse already-fetched text content into UserSong objects.
  * pathForExtension is the file name or URL path, used to detect MusicXML vs ABC.
  */
-export function parseSongsFromText(
+export async function parseSongsFromText(
   text: string,
   pathForExtension: string,
   fallbackTitle: string
-): UserSong[] {
+): Promise<UserSong[]> {
   if (isMusicXmlPath(pathForExtension)) {
+    const { fromMusicXml } = await import('./musicXmlImport');
     const music = fromMusicXml(text);
     return [
       {
@@ -100,12 +100,13 @@ export function parseSongsFromText(
  * Parse already-fetched binary content into UserSong objects.
  * Used for MIDI URL imports where the response must be read as ArrayBuffer.
  */
-export function parseSongsFromBuffer(
+export async function parseSongsFromBuffer(
   buffer: ArrayBuffer,
   pathForExtension: string,
   fallbackTitle: string
-): UserSong[] {
+): Promise<UserSong[]> {
   if (isMidiPath(pathForExtension)) {
+    const { fromMidiToAbc } = await import('./midiImport');
     const { title, abc } = fromMidiToAbc(buffer);
     return [{ id: crypto.randomUUID(), title: title || fallbackTitle, abc }];
   }

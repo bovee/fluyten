@@ -684,6 +684,17 @@ export function parseHeaders(
         }
       } else if (line.startsWith('L:')) {
         defaultDuration = parseLDuration(fieldData);
+      } else if (line.startsWith('Q:')) {
+        // Q: ["<label>"] [<note-length>=]<bpm>
+        // e.g. Q:"Allegro" 1/4=120  or  Q:120  or  Q:"Andante"
+        const qText = fieldData.trim();
+        const labelMatch = qText.match(/^"([^"]*)"/);
+        if (labelMatch && !music.tempoText) music.tempoText = labelMatch[1];
+        const tempoMatch = qText.match(/(?:[\d/]+=)?(\d+)\s*$/);
+        if (tempoMatch && !music.tempo) {
+          const bpm = parseInt(tempoMatch[1], 10);
+          if (!isNaN(bpm)) music.tempo = bpm;
+        }
       } else if (line.startsWith('K:')) {
         const clefMatch = fieldData.match(/\bclef=([\w+]+)/i);
         const middleMatch = fieldData.match(/\bmiddle=([A-Ga-g][,'']*)/);

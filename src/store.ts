@@ -4,6 +4,7 @@ import { persist, createJSONStorage } from 'zustand/middleware';
 import { type RecorderType } from './instrument';
 
 export type PlaybackVoices = 'selected' | 'others' | 'all';
+export type CheckPlayingMode = 'correct-then-advance' | 'in-tempo';
 
 export interface UserSong {
   id: string;
@@ -31,6 +32,8 @@ interface SettingsState {
   setLanguage: (language: string) => void;
   playbackVoices: PlaybackVoices;
   setPlaybackVoices: (v: PlaybackVoices) => void;
+  checkPlayingMode: CheckPlayingMode;
+  setCheckPlayingMode: (mode: CheckPlayingMode) => void;
   userBooks: UserBook[];
   addUserBook: (title: string) => void;
   importUserBook: (title: string, songs: UserSong[]) => void;
@@ -58,6 +61,8 @@ export const useStore = create<SettingsState>()(
       setLanguage: (language) => set({ language }),
       playbackVoices: 'selected',
       setPlaybackVoices: (playbackVoices) => set({ playbackVoices }),
+      checkPlayingMode: 'correct-then-advance',
+      setCheckPlayingMode: (checkPlayingMode) => set({ checkPlayingMode }),
       userBooks: [],
       addUserBook: (title) =>
         set((state) => ({

@@ -354,6 +354,7 @@ function drawNotesAndRecordBounds(
 export function Vexflow(props: {
   music: Music;
   colorNotes: number;
+  noteResults?: ReadonlyMap<number, 'correct' | 'wrong'>;
   cursor?: { noteIdx: number };
 }) {
   const { t } = useTranslation();
@@ -362,6 +363,7 @@ export function Vexflow(props: {
   const noteSvgs = useRef<SVGGElement[]>([]);
   const barBounds = useRef<BarBound[]>([]);
   const cursorLine = useRef<SVGLineElement | null>(null);
+  const wrongNoteMarksRef = useRef<SVGGElement[]>([]);
   // noteIndexMap[staveIdx] = music note index. Populated during rendering so
   // the cursor effect can find the stave note for a given music note index.
   const noteIndexMapRef = useRef<number[]>([]);
@@ -379,7 +381,7 @@ export function Vexflow(props: {
 
   const barWidth = 250;
   const barHeight = 120 + music.lyrics.length * 18;
-  const extraHeightOffset = 20;
+  const extraHeightOffset = 30;
 
   const barsPerLine = Math.max(1, Math.floor((windowWidth - 12) / barWidth));
   const freeTime = music.bars.length === 0;
@@ -547,7 +549,7 @@ export function Vexflow(props: {
         const endType = endBarTypes.get(barIx);
         if (endType !== undefined) stave.setEndBarType(endType);
         const volta = voltaBrackets.get(barIx);
-        if (volta) stave.setVoltaType(volta.vexType, volta.label, -5);
+        if (volta) stave.setVoltaType(volta.vexType, '', -5);
         stave.setContext(context).draw();
         staveInfoByBar.push({
           x: staveX,
@@ -641,6 +643,49 @@ export function Vexflow(props: {
         text.setAttribute('text-anchor', 'middle');
         text.textContent = ',';
         svgEl.appendChild(text);
+      }
+
+      // Draw tempo text (from Q: header) above the first bar.
+      if (music.tempoText && staveInfoByBar.length > 0) {
+        const first = staveInfoByBar[0];
+        const tempoLabel = document.createElementNS(
+          'http://www.w3.org/2000/svg',
+          'text'
+        );
+        tempoLabel.setAttribute('x', String(first.x + 5));
+        tempoLabel.setAttribute('y', String(first.topY - 12));
+        tempoLabel.setAttribute('font-family', 'Georgia, serif');
+        tempoLabel.setAttribute('font-style', 'italic');
+        tempoLabel.setAttribute('font-size', '11pt');
+        tempoLabel.setAttribute('fill', 'black');
+        tempoLabel.setAttribute('stroke', 'none');
+        tempoLabel.textContent = music.tempoText;
+        svgEl.appendChild(tempoLabel);
+      }
+
+      // Draw volta bracket labels on top of the bracket rects.
+      // VexFlow's internal label rendering is covered by the bracket rects,
+      // so we draw them manually here to ensure they appear on top.
+      for (const [barIx, volta] of voltaBrackets.entries()) {
+        if (barIx >= staveInfoByBar.length) continue;
+        if (
+          volta.vexType !== Volta.type.BEGIN &&
+          volta.vexType !== Volta.type.BEGIN_END
+        )
+          continue;
+        const info = staveInfoByBar[barIx];
+        const label = document.createElementNS(
+          'http://www.w3.org/2000/svg',
+          'text'
+        );
+        label.setAttribute('x', String(info.x + 5));
+        label.setAttribute('y', String(info.topY - 50));
+        label.setAttribute('font-size', '9pt');
+        label.setAttribute('font-weight', 'bold');
+        label.setAttribute('fill', 'black');
+        label.setAttribute('stroke', 'none');
+        label.textContent = volta.label;
+        svgEl.appendChild(label);
       }
     }
 
@@ -745,9 +790,57 @@ export function Vexflow(props: {
         | undefined;
       if (!noteHead) continue;
       const musicNoteIx = noteIndexMapRef.current[staveIdx];
-      noteHead.style.fill = musicNoteIx < props.colorNotes ? 'green' : '';
+      if (props.noteResults) {
+        noteHead.style.fill =
+          props.noteResults.get(musicNoteIx) === 'correct' ? 'green' : '';
+      } else {
+        noteHead.style.fill = musicNoteIx < props.colorNotes ? 'green' : '';
+      }
     }
-  }, [props.colorNotes]);
+  }, [props.colorNotes, props.noteResults]);
+
+  // Draw red X marks over notes judged wrong in in-tempo mode.
+  useEffect(() => {
+    const svgEl = vexDiv.current?.querySelector('svg');
+    for (const mark of wrongNoteMarksRef.current) mark.remove();
+    wrongNoteMarksRef.current = [];
+    if (!svgEl || !props.noteResults?.size) return;
+
+    for (const [staveIdx, noteSvg] of noteSvgs.current.entries()) {
+      const musicNoteIx = noteIndexMapRef.current[staveIdx];
+      if (props.noteResults.get(musicNoteIx) !== 'wrong') continue;
+
+      const noteHeadEl = noteSvg.querySelector(
+        '.vf-notehead'
+      ) as SVGGElement | null;
+      const bbox = (noteHeadEl ?? noteSvg).getBBox();
+      const cx = bbox.x + bbox.width / 2;
+      const cy = bbox.y + bbox.height / 2;
+      const r = 6;
+
+      const g = document.createElementNS('http://www.w3.org/2000/svg', 'g');
+      g.setAttribute('pointer-events', 'none');
+      for (const [x1, y1, x2, y2] of [
+        [cx - r, cy - r, cx + r, cy + r],
+        [cx + r, cy - r, cx - r, cy + r],
+      ]) {
+        const line = document.createElementNS(
+          'http://www.w3.org/2000/svg',
+          'line'
+        );
+        line.setAttribute('x1', String(x1));
+        line.setAttribute('y1', String(y1));
+        line.setAttribute('x2', String(x2));
+        line.setAttribute('y2', String(y2));
+        line.setAttribute('stroke', '#d32f2f');
+        line.setAttribute('stroke-width', '2.5');
+        line.setAttribute('stroke-linecap', 'round');
+        g.appendChild(line);
+      }
+      svgEl.appendChild(g);
+      wrongNoteMarksRef.current.push(g);
+    }
+  }, [props.noteResults, props.music, windowWidth]);
 
   const figureLabel = music.title
     ? t('sheetMusicFor', { title: music.title })

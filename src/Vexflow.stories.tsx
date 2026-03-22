@@ -1,7 +1,7 @@
 // eslint-disable-next-line storybook/no-renderer-packages
 import type { Meta, StoryObj } from '@storybook/react';
 import { Vexflow } from './Vexflow';
-import { Music, Note, Duration, DurationModifier } from './music';
+import { Music, Note, Duration, DurationModifier, type BarLine } from './music';
 
 const meta = {
   title: 'Components/Vexflow',
@@ -373,4 +373,41 @@ export const RtlLayout: Story = {
       </div>
     ),
   ],
+};
+
+const createVoltaMusic = () => {
+  const music = new Music();
+  music.beatsPerBar = 4;
+  music.beatValue = 4;
+  // |: CDEF |1 GABC :|2 DEFc |
+  const Q = (p: number) => new Note(p, Duration.QUARTER);
+  music.notes = [
+    Q(60),
+    Q(62),
+    Q(64),
+    Q(65), // common: CDEF
+    Q(67),
+    Q(69),
+    Q(71),
+    Q(72), // volta 1: GABC
+    Q(62),
+    Q(64),
+    Q(65),
+    Q(72), // volta 2: DEFc
+  ];
+  const bars: BarLine[] = [
+    { afterNoteNum: undefined, type: 'begin_repeat' },
+    { afterNoteNum: 3, type: 'standard', volta: 1 }, // end of common section → volta 1
+    { afterNoteNum: 7, type: 'end_repeat', volta: 2 }, // end of volta 1 → volta 2
+    { afterNoteNum: 11, type: 'end' },
+  ];
+  music.bars = bars;
+  return music;
+};
+
+export const VoltaBrackets: Story = {
+  args: {
+    music: createVoltaMusic(),
+    colorNotes: 0,
+  },
 };

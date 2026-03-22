@@ -1,5 +1,5 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest';
-import { render, screen, fireEvent } from '@testing-library/react';
+import { render, screen, fireEvent, waitFor } from '@testing-library/react';
 import App from './App';
 import { useStore } from './store';
 
@@ -80,26 +80,29 @@ describe('App', () => {
       ).toBeInTheDocument();
     });
 
-    it('shows SongPage after clicking a song', () => {
+    it('shows SongPage after clicking a song', async () => {
       useStore.setState({ userBooks: [userBook] });
       render(<App />);
       // Expand the accordion
       fireEvent.click(screen.getByText('My Songs'));
       // Click the song
       fireEvent.click(screen.getByText('Twinkle Twinkle'));
-      expect(
-        screen.getByRole('button', { name: /back to song list/i })
-      ).toBeInTheDocument();
+      await waitFor(() =>
+        expect(
+          screen.getByRole('button', { name: /back to song list/i })
+        ).toBeInTheDocument()
+      );
     });
 
-    it('returns to IndexPage when back button is clicked', () => {
+    it('returns to IndexPage when back button is clicked', async () => {
       useStore.setState({ userBooks: [userBook] });
       render(<App />);
       fireEvent.click(screen.getByText('My Songs'));
       fireEvent.click(screen.getByText('Twinkle Twinkle'));
-      fireEvent.click(
+      const backBtn = await waitFor(() =>
         screen.getByRole('button', { name: /back to song list/i })
       );
+      fireEvent.click(backBtn);
       expect(
         screen.getByRole('button', { name: /add empty book/i })
       ).toBeInTheDocument();
@@ -107,24 +110,30 @@ describe('App', () => {
   });
 
   describe('ABC persistence', () => {
-    it('updateSongAbc is called when ABC changes for a user book song', () => {
+    it('updateSongAbc is called when ABC changes for a user book song', async () => {
       useStore.setState({ userBooks: [userBook] });
       render(<App />);
       fireEvent.click(screen.getByText('My Songs'));
       fireEvent.click(screen.getByText('Twinkle Twinkle'));
-      fireEvent.click(screen.getByRole('button', { name: /edit music/i }));
+      const editBtn = await waitFor(() =>
+        screen.getByRole('button', { name: /edit music/i })
+      );
+      fireEvent.click(editBtn);
       const editor = screen.getByRole('textbox');
       const newAbc = 'X:1\nT:Changed\nM:C\nL:1/4\nK:C\nG A B c |';
       fireEvent.change(editor, { target: { value: newAbc } });
       expect(useStore.getState().userBooks[0].songs[0].abc).toBe(newAbc);
     });
 
-    it('renames the song when the T: header changes', () => {
+    it('renames the song when the T: header changes', async () => {
       useStore.setState({ userBooks: [userBook] });
       render(<App />);
       fireEvent.click(screen.getByText('My Songs'));
       fireEvent.click(screen.getByText('Twinkle Twinkle'));
-      fireEvent.click(screen.getByRole('button', { name: /edit music/i }));
+      const editBtn = await waitFor(() =>
+        screen.getByRole('button', { name: /edit music/i })
+      );
+      fireEvent.click(editBtn);
       const editor = screen.getByRole('textbox');
       fireEvent.change(editor, {
         target: { value: 'X:1\nT:New Title\nM:C\nL:1/4\nK:C\nG' },
@@ -132,13 +141,18 @@ describe('App', () => {
       expect(useStore.getState().userBooks[0].songs[0].title).toBe('New Title');
     });
 
-    it('updateSongTempo is called when tempo changes for a user book song', () => {
+    it('updateSongTempo is called when tempo changes for a user book song', async () => {
       useStore.setState({ userBooks: [userBook] });
       render(<App />);
       fireEvent.click(screen.getByText('My Songs'));
       fireEvent.click(screen.getByText('Twinkle Twinkle'));
-      fireEvent.click(screen.getByRole('button', { name: /edit music/i }));
-      const slider = screen.getByRole('slider', { name: /tempo/i });
+      const editBtn = await waitFor(() =>
+        screen.getByRole('button', { name: /edit music/i })
+      );
+      fireEvent.click(editBtn);
+      const slider = await waitFor(() =>
+        screen.getByRole('slider', { name: /tempo/i })
+      );
       fireEvent.change(slider, { target: { value: '80' } });
       expect(useStore.getState().userBooks[0].songs[0].tempo).toBe(80);
     });

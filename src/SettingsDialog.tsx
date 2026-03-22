@@ -42,6 +42,8 @@ export function SettingsDialog({ open, onClose }: SettingsDialogProps) {
   const setLanguage = useStore((state) => state.setLanguage);
   const playbackVoices = useStore((state) => state.playbackVoices);
   const setPlaybackVoices = useStore((state) => state.setPlaybackVoices);
+  const checkPlayingMode = useStore((state) => state.checkPlayingMode);
+  const setCheckPlayingMode = useStore((state) => state.setCheckPlayingMode);
 
   const [detectOpen, setDetectOpen] = useState(false);
   const [detectStep, setDetectStep] = useState<0 | 1>(0);
@@ -207,6 +209,31 @@ export function SettingsDialog({ open, onClose }: SettingsDialogProps) {
                     {t('playbackVoicesOthers')}
                   </MenuItem>
                   <MenuItem value="all">{t('playbackVoicesAll')}</MenuItem>
+                </Select>
+              </FormControl>
+            </Box>
+
+            <Box>
+              <FormControl fullWidth>
+                <InputLabel id="check-playing-label">
+                  {t('checkPlaying')}
+                </InputLabel>
+                <Select
+                  labelId="check-playing-label"
+                  value={checkPlayingMode}
+                  label={t('checkPlaying')}
+                  onChange={(e) =>
+                    setCheckPlayingMode(
+                      e.target.value as typeof checkPlayingMode
+                    )
+                  }
+                >
+                  <MenuItem value="correct-then-advance">
+                    {t('checkPlayingCorrectThenAdvance')}
+                  </MenuItem>
+                  <MenuItem value="in-tempo">
+                    {t('checkPlayingInTempo')}
+                  </MenuItem>
                 </Select>
               </FormControl>
             </Box>

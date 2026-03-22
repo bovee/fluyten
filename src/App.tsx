@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { lazy, Suspense, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { createTheme, ThemeProvider } from '@mui/material/styles';
 import { CacheProvider } from '@emotion/react';
@@ -8,8 +8,11 @@ import { prefixer } from 'stylis';
 import { type Song } from './music';
 import { IndexPage } from './IndexPage';
 import { OnboardingDialog } from './OnboardingDialog';
-import { SongPage } from './SongPage';
 import { useStore } from './store';
+
+const SongPage = lazy(() =>
+  import('./SongPage').then((m) => ({ default: m.SongPage }))
+);
 
 import { RTL_LANGUAGES } from './i18n';
 import './App.css';
@@ -70,13 +73,15 @@ function App() {
     return (
       <CacheProvider value={isRtl ? cacheRtl : cacheLtr}>
         <ThemeProvider theme={theme}>
-          <SongPage
-            song={song}
-            onBack={() => setSelected(null)}
-            readOnly={readOnly}
-            onAbcChange={onAbcChange}
-            onTempoChange={onTempoChange}
-          />
+          <Suspense fallback={null}>
+            <SongPage
+              song={song}
+              onBack={() => setSelected(null)}
+              readOnly={readOnly}
+              onAbcChange={onAbcChange}
+              onTempoChange={onTempoChange}
+            />
+          </Suspense>
         </ThemeProvider>
       </CacheProvider>
     );

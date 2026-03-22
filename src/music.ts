@@ -394,6 +394,10 @@ export class Music {
   beatValue: number = 4;
   keySignature: string = 'G';
   clef: 'treble' | 'bass' | 'alto' | 'treble8va' = 'treble';
+  // Tempo in BPM parsed from Q: header, if present.
+  tempo?: number;
+  // Tempo text label parsed from Q: header (e.g. "Allegro"), if present.
+  tempoText?: string;
   notes: Note[] = [];
   beams: number[][] = [];
   curves: number[][] = [];

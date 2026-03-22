@@ -14,7 +14,6 @@ describe('NotePlayer', () => {
   function setupExpanded(p: NotePlayer, music: Music) {
     p.expandedNotes = [...music.notes];
     p.expandedCurves = [...music.curves];
-    p.expandedOriginalIndices = music.notes.map((_, i) => i);
   }
 
   afterEach(() => {
@@ -233,7 +232,7 @@ describe('NotePlayer', () => {
       ).toBe(true);
     });
 
-    it('still records noteTimings for tie continuation notes (cursor tracking)', () => {
+    it('advances cursor through tie continuation notes', () => {
       player.start();
 
       const music = new Music();
@@ -243,12 +242,13 @@ describe('NotePlayer', () => {
       ];
       music.curves = [[0, 1]];
 
-      setupExpanded(player, music);
-      player.enqueueNote(120, 4);
-      player.enqueueNote(120, 4);
+      // Use scheduleNotes so a MusicTimeline is built for cursor tracking.
+      // At 120 BPM, each quarter = 0.5 s; tie makes note 1 start at 0.5 s.
+      player.scheduleNotes(120, music);
 
-      expect(player.noteTimings).toHaveLength(2);
-      expect(player.noteTimings[1].noteIdx).toBe(1);
+      // At t=0 cursor is at note 0; at t=0.75 s cursor is past note 1's start.
+      expect(player.getNoteIdxAtTime(0)).toBe(0);
+      expect(player.getNoteIdxAtTime(0.75)).toBeGreaterThan(1);
     });
   });
 
@@ -288,8 +288,11 @@ describe('NotePlayer', () => {
 
       player.scheduleNotes(120, music);
 
+      // Repeat expansion doubles the notes array.
       expect(player.expandedNotes).toHaveLength(4);
-      expect(player.noteTimings.map((t) => t.noteIdx)).toEqual([0, 1, 0, 1]);
+      // At 120 BPM each quarter = 0.5 s; second pass starts at 1.0 s.
+      // At t=1.25 s the cursor should map back to original index 0 (≈0.5).
+      expect(player.getNoteIdxAtTime(1.25)).toBeCloseTo(0.5, 1);
     });
 
     it('ties inside repeated section work on both passes', () => {

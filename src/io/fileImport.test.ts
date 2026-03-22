@@ -45,8 +45,8 @@ describe('isMusicXmlPath', () => {
 // parseSongsFromText
 // ---------------------------------------------------------------------------
 describe('parseSongsFromText', () => {
-  it('parses a single-tune ABC string', () => {
-    const songs = parseSongsFromText(
+  it('parses a single-tune ABC string', async () => {
+    const songs = await parseSongsFromText(
       'X:1\nT:My Tune\nK:C\nC D E F |',
       'tune.abc',
       'fallback'
@@ -56,35 +56,43 @@ describe('parseSongsFromText', () => {
     expect(songs[0].abc).toContain('X:1');
   });
 
-  it('parses a multi-tune ABC string into multiple songs', () => {
+  it('parses a multi-tune ABC string into multiple songs', async () => {
     const text = 'X:1\nT:Song A\nK:C\nC\n\nX:2\nT:Song B\nK:G\nG';
-    const songs = parseSongsFromText(text, 'tunes.abc', 'fallback');
+    const songs = await parseSongsFromText(text, 'tunes.abc', 'fallback');
     expect(songs).toHaveLength(2);
     expect(songs[0].title).toBe('Song A');
     expect(songs[1].title).toBe('Song B');
   });
 
-  it('routes .musicxml extension to MusicXML parser', () => {
-    const songs = parseSongsFromText('<xml/>', 'piece.musicxml', 'fallback');
+  it('routes .musicxml extension to MusicXML parser', async () => {
+    const songs = await parseSongsFromText(
+      '<xml/>',
+      'piece.musicxml',
+      'fallback'
+    );
     expect(songs).toHaveLength(1);
     expect(songs[0].title).toBe('XML Song');
     expect(songs[0].abc).toMatch(/^X:1\n/);
   });
 
-  it('routes .xml extension to MusicXML parser', () => {
-    const songs = parseSongsFromText('<xml/>', 'piece.xml', 'fallback');
+  it('routes .xml extension to MusicXML parser', async () => {
+    const songs = await parseSongsFromText('<xml/>', 'piece.xml', 'fallback');
     expect(songs).toHaveLength(1);
   });
 
-  it('uses fallbackTitle when MusicXML title is empty', () => {
+  it('uses fallbackTitle when MusicXML title is empty', async () => {
     vi.mocked(fromMusicXml).mockReturnValueOnce({ title: '' } as never);
-    const songs = parseSongsFromText('<xml/>', 'piece.xml', 'My Fallback');
+    const songs = await parseSongsFromText(
+      '<xml/>',
+      'piece.xml',
+      'My Fallback'
+    );
     expect(songs[0].title).toBe('My Fallback');
   });
 
-  it('each song gets a unique id', () => {
+  it('each song gets a unique id', async () => {
     const text = 'X:1\nT:A\nK:C\nC\n\nX:2\nT:B\nK:C\nD';
-    const songs = parseSongsFromText(text, 'f.abc', '');
+    const songs = await parseSongsFromText(text, 'f.abc', '');
     expect(songs[0].id).not.toBe(songs[1].id);
   });
 });

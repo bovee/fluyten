@@ -1,4 +1,5 @@
 import { Music, Note, type Decoration, expandRepeats } from '../music';
+import { MusicTimeline } from './MusicTimeline';
 
 const METRONOME_LENGTH = 0.03;
 
@@ -26,14 +27,10 @@ export class NotePlayer {
   startTime: number = 0;
   tone: number = 164.8138;
   lookForward: number = 1.0;
-  // Records { noteIdx, time } for every non-grace note as it is scheduled,
-  // so the cursor can ask "which note is playing right now?" without needing
-  // to replicate the tempo arithmetic independently.
-  noteTimings: Array<{ noteIdx: number; time: number; endTime: number }> = [];
   // Repeat-expanded note/curve sequence built once per playback from music.bars.
   expandedNotes: Note[] = [];
   expandedCurves: number[][] = [];
-  expandedOriginalIndices: number[] = [];
+  private timeline: MusicTimeline | null = null;
 
   constructor() {
     this.lastNoteTime = 0;
@@ -163,17 +160,6 @@ export class NotePlayer {
     // Undefined (past end of array), grace notes (0 ticks), or rests — handle
     // before touching note properties without optional chaining.
     if (!note || note.ticks() === 0) return;
-
-    // Record timing for all non-grace notes (including rests) so the cursor
-    // can determine the current note purely from audioCtx.currentTime.
-    // Use the original (pre-expansion) index so the cursor maps correctly
-    // back to music.notes on repeated passes.
-    this.noteTimings.push({
-      noteIdx: this.expandedOriginalIndices[idx] ?? idx,
-      time: this.lastNoteTime,
-      endTime: this.lastNoteTime + lengthToTime(note.ticks()),
-    });
-
     if (!note.pitches.length) return;
 
     // Tie continuation: this note's sound was already scheduled as part of the
@@ -250,7 +236,7 @@ export class NotePlayer {
         const expanded = expandRepeats(music);
         this.expandedNotes = expanded.notes;
         this.expandedCurves = expanded.curves;
-        this.expandedOriginalIndices = expanded.originalIndices;
+        this.timeline = new MusicTimeline(music, tempo);
       }
       if (this.lastNoteIx >= this.expandedNotes.length) {
         this.active = false;
@@ -271,18 +257,9 @@ export class NotePlayer {
   }
 
   getNoteIdxAtTime(t: number): number {
-    const timings = this.noteTimings;
-    for (let i = 0; i < timings.length; i++) {
-      if (timings[i].time > t) break;
-      const next = timings[i + 1];
-      if (!next || next.time > t) {
-        const { noteIdx, time, endTime } = timings[i];
-        const end = next ? next.time : endTime;
-        const progress = end > time ? (t - time) / (end - time) : 0;
-        return noteIdx + Math.min(progress, 1);
-      }
-    }
-    return 0;
+    // t is audioCtx.currentTime; convert to elapsed seconds from startTime
+    // so it matches the MusicTimeline's 0-based offsets.
+    return this.timeline?.getNoteIdxAtTime(t - this.startTime) ?? 0;
   }
 
   start() {
@@ -296,10 +273,9 @@ export class NotePlayer {
     this.startTime = this.audioCtx.currentTime;
     this.lastNoteTime = this.audioCtx.currentTime;
     this.lastNoteIx = -1;
-    this.noteTimings = [];
+    this.timeline = null;
     this.expandedNotes = [];
     this.expandedCurves = [];
-    this.expandedOriginalIndices = [];
     this.active = true;
   }
 
