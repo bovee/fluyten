@@ -29,7 +29,6 @@
   "exportAbc": "Export Book",
   "fileName": "File Name",
   "download": "Download",
-  "checkPlaying": "Check Playing",
   "playSong": "Play Song",
   "metronome": "Metronome",
   "tempoLabel": "Tempo: {{tempo}} BPM",

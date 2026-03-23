@@ -112,17 +112,51 @@ export function SettingsDialog({ open, onClose }: SettingsDialogProps) {
                   <MenuItem value="ur" dir="rtl">
                     اردو
                   </MenuItem>
-                  <MenuItem value="zh-Hans">中文</MenuItem>
+                  <MenuItem value="zh-Hans">中文（简体）</MenuItem>
+                  <MenuItem value="zh-Hant">中文（繁體）</MenuItem>
+                  <MenuItem value="yue">粵語</MenuItem>
+                  <MenuItem value="cs">Čeština</MenuItem>
+                  <MenuItem value="da">Dansk</MenuItem>
                   <MenuItem value="de">Deutsch</MenuItem>
+                  <MenuItem value="el">Ελληνικά</MenuItem>
+                  <MenuItem value="et">Eesti</MenuItem>
                   <MenuItem value="en">English</MenuItem>
                   <MenuItem value="es">Español</MenuItem>
+                  <MenuItem value="tl">Filipino</MenuItem>
                   <MenuItem value="fr">Français</MenuItem>
+                  <MenuItem value="gu">ગુજરાતી</MenuItem>
+                  <MenuItem value="ha">Hausa</MenuItem>
                   <MenuItem value="hi">हिन्दी</MenuItem>
+                  <MenuItem value="hr">Hrvatski</MenuItem>
+                  <MenuItem value="fa" dir="rtl">
+                    فارسی
+                  </MenuItem>
+                  <MenuItem value="fi">Suomi</MenuItem>
+                  <MenuItem value="he" dir="rtl">
+                    עברית
+                  </MenuItem>
+                  <MenuItem value="hu">Magyar</MenuItem>
                   <MenuItem value="id">Bahasa Indonesia</MenuItem>
-                  <MenuItem value="ja">日本語</MenuItem>
+                  <MenuItem value="jv">Basa Jawa</MenuItem>
+                  <MenuItem value="sw">Kiswahili</MenuItem>
                   <MenuItem value="ko">한국어</MenuItem>
+                  <MenuItem value="mr">मराठी</MenuItem>
+                  <MenuItem value="it">Italiano</MenuItem>
+                  <MenuItem value="ja">日本語</MenuItem>
+                  <MenuItem value="nl">Nederlands</MenuItem>
+                  <MenuItem value="nb">Norsk</MenuItem>
+                  <MenuItem value="pa">ਪੰਜਾਬੀ</MenuItem>
+                  <MenuItem value="pl">Polski</MenuItem>
                   <MenuItem value="pt">Português</MenuItem>
+                  <MenuItem value="ro">Română</MenuItem>
                   <MenuItem value="ru">Русский</MenuItem>
+                  <MenuItem value="sk">Slovenčina</MenuItem>
+                  <MenuItem value="sv">Svenska</MenuItem>
+                  <MenuItem value="ta">தமிழ்</MenuItem>
+                  <MenuItem value="te">తెలుగు</MenuItem>
+                  <MenuItem value="th">ภาษาไทย</MenuItem>
+                  <MenuItem value="uk">Українська</MenuItem>
+                  <MenuItem value="vi">Tiếng Việt</MenuItem>
                 </Select>
               </FormControl>
             </Box>
