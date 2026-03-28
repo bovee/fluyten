@@ -101,15 +101,10 @@
     "SOPRANO": "Sopran",
     "SOPRANINO": "Sopranino"
   },
-  "songs": {
-    "hot-cross-buns": "Hot Cross Buns",
-    "mary-had-a-little-lamb": "Maarial oli väike tall",
-    "twinkle-twinkle": "Sära, säri tähteke",
-    "frere-jacques": "Vend Jaak",
-    "row-row-row-your-boat": "Sõua, sõua paadiga"
-  },
-  "books": {
-    "beginner-songs": "Algajate laulud",
-    "scales": "Helistikud"
-  }
+  "beginnerSongs": [
+    "Hot Cross Buns",
+    "Maarial oli väike tall",
+    "Sära, säri tähteke",
+    "Sõua, sõua paadiga"
+  ]
 }

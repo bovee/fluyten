@@ -101,15 +101,10 @@
     "SOPRANO": "Sopraano",
     "SOPRANINO": "Sopraanino"
   },
-  "songs": {
-    "hot-cross-buns": "Hot Cross Buns",
-    "mary-had-a-little-lamb": "Marialla oli pieni karitsa",
-    "twinkle-twinkle": "Tuiki tuiki tähtönen",
-    "frere-jacques": "Veli Jaakko",
-    "row-row-row-your-boat": "Soutele soutele venettäsi"
-  },
-  "books": {
-    "beginner-songs": "Aloittelijoiden laulut",
-    "scales": "Asteikot"
-  }
+  "beginnerSongs": [
+    "Hot Cross Buns",
+    "Marialla oli pieni karitsa",
+    "Tuiki tuiki tähtönen",
+    "Soutele soutele venettäsi"
+  ]
 }

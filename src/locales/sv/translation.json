@@ -101,15 +101,10 @@
     "SOPRANO": "Sopran",
     "SOPRANINO": "Sopranino"
   },
-  "songs": {
-    "hot-cross-buns": "Hot Cross Buns",
-    "mary-had-a-little-lamb": "Maria hade ett litet lamm",
-    "twinkle-twinkle": "Blinka lilla stjärna",
-    "frere-jacques": "Broder Jakob",
-    "row-row-row-your-boat": "Ro, ro, ro din båt"
-  },
-  "books": {
-    "beginner-songs": "Nybörjarsånger",
-    "scales": "Skalor"
-  }
+  "beginnerSongs": [
+    "Hot Cross Buns",
+    "Maria hade ett litet lamm",
+    "Blinka lilla stjärna",
+    "Ro, ro, ro din båt"
+  ]
 }

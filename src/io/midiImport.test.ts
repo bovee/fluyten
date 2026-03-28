@@ -1,5 +1,5 @@
 import { describe, it, expect } from 'vitest';
-import { fromMidi, fromMidiToAbc } from './midiImport';
+import { fromMidi } from './midiImport';
 import { Duration, DurationModifier } from '../music';
 
 // ---- MIDI binary builder helpers --------------------------------------------
@@ -111,7 +111,7 @@ describe('fromMidi', () => {
       ...noteOff(tpq, 60), // off at tick 480 (1 quarter note)
       ...endOfTrack(0),
     ];
-    const music = fromMidi(buildMidi(tpq, track));
+    const [music] = fromMidi(buildMidi(tpq, track));
 
     expect(music.notes.length).toBe(1);
     expect(music.notes[0].pitches).toEqual([60]);
@@ -129,7 +129,7 @@ describe('fromMidi', () => {
       ...noteOff(tpq / 2, 64),
       ...endOfTrack(0),
     ];
-    const music = fromMidi(buildMidi(tpq, track));
+    const [music] = fromMidi(buildMidi(tpq, track));
 
     expect(music.notes.length).toBe(3);
     expect(music.notes[0].duration).toBe(Duration.QUARTER);
@@ -146,7 +146,7 @@ describe('fromMidi', () => {
       ...noteOff(tpq, 62),
       ...endOfTrack(0),
     ];
-    const music = fromMidi(buildMidi(tpq, track));
+    const [music] = fromMidi(buildMidi(tpq, track));
 
     expect(music.notes.length).toBe(3);
     expect(music.notes[0].pitches).toEqual([60]);
@@ -163,7 +163,7 @@ describe('fromMidi', () => {
       ...noteOff(0, 64),
       ...endOfTrack(0),
     ];
-    const music = fromMidi(buildMidi(tpq, track));
+    const [music] = fromMidi(buildMidi(tpq, track));
 
     expect(music.notes.length).toBe(1);
     expect(music.notes[0].pitches).toContain(60);
@@ -178,7 +178,7 @@ describe('fromMidi', () => {
       ...noteOff(dottedQuarter, 60),
       ...endOfTrack(0),
     ];
-    const music = fromMidi(buildMidi(tpq, track));
+    const [music] = fromMidi(buildMidi(tpq, track));
 
     expect(music.notes[0].duration).toBe(Duration.QUARTER);
     expect(music.notes[0].durationModifier).toBe(DurationModifier.DOTTED);
@@ -192,7 +192,7 @@ describe('fromMidi', () => {
       ...noteOff(tpq, 60),
       ...endOfTrack(0),
     ];
-    const music = fromMidi(buildMidi(tpq, track));
+    const [music] = fromMidi(buildMidi(tpq, track));
 
     expect(music.beatsPerBar).toBe(3);
     expect(music.beatValue).toBe(4);
@@ -206,7 +206,7 @@ describe('fromMidi', () => {
       ...noteOff(tpq, 60),
       ...endOfTrack(0),
     ];
-    const music = fromMidi(buildMidi(tpq, track));
+    const [music] = fromMidi(buildMidi(tpq, track));
 
     expect(music.keySignature).toBe('G');
   });
@@ -219,7 +219,7 @@ describe('fromMidi', () => {
       ...noteOff(tpq, 60),
       ...endOfTrack(0),
     ];
-    const music = fromMidi(buildMidi(tpq, track));
+    const [music] = fromMidi(buildMidi(tpq, track));
 
     expect(music.keySignature).toBe('Dm');
   });
@@ -232,7 +232,7 @@ describe('fromMidi', () => {
       ...noteOff(tpq, 60),
       ...endOfTrack(0),
     ];
-    const music = fromMidi(buildMidi(tpq, track));
+    const [music] = fromMidi(buildMidi(tpq, track));
 
     expect(music.title).toBe('My Song');
   });
@@ -246,10 +246,10 @@ describe('fromMidi', () => {
       ...noteOff(0, 36, 9),
       ...endOfTrack(0),
     ];
-    const music = fromMidi(buildMidi(tpq, track));
+    const voices = fromMidi(buildMidi(tpq, track));
 
-    expect(music.notes.length).toBe(1);
-    expect(music.notes[0].pitches).toEqual([60]);
+    expect(voices).toHaveLength(1);
+    expect(voices[0].notes[0].pitches).toEqual([60]);
   });
 
   it('merges events from multiple tracks (format 1)', () => {
@@ -266,7 +266,7 @@ describe('fromMidi', () => {
       ...noteOff(tpq, 62),
       ...endOfTrack(0),
     ];
-    const music = fromMidi(buildMidi(tpq, metaTrack, noteTrack));
+    const [music] = fromMidi(buildMidi(tpq, metaTrack, noteTrack));
 
     expect(music.title).toBe('Song Title');
     expect(music.beatsPerBar).toBe(4);
@@ -290,7 +290,7 @@ describe('fromMidi', () => {
       ...noteOff(tpq, 67),
       ...endOfTrack(0),
     ];
-    const music = fromMidi(buildMidi(tpq, track));
+    const [music] = fromMidi(buildMidi(tpq, track));
 
     // Should have at least 1 bar line after 4 notes
     expect(music.bars.length).toBeGreaterThan(0);
@@ -309,7 +309,7 @@ describe('fromMidi', () => {
       0, // note on with velocity 0 = note off
       ...endOfTrack(0),
     ];
-    const music = fromMidi(buildMidi(tpq, track));
+    const [music] = fromMidi(buildMidi(tpq, track));
 
     expect(music.notes.length).toBe(1);
     expect(music.notes[0].pitches).toEqual([60]);
@@ -323,19 +323,20 @@ describe('fromMidi', () => {
       ...noteOff(tpq, 60),
       ...endOfTrack(0),
     ];
-    const music = fromMidi(buildMidi(tpq, track));
+    const [music] = fromMidi(buildMidi(tpq, track));
 
     expect(music.notes.length).toBe(2);
     expect(music.notes[0].pitches).toEqual([]); // rest
     expect(music.notes[1].pitches).toEqual([60]);
   });
 
-  it('returns empty Music for file with no notes', () => {
+  it('returns one empty Music for file with no notes', () => {
     const tpq = 480;
     const track = [...endOfTrack(0)];
-    const music = fromMidi(buildMidi(tpq, track));
+    const voices = fromMidi(buildMidi(tpq, track));
 
-    expect(music.notes.length).toBe(0);
+    expect(voices).toHaveLength(1);
+    expect(voices[0].notes.length).toBe(0);
   });
 
   it('throws on invalid header', () => {
@@ -360,7 +361,7 @@ describe('fromMidi', () => {
     expect(() => fromMidi(buf)).toThrow('SMPTE');
   });
 
-  it('fromMidi returns first channel only for multi-channel files', () => {
+  it('returns one Music per channel for multi-channel files', () => {
     const tpq = 480;
     const track = [
       ...noteOn(0, 60, 80, 0), // ch 0: C4
@@ -369,30 +370,31 @@ describe('fromMidi', () => {
       ...noteOff(0, 64, 1),
       ...endOfTrack(0),
     ];
-    const music = fromMidi(buildMidi(tpq, track));
-    // fromMidi only returns the first channel
-    expect(music.notes.length).toBe(1);
-    expect(music.notes[0].pitches).toEqual([60]);
+    const voices = fromMidi(buildMidi(tpq, track));
+
+    expect(voices).toHaveLength(2);
+    expect(voices[0].notes.length).toBe(1);
+    expect(voices[0].notes[0].pitches).toEqual([60]);
+    expect(voices[1].notes.length).toBe(1);
+    expect(voices[1].notes[0].pitches).toEqual([64]);
   });
 
-  it('fromMidiToAbc produces multi-voice ABC for multi-channel files', () => {
+  it('all returned Music objects share the same metadata', () => {
     const tpq = 480;
     const track = [
-      ...noteOn(0, 60, 80, 0), // ch 0: C4 quarter
-      ...noteOn(0, 64, 80, 1), // ch 1: E4 quarter
+      ...trackName(0, 'Test'),
+      ...keySig(0, 1, 0), // G major
+      ...noteOn(0, 60, 80, 0),
+      ...noteOn(0, 64, 80, 1),
       ...noteOff(tpq, 60, 0),
       ...noteOff(0, 64, 1),
       ...endOfTrack(0),
     ];
-    const { abc } = fromMidiToAbc(buildMidi(tpq, track));
-    expect(abc).toContain('V:1');
-    expect(abc).toContain('V:2');
-  });
+    const voices = fromMidi(buildMidi(tpq, track));
 
-  it('fromMidiToAbc returns plain ABC for single-channel files', () => {
-    const tpq = 480;
-    const track = [...noteOn(0, 60), ...noteOff(tpq, 60), ...endOfTrack(0)];
-    const { abc } = fromMidiToAbc(buildMidi(tpq, track));
-    expect(abc).not.toContain('V:');
+    expect(voices[0].title).toBe('Test');
+    expect(voices[1].title).toBe('Test');
+    expect(voices[0].keySignature).toBe('G');
+    expect(voices[1].keySignature).toBe('G');
   });
 });

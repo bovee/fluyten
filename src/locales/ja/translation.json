@@ -101,15 +101,10 @@
     "SOPRANO": "ソプラノ",
     "SOPRANINO": "ソプラニーノ"
   },
-  "songs": {
-    "hot-cross-buns": "ホットクロスバンズ",
-    "mary-had-a-little-lamb": "メリーさんの羊",
-    "twinkle-twinkle": "きらきら星",
-    "frere-jacques": "フレール・ジャック",
-    "row-row-row-your-boat": "ボートをこいで"
-  },
-  "books": {
-    "beginner-songs": "初心者向けの曲",
-    "scales": "音階"
-  }
+  "beginnerSongs": [
+    "ホットクロスバンズ",
+    "メリーさんの羊",
+    "きらきら星",
+    "ボートをこいで"
+  ]
 }

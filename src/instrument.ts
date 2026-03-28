@@ -36,3 +36,7 @@ export const RECORDER_TYPES = {
 export function getStarterBookUrl(instrumentType: RecorderType): string {
   return `${window.location.origin}${import.meta.env.BASE_URL}${RECORDER_TYPES[instrumentType].starterBook}`;
 }
+
+export function isStarterBookUrl(url: string): boolean {
+  return Object.values(RECORDER_TYPES).some((rt) => url.endsWith(rt.starterBook));
+}

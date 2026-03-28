@@ -697,6 +697,43 @@ export function expandRepeats(music: Music): {
   // Notes after the last bar line
   addSegment(prevEndIdx + 1, music.notes.length - 1);
 
+  // addSegment only includes curves where both endpoints fall within the same
+  // segment call.  Ties that cross a standard bar line land in adjacent
+  // segments and are therefore missed.  Do a second pass: for every tie in the
+  // original (consecutive indices, identical pitches) that was not yet
+  // captured, find the matching result-index pairs and add them.
+  //
+  // We intentionally restrict this to same-pitch consecutive-index curves
+  // (i.e. true ties) so that slurs crossing repeat-section boundaries continue
+  // to be excluded, preserving the existing behaviour for those cases.
+  const origToResultIndices = new Map<number, number[]>();
+  for (let i = 0; i < resultOriginalIndices.length; i++) {
+    const orig = resultOriginalIndices[i];
+    const arr = origToResultIndices.get(orig);
+    if (arr) arr.push(i);
+    else origToResultIndices.set(orig, [i]);
+  }
+  for (const [s, e] of music.curves) {
+    if (e !== s + 1) continue; // only consecutive-note ties
+    const ns = music.notes[s];
+    const ne = music.notes[e];
+    if (!ns || !ne || ns.pitches.length === 0) continue;
+    if (
+      ns.pitches.length !== ne.pitches.length ||
+      !ns.pitches.every((p, i) => p === ne.pitches[i])
+    )
+      continue;
+    const sIdxs = origToResultIndices.get(s) ?? [];
+    const eIdxs = origToResultIndices.get(e) ?? [];
+    for (const si of sIdxs) {
+      for (const ei of eIdxs) {
+        if (ei > si && !resultCurves.some(([rs, re]) => rs === si && re === ei)) {
+          resultCurves.push([si, ei]);
+        }
+      }
+    }
+  }
+
   return {
     notes: resultNotes,
     curves: resultCurves,

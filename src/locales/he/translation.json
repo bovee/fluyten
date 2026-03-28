@@ -101,15 +101,10 @@
     "SOPRANO": "סופרן",
     "SOPRANINO": "סופרנינו"
   },
-  "songs": {
-    "hot-cross-buns": "לחמניות עם צלב",
-    "mary-had-a-little-lamb": "למרי היה כבשון קטן",
-    "twinkle-twinkle": "כוכב קטן",
-    "frere-jacques": "אח ז'אק",
-    "row-row-row-your-boat": "חתור, חתור בסירתך"
-  },
-  "books": {
-    "beginner-songs": "שירים למתחילים",
-    "scales": "גמות"
-  }
+  "beginnerSongs": [
+    "לחמניות עם צלב",
+    "למרי היה כבשון קטן",
+    "כוכב קטן",
+    "חתור, חתור בסירתך"
+  ]
 }

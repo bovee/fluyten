@@ -101,15 +101,10 @@
     "SOPRANO": "Szoprán",
     "SOPRANINO": "Sopranino"
   },
-  "songs": {
-    "hot-cross-buns": "Hot Cross Buns",
-    "mary-had-a-little-lamb": "Máriának kis báránya volt",
-    "twinkle-twinkle": "Csillagocska",
-    "frere-jacques": "Fráter Jakab",
-    "row-row-row-your-boat": "Evezz, evezz csónakodon"
-  },
-  "books": {
-    "beginner-songs": "Kezdők dalai",
-    "scales": "Hangsorok"
-  }
+  "beginnerSongs": [
+    "Hot Cross Buns",
+    "Máriának kis báránya volt",
+    "Csillagocska",
+    "Evezz, evezz csónakodon"
+  ]
 }

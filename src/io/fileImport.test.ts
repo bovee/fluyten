@@ -1,11 +1,13 @@
-import { describe, it, expect, vi, beforeEach } from 'vitest';
+import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest';
 import {
   isMusicXmlPath,
   parseSongsFromFile,
-  parseSongsFromText,
+  parseSongsFromUrl,
+  HttpError,
 } from './fileImport';
 import { fromMusicXml, extractMxl } from './musicXmlImport';
-import { toAbc } from './abcExport';
+import { toAbc, notesToAbc } from './abcExport';
+import { fromMidi } from './midiImport';
 
 vi.mock('./musicXmlImport', () => ({
   fromMusicXml: vi.fn(() => ({ title: 'XML Song' })),
@@ -14,6 +16,11 @@ vi.mock('./musicXmlImport', () => ({
 
 vi.mock('./abcExport', () => ({
   toAbc: vi.fn(() => 'T:XML Song\nK:C\nC D E F |'),
+  notesToAbc: vi.fn(() => 'C D E F |'),
+}));
+
+vi.mock('./midiImport', () => ({
+  fromMidi: vi.fn(() => [{ title: 'MIDI Song', beatsPerBar: 4, beatValue: 4, keySignature: 'C', notes: [] }]),
 }));
 
 beforeEach(() => {
@@ -21,6 +28,14 @@ beforeEach(() => {
   vi.mocked(fromMusicXml).mockReturnValue({ title: 'XML Song' } as never);
   vi.mocked(extractMxl).mockReturnValue('<score-partwise/>');
   vi.mocked(toAbc).mockReturnValue('T:XML Song\nK:C\nC D E F |');
+  vi.mocked(notesToAbc).mockReturnValue('C D E F |');
+  vi.mocked(fromMidi).mockReturnValue([
+    { title: 'MIDI Song', beatsPerBar: 4, beatValue: 4, keySignature: 'C', notes: [] } as never,
+  ]);
+});
+
+afterEach(() => {
+  vi.unstubAllGlobals();
 });
 
 // ---------------------------------------------------------------------------
@@ -39,62 +54,6 @@ describe('isMusicXmlPath', () => {
   it.each(['.abc', '.txt', '.mid', ''])('returns false for %s', (ext) =>
     expect(isMusicXmlPath(`song${ext}`)).toBe(false)
   );
-});
-
-// ---------------------------------------------------------------------------
-// parseSongsFromText
-// ---------------------------------------------------------------------------
-describe('parseSongsFromText', () => {
-  it('parses a single-tune ABC string', async () => {
-    const songs = await parseSongsFromText(
-      'X:1\nT:My Tune\nK:C\nC D E F |',
-      'tune.abc',
-      'fallback'
-    );
-    expect(songs).toHaveLength(1);
-    expect(songs[0].title).toBe('My Tune');
-    expect(songs[0].abc).toContain('X:1');
-  });
-
-  it('parses a multi-tune ABC string into multiple songs', async () => {
-    const text = 'X:1\nT:Song A\nK:C\nC\n\nX:2\nT:Song B\nK:G\nG';
-    const songs = await parseSongsFromText(text, 'tunes.abc', 'fallback');
-    expect(songs).toHaveLength(2);
-    expect(songs[0].title).toBe('Song A');
-    expect(songs[1].title).toBe('Song B');
-  });
-
-  it('routes .musicxml extension to MusicXML parser', async () => {
-    const songs = await parseSongsFromText(
-      '<xml/>',
-      'piece.musicxml',
-      'fallback'
-    );
-    expect(songs).toHaveLength(1);
-    expect(songs[0].title).toBe('XML Song');
-    expect(songs[0].abc).toMatch(/^X:1\n/);
-  });
-
-  it('routes .xml extension to MusicXML parser', async () => {
-    const songs = await parseSongsFromText('<xml/>', 'piece.xml', 'fallback');
-    expect(songs).toHaveLength(1);
-  });
-
-  it('uses fallbackTitle when MusicXML title is empty', async () => {
-    vi.mocked(fromMusicXml).mockReturnValueOnce({ title: '' } as never);
-    const songs = await parseSongsFromText(
-      '<xml/>',
-      'piece.xml',
-      'My Fallback'
-    );
-    expect(songs[0].title).toBe('My Fallback');
-  });
-
-  it('each song gets a unique id', async () => {
-    const text = 'X:1\nT:A\nK:C\nC\n\nX:2\nT:B\nK:C\nD';
-    const songs = await parseSongsFromText(text, 'f.abc', '');
-    expect(songs[0].id).not.toBe(songs[1].id);
-  });
 });
 
 // ---------------------------------------------------------------------------
@@ -165,6 +124,123 @@ describe('parseSongsFromFile', () => {
     const text = 'X:1\nT:A\nK:C\nC\n\nX:2\nT:B\nK:C\nD';
     const file = new File([text], 'tunes.abc');
     const songs = await parseSongsFromFile(file);
+    expect(songs[0].id).not.toBe(songs[1].id);
+  });
+
+  it('parses a .mid file via fromMidi', async () => {
+    const file = new File([new Uint8Array([0x4d, 0x54])], 'song.mid');
+    const songs = await parseSongsFromFile(file);
+    expect(vi.mocked(fromMidi)).toHaveBeenCalled();
+    expect(songs).toHaveLength(1);
+    expect(songs[0].title).toBe('MIDI Song');
+  });
+
+  it('uses fallback title when MIDI Music has no title', async () => {
+    vi.mocked(fromMidi).mockReturnValueOnce([
+      { title: '', beatsPerBar: 4, beatValue: 4, keySignature: 'C', notes: [] } as never,
+    ]);
+    const file = new File([new Uint8Array([0])], 'my-piece.mid');
+    const songs = await parseSongsFromFile(file);
+    expect(songs[0].title).toBe('my-piece');
+  });
+
+  it('assembles multi-voice ABC with V: lines for multi-channel MIDI', async () => {
+    const voice1 = { title: 'Multi', beatsPerBar: 4, beatValue: 4, keySignature: 'C', notes: [] };
+    const voice2 = { title: 'Multi', beatsPerBar: 4, beatValue: 4, keySignature: 'C', notes: [] };
+    vi.mocked(fromMidi).mockReturnValueOnce([voice1, voice2] as never);
+    const file = new File([new Uint8Array([0])], 'multi.mid');
+    const songs = await parseSongsFromFile(file);
+    expect(songs[0].abc).toContain('V:1');
+    expect(songs[0].abc).toContain('V:2');
+    // notesToAbc used instead of toAbc for multi-voice
+    expect(vi.mocked(notesToAbc)).toHaveBeenCalledTimes(2);
+    expect(vi.mocked(toAbc)).not.toHaveBeenCalled();
+  });
+});
+
+// ---------------------------------------------------------------------------
+// parseSongsFromUrl
+// ---------------------------------------------------------------------------
+describe('parseSongsFromUrl', () => {
+  function stubFetch(body: string | ArrayBuffer, ok = true, status = 200) {
+    vi.stubGlobal(
+      'fetch',
+      vi.fn().mockResolvedValue({
+        ok,
+        status,
+        text: () => Promise.resolve(body as string),
+        arrayBuffer: () => Promise.resolve(body as ArrayBuffer),
+      })
+    );
+  }
+
+  it('fetches and parses an ABC URL', async () => {
+    stubFetch('X:1\nT:My Tune\nK:C\nC D E F |');
+    const songs = await parseSongsFromUrl('https://example.com/tune.abc');
+    expect(songs).toHaveLength(1);
+    expect(songs[0].title).toBe('My Tune');
+    expect(songs[0].abc).toContain('X:1');
+  });
+
+  it('parses a multi-tune ABC URL into multiple songs', async () => {
+    stubFetch('X:1\nT:Song A\nK:C\nC\n\nX:2\nT:Song B\nK:G\nG');
+    const songs = await parseSongsFromUrl('https://example.com/tunes.abc');
+    expect(songs).toHaveLength(2);
+    expect(songs[0].title).toBe('Song A');
+    expect(songs[1].title).toBe('Song B');
+  });
+
+  it('routes .musicxml URL to MusicXML parser', async () => {
+    stubFetch('<xml/>');
+    const songs = await parseSongsFromUrl('https://example.com/piece.musicxml');
+    expect(songs).toHaveLength(1);
+    expect(songs[0].title).toBe('XML Song');
+    expect(songs[0].abc).toMatch(/^X:1\n/);
+  });
+
+  it('routes .xml URL to MusicXML parser', async () => {
+    stubFetch('<xml/>');
+    const songs = await parseSongsFromUrl('https://example.com/piece.xml');
+    expect(vi.mocked(fromMusicXml)).toHaveBeenCalled();
+    expect(songs).toHaveLength(1);
+  });
+
+  it('derives fallback title from URL path', async () => {
+    vi.mocked(fromMusicXml).mockReturnValueOnce({ title: '' } as never);
+    stubFetch('<xml/>');
+    const songs = await parseSongsFromUrl('https://example.com/nocturne.xml');
+    expect(songs[0].title).toBe('nocturne');
+  });
+
+  it('throws HttpError on non-2xx response', async () => {
+    stubFetch('Not Found', false, 404);
+    await expect(
+      parseSongsFromUrl('https://example.com/missing.abc')
+    ).rejects.toBeInstanceOf(HttpError);
+  });
+
+  it('HttpError carries the HTTP status code', async () => {
+    stubFetch('Server Error', false, 503);
+    let err: unknown;
+    try {
+      await parseSongsFromUrl('https://example.com/missing.abc');
+    } catch (e) {
+      err = e;
+    }
+    expect(err).toBeInstanceOf(HttpError);
+    expect((err as HttpError).status).toBe(503);
+  });
+
+  it('propagates network failures as-is', async () => {
+    vi.stubGlobal('fetch', vi.fn().mockRejectedValue(new TypeError('Failed to fetch')));
+    await expect(
+      parseSongsFromUrl('https://example.com/tune.abc')
+    ).rejects.toThrow('Failed to fetch');
+  });
+
+  it('each song gets a unique id', async () => {
+    stubFetch('X:1\nT:A\nK:C\nC\n\nX:2\nT:B\nK:C\nD');
+    const songs = await parseSongsFromUrl('https://example.com/tunes.abc');
     expect(songs[0].id).not.toBe(songs[1].id);
   });
 });

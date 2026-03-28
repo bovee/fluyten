@@ -92,9 +92,9 @@ export function OnboardingDialog({ open, onComplete }: OnboardingDialogProps) {
     fetch(bookUrl)
       .then((r) => r.text())
       .then((text) => {
-        const songs: UserSong[] = parseAbcFile(text).map(({ title, abc }) => ({
+        const songs: UserSong[] = parseAbcFile(text).map(({ title, abc }, i) => ({
           id: crypto.randomUUID(),
-          title,
+          title: t(`beginnerSongs.${i}`, { defaultValue: title }),
           abc,
         }));
         importUserBook(bookTitle, songs);

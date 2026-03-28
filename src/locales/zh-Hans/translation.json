@@ -101,15 +101,10 @@
     "SOPRANO": "高音",
     "SOPRANINO": "超高音"
   },
-  "songs": {
-    "hot-cross-buns": "热十字面包",
-    "mary-had-a-little-lamb": "玛丽有只小羊羔",
-    "twinkle-twinkle": "一闪一闪亮晶晶",
-    "frere-jacques": "雅克兄弟",
-    "row-row-row-your-boat": "划呀划呀划小船"
-  },
-  "books": {
-    "beginner-songs": "初学者歌曲",
-    "scales": "音阶"
-  }
+  "beginnerSongs": [
+    "热十字面包",
+    "玛丽有只小羊羔",
+    "一闪一闪亮晶晶",
+    "划呀划呀划小船"
+  ]
 }

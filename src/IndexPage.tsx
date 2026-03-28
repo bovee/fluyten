@@ -28,11 +28,10 @@ import Settings from '@mui/icons-material/Settings';
 
 import {
   parseSongsFromFile,
-  parseSongsFromText,
-  parseSongsFromBuffer,
-  isMidiPath,
+  parseSongsFromUrl,
+  HttpError,
 } from './io/fileImport';
-import { getStarterBookUrl } from './instrument';
+import { getStarterBookUrl, isStarterBookUrl } from './instrument';
 import { ScaleDialog } from './scales/ScaleDialog';
 import { SettingsDialog } from './SettingsDialog';
 import { type Song } from './music';
@@ -147,30 +146,25 @@ export function IndexPage({
       return;
     }
     try {
-      const response = await fetch(current.value);
-      if (!response.ok) {
+      const songs = await parseSongsFromUrl(current.value);
+      const isStarter = isStarterBookUrl(current.value);
+      (isStarter
+        ? songs.map((s, i) => ({
+            ...s,
+            title: t(`beginnerSongs.${i}`, { defaultValue: s.title }),
+          }))
+        : songs
+      ).forEach((song) => addSongToBook(current.bookId, song));
+      setImportUrl(null);
+    } catch (err) {
+      if (err instanceof HttpError) {
         setImportUrl({
           ...current,
-          error: t('importUrlHttpError', { status: response.status }),
+          error: t('importUrlHttpError', { status: err.status }),
         });
-        return;
-      }
-      const urlPath = new URL(current.value).pathname;
-      const fallbackTitle = (
-        urlPath.split('/').pop()?.split('?')[0] ?? 'Imported'
-      ).replace(/\.[^.]+$/, '');
-      let songs;
-      if (isMidiPath(urlPath)) {
-        const buffer = await response.arrayBuffer();
-        songs = await parseSongsFromBuffer(buffer, urlPath, fallbackTitle);
       } else {
-        const text = await response.text();
-        songs = await parseSongsFromText(text, urlPath, fallbackTitle);
+        setImportUrl({ ...current, error: t('importUrlCorsError') });
       }
-      songs.forEach((song) => addSongToBook(current.bookId, song));
-      setImportUrl(null);
-    } catch {
-      setImportUrl({ ...current, error: t('importUrlCorsError') });
     }
   };
 

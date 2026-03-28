@@ -101,15 +101,10 @@
     "SOPRANO": "โซปราโน",
     "SOPRANINO": "โซปรานิโน"
   },
-  "songs": {
-    "hot-cross-buns": "ฮอตครอสบันส์",
-    "mary-had-a-little-lamb": "แมรี่มีลูกแกะตัวน้อย",
-    "twinkle-twinkle": "ดาวเล็กดาวน้อย",
-    "frere-jacques": "พี่ชายฌาก",
-    "row-row-row-your-boat": "พายเรือ พายเรือ"
-  },
-  "books": {
-    "beginner-songs": "เพลงสำหรับผู้เริ่มต้น",
-    "scales": "สเกล"
-  }
+  "beginnerSongs": [
+    "ฮอตครอสบันส์",
+    "แมรี่มีลูกแกะตัวน้อย",
+    "ดาวเล็กดาวน้อย",
+    "พายเรือ พายเรือ"
+  ]
 }

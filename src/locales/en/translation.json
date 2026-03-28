@@ -101,11 +101,10 @@
     "SOPRANO": "Soprano",
     "SOPRANINO": "Sopranino"
   },
-  "songs": {
-    "hot-cross-buns": "Hot Cross Buns",
-    "mary-had-a-little-lamb": "Mary Had a Little Lamb",
-    "twinkle-twinkle": "Twinkle Twinkle Little Star",
-    "frere-jacques": "Frère Jacques",
-    "row-row-row-your-boat": "Row Row Row Your Boat"
-  }
+  "beginnerSongs": [
+    "Hot Cross Buns",
+    "Mary Had a Little Lamb",
+    "Twinkle Twinkle Little Star",
+    "Row Row Row Your Boat"
+  ]
 }

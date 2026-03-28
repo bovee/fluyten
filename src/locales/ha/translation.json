@@ -101,15 +101,10 @@
     "SOPRANO": "Soprano",
     "SOPRANINO": "Sopranino"
   },
-  "songs": {
-    "hot-cross-buns": "Hot Cross Buns",
-    "mary-had-a-little-lamb": "Maryamu tana da ƙaramin rago",
-    "twinkle-twinkle": "Tauraro ƙarami mai walƙiya",
-    "frere-jacques": "Dan'uwa Yakubu",
-    "row-row-row-your-boat": "Sha jeka sha jeka jirgin ruwanka"
-  },
-  "books": {
-    "beginner-songs": "Waƙoƙi don masu farawa",
-    "scales": "Ma'auni"
-  }
+  "beginnerSongs": [
+    "Hot Cross Buns",
+    "Maryamu tana da ƙaramin rago",
+    "Tauraro ƙarami mai walƙiya",
+    "Sha jeka sha jeka jirgin ruwanka"
+  ]
 }

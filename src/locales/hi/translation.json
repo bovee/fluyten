@@ -101,15 +101,10 @@
     "SOPRANO": "सोप्रानो",
     "SOPRANINO": "सोप्रानिनो"
   },
-  "songs": {
-    "hot-cross-buns": "हॉट क्रॉस बन्स",
-    "mary-had-a-little-lamb": "मैरी का एक छोटा मेमना था",
-    "twinkle-twinkle": "टिमटिम करते तारे",
-    "frere-jacques": "फ्रेर जाक",
-    "row-row-row-your-boat": "नाव खेओ नाव खेओ"
-  },
-  "books": {
-    "beginner-songs": "शुरुआती गाने",
-    "scales": "स्केल"
-  }
+  "beginnerSongs": [
+    "हॉट क्रॉस बन्स",
+    "मैरी का एक छोटा मेमना था",
+    "टिमटिम करते तारे",
+    "नाव खेओ नाव खेओ"
+  ]
 }

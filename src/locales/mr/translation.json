@@ -101,15 +101,10 @@
     "SOPRANO": "सोप्रानो",
     "SOPRANINO": "सोप्रानिनो"
   },
-  "songs": {
-    "hot-cross-buns": "हॉट क्रॉस बन्स",
-    "mary-had-a-little-lamb": "मेरीला एक छोटे कोकरू होते",
-    "twinkle-twinkle": "लुकलुकती तारा",
-    "frere-jacques": "ब्रदर जाक",
-    "row-row-row-your-boat": "वल्हव वल्हव तुझी होडी"
-  },
-  "books": {
-    "beginner-songs": "नवशिक्यांसाठी गाणी",
-    "scales": "स्केल"
-  }
+  "beginnerSongs": [
+    "हॉट क्रॉस बन्स",
+    "मेरीला एक छोटे कोकरू होते",
+    "लुकलुकती तारा",
+    "वल्हव वल्हव तुझी होडी"
+  ]
 }

@@ -101,15 +101,10 @@
     "SOPRANO": "Soprano",
     "SOPRANINO": "Sopranino"
   },
-  "songs": {
-    "hot-cross-buns": "Hot Cross Buns",
-    "mary-had-a-little-lamb": "Marie avait un petit agneau",
-    "twinkle-twinkle": "Ah ! vous dirai-je, maman",
-    "frere-jacques": "Frère Jacques",
-    "row-row-row-your-boat": "Rame, Rame, Rame ton Bateau"
-  },
-  "books": {
-    "beginner-songs": "Chansons pour débutants",
-    "scales": "Gammes"
-  }
+  "beginnerSongs": [
+    "Hot Cross Buns",
+    "Marie avait un petit agneau",
+    "Ah ! vous dirai-je, maman",
+    "Rame, Rame, Rame ton Bateau"
+  ]
 }

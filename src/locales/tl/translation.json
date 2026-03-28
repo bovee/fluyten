@@ -101,15 +101,10 @@
     "SOPRANO": "Soprano",
     "SOPRANINO": "Sopranino"
   },
-  "songs": {
-    "hot-cross-buns": "Hot Cross Buns",
-    "mary-had-a-little-lamb": "Si Maria ay may munting tupa",
-    "twinkle-twinkle": "Kumikislap na bituin",
-    "frere-jacques": "Kapatid na Jacques",
-    "row-row-row-your-boat": "Sagwan, sagwan ang iyong bangka"
-  },
-  "books": {
-    "beginner-songs": "Mga Kanta para sa mga Baguhan",
-    "scales": "Mga scale"
-  }
+  "beginnerSongs": [
+    "Hot Cross Buns",
+    "Si Maria ay may munting tupa",
+    "Kumikislap na bituin",
+    "Sagwan, sagwan ang iyong bangka"
+  ]
 }

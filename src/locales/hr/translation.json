@@ -101,15 +101,10 @@
     "SOPRANO": "Sopran",
     "SOPRANINO": "Sopranino"
   },
-  "songs": {
-    "hot-cross-buns": "Hot Cross Buns",
-    "mary-had-a-little-lamb": "Marija je imala malo janje",
-    "twinkle-twinkle": "Zvijezdo mala",
-    "frere-jacques": "Brate Jakov",
-    "row-row-row-your-boat": "Veslaj, veslaj čamcem"
-  },
-  "books": {
-    "beginner-songs": "Pjesme za početnike",
-    "scales": "Ljestvice"
-  }
+  "beginnerSongs": [
+    "Hot Cross Buns",
+    "Marija je imala malo janje",
+    "Zvijezdo mala",
+    "Veslaj, veslaj čamcem"
+  ]
 }

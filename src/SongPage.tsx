@@ -602,7 +602,7 @@ export function SongPage({
           fontFamily: "'EB Garamond', Georgia, serif",
         }}
       >
-        {t(`songs.${song.id}`, music.title ?? '')}
+        {song.title}
       </Typography>
       {music.composer && (
         <Typography

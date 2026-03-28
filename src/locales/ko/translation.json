@@ -101,15 +101,10 @@
     "SOPRANO": "소프라노",
     "SOPRANINO": "소프라니노"
   },
-  "songs": {
-    "hot-cross-buns": "핫크로스번",
-    "mary-had-a-little-lamb": "메리에게 작은 양이 있었네",
-    "twinkle-twinkle": "반짝반짝 작은 별",
-    "frere-jacques": "프레르 자크",
-    "row-row-row-your-boat": "노 저어라 노 저어라"
-  },
-  "books": {
-    "beginner-songs": "초보자 곡",
-    "scales": "음계"
-  }
+  "beginnerSongs": [
+    "핫크로스번",
+    "메리에게 작은 양이 있었네",
+    "반짝반짝 작은 별",
+    "노 저어라 노 저어라"
+  ]
 }

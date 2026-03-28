@@ -101,15 +101,10 @@
     "SOPRANO": "Soprán",
     "SOPRANINO": "Sopranino"
   },
-  "songs": {
-    "hot-cross-buns": "Hot Cross Buns",
-    "mary-had-a-little-lamb": "Mária mala malého baránka",
-    "twinkle-twinkle": "Svieť, svieť, hviezdička",
-    "frere-jacques": "Brat Jakub",
-    "row-row-row-your-boat": "Vesluj, vesluj loďkou"
-  },
-  "books": {
-    "beginner-songs": "Piesne pre začiatočníkov",
-    "scales": "Stupnice"
-  }
+  "beginnerSongs": [
+    "Hot Cross Buns",
+    "Mária mala malého baránka",
+    "Svieť, svieť, hviezdička",
+    "Vesluj, vesluj loďkou"
+  ]
 }

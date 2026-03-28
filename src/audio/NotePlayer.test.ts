@@ -252,6 +252,24 @@ describe('NotePlayer', () => {
     });
   });
 
+  it('handles a tie that crosses a bar line', () => {
+    player.start();
+    const createOscSpy = vi.spyOn(player.audioCtx!, 'createOscillator');
+
+    // C quarter tied across a bar line to another C quarter
+    const music = fromAbc('X:1\nT:Test\nM:C\nL:1/4\nK:C\nC- |C |');
+
+    expect(music.notes).toHaveLength(2);
+    expect(music.curves).toHaveLength(1);
+
+    // scheduleNotes calls expandRepeats internally; the cross-bar tie curve
+    // must survive expansion so note 1 is treated as a continuation.
+    player.scheduleNotes(120, music);
+
+    // Only 3 oscillators (1 pitch × 3 harmonics), not 6
+    expect(createOscSpy).toHaveBeenCalledTimes(3);
+  });
+
   it('handles ties parsed from ABC notation', () => {
     player.start();
     const createOscSpy = vi.spyOn(player.audioCtx!, 'createOscillator');

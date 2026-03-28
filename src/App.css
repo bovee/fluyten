@@ -41,10 +41,8 @@
   color: #888;
 }
 
-@media (max-width: 600px) {
-  .vexflow-container {
-    padding-left: 8px;
-  }
+.vexflow-container {
+  padding-left: 8px;
 }
 
 @keyframes trill-primary {

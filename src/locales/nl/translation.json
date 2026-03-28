@@ -101,15 +101,10 @@
     "SOPRANO": "Sopraan",
     "SOPRANINO": "Sopranino"
   },
-  "songs": {
-    "hot-cross-buns": "Hot Cross Buns",
-    "mary-had-a-little-lamb": "Maria had een lammetje",
-    "twinkle-twinkle": "Twinkle Twinkle Kleine Ster",
-    "frere-jacques": "Broeder Jacob",
-    "row-row-row-your-boat": "Roei, Roei, Roei je Boot"
-  },
-  "books": {
-    "beginner-songs": "Beginnersnummers",
-    "scales": "Toonladders"
-  }
+  "beginnerSongs": [
+    "Hot Cross Buns",
+    "Maria had een lammetje",
+    "Twinkle Twinkle Kleine Ster",
+    "Roei, Roei, Roei je Boot"
+  ]
 }

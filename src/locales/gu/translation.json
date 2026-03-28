@@ -101,15 +101,10 @@
     "SOPRANO": "સોપ્રાનો",
     "SOPRANINO": "સોપ્રાનિનો"
   },
-  "songs": {
-    "hot-cross-buns": "હૉટ ક્રૉસ બન્સ",
-    "mary-had-a-little-lamb": "મેરી પાસે એક નાનું ઘેટું હતું",
-    "twinkle-twinkle": "ઝગમગ ઝગમગ નાનો તારો",
-    "frere-jacques": "ભાઈ જૅક",
-    "row-row-row-your-boat": "ચલાવ ચલાવ તારી નૌકા"
-  },
-  "books": {
-    "beginner-songs": "શિખાઉ ગીતો",
-    "scales": "સ્કેલ"
-  }
+  "beginnerSongs": [
+    "હૉટ ક્રૉસ બન્સ",
+    "મેરી પાસે એક નાનું ઘેટું હતું",
+    "ઝગમગ ઝગમગ નાનો તારો",
+    "ચલાવ ચલાવ તારી નૌકા"
+  ]
 }

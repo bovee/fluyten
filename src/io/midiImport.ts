@@ -1,6 +1,5 @@
 import { Duration, DurationModifier, Music, Note } from '../music';
 import { DURATION_TICKS } from '../constants';
-import { toAbc, notesToAbc } from './abcExport';
 
 // Key signature: sharps/flats count → key name
 const FIFTHS_TO_MAJOR_KEY: Record<number, string> = {
@@ -420,14 +419,12 @@ function parseMidiBuffer(buffer: ArrayBuffer): ParsedMidi {
 }
 
 /**
- * Parse a MIDI buffer into an ABC string (possibly multi-voice).
- * Use this for file import — it preserves all channels as V: voices.
- * For single-channel files the result is a plain single-voice ABC tune.
+ * Parse a MIDI buffer into an array of Music objects, one per non-drum channel.
+ * If the file has no pitched channels an array containing one empty Music
+ * (with metadata only) is returned so callers always get at least one object.
+ * For single-channel files the array has one element.
  */
-export function fromMidiToAbc(buffer: ArrayBuffer): {
-  title: string;
-  abc: string;
-} {
+export function fromMidi(buffer: ArrayBuffer): Music[] {
   const {
     title,
     beatsPerBar,
@@ -447,62 +444,12 @@ export function fromMidiToAbc(buffer: ArrayBuffer): {
     return m;
   }
 
-  if (channels.length <= 1) {
+  if (channels.length === 0) return [makeBaseMusic()];
+
+  return channels.map((ch) => {
     const music = makeBaseMusic();
-    if (channels.length === 1)
-      buildNotesIntoMusic(
-        channelNotes.get(channels[0])!,
-        music,
-        ticksPerQuarter
-      );
+    buildNotesIntoMusic(channelNotes.get(ch)!, music, ticksPerQuarter);
     music.reflow();
-    return { title, abc: `X:1\n${toAbc(music)}` };
-  }
-
-  // Multiple channels → one V: voice per channel
-  const headerLines = [
-    title ? `T:${title}` : '',
-    `M:${beatsPerBar}/${beatValue}`,
-    'L:1/8',
-    `K:${keySignature}`,
-  ].filter(Boolean);
-
-  const voiceLines: string[] = [];
-  for (const ch of channels) {
-    const voiceMusic = makeBaseMusic();
-    buildNotesIntoMusic(channelNotes.get(ch)!, voiceMusic, ticksPerQuarter);
-    voiceMusic.reflow();
-    voiceLines.push(`V:${ch + 1}`);
-    voiceLines.push(notesToAbc(voiceMusic, keySignature));
-  }
-
-  return { title, abc: `X:1\n${[...headerLines, ...voiceLines].join('\n')}` };
-}
-
-/**
- * Parse a MIDI buffer into a Music object (first/only channel).
- * For multi-channel files use fromMidiToAbc to preserve all voices.
- */
-export function fromMidi(buffer: ArrayBuffer): Music {
-  const {
-    title,
-    beatsPerBar,
-    beatValue,
-    keySignature,
-    channels,
-    channelNotes,
-    ticksPerQuarter,
-  } = parseMidiBuffer(buffer);
-
-  const music = new Music();
-  music.title = title;
-  music.beatsPerBar = beatsPerBar;
-  music.beatValue = beatValue;
-  music.keySignature = keySignature;
-
-  if (channels.length >= 1) {
-    buildNotesIntoMusic(channelNotes.get(channels[0])!, music, ticksPerQuarter);
-  }
-  music.reflow();
-  return music;
+    return music;
+  });
 }

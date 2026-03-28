@@ -101,15 +101,10 @@
     "SOPRANO": "ਸੋਪ੍ਰਾਨੋ",
     "SOPRANINO": "ਸੋਪ੍ਰਾਨਿਨੋ"
   },
-  "songs": {
-    "hot-cross-buns": "ਹੌਟ ਕਰਾਸ ਬਨਜ਼",
-    "mary-had-a-little-lamb": "ਮੈਰੀ ਕੋਲ ਇੱਕ ਛੋਟਾ ਲੇਲਾ ਸੀ",
-    "twinkle-twinkle": "ਟਿਮ ਟਿਮ ਤਾਰੇ",
-    "frere-jacques": "ਭਰਾ ਜੈਕ",
-    "row-row-row-your-boat": "ਖੇਵੋ ਖੇਵੋ ਕਿਸ਼ਤੀ"
-  },
-  "books": {
-    "beginner-songs": "ਸ਼ੁਰੂਆਤੀ ਗਾਣੇ",
-    "scales": "ਸਕੇਲ"
-  }
+  "beginnerSongs": [
+    "ਹੌਟ ਕਰਾਸ ਬਨਜ਼",
+    "ਮੈਰੀ ਕੋਲ ਇੱਕ ਛੋਟਾ ਲੇਲਾ ਸੀ",
+    "ਟਿਮ ਟਿਮ ਤਾਰੇ",
+    "ਖੇਵੋ ਖੇਵੋ ਕਿਸ਼ਤੀ"
+  ]
 }

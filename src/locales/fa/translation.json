@@ -101,15 +101,10 @@
     "SOPRANO": "سوپرانو",
     "SOPRANINO": "سوپرانینو"
   },
-  "songs": {
-    "hot-cross-buns": "Hot Cross Buns",
-    "mary-had-a-little-lamb": "ماری بره کوچکی داشت",
-    "twinkle-twinkle": "ستاره کوچولو",
-    "frere-jacques": "برادر ژاک",
-    "row-row-row-your-boat": "قایق بران، قایق بران"
-  },
-  "books": {
-    "beginner-songs": "آهنگ‌های مبتدی",
-    "scales": "گام‌ها"
-  }
+  "beginnerSongs": [
+    "Hot Cross Buns",
+    "ماری بره کوچکی داشت",
+    "ستاره کوچولو",
+    "قایق بران، قایق بران"
+  ]
 }

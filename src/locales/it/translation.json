@@ -101,15 +101,10 @@
     "SOPRANO": "Soprano",
     "SOPRANINO": "Sopranino"
   },
-  "songs": {
-    "hot-cross-buns": "Hot Cross Buns",
-    "mary-had-a-little-lamb": "Maria aveva un agnellino",
-    "twinkle-twinkle": "Stella, stellina",
-    "frere-jacques": "Fra Martino",
-    "row-row-row-your-boat": "Voga, voga, voga la barca"
-  },
-  "books": {
-    "beginner-songs": "Brani per principianti",
-    "scales": "Scale"
-  }
+  "beginnerSongs": [
+    "Hot Cross Buns",
+    "Maria aveva un agnellino",
+    "Stella, stellina",
+    "Voga, voga, voga la barca"
+  ]
 }

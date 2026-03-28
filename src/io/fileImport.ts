@@ -1,5 +1,6 @@
 import { parseAbcFile } from './abcImport';
-import { toAbc } from './abcExport';
+import { toAbc, notesToAbc } from './abcExport';
+import type { Music } from '../music';
 import type { UserSong } from '../store';
 
 export function isMusicXmlPath(path: string): boolean {
@@ -16,71 +17,67 @@ export function isMidiPath(path: string): boolean {
   return lower.endsWith('.mid') || lower.endsWith('.midi');
 }
 
-/**
- * Parse a File into UserSong objects.
- * Handles .abc/.txt, .musicxml/.xml/.mxl, and .mid/.midi.
- * Throws on parse failure.
- */
-export async function parseSongsFromFile(file: File): Promise<UserSong[]> {
-  const name = file.name.toLowerCase();
-  const fallbackTitle = file.name.replace(/\.[^.]+$/, '');
-
-  if (isMidiPath(name)) {
-    const { fromMidiToAbc } = await import('./midiImport');
-    const buffer = await file.arrayBuffer();
-    const { title, abc } = fromMidiToAbc(buffer);
-    return [{ id: crypto.randomUUID(), title: title || fallbackTitle, abc }];
+export class HttpError extends Error {
+  constructor(public readonly status: number) {
+    super(`HTTP error ${status}`);
   }
-
-  if (isMusicXmlPath(name)) {
-    const { fromMusicXml, extractMxl } = await import('./musicXmlImport');
-    let xmlText: string;
-    if (name.endsWith('.mxl')) {
-      const buffer = await file.arrayBuffer();
-      xmlText = extractMxl(buffer);
-    } else {
-      xmlText = await file.text();
-    }
-    const music = fromMusicXml(xmlText);
-    return [
-      {
-        id: crypto.randomUUID(),
-        title: music.title || fallbackTitle,
-        abc: `X:1\n${toAbc(music)}`,
-      },
-    ];
-  }
-
-  return new Promise((resolve, reject) => {
-    const reader = new FileReader();
-    reader.onload = () => {
-      const text = reader.result as string;
-      resolve(
-        parseAbcFile(text).map(({ title, abc }) => ({
-          id: crypto.randomUUID(),
-          title: title === 'Untitled' ? fallbackTitle : title,
-          abc,
-        }))
-      );
-    };
-    reader.onerror = () =>
-      reject(reader.error ?? new Error('Failed to read file'));
-    reader.readAsText(file);
-  });
 }
 
 /**
- * Parse already-fetched text content into UserSong objects.
- * pathForExtension is the file name or URL path, used to detect MusicXML vs ABC.
+ * Convert an array of Music objects (one per MIDI channel) to a single ABC
+ * string.  Single-voice files produce plain ABC; multi-voice files produce
+ * ABC with V: headers, one per voice.
  */
-export async function parseSongsFromText(
-  text: string,
-  pathForExtension: string,
+function musicVoicesToAbc(voices: Music[]): string {
+  if (voices.length === 1) return `X:1\n${toAbc(voices[0])}`;
+  const first = voices[0];
+  const header = [
+    first.title ? `T:${first.title}` : null,
+    `M:${first.beatsPerBar}/${first.beatValue}`,
+    'L:1/8',
+    `K:${first.keySignature}`,
+  ]
+    .filter(Boolean)
+    .join('\n');
+  const voiceParts = voices
+    .map((m, i) => `V:${i + 1}\n${notesToAbc(m, m.keySignature)}`)
+    .join('\n');
+  return `X:1\n${header}\n${voiceParts}`;
+}
+
+/** Shared format routing used by both parseSongsFromFile and parseSongsFromUrl. */
+async function parseSongsFromContent(
+  content: string | ArrayBuffer,
+  path: string,
   fallbackTitle: string
 ): Promise<UserSong[]> {
-  if (isMusicXmlPath(pathForExtension)) {
+  const lower = path.toLowerCase();
+
+  if (content instanceof ArrayBuffer) {
+    if (isMidiPath(lower)) {
+      const { fromMidi } = await import('./midiImport');
+      const voices = fromMidi(content);
+      const title = voices[0]?.title || fallbackTitle;
+      return [{ id: crypto.randomUUID(), title, abc: musicVoicesToAbc(voices) }];
+    }
+    if (lower.endsWith('.mxl')) {
+      const { fromMusicXml, extractMxl } = await import('./musicXmlImport');
+      const xmlText = extractMxl(content);
+      const music = fromMusicXml(xmlText);
+      return [
+        {
+          id: crypto.randomUUID(),
+          title: music.title || fallbackTitle,
+          abc: `X:1\n${toAbc(music)}`,
+        },
+      ];
+    }
+    throw new Error(`Binary import not supported for: ${path}`);
+  }
+
+  if (isMusicXmlPath(lower)) {
     const { fromMusicXml } = await import('./musicXmlImport');
-    const music = fromMusicXml(text);
+    const music = fromMusicXml(content);
     return [
       {
         id: crypto.randomUUID(),
@@ -89,7 +86,8 @@ export async function parseSongsFromText(
       },
     ];
   }
-  return parseAbcFile(text).map(({ title, abc }) => ({
+
+  return parseAbcFile(content).map(({ title, abc }) => ({
     id: crypto.randomUUID(),
     title: title === 'Untitled' ? fallbackTitle : title,
     abc,
@@ -97,18 +95,43 @@ export async function parseSongsFromText(
 }
 
 /**
- * Parse already-fetched binary content into UserSong objects.
- * Used for MIDI URL imports where the response must be read as ArrayBuffer.
+ * Parse a File into UserSong objects.
+ * Handles .abc/.txt, .musicxml/.xml/.mxl, and .mid/.midi.
+ * Throws on parse failure.
  */
-export async function parseSongsFromBuffer(
-  buffer: ArrayBuffer,
-  pathForExtension: string,
-  fallbackTitle: string
-): Promise<UserSong[]> {
-  if (isMidiPath(pathForExtension)) {
-    const { fromMidiToAbc } = await import('./midiImport');
-    const { title, abc } = fromMidiToAbc(buffer);
-    return [{ id: crypto.randomUUID(), title: title || fallbackTitle, abc }];
+export async function parseSongsFromFile(file: File): Promise<UserSong[]> {
+  const fallbackTitle = file.name.replace(/\.[^.]+$/, '');
+  const lower = file.name.toLowerCase();
+  let content: string | ArrayBuffer;
+  if (isMidiPath(lower) || lower.endsWith('.mxl')) {
+    content = await file.arrayBuffer();
+  } else {
+    content = await file.text();
   }
-  throw new Error(`Binary import not supported for: ${pathForExtension}`);
+  return parseSongsFromContent(content, file.name, fallbackTitle);
+}
+
+/**
+ * Fetch a URL and parse its content into UserSong objects.
+ * Handles .abc/.txt, .musicxml/.xml/.mxl, and .mid/.midi.
+ * Throws HttpError on non-2xx responses; rethrows network failures as-is.
+ */
+export async function parseSongsFromUrl(url: string): Promise<UserSong[]> {
+  const response = await fetch(url);
+  if (!response.ok) throw new HttpError(response.status);
+
+  const urlPath = new URL(url).pathname;
+  const fallbackTitle = (urlPath.split('/').pop()?.split('?')[0] ?? 'Imported').replace(
+    /\.[^.]+$/,
+    ''
+  );
+
+  const lower = urlPath.toLowerCase();
+  let content: string | ArrayBuffer;
+  if (isMidiPath(lower) || lower.endsWith('.mxl')) {
+    content = await response.arrayBuffer();
+  } else {
+    content = await response.text();
+  }
+  return parseSongsFromContent(content, urlPath, fallbackTitle);
 }

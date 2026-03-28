@@ -2,7 +2,7 @@ X:1
 T:Hot Cross Buns
 M:C
 L:1/4
-K:F
+K:C
 e2 d2 | c4 | e2 d2 | c4 |
 c c c c | d d d d | e2 d2 | c4 |
 
@@ -10,7 +10,7 @@ X:2
 T:Mary Had a Little Lamb
 M:C
 L:1/4
-K:F
+K:C
 e2 d2 | c2 d2 | e2 e2 | e4 |
 d2 d2 | d4 | e2 g2 | g4 |
 e2 d2 | c2 d2 | e2 e2 | e2 e2 |
@@ -29,6 +29,6 @@ X:4
 T:Row Row Row Your Boat
 M:3/4
 L:1/4
-K:F
-F3 | F3 | F2 G | A3 | A2 G | A2 B | c3 |
-f f f | c c c | A A A | F F F | c2 B | A2 G | F3
+K:C
+F3 | F3 | F2 G | A3 | A2 G | A2 _B | c3 |
+f f f | c c c | A A A | F F F | c2 _B | A2 G | F3

@@ -101,15 +101,10 @@
     "SOPRANO": "Soprano",
     "SOPRANINO": "Sopranino"
   },
-  "songs": {
-    "hot-cross-buns": "Hot Cross Buns",
-    "mary-had-a-little-lamb": "Maria tinha um carneirinho",
-    "twinkle-twinkle": "Brilha, Brilha, Estrelinha",
-    "frere-jacques": "Frei João",
-    "row-row-row-your-boat": "Rema, Rema, Rema o Barco"
-  },
-  "books": {
-    "beginner-songs": "Músicas para iniciantes",
-    "scales": "Escalas"
-  }
+  "beginnerSongs": [
+    "Hot Cross Buns",
+    "Maria tinha um carneirinho",
+    "Brilha, Brilha, Estrelinha",
+    "Rema, Rema, Rema o Barco"
+  ]
 }

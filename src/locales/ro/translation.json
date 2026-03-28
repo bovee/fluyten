@@ -101,15 +101,10 @@
     "SOPRANO": "Sopran",
     "SOPRANINO": "Sopranino"
   },
-  "songs": {
-    "hot-cross-buns": "Hot Cross Buns",
-    "mary-had-a-little-lamb": "Maria a avut un miel mic",
-    "twinkle-twinkle": "Stelușă, stelușă",
-    "frere-jacques": "Frate Iacob",
-    "row-row-row-your-boat": "Vâslește, vâslește barca"
-  },
-  "books": {
-    "beginner-songs": "Cântece pentru începători",
-    "scales": "Game"
-  }
+  "beginnerSongs": [
+    "Hot Cross Buns",
+    "Maria a avut un miel mic",
+    "Stelușă, stelușă",
+    "Vâslește, vâslește barca"
+  ]
 }
