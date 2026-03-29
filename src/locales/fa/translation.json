@@ -1,7 +1,19 @@
 {
   "appTitle": "Fluyten",
   "settings": "تنظیمات",
+  "settingsTabGeneral": "عمومی",
+  "settingsTabInstrument": "ساز",
+  "settingsTabPlayback": "پخش",
   "addSong": "افزودن آهنگ",
+  "filterSongs": "Filter songs",
+  "addEmptySong": "افزودن آهنگ خالی",
+  "editSong": "ویرایش آهنگ",
+  "editSongs": "ویرایش آهنگ‌ها",
+  "exportSongs": "صدور آهنگ‌ها",
+  "deleteSongs": "حذف آهنگ‌ها",
+  "selectSong": "انتخاب آهنگ",
+  "deselectSong": "لغو انتخاب آهنگ",
+  "exportSong": "صدور آهنگ",
   "addOtherSong": "افزودن آهنگ دیگر",
   "addEmptyBook": "افزودن کتاب خالی",
   "importFromFile": "وارد کردن از فایل",
@@ -106,5 +118,7 @@
     "ماری بره کوچکی داشت",
     "ستاره کوچولو",
     "قایق بران، قایق بران"
-  ]
+  ],
+  "confirmDeleteSongs_one": "1 آهنگ حذف شود؟ این قابل برگشت نیست.",
+  "confirmDeleteSongs_other": "{{count}} آهنگ حذف شود؟ این قابل برگشت نیست."
 }

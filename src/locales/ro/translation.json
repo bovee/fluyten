@@ -1,7 +1,19 @@
 {
   "appTitle": "Fluyten",
   "settings": "Setări",
+  "settingsTabGeneral": "General",
+  "settingsTabInstrument": "Instrument",
+  "settingsTabPlayback": "Redare",
   "addSong": "Adaugă cântec",
+  "filterSongs": "Filter songs",
+  "addEmptySong": "Adaugă cântec gol",
+  "editSong": "Editează cântecul",
+  "editSongs": "Editează cântece",
+  "exportSongs": "Exportă cântece",
+  "deleteSongs": "Șterge cântece",
+  "selectSong": "Selectează cântecul",
+  "deselectSong": "Deselectează cântecul",
+  "exportSong": "Exportă cântecul",
   "addOtherSong": "Adaugă alt cântec",
   "addEmptyBook": "Adaugă carte goală",
   "importFromFile": "Importă din fișier",
@@ -106,5 +118,7 @@
     "Maria a avut un miel mic",
     "Stelușă, stelușă",
     "Vâslește, vâslește barca"
-  ]
+  ],
+  "confirmDeleteSongs_one": "Ștergeți 1 cântece? Aceasta nu poate fi anulată.",
+  "confirmDeleteSongs_other": "Ștergeți {{count}} cântece? Aceasta nu poate fi anulată."
 }

@@ -1,7 +1,19 @@
 {
   "appTitle": "Fluyten",
   "settings": "सेटिंग्स",
+  "settingsTabGeneral": "सामान्य",
+  "settingsTabInstrument": "वाद्य यंत्र",
+  "settingsTabPlayback": "प्लेबैक",
   "addSong": "गाना जोड़ें",
+  "filterSongs": "Filter songs",
+  "addEmptySong": "खाली गाना जोड़ें",
+  "editSong": "गाना संपादित करें",
+  "editSongs": "गाने संपादित करें",
+  "exportSongs": "गाने निर्यात करें",
+  "deleteSongs": "गाने हटाएं",
+  "selectSong": "गाना चुनें",
+  "deselectSong": "गाना अचयनित करें",
+  "exportSong": "गाना निर्यात करें",
   "addOtherSong": "दूसरा गाना जोड़ें",
   "addEmptyBook": "खाली पुस्तक जोड़ें",
   "importFromFile": "फ़ाइल से आयात करें",
@@ -106,5 +118,7 @@
     "मैरी का एक छोटा मेमना था",
     "टिमटिम करते तारे",
     "नाव खेओ नाव खेओ"
-  ]
+  ],
+  "confirmDeleteSongs_one": "1 गाने हटाएं? यह पूर्ववत नहीं किया जा सकता।",
+  "confirmDeleteSongs_other": "{{count}} गाने हटाएं? यह पूर्ववत नहीं किया जा सकता।"
 }

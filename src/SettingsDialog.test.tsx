@@ -27,7 +27,7 @@ beforeEach(() => {
     tuning: 1.0,
     isGerman: false,
     language: 'en',
-    userBooks: [],
+    songs: [],
   });
   mockStart.mockReset().mockResolvedValue(undefined);
   mockStop.mockReset();
@@ -36,16 +36,10 @@ beforeEach(() => {
 const renderDialog = (open = true) =>
   render(<SettingsDialog open={open} onClose={vi.fn()} />);
 
-describe('SettingsDialog', () => {
-  it('renders all controls when open', () => {
-    renderDialog();
-    expect(screen.getByLabelText(/language/i)).toBeInTheDocument();
-    expect(screen.getByLabelText(/recorder type/i)).toBeInTheDocument();
-    expect(screen.getByRole('slider', { name: /tuning/i })).toBeInTheDocument();
-    expect(screen.getByRole('switch')).toBeInTheDocument();
-    expect(screen.getByRole('button', { name: /detect/i })).toBeInTheDocument();
-  });
+const clickTab = (name: RegExp) =>
+  fireEvent.click(screen.getByRole('tab', { name }));
 
+describe('SettingsDialog', () => {
   it('does not render content when closed', () => {
     renderDialog(false);
     expect(
@@ -53,11 +47,16 @@ describe('SettingsDialog', () => {
     ).not.toBeInTheDocument();
   });
 
+  it('General tab shows language select', () => {
+    renderDialog();
+    // General tab is active by default
+    expect(screen.getByLabelText(/language/i)).toBeInTheDocument();
+  });
+
   it('language select shows all 44 language options', () => {
     renderDialog();
     const select = screen.getByLabelText(/language/i);
     fireEvent.mouseDown(select);
-    // 44 languages
     const options = screen.getAllByRole('option');
     expect(options.length).toBe(44);
   });
@@ -76,8 +75,18 @@ describe('SettingsDialog', () => {
     spy.mockRestore();
   });
 
+  it('Instrument tab shows recorder type, tuning slider, detect button, and german toggle', () => {
+    renderDialog();
+    clickTab(/instrument/i);
+    expect(screen.getByLabelText(/recorder type/i)).toBeInTheDocument();
+    expect(screen.getByRole('slider', { name: /tuning/i })).toBeInTheDocument();
+    expect(screen.getByRole('switch')).toBeInTheDocument();
+    expect(screen.getByRole('button', { name: /detect/i })).toBeInTheDocument();
+  });
+
   it('instrument type select excludes ALL and shows 5 recorder types', () => {
     renderDialog();
+    clickTab(/instrument/i);
     const select = screen.getByLabelText(/recorder type/i);
     fireEvent.mouseDown(select);
     const options = screen.getAllByRole('option');
@@ -89,6 +98,7 @@ describe('SettingsDialog', () => {
 
   it('changing instrument type updates store', () => {
     renderDialog();
+    clickTab(/instrument/i);
     const select = screen.getByLabelText(/recorder type/i);
     fireEvent.mouseDown(select);
     const altoOption = screen
@@ -101,18 +111,21 @@ describe('SettingsDialog', () => {
   it('tuning slider displays current tuning value', () => {
     useStore.setState({ tuning: 0.95 });
     renderDialog();
+    clickTab(/instrument/i);
     expect(screen.getAllByText(/0\.95/).length).toBeGreaterThan(0);
   });
 
   it('german fingering toggle reflects store state', () => {
     useStore.setState({ isGerman: true });
     renderDialog();
+    clickTab(/instrument/i);
     const toggle = screen.getByRole('switch');
     expect((toggle as HTMLInputElement).checked).toBe(true);
   });
 
   it('toggling german fingering updates store', () => {
     renderDialog();
+    clickTab(/instrument/i);
     const toggle = screen.getByRole('switch');
     fireEvent.click(toggle);
     expect(useStore.getState().isGerman).toBe(true);
@@ -120,11 +133,11 @@ describe('SettingsDialog', () => {
 
   it('detect button opens detection dialog with stepper', async () => {
     renderDialog();
+    clickTab(/instrument/i);
     const detectBtn = screen.getByRole('button', { name: /detect/i });
     fireEvent.click(detectBtn);
     const detectDialog = await screen.findByRole('dialog', { name: /detect/i });
     expect(detectDialog).toBeInTheDocument();
-    // Stepper is present in the detect dialog
     expect(
       within(detectDialog).getAllByText(/recorder type/i).length
     ).toBeGreaterThan(0);
@@ -132,6 +145,7 @@ describe('SettingsDialog', () => {
 
   it('closing detection dialog calls detector.stop()', async () => {
     renderDialog();
+    clickTab(/instrument/i);
     fireEvent.click(screen.getByRole('button', { name: /detect/i }));
     const detectDialog = await screen.findByRole('dialog', { name: /detect/i });
     const closeBtn = within(detectDialog).getByRole('button', {

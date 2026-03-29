@@ -1,7 +1,19 @@
 {
   "appTitle": "Fluyten",
   "settings": "הגדרות",
+  "settingsTabGeneral": "כללי",
+  "settingsTabInstrument": "כלי נגינה",
+  "settingsTabPlayback": "השמעה",
   "addSong": "הוסף שיר",
+  "filterSongs": "Filter songs",
+  "addEmptySong": "הוסף שיר ריק",
+  "editSong": "ערוך שיר",
+  "editSongs": "ערוך שירים",
+  "exportSongs": "ייצא שירים",
+  "deleteSongs": "מחק שירים",
+  "selectSong": "בחר שיר",
+  "deselectSong": "בטל בחירת שיר",
+  "exportSong": "ייצא שיר",
   "addOtherSong": "הוסף שיר נוסף",
   "addEmptyBook": "הוסף ספר ריק",
   "importFromFile": "ייבא מקובץ",
@@ -106,5 +118,7 @@
     "למרי היה כבשון קטן",
     "כוכב קטן",
     "חתור, חתור בסירתך"
-  ]
+  ],
+  "confirmDeleteSongs_one": "למחוק 1 שירים? לא ניתן לבטל פעולה זו.",
+  "confirmDeleteSongs_other": "למחוק {{count}} שירים? לא ניתן לבטל פעולה זו."
 }

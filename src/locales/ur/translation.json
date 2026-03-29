@@ -1,7 +1,19 @@
 {
   "appTitle": "Fluyten",
   "settings": "ترتیبات",
+  "settingsTabGeneral": "عام",
+  "settingsTabInstrument": "آلہ",
+  "settingsTabPlayback": "پلے بیک",
   "addSong": "گانا شامل کریں",
+  "filterSongs": "Filter songs",
+  "addEmptySong": "خالی گانا شامل کریں",
+  "editSong": "گانا ترمیم کریں",
+  "editSongs": "گانے ترمیم کریں",
+  "exportSongs": "گانے برآمد کریں",
+  "deleteSongs": "گانے حذف کریں",
+  "selectSong": "گانا منتخب کریں",
+  "deselectSong": "گانے کا انتخاب ہٹائیں",
+  "exportSong": "گانا برآمد کریں",
   "addOtherSong": "دوسرا گانا شامل کریں",
   "addEmptyBook": "خالی کتاب شامل کریں",
   "importFromFile": "فائل سے درآمد کریں",
@@ -106,5 +118,7 @@
     "میری کے پاس ایک چھوٹا برہ تھا",
     "چمکو چمکو چھوٹے ستارے",
     "چلاؤ چلاؤ اپنی کشتی"
-  ]
+  ],
+  "confirmDeleteSongs_one": "1 گانے حذف کریں؟ یہ واپس نہیں ہو سکتا۔",
+  "confirmDeleteSongs_other": "{{count}} گانے حذف کریں؟ یہ واپس نہیں ہو سکتا۔"
 }

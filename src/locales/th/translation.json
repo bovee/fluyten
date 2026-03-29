@@ -1,7 +1,19 @@
 {
   "appTitle": "Fluyten",
   "settings": "การตั้งค่า",
+  "settingsTabGeneral": "ทั่วไป",
+  "settingsTabInstrument": "เครื่องดนตรี",
+  "settingsTabPlayback": "การเล่น",
   "addSong": "เพิ่มเพลง",
+  "filterSongs": "Filter songs",
+  "addEmptySong": "เพิ่มเพลงว่าง",
+  "editSong": "แก้ไขเพลง",
+  "editSongs": "แก้ไขเพลง",
+  "exportSongs": "ส่งออกเพลง",
+  "deleteSongs": "ลบเพลง",
+  "selectSong": "เลือกเพลง",
+  "deselectSong": "ยกเลิกการเลือกเพลง",
+  "exportSong": "ส่งออกเพลง",
   "addOtherSong": "เพิ่มเพลงอื่น",
   "addEmptyBook": "เพิ่มสมุดว่าง",
   "importFromFile": "นำเข้าจากไฟล์",
@@ -106,5 +118,7 @@
     "แมรี่มีลูกแกะตัวน้อย",
     "ดาวเล็กดาวน้อย",
     "พายเรือ พายเรือ"
-  ]
+  ],
+  "confirmDeleteSongs_one": "ลบ 1 เพลง? ไม่สามารถยกเลิกได้",
+  "confirmDeleteSongs_other": "ลบ {{count}} เพลง? ไม่สามารถยกเลิกได้"
 }

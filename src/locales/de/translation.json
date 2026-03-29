@@ -1,7 +1,19 @@
 {
   "appTitle": "Fluyten",
   "settings": "Einstellungen",
+  "settingsTabGeneral": "Allgemein",
+  "settingsTabInstrument": "Instrument",
+  "settingsTabPlayback": "Wiedergabe",
   "addSong": "Stück hinzufügen",
+  "filterSongs": "Filter songs",
+  "addEmptySong": "Leeres Lied hinzufügen",
+  "editSong": "Lied bearbeiten",
+  "editSongs": "Lieder bearbeiten",
+  "exportSongs": "Lieder exportieren",
+  "deleteSongs": "Lieder löschen",
+  "selectSong": "Lied auswählen",
+  "deselectSong": "Lied abwählen",
+  "exportSong": "Lied exportieren",
   "addOtherSong": "Anderes Stück hinzufügen",
   "addEmptyBook": "Leeres Buch hinzufügen",
   "importFromFile": "Aus Datei importieren",
@@ -106,5 +118,7 @@
     "Mary hatte ein kleines Lamm",
     "Twinkle, Twinkle, Little Star",
     "Rudere, Rudere dein Boot"
-  ]
+  ],
+  "confirmDeleteSongs_one": "1 Lieder löschen? Dies kann nicht rückgängig gemacht werden.",
+  "confirmDeleteSongs_other": "{{count}} Lieder löschen? Dies kann nicht rückgängig gemacht werden."
 }

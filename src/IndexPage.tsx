@@ -1,30 +1,24 @@
-import { useRef, useState } from 'react';
+import { useCallback, useEffect, useRef, useState } from 'react';
 import { useTranslation } from 'react-i18next';
-import Accordion from '@mui/material/Accordion';
+import Add from '@mui/icons-material/Add';
+import CheckCircle from '@mui/icons-material/CheckCircle';
+import EditNote from '@mui/icons-material/EditNote';
+import RadioButtonUnchecked from '@mui/icons-material/RadioButtonUnchecked';
+import Settings from '@mui/icons-material/Settings';
 import Box from '@mui/material/Box';
-import AccordionDetails from '@mui/material/AccordionDetails';
-import AccordionSummary from '@mui/material/AccordionSummary';
 import Button from '@mui/material/Button';
-import IconButton from '@mui/material/IconButton';
-import List from '@mui/material/List';
-import ListItem from '@mui/material/ListItem';
-import ListItemButton from '@mui/material/ListItemButton';
-import ListItemText from '@mui/material/ListItemText';
-import TextField from '@mui/material/TextField';
 import Dialog from '@mui/material/Dialog';
 import DialogActions from '@mui/material/DialogActions';
 import DialogContent from '@mui/material/DialogContent';
 import DialogTitle from '@mui/material/DialogTitle';
-import ButtonGroup from '@mui/material/ButtonGroup';
+import IconButton from '@mui/material/IconButton';
+import ListItem from '@mui/material/ListItem';
+import ListItemButton from '@mui/material/ListItemButton';
+import ListItemText from '@mui/material/ListItemText';
 import Menu from '@mui/material/Menu';
 import MenuItem from '@mui/material/MenuItem';
+import TextField from '@mui/material/TextField';
 import Tooltip from '@mui/material/Tooltip';
-import ArrowDropDown from '@mui/icons-material/ArrowDropDown';
-import ExpandMore from '@mui/icons-material/ExpandMore';
-import Delete from '@mui/icons-material/Delete';
-import Edit from '@mui/icons-material/Edit';
-import FileDownload from '@mui/icons-material/FileDownload';
-import Settings from '@mui/icons-material/Settings';
 
 import {
   parseSongsFromFile,
@@ -35,101 +29,125 @@ import { getStarterBookUrl, isStarterBookUrl } from './instrument';
 import { ScaleDialog } from './scales/ScaleDialog';
 import { SettingsDialog } from './SettingsDialog';
 import { type Song } from './music';
-import { useStore, type UserBook, type UserSong } from './store';
+import { useStore } from './store';
 
 interface IndexPageProps {
-  onSelectSong: (song: Song, readOnly: boolean, bookId?: string) => void;
-  expandedBook: string | false;
-  onExpandedBookChange: (bookId: string | false) => void;
+  onSelectSong: (song: Song, readOnly: boolean) => void;
 }
 
-export function IndexPage({
-  onSelectSong,
-  expandedBook,
-  onExpandedBookChange,
-}: IndexPageProps) {
+export function IndexPage({ onSelectSong }: IndexPageProps) {
   const { t } = useTranslation();
   const [settingsOpen, setSettingsOpen] = useState(false);
-  const [scaleDialogBookId, setScaleDialogBookId] = useState<string | null>(
-    null
-  );
-  const [addSongMenu, setAddSongMenu] = useState<{
-    anchor: HTMLElement;
-    bookId: string;
-  } | null>(null);
-  const [newBook, setNewBook] = useState<{ title: string } | null>(null);
-  const [renameBook, setRenameBook] = useState<{
-    id: string;
-    title: string;
-  } | null>(null);
-  const [deleteConfirmBookId, setDeleteConfirmBookId] = useState<string | null>(
-    null
-  );
-  const [deleteConfirmSong, setDeleteConfirmSong] = useState<{
-    bookId: string;
-    songId: string;
-    title: string;
-  } | null>(null);
-  const [exportBook, setExportBook] = useState<{
-    id: string;
-    fileName: string;
-  } | null>(null);
+  const [scaleDialogOpen, setScaleDialogOpen] = useState(false);
+  const [addSongMenuAnchor, setAddSongMenuAnchor] =
+    useState<HTMLElement | null>(null);
+  const [editDialogOpen, setEditDialogOpen] = useState(false);
+  const [deleteConfirmOpen, setDeleteConfirmOpen] = useState(false);
   const [importUrl, setImportUrl] = useState<{
-    bookId: string;
     value: string;
     error: string | null;
   } | null>(null);
+  const [isDragOver, setIsDragOver] = useState(false);
+  const [filterText, setFilterText] = useState('');
+  const [selectedIds, setSelectedIds] = useState<Set<string>>(new Set());
+  const longPressTimers = useRef<Map<string, ReturnType<typeof setTimeout>>>(new Map());
+  const suppressNextClick = useRef<Set<string>>(new Set());
   const importFileRef = useRef<HTMLInputElement>(null);
-  const [importFileBookId, setImportFileBookId] = useState<string | null>(null);
-  const [dragOverBookId, setDragOverBookId] = useState<string | null>(null);
 
-  const userBooks = useStore((state) => state.userBooks);
-  const addUserBook = useStore((state) => state.addUserBook);
-  const removeUserBook = useStore((state) => state.removeUserBook);
-  const renameUserBook = useStore((state) => state.renameUserBook);
-  const addSongToBook = useStore((state) => state.addSongToBook);
-  const removeSongFromBook = useStore((state) => state.removeSongFromBook);
+  const isSelecting = selectedIds.size > 0;
 
-  const handleAccordionChange =
-    (bookId: string) => (_: React.SyntheticEvent, isExpanded: boolean) => {
-      onExpandedBookChange(isExpanded ? bookId : false);
+  const songs = useStore((state) => state.songs);
+  const filteredSongs = filterText
+    ? songs.filter((s) =>
+        s.title.toLowerCase().includes(filterText.toLowerCase())
+      )
+    : songs;
+  const addSong = useStore((state) => state.addSong);
+  const removeSong = useStore((state) => state.removeSong);
+
+  useEffect(() => {
+    const onDragOver = (e: DragEvent) => {
+      e.preventDefault();
+      setIsDragOver(true);
     };
+    const onDragLeave = (e: DragEvent) => {
+      if (!e.relatedTarget) setIsDragOver(false);
+    };
+    const onDrop = async (e: DragEvent) => {
+      e.preventDefault();
+      setIsDragOver(false);
+      const file = e.dataTransfer?.files[0];
+      if (!file || !/\.(abc|txt|musicxml|xml|mxl)$/i.test(file.name)) return;
+      try {
+        const parsed = await parseSongsFromFile(file);
+        parsed.forEach((s) => addSong(s));
+      } catch (err) {
+        alert(`Failed to import file: ${(err as Error).message}`);
+      }
+    };
+    window.addEventListener('dragover', onDragOver);
+    window.addEventListener('dragleave', onDragLeave);
+    window.addEventListener('drop', onDrop);
+    return () => {
+      window.removeEventListener('dragover', onDragOver);
+      window.removeEventListener('dragleave', onDragLeave);
+      window.removeEventListener('drop', onDrop);
+    };
+  }, [addSong]);
 
-  const handleCreateBook = () => {
-    if (!newBook?.title.trim()) return;
-    addUserBook(newBook.title.trim());
-    setNewBook(null);
-  };
+  const handleLongPressStart = useCallback((songId: string) => {
+    const timer = setTimeout(() => {
+      longPressTimers.current.delete(songId);
+      suppressNextClick.current.add(songId);
+      setSelectedIds((prev) => new Set([...prev, songId]));
+    }, 500);
+    longPressTimers.current.set(songId, timer);
+  }, []);
 
-  const handleRenameBook = () => {
-    if (renameBook?.title.trim()) {
-      renameUserBook(renameBook.id, renameBook.title.trim());
+  const handleLongPressCancel = useCallback((songId: string) => {
+    const timer = longPressTimers.current.get(songId);
+    if (timer !== undefined) {
+      clearTimeout(timer);
+      longPressTimers.current.delete(songId);
     }
-    setRenameBook(null);
+  }, []);
+
+  const handleRowClick = useCallback(
+    (song: Song) => {
+      if (suppressNextClick.current.has(song.id)) {
+        suppressNextClick.current.delete(song.id);
+        return;
+      }
+      onSelectSong(song, false);
+    },
+    [onSelectSong]
+  );
+
+  const handleCircleClick = useCallback((songId: string) => {
+    setSelectedIds((prev) => {
+      const next = new Set(prev);
+      if (next.has(songId)) next.delete(songId);
+      else next.add(songId);
+      return next;
+    });
+  }, []);
+
+  const handleAddEmptySong = () => {
+    addSong({
+      id: crypto.randomUUID(),
+      title: 'New Song',
+      abc: `X:1\nT:New Song\nM:C\nL:1/4\nK:C\nC D E F |`,
+    });
+    setAddSongMenuAnchor(null);
   };
 
   const handleImportFile = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
-    const bookId = importFileBookId;
-    if (!file || !bookId) return;
+    if (!file) return;
     e.target.value = '';
     try {
-      const songs = await parseSongsFromFile(file);
-      songs.forEach((song) => addSongToBook(bookId, song));
-    } catch (err) {
-      alert(`Failed to import file: ${(err as Error).message}`);
-    }
-  };
-
-  const handleDropOnBook = async (bookId: string, e: React.DragEvent) => {
-    e.preventDefault();
-    setDragOverBookId(null);
-    const file = e.dataTransfer.files[0];
-    if (!file) return;
-    if (!/\.(abc|txt|musicxml|xml|mxl)$/i.test(file.name)) return;
-    try {
-      const songs = await parseSongsFromFile(file);
-      songs.forEach((song) => addSongToBook(bookId, song));
+      const parsed = await parseSongsFromFile(file);
+      parsed.forEach((s) => addSong(s));
     } catch (err) {
       alert(`Failed to import file: ${(err as Error).message}`);
     }
@@ -146,21 +164,21 @@ export function IndexPage({
       return;
     }
     try {
-      const songs = await parseSongsFromUrl(current.value);
+      const parsed = await parseSongsFromUrl(current.value);
       const isStarter = isStarterBookUrl(current.value);
       (isStarter
-        ? songs.map((s, i) => ({
+        ? parsed.map((s, i) => ({
             ...s,
             title: t(`beginnerSongs.${i}`, { defaultValue: s.title }),
           }))
-        : songs
-      ).forEach((song) => addSongToBook(current.bookId, song));
+        : parsed
+      ).forEach((s) => addSong(s));
       setImportUrl(null);
     } catch (err) {
       if (err instanceof HttpError) {
         setImportUrl({
           ...current,
-          error: t('importUrlHttpError', { status: err.status }),
+          error: t('importUrlHttpError', { status: (err as HttpError).status }),
         });
       } else {
         setImportUrl({ ...current, error: t('importUrlCorsError') });
@@ -168,46 +186,25 @@ export function IndexPage({
     }
   };
 
-  const handleAddSong = (bookId: string) => {
-    const newSong: UserSong = {
-      id: crypto.randomUUID(),
-      title: 'New Song',
-      abc: `X:1\nT:New Song\nM:C\nL:1/4\nK:C\nC D E F |`,
-    };
-    addSongToBook(bookId, newSong);
-  };
-
-  const openRenameBook = (book: UserBook, e: React.MouseEvent) => {
-    e.stopPropagation();
-    setRenameBook({ id: book.id, title: book.title });
-  };
-
-  const handleDeleteBook = (bookId: string) => {
-    removeUserBook(bookId);
-    setRenameBook(null);
-    setDeleteConfirmBookId(null);
-  };
-
-  const openExport = (book: UserBook, e: React.MouseEvent) => {
-    e.stopPropagation();
-    setExportBook({ id: book.id, fileName: book.title });
-  };
-
-  const handleExport = () => {
-    if (!exportBook) return;
-    const book = userBooks.find((b) => b.id === exportBook.id);
-    if (!book) return;
-    const content = book.songs
-      .map((song, i) => song.abc.replace(/^X:\s*\d+/m, `X:${i + 1}`))
+  const handleExportSongs = () => {
+    const selected = songs.filter((s) => selectedIds.has(s.id));
+    const content = selected
+      .map((s, i) => s.abc.replace(/^X:\s*\d+/m, `X:${i + 1}`))
       .join('\n\n');
     const blob = new Blob([content], { type: 'text/plain' });
     const url = URL.createObjectURL(blob);
     const a = document.createElement('a');
     a.href = url;
-    a.download = `${exportBook.fileName || book.title}.abc`;
+    a.download = 'songs.abc';
     a.click();
     URL.revokeObjectURL(url);
-    setExportBook(null);
+    setEditDialogOpen(false);
+  };
+
+  const handleDeleteSongs = () => {
+    selectedIds.forEach((id) => removeSong(id));
+    setSelectedIds(new Set());
+    setDeleteConfirmOpen(false);
   };
 
   return (
@@ -221,7 +218,7 @@ export function IndexPage({
           zIndex: -2,
         }}
       />
-      {/* Decorative treble clef watermark — uses Unicode 𝄞 from serif font */}
+      {/* Decorative treble clef watermark */}
       <div
         aria-hidden="true"
         style={{
@@ -242,6 +239,40 @@ export function IndexPage({
         𝄞
       </div>
 
+      {/* Drag-over overlay */}
+      {isDragOver && (
+        <div
+          style={{
+            position: 'fixed',
+            inset: 0,
+            border: '4px dashed #1976d2',
+            backgroundColor: 'rgba(25, 118, 210, 0.08)',
+            zIndex: 9999,
+            pointerEvents: 'none',
+          }}
+        />
+      )}
+
+      <Tooltip title={t('editSongs')}>
+        <span style={{ position: 'fixed', top: 8, right: 88 }}>
+          <IconButton
+            onClick={() => setEditDialogOpen(true)}
+            aria-label={t('editSongs')}
+            disabled={!isSelecting}
+          >
+            <EditNote />
+          </IconButton>
+        </span>
+      </Tooltip>
+      <Tooltip title={t('addSong')}>
+        <IconButton
+          onClick={(e) => setAddSongMenuAnchor(e.currentTarget)}
+          aria-label={t('addSong')}
+          style={{ position: 'fixed', top: 8, right: 48 }}
+        >
+          <Add />
+        </IconButton>
+      </Tooltip>
       <Tooltip title={t('settingsButton')}>
         <IconButton
           onClick={() => setSettingsOpen(true)}
@@ -253,183 +284,105 @@ export function IndexPage({
       </Tooltip>
       <h1 style={{ color: '#1c3248' }}>{t('appTitle')}</h1>
 
-      <div style={{ width: 'min(600px, 95vw)', margin: '0 auto' }}>
-        {userBooks.map((book) => (
-          <Accordion
-            key={book.id}
-            expanded={expandedBook === book.id}
-            onChange={handleAccordionChange(book.id)}
-            onDragOver={(e) => {
-              e.preventDefault();
-              e.dataTransfer.dropEffect = 'copy';
-            }}
-            onDragEnter={(e) => {
-              e.preventDefault();
-              setDragOverBookId(book.id);
-            }}
-            onDragLeave={(e) => {
-              if (!e.currentTarget.contains(e.relatedTarget as Node))
-                setDragOverBookId(null);
-            }}
-            onDrop={(e) => void handleDropOnBook(book.id, e)}
-            sx={{
-              backgroundColor:
-                dragOverBookId === book.id ? '#e8f4fd' : '#fffef9',
-              outline:
-                dragOverBookId === book.id ? '2px dashed #1976d2' : 'none',
-              transition: 'background-color 0.15s, outline 0.15s',
-            }}
-          >
-            <AccordionSummary expandIcon={<ExpandMore />}>
-              <strong>{book.title}</strong>
-            </AccordionSummary>
-            <AccordionDetails sx={{ p: 0 }}>
-              <List disablePadding>
-                {book.songs.map((song) => (
-                  <ListItem
-                    key={song.id}
-                    disablePadding
-                    secondaryAction={
-                      <Tooltip title={t('deleteSong')}>
-                        <IconButton
-                          edge="end"
-                          size="small"
-                          onClick={() =>
-                            setDeleteConfirmSong({
-                              bookId: book.id,
-                              songId: song.id,
-                              title: song.title,
-                            })
-                          }
-                          aria-label={t('deleteSong')}
-                        >
-                          <Delete fontSize="small" />
-                        </IconButton>
-                      </Tooltip>
-                    }
-                  >
-                    <ListItemButton
-                      onClick={() =>
-                        onSelectSong(
-                          { id: song.id, title: song.title, abc: song.abc },
-                          false,
-                          book.id
-                        )
-                      }
-                    >
-                      <ListItemText primary={song.title} />
-                    </ListItemButton>
-                  </ListItem>
-                ))}
-              </List>
-              <Box
-                sx={{
-                  display: 'flex',
-                  alignItems: 'center',
-                  justifyContent: 'space-between',
-                  m: 1,
-                }}
+      {songs.length > 0 && (
+        <TextField
+          size="small"
+          placeholder={t('filterSongs')}
+          value={filterText}
+          onChange={(e) => setFilterText(e.target.value)}
+          sx={{ width: 'min(400px, 95vw)', mb: 1 }}
+        />
+      )}
+
+      <div
+        role="list"
+        style={{
+          width: 'min(1200px, 95vw)',
+          margin: '0 auto',
+          display: 'grid',
+          gridTemplateColumns: 'repeat(auto-fill, minmax(min(280px, 100%), 1fr))',
+        }}
+      >
+        {filteredSongs.map((song) => {
+          const selected = selectedIds.has(song.id);
+          return (
+            <ListItem
+              key={song.id}
+              role="listitem"
+              disablePadding
+              sx={selected ? { backgroundColor: 'action.selected' } : undefined}
+            >
+              <Tooltip title={selected ? t('deselectSong') : t('selectSong')}>
+                <IconButton
+                  size="small"
+                  aria-label={selected ? t('deselectSong') : t('selectSong')}
+                  onClick={() => handleCircleClick(song.id)}
+                  sx={{ ml: 0.5, color: selected ? 'primary.main' : 'text.disabled', flexShrink: 0 }}
+                >
+                  {selected ? (
+                    <CheckCircle fontSize="small" />
+                  ) : (
+                    <RadioButtonUnchecked fontSize="small" />
+                  )}
+                </IconButton>
+              </Tooltip>
+              <ListItemButton
+                onClick={() => handleRowClick(song)}
+                onPointerDown={() => handleLongPressStart(song.id)}
+                onPointerUp={() => handleLongPressCancel(song.id)}
+                onPointerLeave={() => handleLongPressCancel(song.id)}
+                onPointerCancel={() => handleLongPressCancel(song.id)}
+                sx={{ minWidth: 0 }}
               >
-                <ButtonGroup size="small">
-                  <Button onClick={() => handleAddSong(book.id)}>
-                    {t('addSong')}
-                  </Button>
-                  <Button
-                    size="small"
-                    aria-label={t('addOtherSong')}
-                    onClick={(e) =>
-                      setAddSongMenu({
-                        anchor: e.currentTarget,
-                        bookId: book.id,
-                      })
-                    }
-                  >
-                    <ArrowDropDown />
-                  </Button>
-                </ButtonGroup>
-                <ButtonGroup size="small">
-                  <Tooltip title={t('exportBook')}>
-                    <Button
-                      onClick={(e) => openExport(book, e)}
-                      aria-label={t('exportBook')}
-                    >
-                      <FileDownload fontSize="small" />
-                    </Button>
-                  </Tooltip>
-                  <Tooltip title={t('editBook')}>
-                    <Button
-                      onClick={(e) => openRenameBook(book, e)}
-                      aria-label={t('editBook')}
-                    >
-                      <Edit fontSize="small" />
-                    </Button>
-                  </Tooltip>
-                </ButtonGroup>
-              </Box>
-            </AccordionDetails>
-          </Accordion>
-        ))}
+                <ListItemText primary={song.title} />
+              </ListItemButton>
+            </ListItem>
+          );
+        })}
+      </div>
 
-        <Menu
-          anchorEl={addSongMenu?.anchor}
-          open={Boolean(addSongMenu)}
-          onClose={() => setAddSongMenu(null)}
-        >
-          <MenuItem
-            onClick={() => {
-              const bookId = addSongMenu!.bookId;
-              setImportFileBookId(bookId);
-              setAddSongMenu(null);
-              importFileRef.current?.click();
-            }}
-          >
-            {t('importFromFile')}
-          </MenuItem>
-          <MenuItem
-            onClick={() => {
-              const bookId = addSongMenu!.bookId;
-              setImportUrl({
-                bookId,
-                value: getStarterBookUrl(useStore.getState().instrumentType),
-                error: null,
-              });
-              setAddSongMenu(null);
-            }}
-          >
-            {t('importAbcUrl')}
-          </MenuItem>
-          <MenuItem
-            onClick={() => {
-              const bookId = addSongMenu!.bookId;
-              setAddSongMenu(null);
-              setScaleDialogBookId(bookId);
-            }}
-          >
-            {t('generateScale')}
-          </MenuItem>
-        </Menu>
-
-        <div
-          style={{
-            display: 'flex',
-            gap: 8,
-            marginTop: 16,
-            flexWrap: 'wrap',
-            justifyContent: 'center',
+      <Menu
+        anchorEl={addSongMenuAnchor}
+        open={Boolean(addSongMenuAnchor)}
+        onClose={() => setAddSongMenuAnchor(null)}
+      >
+        <MenuItem onClick={handleAddEmptySong}>{t('addEmptySong')}</MenuItem>
+        <MenuItem
+          onClick={() => {
+            setAddSongMenuAnchor(null);
+            importFileRef.current?.click();
           }}
         >
-          <Button variant="outlined" onClick={() => setNewBook({ title: '' })}>
-            {t('addEmptyBook')}
-          </Button>
-          <input
-            ref={importFileRef}
-            type="file"
-            accept=".abc,.txt,.musicxml,.xml,.mxl,.mid,.midi"
-            style={{ display: 'none' }}
-            onChange={(e) => void handleImportFile(e)}
-          />
-        </div>
-      </div>
+          {t('importFromFile')}
+        </MenuItem>
+        <MenuItem
+          onClick={() => {
+            setImportUrl({
+              value: getStarterBookUrl(useStore.getState().instrumentType),
+              error: null,
+            });
+            setAddSongMenuAnchor(null);
+          }}
+        >
+          {t('importAbcUrl')}
+        </MenuItem>
+        <MenuItem
+          onClick={() => {
+            setAddSongMenuAnchor(null);
+            setScaleDialogOpen(true);
+          }}
+        >
+          {t('generateScale')}
+        </MenuItem>
+      </Menu>
+
+      <input
+        ref={importFileRef}
+        type="file"
+        accept=".abc,.txt,.musicxml,.xml,.mxl,.mid,.midi"
+        style={{ display: 'none' }}
+        onChange={(e) => void handleImportFile(e)}
+      />
 
       <SettingsDialog
         open={settingsOpen}
@@ -437,131 +390,58 @@ export function IndexPage({
       />
 
       <ScaleDialog
-        open={scaleDialogBookId !== null}
-        onClose={() => setScaleDialogBookId(null)}
+        open={scaleDialogOpen}
+        onClose={() => setScaleDialogOpen(false)}
         onCreate={(song) => {
-          if (scaleDialogBookId) addSongToBook(scaleDialogBookId, song);
-          setScaleDialogBookId(null);
+          addSong(song);
+          setScaleDialogOpen(false);
         }}
       />
 
-      <Dialog open={newBook !== null} onClose={() => setNewBook(null)}>
-        <DialogTitle>{t('createNewEmptyBook')}</DialogTitle>
-        <DialogContent>
-          <TextField
-            autoFocus
-            label={t('bookName')}
-            value={newBook?.title ?? ''}
-            onChange={(e) =>
-              setNewBook((prev) => prev && { title: e.target.value })
-            }
-            onKeyDown={(e) => {
-              if (e.key === 'Enter') {
-                e.preventDefault();
-                handleCreateBook();
-              }
-            }}
-            sx={{ mt: 1 }}
-            fullWidth
-          />
-        </DialogContent>
-        <DialogActions>
-          <Button onClick={() => setNewBook(null)}>{t('cancel')}</Button>
-          <Button onClick={handleCreateBook} variant="contained">
-            {t('create')}
-          </Button>
-        </DialogActions>
-      </Dialog>
-
-      <Dialog open={renameBook !== null} onClose={() => setRenameBook(null)}>
-        <DialogTitle>{t('editBook_title')}</DialogTitle>
-        <DialogContent>
-          <TextField
-            autoFocus
-            label={t('bookName')}
-            value={renameBook?.title ?? ''}
-            onChange={(e) =>
-              setRenameBook(
-                (prev) => prev && { ...prev, title: e.target.value }
-              )
-            }
-            onKeyDown={(e) => e.key === 'Enter' && handleRenameBook()}
-            sx={{ mt: 1 }}
-            fullWidth
-          />
-        </DialogContent>
+      {/* Edit Songs dialog */}
+      <Dialog open={editDialogOpen} onClose={() => setEditDialogOpen(false)}>
+        <DialogTitle>{t('editSongs')}</DialogTitle>
         <DialogActions sx={{ justifyContent: 'space-between' }}>
           <Button
             color="error"
-            onClick={() => renameBook && setDeleteConfirmBookId(renameBook.id)}
-          >
-            {t('deleteBook')}
-          </Button>
-          <div>
-            <Button onClick={() => setRenameBook(null)}>{t('cancel')}</Button>
-            <Button onClick={handleRenameBook} variant="contained">
-              {t('save')}
-            </Button>
-          </div>
-        </DialogActions>
-      </Dialog>
-      <Dialog
-        open={deleteConfirmSong !== null}
-        onClose={() => setDeleteConfirmSong(null)}
-      >
-        <DialogTitle>{t('deleteSong')}</DialogTitle>
-        <DialogContent>
-          {t('confirmDeleteSong', { title: deleteConfirmSong?.title ?? '' })}
-        </DialogContent>
-        <DialogActions>
-          <Button onClick={() => setDeleteConfirmSong(null)}>
-            {t('cancel')}
-          </Button>
-          <Button
-            color="error"
-            variant="contained"
             onClick={() => {
-              if (deleteConfirmSong) {
-                removeSongFromBook(
-                  deleteConfirmSong.bookId,
-                  deleteConfirmSong.songId
-                );
-                setDeleteConfirmSong(null);
-              }
+              setEditDialogOpen(false);
+              setDeleteConfirmOpen(true);
             }}
           >
-            {t('deleteSong')}
+            {t('deleteSongs')}
           </Button>
+          <Box sx={{ display: 'flex', gap: 1 }}>
+            <Button variant="outlined" onClick={handleExportSongs}>
+              {t('exportSongs')}
+            </Button>
+            <Button onClick={() => setEditDialogOpen(false)}>
+              {t('cancel')}
+            </Button>
+          </Box>
         </DialogActions>
       </Dialog>
 
+      {/* Delete confirmation */}
       <Dialog
-        open={deleteConfirmBookId !== null}
-        onClose={() => setDeleteConfirmBookId(null)}
+        open={deleteConfirmOpen}
+        onClose={() => setDeleteConfirmOpen(false)}
       >
-        <DialogTitle>{t('deleteBook')}</DialogTitle>
+        <DialogTitle>{t('deleteSongs')}</DialogTitle>
         <DialogContent>
-          {t('confirmDeleteBook', {
-            title:
-              userBooks.find((b) => b.id === deleteConfirmBookId)?.title ?? '',
-          })}
+          {t('confirmDeleteSongs', { count: selectedIds.size })}
         </DialogContent>
         <DialogActions>
-          <Button onClick={() => setDeleteConfirmBookId(null)}>
+          <Button onClick={() => setDeleteConfirmOpen(false)}>
             {t('cancel')}
           </Button>
-          <Button
-            color="error"
-            variant="contained"
-            onClick={() =>
-              deleteConfirmBookId && handleDeleteBook(deleteConfirmBookId)
-            }
-          >
-            {t('deleteBook')}
+          <Button color="error" variant="contained" onClick={handleDeleteSongs}>
+            {t('deleteSongs')}
           </Button>
         </DialogActions>
       </Dialog>
 
+      {/* Import from URL */}
       <Dialog open={importUrl !== null} onClose={() => setImportUrl(null)}>
         <DialogTitle>{t('importAbcUrl')}</DialogTitle>
         <DialogContent>
@@ -588,32 +468,6 @@ export function IndexPage({
           <Button onClick={() => setImportUrl(null)}>{t('cancel')}</Button>
           <Button onClick={() => void handleImportUrl()} variant="contained">
             {t('import')}
-          </Button>
-        </DialogActions>
-      </Dialog>
-
-      <Dialog open={exportBook !== null} onClose={() => setExportBook(null)}>
-        <DialogTitle>{t('exportAbc')}</DialogTitle>
-        <DialogContent>
-          <TextField
-            autoFocus
-            label={t('fileName')}
-            value={exportBook?.fileName ?? ''}
-            onChange={(e) =>
-              setExportBook(
-                (prev) => prev && { ...prev, fileName: e.target.value }
-              )
-            }
-            onKeyDown={(e) => e.key === 'Enter' && handleExport()}
-            sx={{ mt: 1 }}
-            fullWidth
-            slotProps={{ input: { endAdornment: '.abc' } }}
-          />
-        </DialogContent>
-        <DialogActions>
-          <Button onClick={() => setExportBook(null)}>{t('cancel')}</Button>
-          <Button onClick={handleExport} variant="contained">
-            {t('download')}
           </Button>
         </DialogActions>
       </Dialog>

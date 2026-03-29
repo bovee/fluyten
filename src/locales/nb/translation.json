@@ -1,7 +1,19 @@
 {
   "appTitle": "Fluyten",
   "settings": "Innstillinger",
+  "settingsTabGeneral": "Generelt",
+  "settingsTabInstrument": "Instrument",
+  "settingsTabPlayback": "Avspilling",
   "addSong": "Legg til sang",
+  "filterSongs": "Filter songs",
+  "addEmptySong": "Legg til tom sang",
+  "editSong": "Rediger sang",
+  "editSongs": "Rediger sanger",
+  "exportSongs": "Eksporter sanger",
+  "deleteSongs": "Slett sanger",
+  "selectSong": "Velg sang",
+  "deselectSong": "Fjern valg av sang",
+  "exportSong": "Eksporter sang",
   "addOtherSong": "Legg til en annen sang",
   "addEmptyBook": "Legg til tom bok",
   "importFromFile": "Importer fra fil",
@@ -106,5 +118,7 @@
     "Maria hadde et lite lam",
     "Lille stjerne",
     "Ro, ro, ro din båt"
-  ]
+  ],
+  "confirmDeleteSongs_one": "Slette 1 sanger? Dette kan ikke angres.",
+  "confirmDeleteSongs_other": "Slette {{count}} sanger? Dette kan ikke angres."
 }

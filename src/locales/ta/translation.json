@@ -1,7 +1,19 @@
 {
   "appTitle": "Fluyten",
   "settings": "அமைப்புகள்",
+  "settingsTabGeneral": "பொது",
+  "settingsTabInstrument": "இசைக்கருவி",
+  "settingsTabPlayback": "இயக்கம்",
   "addSong": "பாடல் சேர்க்கவும்",
+  "filterSongs": "Filter songs",
+  "addEmptySong": "வெற்று பாடல் சேர்க்கவும்",
+  "editSong": "பாடலை திருத்து",
+  "editSongs": "பாடல்களை திருத்து",
+  "exportSongs": "பாடல்களை ஏற்றுமதி செய்",
+  "deleteSongs": "பாடல்களை நீக்கு",
+  "selectSong": "பாடலை தேர்ந்தெடு",
+  "deselectSong": "பாடலை தேர்வு நீக்கு",
+  "exportSong": "பாடலை ஏற்றுமதி செய்",
   "addOtherSong": "மற்றொரு பாடல் சேர்க்கவும்",
   "addEmptyBook": "காலி புத்தகம் சேர்க்கவும்",
   "importFromFile": "கோப்பிலிருந்து இறக்குமதி செய்யவும்",
@@ -106,5 +118,7 @@
     "மேரிக்கு ஒரு சிறிய ஆட்டுக்குட்டி இருந்தது",
     "மின்னு மின்னு சிறு விண்மீன்",
     "தோணி விடு தோணி விடு"
-  ]
+  ],
+  "confirmDeleteSongs_one": "1 பாடல்களை நீக்கவா? இதை மாற்ற முடியாது.",
+  "confirmDeleteSongs_other": "{{count}} பாடல்களை நீக்கவா? இதை மாற்ற முடியாது."
 }

@@ -1,7 +1,19 @@
 {
   "appTitle": "Fluyten",
   "settings": "Beállítások",
+  "settingsTabGeneral": "Általános",
+  "settingsTabInstrument": "Hangszer",
+  "settingsTabPlayback": "Lejátszás",
   "addSong": "Dal hozzáadása",
+  "filterSongs": "Filter songs",
+  "addEmptySong": "Üres dal hozzáadása",
+  "editSong": "Dal szerkesztése",
+  "editSongs": "Dalok szerkesztése",
+  "exportSongs": "Dalok exportálása",
+  "deleteSongs": "Dalok törlése",
+  "selectSong": "Dal kiválasztása",
+  "deselectSong": "Dal kijelölés megszüntetése",
+  "exportSong": "Dal exportálása",
   "addOtherSong": "Másik dal hozzáadása",
   "addEmptyBook": "Üres könyv hozzáadása",
   "importFromFile": "Importálás fájlból",
@@ -106,5 +118,7 @@
     "Máriának kis báránya volt",
     "Csillagocska",
     "Evezz, evezz csónakodon"
-  ]
+  ],
+  "confirmDeleteSongs_one": "Törölni 1 dalt? Ez nem vonható vissza.",
+  "confirmDeleteSongs_other": "Törölni {{count}} dalt? Ez nem vonható vissza."
 }

@@ -1,7 +1,19 @@
 {
   "appTitle": "Fluyten",
   "settings": "Settings",
+  "settingsTabGeneral": "General",
+  "settingsTabInstrument": "Instrument",
+  "settingsTabPlayback": "Playback",
   "addSong": "Add Song",
+  "filterSongs": "Filter songs",
+  "addEmptySong": "Add Empty Song",
+  "editSong": "Edit Song",
+  "editSongs": "Edit Songs",
+  "exportSongs": "Export Songs",
+  "deleteSongs": "Delete Songs",
+  "selectSong": "Select Song",
+  "deselectSong": "Deselect Song",
+  "exportSong": "Export Song",
   "addOtherSong": "Add Other Song",
   "addEmptyBook": "Add Empty Book",
   "importFromFile": "Import from File",
@@ -106,5 +118,7 @@
     "Mary Had a Little Lamb",
     "Twinkle Twinkle Little Star",
     "Row Row Row Your Boat"
-  ]
+  ],
+  "confirmDeleteSongs_one": "Delete 1 song? This cannot be undone.",
+  "confirmDeleteSongs_other": "Delete {{count}} songs? This cannot be undone."
 }

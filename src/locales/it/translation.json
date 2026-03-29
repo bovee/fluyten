@@ -1,7 +1,19 @@
 {
   "appTitle": "Fluyten",
   "settings": "Impostazioni",
+  "settingsTabGeneral": "Generale",
+  "settingsTabInstrument": "Strumento",
+  "settingsTabPlayback": "Riproduzione",
   "addSong": "Aggiungi brano",
+  "filterSongs": "Filter songs",
+  "addEmptySong": "Aggiungi brano vuoto",
+  "editSong": "Modifica brano",
+  "editSongs": "Modifica brani",
+  "exportSongs": "Esporta brani",
+  "deleteSongs": "Elimina brani",
+  "selectSong": "Seleziona brano",
+  "deselectSong": "Deseleziona brano",
+  "exportSong": "Esporta brano",
   "addOtherSong": "Aggiungi altro brano",
   "addEmptyBook": "Aggiungi libro vuoto",
   "importFromFile": "Importa da file",
@@ -106,5 +118,7 @@
     "Maria aveva un agnellino",
     "Stella, stellina",
     "Voga, voga, voga la barca"
-  ]
+  ],
+  "confirmDeleteSongs_one": "Eliminare 1 brani? Questa azione non può essere annullata.",
+  "confirmDeleteSongs_other": "Eliminare {{count}} brani? Questa azione non può essere annullata."
 }

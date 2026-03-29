@@ -1,7 +1,19 @@
 {
   "appTitle": "Fluyten",
   "settings": "Настройки",
+  "settingsTabGeneral": "Общие",
+  "settingsTabInstrument": "Инструмент",
+  "settingsTabPlayback": "Воспроизведение",
   "addSong": "Добавить пьесу",
+  "filterSongs": "Filter songs",
+  "addEmptySong": "Добавить пустую песню",
+  "editSong": "Редактировать песню",
+  "editSongs": "Редактировать песни",
+  "exportSongs": "Экспортировать песни",
+  "deleteSongs": "Удалить песни",
+  "selectSong": "Выбрать песню",
+  "deselectSong": "Снять выбор песни",
+  "exportSong": "Экспортировать песню",
   "addOtherSong": "Добавить другую пьесу",
   "addEmptyBook": "Добавить пустую книгу",
   "importFromFile": "Импортировать из файла",
@@ -106,5 +118,7 @@
     "У Мэри был ягнёнок",
     "Мерцай, мерцай, звёздочка",
     "Греби, Греби, Греби свою Лодку"
-  ]
+  ],
+  "confirmDeleteSongs_one": "Удалить 1 песен? Это действие нельзя отменить.",
+  "confirmDeleteSongs_other": "Удалить {{count}} песен? Это действие нельзя отменить."
 }

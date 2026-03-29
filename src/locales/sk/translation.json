@@ -1,7 +1,19 @@
 {
   "appTitle": "Fluyten",
   "settings": "Nastavenia",
+  "settingsTabGeneral": "Všeobecné",
+  "settingsTabInstrument": "Nástroj",
+  "settingsTabPlayback": "Prehrávanie",
   "addSong": "Pridať pieseň",
+  "filterSongs": "Filter songs",
+  "addEmptySong": "Pridať prázdnu pieseň",
+  "editSong": "Upraviť pieseň",
+  "editSongs": "Upraviť piesne",
+  "exportSongs": "Exportovať piesne",
+  "deleteSongs": "Zmazať piesne",
+  "selectSong": "Vybrať pieseň",
+  "deselectSong": "Zrušiť výber piesne",
+  "exportSong": "Exportovať pieseň",
   "addOtherSong": "Pridať ďalšiu pieseň",
   "addEmptyBook": "Pridať prázdnu knihu",
   "importFromFile": "Importovať zo súboru",
@@ -106,5 +118,7 @@
     "Mária mala malého baránka",
     "Svieť, svieť, hviezdička",
     "Vesluj, vesluj loďkou"
-  ]
+  ],
+  "confirmDeleteSongs_one": "Zmazať 1 piesní? Toto nie je možné vrátiť.",
+  "confirmDeleteSongs_other": "Zmazať {{count}} piesní? Toto nie je možné vrátiť."
 }

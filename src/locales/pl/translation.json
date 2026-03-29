@@ -1,7 +1,19 @@
 {
   "appTitle": "Fluyten",
   "settings": "Ustawienia",
+  "settingsTabGeneral": "Ogólne",
+  "settingsTabInstrument": "Instrument",
+  "settingsTabPlayback": "Odtwarzanie",
   "addSong": "Dodaj utwór",
+  "filterSongs": "Filter songs",
+  "addEmptySong": "Dodaj pustą piosenkę",
+  "editSong": "Edytuj piosenkę",
+  "editSongs": "Edytuj piosenki",
+  "exportSongs": "Eksportuj piosenki",
+  "deleteSongs": "Usuń piosenki",
+  "selectSong": "Wybierz piosenkę",
+  "deselectSong": "Odznacz piosenkę",
+  "exportSong": "Eksportuj piosenkę",
   "addOtherSong": "Dodaj inny utwór",
   "addEmptyBook": "Dodaj pustą książkę",
   "importFromFile": "Importuj z pliku",
@@ -106,5 +118,7 @@
     "Marysia miała owieczki",
     "Gwiazdeczko mała",
     "Wiosłuj, wiosłuj łódką swą"
-  ]
+  ],
+  "confirmDeleteSongs_one": "Usunąć 1 piosenek? Tego nie można cofnąć.",
+  "confirmDeleteSongs_other": "Usunąć {{count}} piosenek? Tego nie można cofnąć."
 }

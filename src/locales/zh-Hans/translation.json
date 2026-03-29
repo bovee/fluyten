@@ -1,7 +1,19 @@
 {
   "appTitle": "Fluyten",
   "settings": "设置",
+  "settingsTabGeneral": "常规",
+  "settingsTabInstrument": "乐器",
+  "settingsTabPlayback": "播放",
   "addSong": "添加歌曲",
+  "filterSongs": "Filter songs",
+  "addEmptySong": "添加空白歌曲",
+  "editSong": "编辑歌曲",
+  "editSongs": "编辑歌曲",
+  "exportSongs": "导出歌曲",
+  "deleteSongs": "删除歌曲",
+  "selectSong": "选择歌曲",
+  "deselectSong": "取消选择歌曲",
+  "exportSong": "导出歌曲",
   "addOtherSong": "添加其他歌曲",
   "addEmptyBook": "添加空曲集",
   "importFromFile": "从文件导入",
@@ -106,5 +118,7 @@
     "玛丽有只小羊羔",
     "一闪一闪亮晶晶",
     "划呀划呀划小船"
-  ]
+  ],
+  "confirmDeleteSongs_one": "删除 1 首歌曲？此操作无法撤销。",
+  "confirmDeleteSongs_other": "删除 {{count}} 首歌曲？此操作无法撤销。"
 }

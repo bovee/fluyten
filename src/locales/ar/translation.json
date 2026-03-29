@@ -1,7 +1,19 @@
 {
   "appTitle": "Fluyten",
   "settings": "الإعدادات",
+  "settingsTabGeneral": "عام",
+  "settingsTabInstrument": "الآلة الموسيقية",
+  "settingsTabPlayback": "تشغيل",
   "addSong": "إضافة أغنية",
+  "filterSongs": "Filter songs",
+  "addEmptySong": "أضف أغنية فارغة",
+  "editSong": "تعديل الأغنية",
+  "editSongs": "تعديل الأغاني",
+  "exportSongs": "تصدير الأغاني",
+  "deleteSongs": "حذف الأغاني",
+  "selectSong": "تحديد الأغنية",
+  "deselectSong": "إلغاء تحديد الأغنية",
+  "exportSong": "تصدير الأغنية",
   "addOtherSong": "إضافة أغنية أخرى",
   "addEmptyBook": "إضافة كتاب فارغ",
   "importFromFile": "استيراد من ملف",
@@ -106,5 +118,7 @@
     "كان لدى ماري حمل صغير",
     "يا نجمة يا صغيرة",
     "اجدف اجدف اجدف قاربك"
-  ]
+  ],
+  "confirmDeleteSongs_one": "هل تريد حذف 1 أغنية؟ لا يمكن التراجع عن هذا.",
+  "confirmDeleteSongs_other": "هل تريد حذف {{count}} أغنية؟ لا يمكن التراجع عن هذا."
 }

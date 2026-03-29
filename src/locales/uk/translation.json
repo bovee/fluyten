@@ -1,7 +1,19 @@
 {
   "appTitle": "Fluyten",
   "settings": "Налаштування",
+  "settingsTabGeneral": "Загальне",
+  "settingsTabInstrument": "Інструмент",
+  "settingsTabPlayback": "Відтворення",
   "addSong": "Додати твір",
+  "filterSongs": "Filter songs",
+  "addEmptySong": "Додати порожню пісню",
+  "editSong": "Редагувати пісню",
+  "editSongs": "Редагувати пісні",
+  "exportSongs": "Експортувати пісні",
+  "deleteSongs": "Видалити пісні",
+  "selectSong": "Вибрати пісню",
+  "deselectSong": "Скасувати вибір пісні",
+  "exportSong": "Експортувати пісню",
   "addOtherSong": "Додати інший твір",
   "addEmptyBook": "Додати порожню книгу",
   "importFromFile": "Імпортувати з файлу",
@@ -106,5 +118,7 @@
     "У Марії було ягня",
     "Мерехтіння зірочки",
     "Гребіть, гребіть човником"
-  ]
+  ],
+  "confirmDeleteSongs_one": "Видалити 1 пісень? Цю дію не можна скасувати.",
+  "confirmDeleteSongs_other": "Видалити {{count}} пісень? Цю дію не можна скасувати."
 }

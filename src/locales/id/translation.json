@@ -1,7 +1,19 @@
 {
   "appTitle": "Fluyten",
   "settings": "Pengaturan",
+  "settingsTabGeneral": "Umum",
+  "settingsTabInstrument": "Instrumen",
+  "settingsTabPlayback": "Pemutaran",
   "addSong": "Tambah Lagu",
+  "filterSongs": "Filter songs",
+  "addEmptySong": "Tambah lagu kosong",
+  "editSong": "Edit lagu",
+  "editSongs": "Edit lagu-lagu",
+  "exportSongs": "Ekspor lagu-lagu",
+  "deleteSongs": "Hapus lagu-lagu",
+  "selectSong": "Pilih lagu",
+  "deselectSong": "Batalkan pilihan lagu",
+  "exportSong": "Ekspor lagu",
   "addOtherSong": "Tambah Lagu Lain",
   "addEmptyBook": "Tambah Buku Kosong",
   "importFromFile": "Impor dari File",
@@ -106,5 +118,7 @@
     "Mary Had a Little Lamb",
     "Bintang Kecil",
     "Dayung, Dayung, Dayung Perahumu"
-  ]
+  ],
+  "confirmDeleteSongs_one": "Hapus 1 lagu? Ini tidak dapat dibatalkan.",
+  "confirmDeleteSongs_other": "Hapus {{count}} lagu? Ini tidak dapat dibatalkan."
 }

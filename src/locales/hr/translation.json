@@ -1,7 +1,19 @@
 {
   "appTitle": "Fluyten",
   "settings": "Postavke",
+  "settingsTabGeneral": "Opće",
+  "settingsTabInstrument": "Instrument",
+  "settingsTabPlayback": "Reprodukcija",
   "addSong": "Dodaj pjesmu",
+  "filterSongs": "Filter songs",
+  "addEmptySong": "Dodaj praznu pjesmu",
+  "editSong": "Uredi pjesmu",
+  "editSongs": "Uredi pjesme",
+  "exportSongs": "Izvezi pjesme",
+  "deleteSongs": "Obriši pjesme",
+  "selectSong": "Odaberi pjesmu",
+  "deselectSong": "Poništi odabir pjesme",
+  "exportSong": "Izvezi pjesmu",
   "addOtherSong": "Dodaj drugu pjesmu",
   "addEmptyBook": "Dodaj praznu knjigu",
   "importFromFile": "Uvezi iz datoteke",
@@ -106,5 +118,7 @@
     "Marija je imala malo janje",
     "Zvijezdo mala",
     "Veslaj, veslaj čamcem"
-  ]
+  ],
+  "confirmDeleteSongs_one": "Obrisati 1 pjesama? Ovo se ne može poništiti.",
+  "confirmDeleteSongs_other": "Obrisati {{count}} pjesama? Ovo se ne može poništiti."
 }

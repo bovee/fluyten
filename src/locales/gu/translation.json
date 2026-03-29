@@ -1,7 +1,19 @@
 {
   "appTitle": "Fluyten",
   "settings": "સેટિંગ્સ",
+  "settingsTabGeneral": "સામાન્ય",
+  "settingsTabInstrument": "સાધન",
+  "settingsTabPlayback": "પ્લેબૅક",
   "addSong": "ગીત ઉમેરો",
+  "filterSongs": "Filter songs",
+  "addEmptySong": "ખાલી ગીત ઉમેરો",
+  "editSong": "ગીત સંપાદિત કરો",
+  "editSongs": "ગીતો સંપાદિત કરો",
+  "exportSongs": "ગીતો નિકાસ કરો",
+  "deleteSongs": "ગીતો કાઢી નાખો",
+  "selectSong": "ગીત પસંદ કરો",
+  "deselectSong": "ગીત અનસિલેક્ટ કરો",
+  "exportSong": "ગીત નિકાસ કરો",
   "addOtherSong": "બીજું ગીત ઉમેરો",
   "addEmptyBook": "ખાલી પુસ્તક ઉમેરો",
   "importFromFile": "ફાઇલમાંથી આયાત કરો",
@@ -106,5 +118,7 @@
     "મેરી પાસે એક નાનું ઘેટું હતું",
     "ઝગમગ ઝગમગ નાનો તારો",
     "ચલાવ ચલાવ તારી નૌકા"
-  ]
+  ],
+  "confirmDeleteSongs_one": "1 ગીત કાઢી નાખો? આ પૂર્વવત્ કરી શકાશે નહીં.",
+  "confirmDeleteSongs_other": "{{count}} ગીત કાઢી નાખો? આ પૂર્વવત્ કરી શકાશે નહીં."
 }

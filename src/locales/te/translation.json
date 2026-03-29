@@ -1,7 +1,19 @@
 {
   "appTitle": "Fluyten",
   "settings": "సెట్టింగులు",
+  "settingsTabGeneral": "సాధారణ",
+  "settingsTabInstrument": "వాయిద్యం",
+  "settingsTabPlayback": "ప్లేబ్యాక్",
   "addSong": "పాట జోడించు",
+  "filterSongs": "Filter songs",
+  "addEmptySong": "ఖాళీ పాట జోడించండి",
+  "editSong": "పాటను సవరించండి",
+  "editSongs": "పాటలను సవరించండి",
+  "exportSongs": "పాటలను ఎగుమతి చేయండి",
+  "deleteSongs": "పాటలను తొలగించండి",
+  "selectSong": "పాటను ఎంచుకోండి",
+  "deselectSong": "పాట ఎంపికను తీసివేయండి",
+  "exportSong": "పాటను ఎగుమతి చేయండి",
   "addOtherSong": "మరొక పాట జోడించు",
   "addEmptyBook": "ఖాళీ పుస్తకం జోడించు",
   "importFromFile": "ఫైల్ నుండి దిగుమతి చేయండి",
@@ -106,5 +118,7 @@
     "మేరీకి ఒక చిన్న గొర్రెపిల్ల ఉంది",
     "మిణుకు మిణుకు చుక్క",
     "వల్లించు వల్లించు నీ పడవను"
-  ]
+  ],
+  "confirmDeleteSongs_one": "1 పాటలు తొలగించాలా? దీన్ని రద్దు చేయలేరు.",
+  "confirmDeleteSongs_other": "{{count}} పాటలు తొలగించాలా? దీన్ని రద్దు చేయలేరు."
 }

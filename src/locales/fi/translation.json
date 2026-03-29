@@ -1,7 +1,19 @@
 {
   "appTitle": "Fluyten",
   "settings": "Asetukset",
+  "settingsTabGeneral": "Yleinen",
+  "settingsTabInstrument": "Soitin",
+  "settingsTabPlayback": "Toisto",
   "addSong": "Lisää laulu",
+  "filterSongs": "Filter songs",
+  "addEmptySong": "Lisää tyhjä kappale",
+  "editSong": "Muokkaa kappaletta",
+  "editSongs": "Muokkaa kappaleita",
+  "exportSongs": "Vie kappaleet",
+  "deleteSongs": "Poista kappaleet",
+  "selectSong": "Valitse kappale",
+  "deselectSong": "Poista kappaleen valinta",
+  "exportSong": "Vie kappale",
   "addOtherSong": "Lisää toinen laulu",
   "addEmptyBook": "Lisää tyhjä kirja",
   "importFromFile": "Tuo tiedostosta",
@@ -106,5 +118,7 @@
     "Marialla oli pieni karitsa",
     "Tuiki tuiki tähtönen",
     "Soutele soutele venettäsi"
-  ]
+  ],
+  "confirmDeleteSongs_one": "Poistetaanko 1 kappaletta? Tätä ei voi kumota.",
+  "confirmDeleteSongs_other": "Poistetaanko {{count}} kappaletta? Tätä ei voi kumota."
 }

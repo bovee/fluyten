@@ -1,7 +1,19 @@
 {
   "appTitle": "Fluyten",
   "settings": "Setelan",
+  "settingsTabGeneral": "Umum",
+  "settingsTabInstrument": "Instrumen",
+  "settingsTabPlayback": "Pemutaran",
   "addSong": "Tambah lagu",
+  "filterSongs": "Filter songs",
+  "addEmptySong": "Tambah lagu kosong",
+  "editSong": "Edit lagu",
+  "editSongs": "Edit lagu-lagu",
+  "exportSongs": "Ekspor lagu-lagu",
+  "deleteSongs": "Hapus lagu-lagu",
+  "selectSong": "Pilih lagu",
+  "deselectSong": "Batalke pilihan lagu",
+  "exportSong": "Ekspor lagu",
   "addOtherSong": "Tambah lagu liyane",
   "addEmptyBook": "Tambah buku kosong",
   "importFromFile": "Impor saka file",
@@ -106,5 +118,7 @@
     "Mary duwe wedhus cilik",
     "Bintang cilik",
     "Dayung, dayung perahumu"
-  ]
+  ],
+  "confirmDeleteSongs_one": "Hapus 1 lagu? Iki ora bisa dibatalke.",
+  "confirmDeleteSongs_other": "Hapus {{count}} lagu? Iki ora bisa dibatalke."
 }

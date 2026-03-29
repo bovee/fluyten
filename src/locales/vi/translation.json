@@ -1,7 +1,19 @@
 {
   "appTitle": "Fluyten",
   "settings": "Cài đặt",
+  "settingsTabGeneral": "Chung",
+  "settingsTabInstrument": "Nhạc cụ",
+  "settingsTabPlayback": "Phát lại",
   "addSong": "Thêm bài hát",
+  "filterSongs": "Filter songs",
+  "addEmptySong": "Thêm bài hát trống",
+  "editSong": "Chỉnh sửa bài hát",
+  "editSongs": "Chỉnh sửa bài hát",
+  "exportSongs": "Xuất bài hát",
+  "deleteSongs": "Xóa bài hát",
+  "selectSong": "Chọn bài hát",
+  "deselectSong": "Bỏ chọn bài hát",
+  "exportSong": "Xuất bài hát",
   "addOtherSong": "Thêm bài hát khác",
   "addEmptyBook": "Thêm sách trống",
   "importFromFile": "Nhập từ tệp",
@@ -106,5 +118,7 @@
     "Mary có con cừu nhỏ",
     "Lấp lánh ngôi sao nhỏ",
     "Chèo thuyền, chèo thuyền"
-  ]
+  ],
+  "confirmDeleteSongs_one": "Xóa 1 bài hát? Không thể hoàn tác.",
+  "confirmDeleteSongs_other": "Xóa {{count}} bài hát? Không thể hoàn tác."
 }

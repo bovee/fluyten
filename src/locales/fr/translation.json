@@ -1,7 +1,19 @@
 {
   "appTitle": "Fluyten",
   "settings": "Paramètres",
+  "settingsTabGeneral": "Général",
+  "settingsTabInstrument": "Instrument",
+  "settingsTabPlayback": "Lecture",
   "addSong": "Ajouter une chanson",
+  "filterSongs": "Filter songs",
+  "addEmptySong": "Ajouter une chanson vide",
+  "editSong": "Modifier la chanson",
+  "editSongs": "Modifier les chansons",
+  "exportSongs": "Exporter les chansons",
+  "deleteSongs": "Supprimer les chansons",
+  "selectSong": "Sélectionner la chanson",
+  "deselectSong": "Désélectionner la chanson",
+  "exportSong": "Exporter la chanson",
   "addOtherSong": "Ajouter une autre chanson",
   "addEmptyBook": "Ajouter un livre vide",
   "importFromFile": "Importer depuis un fichier",
@@ -106,5 +118,7 @@
     "Marie avait un petit agneau",
     "Ah ! vous dirai-je, maman",
     "Rame, Rame, Rame ton Bateau"
-  ]
+  ],
+  "confirmDeleteSongs_one": "Supprimer 1 chansons ? Cette action est irréversible.",
+  "confirmDeleteSongs_other": "Supprimer {{count}} chansons ? Cette action est irréversible."
 }

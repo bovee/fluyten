@@ -1,7 +1,19 @@
 {
   "appTitle": "Fluyten",
   "settings": "Mipangilio",
+  "settingsTabGeneral": "Jumla",
+  "settingsTabInstrument": "Chombo",
+  "settingsTabPlayback": "Uchezaji",
   "addSong": "Ongeza wimbo",
+  "filterSongs": "Filter songs",
+  "addEmptySong": "Ongeza wimbo tupu",
+  "editSong": "Hariri wimbo",
+  "editSongs": "Hariri nyimbo",
+  "exportSongs": "Hamisha nyimbo",
+  "deleteSongs": "Futa nyimbo",
+  "selectSong": "Chagua wimbo",
+  "deselectSong": "Ondoa uteuzi wa wimbo",
+  "exportSong": "Hamisha wimbo",
   "addOtherSong": "Ongeza wimbo mwingine",
   "addEmptyBook": "Ongeza kitabu tupu",
   "importFromFile": "Ingiza kutoka faili",
@@ -106,5 +118,7 @@
     "Maria alikuwa na mwana-kondoo mdogo",
     "Nyota ndogo inayong'aa",
     "Piga makasia mashuani mwako"
-  ]
+  ],
+  "confirmDeleteSongs_one": "Futa nyimbo 1? Hii haiwezi kutenduliwa.",
+  "confirmDeleteSongs_other": "Futa nyimbo {{count}}? Hii haiwezi kutenduliwa."
 }

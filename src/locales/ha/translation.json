@@ -1,7 +1,19 @@
 {
   "appTitle": "Fluyten",
   "settings": "Saitunan",
+  "settingsTabGeneral": "Gaba ɗaya",
+  "settingsTabInstrument": "Kayan kida",
+  "settingsTabPlayback": "Sake kunnewa",
   "addSong": "Ƙara waƙa",
+  "filterSongs": "Filter songs",
+  "addEmptySong": "Ƙara waƙar fanko",
+  "editSong": "Gyara waƙa",
+  "editSongs": "Gyara waƙoƙi",
+  "exportSongs": "Fitar da waƙoƙi",
+  "deleteSongs": "Goge waƙoƙi",
+  "selectSong": "Zaɓi waƙa",
+  "deselectSong": "Cire zaɓin waƙa",
+  "exportSong": "Fitar da waƙa",
   "addOtherSong": "Ƙara wata waƙa",
   "addEmptyBook": "Ƙara littafi mara komai",
   "importFromFile": "Shigo daga fayil",
@@ -106,5 +118,7 @@
     "Maryamu tana da ƙaramin rago",
     "Tauraro ƙarami mai walƙiya",
     "Sha jeka sha jeka jirgin ruwanka"
-  ]
+  ],
+  "confirmDeleteSongs_one": "Goge waƙoƙi 1? Ba za a iya mayar da wannan ba.",
+  "confirmDeleteSongs_other": "Goge waƙoƙi {{count}}? Ba za a iya mayar da wannan ba."
 }

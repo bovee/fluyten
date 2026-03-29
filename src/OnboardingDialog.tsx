@@ -43,7 +43,7 @@ export function OnboardingDialog({ open, onComplete }: OnboardingDialogProps) {
   const isGerman = useStore((state) => state.isGerman);
   const setIsGerman = useStore((state) => state.setIsGerman);
   const setTuning = useStore((state) => state.setTuning);
-  const importUserBook = useStore((state) => state.importUserBook);
+  const importSongs = useStore((state) => state.importSongs);
 
   const [detectOpen, setDetectOpen] = useState(false);
   const [detectStep, setDetectStep] = useState<0 | 1>(0);
@@ -85,8 +85,6 @@ export function OnboardingDialog({ open, onComplete }: OnboardingDialogProps) {
   };
 
   const handleFinish = () => {
-    // Capture title and URL now, while the correct language and instrument type are active
-    const bookTitle = t('beginnerSongsBook');
     const bookUrl = getStarterBookUrl(useStore.getState().instrumentType);
     onComplete();
     fetch(bookUrl)
@@ -97,7 +95,7 @@ export function OnboardingDialog({ open, onComplete }: OnboardingDialogProps) {
           title: t(`beginnerSongs.${i}`, { defaultValue: title }),
           abc,
         }));
-        importUserBook(bookTitle, songs);
+        importSongs(songs);
       })
       .catch((err) => {
         console.error('Failed to fetch beginner songs:', err);

@@ -1,7 +1,19 @@
 {
   "appTitle": "Fluyten",
   "settings": "Inställningar",
+  "settingsTabGeneral": "Allmänt",
+  "settingsTabInstrument": "Instrument",
+  "settingsTabPlayback": "Uppspelning",
   "addSong": "Lägg till sång",
+  "filterSongs": "Filter songs",
+  "addEmptySong": "Lägg till tomt stycke",
+  "editSong": "Redigera stycke",
+  "editSongs": "Redigera stycken",
+  "exportSongs": "Exportera stycken",
+  "deleteSongs": "Ta bort stycken",
+  "selectSong": "Välj stycke",
+  "deselectSong": "Avmarkera stycke",
+  "exportSong": "Exportera stycke",
   "addOtherSong": "Lägg till en annan sång",
   "addEmptyBook": "Lägg till tom bok",
   "importFromFile": "Importera från fil",
@@ -106,5 +118,7 @@
     "Maria hade ett litet lamm",
     "Blinka lilla stjärna",
     "Ro, ro, ro din båt"
-  ]
+  ],
+  "confirmDeleteSongs_one": "Ta bort 1 stycken? Det går inte att ångra.",
+  "confirmDeleteSongs_other": "Ta bort {{count}} stycken? Det går inte att ångra."
 }

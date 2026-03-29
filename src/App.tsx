@@ -26,7 +26,6 @@ const cacheRtl = createCache({
 interface SelectedSong {
   song: Song;
   readOnly: boolean;
-  bookId?: string;
 }
 
 function App() {
@@ -48,28 +47,22 @@ function App() {
   const setOnboarded = useStore((state) => state.setOnboarded);
 
   const [selected, setSelected] = useState<SelectedSong | null>(null);
-  const [expandedBook, setExpandedBook] = useState<string | false>(false);
   const updateSongAbc = useStore((state) => state.updateSongAbc);
   const updateSongTempo = useStore((state) => state.updateSongTempo);
-  const renameSongInBook = useStore((state) => state.renameSongInBook);
-
-  const handleSelectSong = (song: Song, readOnly: boolean, bookId?: string) => {
-    setSelected({ song, readOnly, bookId });
-  };
+  const renameSong = useStore((state) => state.renameSong);
 
   if (selected) {
-    const { song, readOnly, bookId } = selected;
-    const onAbcChange = bookId
-      ? (abc: string) => {
-          updateSongAbc(bookId, song.id, abc);
+    const { song, readOnly } = selected;
+    const onAbcChange = readOnly
+      ? undefined
+      : (abc: string) => {
+          updateSongAbc(song.id, abc);
           const titleMatch = abc.match(/^T:\s*(.+)/m);
-          if (titleMatch)
-            renameSongInBook(bookId, song.id, titleMatch[1].trim());
-        }
-      : undefined;
-    const onTempoChange = bookId
-      ? (tempo: number) => updateSongTempo(bookId, song.id, tempo)
-      : undefined;
+          if (titleMatch) renameSong(song.id, titleMatch[1].trim());
+        };
+    const onTempoChange = readOnly
+      ? undefined
+      : (tempo: number) => updateSongTempo(song.id, tempo);
     return (
       <CacheProvider value={isRtl ? cacheRtl : cacheLtr}>
         <ThemeProvider theme={theme}>
@@ -92,11 +85,7 @@ function App() {
       <ThemeProvider theme={theme}>
         <OnboardingDialog open={!onboarded} onComplete={setOnboarded} />
         <IndexPage
-          expandedBook={expandedBook}
-          onExpandedBookChange={setExpandedBook}
-          onSelectSong={(song, readOnly, bookId) =>
-            handleSelectSong(song, readOnly, bookId)
-          }
+          onSelectSong={(song, readOnly) => setSelected({ song, readOnly })}
         />
       </ThemeProvider>
     </CacheProvider>

@@ -1,7 +1,19 @@
 {
   "appTitle": "Fluyten",
   "settings": "Configurações",
+  "settingsTabGeneral": "Geral",
+  "settingsTabInstrument": "Instrumento",
+  "settingsTabPlayback": "Reprodução",
   "addSong": "Adicionar música",
+  "filterSongs": "Filter songs",
+  "addEmptySong": "Adicionar música vazia",
+  "editSong": "Editar música",
+  "editSongs": "Editar músicas",
+  "exportSongs": "Exportar músicas",
+  "deleteSongs": "Excluir músicas",
+  "selectSong": "Selecionar música",
+  "deselectSong": "Desselecionar música",
+  "exportSong": "Exportar música",
   "addOtherSong": "Adicionar outra música",
   "addEmptyBook": "Adicionar livro vazio",
   "importFromFile": "Importar de arquivo",
@@ -106,5 +118,7 @@
     "Maria tinha um carneirinho",
     "Brilha, Brilha, Estrelinha",
     "Rema, Rema, Rema o Barco"
-  ]
+  ],
+  "confirmDeleteSongs_one": "Excluir 1 músicas? Isso não pode ser desfeito.",
+  "confirmDeleteSongs_other": "Excluir {{count}} músicas? Isso não pode ser desfeito."
 }

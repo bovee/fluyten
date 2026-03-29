@@ -3,12 +3,12 @@ import type { Meta, StoryObj, Decorator } from '@storybook/react';
 import { userEvent, within, expect } from 'storybook/test';
 import App from './App';
 import { useStore } from './store';
-import type { UserBook } from './store';
+import type { UserSong } from './store';
 
-const withUserBooks =
-  (books: UserBook[]): Decorator =>
+const withSongs =
+  (songs: UserSong[]): Decorator =>
   (Story) => {
-    useStore.setState({ userBooks: books });
+    useStore.setState({ songs });
     return <Story />;
   };
 
@@ -20,7 +20,7 @@ const meta = {
   },
   decorators: [
     (Story) => {
-      useStore.setState({ userBooks: [] });
+      useStore.setState({ songs: [] });
       return <Story />;
     },
   ],
@@ -29,26 +29,17 @@ const meta = {
 export default meta;
 type Story = StoryObj<typeof meta>;
 
-const userBook: UserBook = {
-  id: 'my-book',
-  title: 'My Songs',
-  songs: [
-    {
-      id: 'song-1',
-      title: 'Twinkle Twinkle',
-      abc: 'X:1\nT:Twinkle Twinkle\nM:C\nL:1/4\nK:C\nC C G G | A A G2 |',
-    },
-  ],
+const userSong: UserSong = {
+  id: 'song-1',
+  title: 'Twinkle Twinkle',
+  abc: 'X:1\nT:Twinkle Twinkle\nM:C\nL:1/4\nK:C\nC C G G | A A G2 |',
 };
 
-/** Navigating from IndexPage to SongPage by clicking a song in a user book. */
+/** Navigating from IndexPage to SongPage by clicking a song. */
 export const NavigateToSong: Story = {
-  decorators: [withUserBooks([userBook])],
+  decorators: [withSongs([userSong])],
   play: async ({ canvasElement }) => {
     const canvas = within(canvasElement);
-
-    // Expand the book accordion
-    await userEvent.click(await canvas.findByText('My Songs'));
 
     // Click the song to navigate to SongPage
     await userEvent.click(await canvas.findByText('Twinkle Twinkle'));
@@ -61,11 +52,10 @@ export const NavigateToSong: Story = {
 
 /** Navigating back from SongPage to IndexPage via the back button. */
 export const NavigateBack: Story = {
-  decorators: [withUserBooks([userBook])],
+  decorators: [withSongs([userSong])],
   play: async ({ canvasElement }) => {
     const canvas = within(canvasElement);
 
-    await userEvent.click(await canvas.findByText('My Songs'));
     await userEvent.click(await canvas.findByText('Twinkle Twinkle'));
     await canvas.findByRole('button', { name: /back to song list/i });
 
@@ -75,39 +65,16 @@ export const NavigateBack: Story = {
     );
 
     // IndexPage is restored
-    await canvas.findByRole('button', { name: /Add Empty Book/i });
-  },
-};
-
-/** The expanded book accordion is still open after navigating to a song and back. */
-export const ExpandedBookPreserved: Story = {
-  decorators: [withUserBooks([userBook])],
-  play: async ({ canvasElement }) => {
-    const canvas = within(canvasElement);
-
-    // Expand the book
-    await userEvent.click(await canvas.findByText('My Songs'));
-    await canvas.findByText('Twinkle Twinkle');
-
-    // Navigate to the song and back
-    await userEvent.click(await canvas.findByText('Twinkle Twinkle'));
-    await canvas.findByRole('button', { name: /back to song list/i });
-    await userEvent.click(
-      await canvas.findByRole('button', { name: /back to song list/i })
-    );
-
-    // The song list should still be visible — accordion is still expanded
-    await canvas.findByText('Twinkle Twinkle');
+    await canvas.findByRole('button', { name: /add song/i });
   },
 };
 
 /** ABC edits made in SongPage are persisted to the store and visible when returning. */
 export const AbcChangePersisted: Story = {
-  decorators: [withUserBooks([userBook])],
+  decorators: [withSongs([userSong])],
   play: async ({ canvasElement }) => {
     const canvas = within(canvasElement);
 
-    await userEvent.click(await canvas.findByText('My Songs'));
     await userEvent.click(await canvas.findByText('Twinkle Twinkle'));
 
     // Open the edit drawer and change the ABC

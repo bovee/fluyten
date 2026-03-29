@@ -1,7 +1,19 @@
 {
   "appTitle": "Fluyten",
   "settings": "Instellingen",
+  "settingsTabGeneral": "Algemeen",
+  "settingsTabInstrument": "Instrument",
+  "settingsTabPlayback": "Afspelen",
   "addSong": "Nummer toevoegen",
+  "filterSongs": "Filter songs",
+  "addEmptySong": "Lege song toevoegen",
+  "editSong": "Nummer bewerken",
+  "editSongs": "Nummers bewerken",
+  "exportSongs": "Nummers exporteren",
+  "deleteSongs": "Nummers verwijderen",
+  "selectSong": "Nummer selecteren",
+  "deselectSong": "Nummer deselecteren",
+  "exportSong": "Nummer exporteren",
   "addOtherSong": "Ander nummer toevoegen",
   "addEmptyBook": "Leeg boek toevoegen",
   "importFromFile": "Importeren uit bestand",
@@ -106,5 +118,7 @@
     "Maria had een lammetje",
     "Twinkle Twinkle Kleine Ster",
     "Roei, Roei, Roei je Boot"
-  ]
+  ],
+  "confirmDeleteSongs_one": "1 nummers verwijderen? Dit kan niet ongedaan worden gemaakt.",
+  "confirmDeleteSongs_other": "{{count}} nummers verwijderen? Dit kan niet ongedaan worden gemaakt."
 }

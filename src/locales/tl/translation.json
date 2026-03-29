@@ -1,7 +1,19 @@
 {
   "appTitle": "Fluyten",
   "settings": "Mga Setting",
+  "settingsTabGeneral": "Pangkalahatan",
+  "settingsTabInstrument": "Instrumento",
+  "settingsTabPlayback": "Pagtugtog",
   "addSong": "Magdagdag ng kanta",
+  "filterSongs": "Filter songs",
+  "addEmptySong": "Magdagdag ng walang laman na kanta",
+  "editSong": "I-edit ang kanta",
+  "editSongs": "I-edit ang mga kanta",
+  "exportSongs": "I-export ang mga kanta",
+  "deleteSongs": "Burahin ang mga kanta",
+  "selectSong": "Pumili ng kanta",
+  "deselectSong": "Alisin ang pagpili ng kanta",
+  "exportSong": "I-export ang kanta",
   "addOtherSong": "Magdagdag ng ibang kanta",
   "addEmptyBook": "Magdagdag ng blangkong libro",
   "importFromFile": "Mag-import mula sa file",
@@ -106,5 +118,7 @@
     "Si Maria ay may munting tupa",
     "Kumikislap na bituin",
     "Sagwan, sagwan ang iyong bangka"
-  ]
+  ],
+  "confirmDeleteSongs_one": "Burahin ang 1 kanta? Hindi ito maaaring ibalik.",
+  "confirmDeleteSongs_other": "Burahin ang {{count}} kanta? Hindi ito maaaring ibalik."
 }

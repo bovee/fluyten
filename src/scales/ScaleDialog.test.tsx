@@ -4,7 +4,7 @@ import { ScaleDialog } from './ScaleDialog';
 import { useStore } from '../store';
 
 beforeEach(() => {
-  useStore.setState({ instrumentType: 'SOPRANO', userBooks: [] });
+  useStore.setState({ instrumentType: 'SOPRANO', songs: [] });
 });
 
 const renderDialog = (props?: Partial<Parameters<typeof ScaleDialog>[0]>) => {

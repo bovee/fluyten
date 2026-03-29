@@ -1,7 +1,19 @@
 {
   "appTitle": "Fluyten",
   "settings": "ਸੈਟਿੰਗਾਂ",
+  "settingsTabGeneral": "ਆਮ",
+  "settingsTabInstrument": "ਸਾਜ਼",
+  "settingsTabPlayback": "ਪਲੇਬੈਕ",
   "addSong": "ਗਾਣਾ ਜੋੜੋ",
+  "filterSongs": "Filter songs",
+  "addEmptySong": "ਖਾਲੀ ਗੀਤ ਜੋੜੋ",
+  "editSong": "ਗੀਤ ਸੋਧੋ",
+  "editSongs": "ਗੀਤ ਸੋਧੋ",
+  "exportSongs": "ਗੀਤ ਨਿਰਯਾਤ ਕਰੋ",
+  "deleteSongs": "ਗੀਤ ਮਿਟਾਓ",
+  "selectSong": "ਗੀਤ ਚੁਣੋ",
+  "deselectSong": "ਗੀਤ ਅਣਚੁਣਾ ਕਰੋ",
+  "exportSong": "ਗੀਤ ਨਿਰਯਾਤ ਕਰੋ",
   "addOtherSong": "ਹੋਰ ਗਾਣਾ ਜੋੜੋ",
   "addEmptyBook": "ਖਾਲੀ ਕਿਤਾਬ ਜੋੜੋ",
   "importFromFile": "ਫ਼ਾਈਲ ਤੋਂ ਆਯਾਤ ਕਰੋ",
@@ -106,5 +118,7 @@
     "ਮੈਰੀ ਕੋਲ ਇੱਕ ਛੋਟਾ ਲੇਲਾ ਸੀ",
     "ਟਿਮ ਟਿਮ ਤਾਰੇ",
     "ਖੇਵੋ ਖੇਵੋ ਕਿਸ਼ਤੀ"
-  ]
+  ],
+  "confirmDeleteSongs_one": "1 ਗੀਤ ਮਿਟਾਓ? ਇਹ ਵਾਪਸ ਨਹੀਂ ਕੀਤਾ ਜਾ ਸਕਦਾ।",
+  "confirmDeleteSongs_other": "{{count}} ਗੀਤ ਮਿਟਾਓ? ਇਹ ਵਾਪਸ ਨਹੀਂ ਕੀਤਾ ਜਾ ਸਕਦਾ।"
 }

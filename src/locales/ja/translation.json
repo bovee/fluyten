@@ -1,7 +1,19 @@
 {
   "appTitle": "Fluyten",
   "settings": "設定",
+  "settingsTabGeneral": "一般",
+  "settingsTabInstrument": "楽器",
+  "settingsTabPlayback": "再生",
   "addSong": "曲を追加",
+  "filterSongs": "Filter songs",
+  "addEmptySong": "空の曲を追加",
+  "editSong": "曲を編集",
+  "editSongs": "曲を編集",
+  "exportSongs": "曲をエクスポート",
+  "deleteSongs": "曲を削除",
+  "selectSong": "曲を選択",
+  "deselectSong": "曲の選択を解除",
+  "exportSong": "曲をエクスポート",
   "addOtherSong": "他の曲を追加",
   "addEmptyBook": "空の本を追加",
   "importFromFile": "ファイルからインポート",
@@ -106,5 +118,7 @@
     "メリーさんの羊",
     "きらきら星",
     "ボートをこいで"
-  ]
+  ],
+  "confirmDeleteSongs_one": "1曲を削除しますか？この操作は元に戻せません。",
+  "confirmDeleteSongs_other": "{{count}}曲を削除しますか？この操作は元に戻せません。"
 }

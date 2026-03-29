@@ -13,12 +13,6 @@ export interface UserSong {
   tempo?: number;
 }
 
-export interface UserBook {
-  id: string;
-  title: string;
-  songs: UserSong[];
-}
-
 interface SettingsState {
   onboarded: boolean;
   setOnboarded: () => void;
@@ -34,16 +28,13 @@ interface SettingsState {
   setPlaybackVoices: (v: PlaybackVoices) => void;
   checkPlayingMode: CheckPlayingMode;
   setCheckPlayingMode: (mode: CheckPlayingMode) => void;
-  userBooks: UserBook[];
-  addUserBook: (title: string) => void;
-  importUserBook: (title: string, songs: UserSong[]) => void;
-  removeUserBook: (bookId: string) => void;
-  renameUserBook: (bookId: string, title: string) => void;
-  addSongToBook: (bookId: string, song: UserSong) => void;
-  removeSongFromBook: (bookId: string, songId: string) => void;
-  renameSongInBook: (bookId: string, songId: string, title: string) => void;
-  updateSongAbc: (bookId: string, songId: string, abc: string) => void;
-  updateSongTempo: (bookId: string, songId: string, tempo: number) => void;
+  songs: UserSong[];
+  addSong: (song: UserSong) => void;
+  importSongs: (songs: UserSong[]) => void;
+  removeSong: (songId: string) => void;
+  renameSong: (songId: string, title: string) => void;
+  updateSongAbc: (songId: string, abc: string) => void;
+  updateSongTempo: (songId: string, tempo: number) => void;
 }
 
 export const useStore = create<SettingsState>()(
@@ -63,87 +54,39 @@ export const useStore = create<SettingsState>()(
       setPlaybackVoices: (playbackVoices) => set({ playbackVoices }),
       checkPlayingMode: 'correct-then-advance',
       setCheckPlayingMode: (checkPlayingMode) => set({ checkPlayingMode }),
-      userBooks: [],
-      addUserBook: (title) =>
+      songs: [],
+      addSong: (song) =>
+        set((state) => ({ songs: [...state.songs, song] })),
+      importSongs: (songs) =>
+        set((state) => ({ songs: [...state.songs, ...songs] })),
+      removeSong: (songId) =>
+        set((state) => ({ songs: state.songs.filter((s) => s.id !== songId) })),
+      renameSong: (songId, title) =>
         set((state) => ({
-          userBooks: [
-            ...state.userBooks,
-            { id: crypto.randomUUID(), title, songs: [] },
-          ],
+          songs: state.songs.map((s) => (s.id === songId ? { ...s, title } : s)),
         })),
-      importUserBook: (title, songs) =>
+      updateSongAbc: (songId, abc) =>
         set((state) => ({
-          userBooks: [
-            ...state.userBooks,
-            { id: crypto.randomUUID(), title, songs },
-          ],
+          songs: state.songs.map((s) => (s.id === songId ? { ...s, abc } : s)),
         })),
-      removeUserBook: (bookId) =>
+      updateSongTempo: (songId, tempo) =>
         set((state) => ({
-          userBooks: state.userBooks.filter((b) => b.id !== bookId),
-        })),
-      renameUserBook: (bookId, title) =>
-        set((state) => ({
-          userBooks: state.userBooks.map((b) =>
-            b.id === bookId ? { ...b, title } : b
-          ),
-        })),
-      addSongToBook: (bookId, song) =>
-        set((state) => ({
-          userBooks: state.userBooks.map((b) =>
-            b.id === bookId ? { ...b, songs: [...b.songs, song] } : b
-          ),
-        })),
-      removeSongFromBook: (bookId, songId) =>
-        set((state) => ({
-          userBooks: state.userBooks.map((b) =>
-            b.id === bookId
-              ? { ...b, songs: b.songs.filter((s) => s.id !== songId) }
-              : b
-          ),
-        })),
-      renameSongInBook: (bookId, songId, title) =>
-        set((state) => ({
-          userBooks: state.userBooks.map((b) =>
-            b.id === bookId
-              ? {
-                  ...b,
-                  songs: b.songs.map((s) =>
-                    s.id === songId ? { ...s, title } : s
-                  ),
-                }
-              : b
-          ),
-        })),
-      updateSongAbc: (bookId, songId, abc) =>
-        set((state) => ({
-          userBooks: state.userBooks.map((b) =>
-            b.id === bookId
-              ? {
-                  ...b,
-                  songs: b.songs.map((s) =>
-                    s.id === songId ? { ...s, abc } : s
-                  ),
-                }
-              : b
-          ),
-        })),
-      updateSongTempo: (bookId, songId, tempo) =>
-        set((state) => ({
-          userBooks: state.userBooks.map((b) =>
-            b.id === bookId
-              ? {
-                  ...b,
-                  songs: b.songs.map((s) =>
-                    s.id === songId ? { ...s, tempo } : s
-                  ),
-                }
-              : b
-          ),
+          songs: state.songs.map((s) => (s.id === songId ? { ...s, tempo } : s)),
         })),
     }),
     {
       name: 'fluyten-settings',
+      version: 1,
+      migrate: (persistedState: unknown, version: number) => {
+        const state = persistedState as Record<string, unknown>;
+        if (version === 0 && Array.isArray(state.userBooks)) {
+          state.songs = (state.userBooks as Array<{ songs?: UserSong[] }>).flatMap(
+            (b) => b.songs ?? []
+          );
+          delete state.userBooks;
+        }
+        return state;
+      },
       ...(import.meta.env.MODE === 'test' && {
         storage: createJSONStorage(() => ({
           getItem: () => null,

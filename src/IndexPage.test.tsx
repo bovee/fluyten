@@ -14,12 +14,17 @@ vi.mock('./audio/RecorderDetector', () => ({
 
 const defaultProps = () => ({
   onSelectSong: vi.fn(),
-  expandedBook: false as string | false,
-  onExpandedBookChange: vi.fn(),
 });
 
+const songId = 'song-1';
+const userSong = {
+  id: songId,
+  title: 'Greensleeves',
+  abc: 'X:1\nT:Greensleeves\nM:3/4\nK:Am\nA2',
+};
+
 beforeEach(() => {
-  useStore.setState({ userBooks: [] });
+  useStore.setState({ songs: [] });
 });
 
 afterEach(() => {
@@ -35,270 +40,119 @@ describe('IndexPage', () => {
     ).toBeInTheDocument();
   });
 
-  it('renders Add Empty Book button', () => {
+  it('renders Add Song and Edit Songs buttons', () => {
     render(<IndexPage {...defaultProps()} />);
-    expect(
-      screen.getByRole('button', { name: /add empty book/i })
-    ).toBeInTheDocument();
+    expect(screen.getByRole('button', { name: /add song/i })).toBeInTheDocument();
+    expect(screen.getByRole('button', { name: /edit songs/i })).toBeInTheDocument();
   });
 
-  describe('Add Book dialog', () => {
-    it('opens when Add Empty Book is clicked', () => {
-      render(<IndexPage {...defaultProps()} />);
-      fireEvent.click(screen.getByRole('button', { name: /add empty book/i }));
-      expect(screen.getByRole('dialog')).toBeInTheDocument();
-    });
-
-    it('creates a new book when title entered and Create clicked', () => {
-      render(<IndexPage {...defaultProps()} />);
-      fireEvent.click(screen.getByRole('button', { name: /add empty book/i }));
-      const input = screen.getByRole('textbox');
-      fireEvent.change(input, { target: { value: 'My New Book' } });
-      fireEvent.click(screen.getByRole('button', { name: /^create$/i }));
-      expect(useStore.getState().userBooks).toHaveLength(1);
-      expect(useStore.getState().userBooks[0].title).toBe('My New Book');
-    });
-
-    it('does not create a book with empty title', () => {
-      render(<IndexPage {...defaultProps()} />);
-      fireEvent.click(screen.getByRole('button', { name: /add empty book/i }));
-      fireEvent.click(screen.getByRole('button', { name: /^create$/i }));
-      expect(useStore.getState().userBooks).toHaveLength(0);
-    });
-
-    it('creates book when Enter is pressed in title field', () => {
-      render(<IndexPage {...defaultProps()} />);
-      fireEvent.click(screen.getByRole('button', { name: /add empty book/i }));
-      const input = screen.getByRole('textbox');
-      fireEvent.change(input, { target: { value: 'Enter Book' } });
-      fireEvent.keyDown(input, { key: 'Enter' });
-      expect(useStore.getState().userBooks[0].title).toBe('Enter Book');
-    });
-
-    it('clears title input when Cancel is clicked', () => {
-      render(<IndexPage {...defaultProps()} />);
-      fireEvent.click(screen.getByRole('button', { name: /add empty book/i }));
-      const input = screen.getByRole('textbox');
-      fireEvent.change(input, { target: { value: 'Abandoned Book' } });
-      fireEvent.click(screen.getByRole('button', { name: /cancel/i }));
-      // No book should have been created
-      expect(useStore.getState().userBooks).toHaveLength(0);
-    });
+  it('Edit Songs button is disabled when no songs are selected', () => {
+    useStore.setState({ songs: [userSong] });
+    render(<IndexPage {...defaultProps()} />);
+    expect(screen.getByRole('button', { name: /edit songs/i })).toBeDisabled();
   });
 
-  describe('with books', () => {
-    const bookId = 'book-1';
-    const songId = 'song-1';
-
+  describe('with songs', () => {
     beforeEach(() => {
-      useStore.setState({
-        userBooks: [
-          {
-            id: bookId,
-            title: 'My Favourites',
-            songs: [
-              {
-                id: songId,
-                title: 'Greensleeves',
-                abc: 'X:1\nT:Greensleeves\nM:3/4\nK:Am\nA2',
-              },
-            ],
-          },
-        ],
-      });
+      useStore.setState({ songs: [userSong] });
     });
 
-    it('renders the book title', () => {
-      render(<IndexPage {...defaultProps()} expandedBook={bookId} />);
-      expect(screen.getByText('My Favourites')).toBeInTheDocument();
-    });
-
-    it('renders song list when book is expanded', () => {
-      render(<IndexPage {...defaultProps()} expandedBook={bookId} />);
+    it('renders song title', () => {
+      render(<IndexPage {...defaultProps()} />);
       expect(screen.getByText('Greensleeves')).toBeInTheDocument();
     });
 
-    it('calls onSelectSong when a song is clicked', () => {
+    it('calls onSelectSong when a song row is clicked', () => {
       const onSelectSong = vi.fn();
-      render(
-        <IndexPage
-          {...defaultProps()}
-          onSelectSong={onSelectSong}
-          expandedBook={bookId}
-        />
-      );
+      render(<IndexPage onSelectSong={onSelectSong} />);
       fireEvent.click(screen.getByText('Greensleeves'));
       expect(onSelectSong).toHaveBeenCalledWith(
         expect.objectContaining({ id: songId, title: 'Greensleeves' }),
-        false,
-        bookId
+        false
       );
     });
 
-    it('calls onExpandedBookChange when accordion is toggled', () => {
-      const onExpandedBookChange = vi.fn();
-      render(
-        <IndexPage
-          {...defaultProps()}
-          onExpandedBookChange={onExpandedBookChange}
-        />
-      );
-      // Click the accordion summary to expand
-      const summary = screen.getByText('My Favourites');
-      fireEvent.click(summary);
-      expect(onExpandedBookChange).toHaveBeenCalledWith(bookId);
+    it('selecting a song enables the Edit Songs button', () => {
+      render(<IndexPage {...defaultProps()} />);
+      fireEvent.click(screen.getByRole('button', { name: /select song/i }));
+      expect(screen.getByRole('button', { name: /edit songs/i })).not.toBeDisabled();
     });
 
-    it('calls onExpandedBookChange with false when expanded book is collapsed', () => {
-      const onExpandedBookChange = vi.fn();
-      render(
-        <IndexPage
-          {...defaultProps()}
-          expandedBook={bookId}
-          onExpandedBookChange={onExpandedBookChange}
-        />
-      );
-      const summary = screen.getByText('My Favourites');
-      fireEvent.click(summary);
-      expect(onExpandedBookChange).toHaveBeenCalledWith(false);
+    it('opens Edit Songs dialog when Edit Songs button is clicked after selecting', () => {
+      render(<IndexPage {...defaultProps()} />);
+      fireEvent.click(screen.getByRole('button', { name: /select song/i }));
+      fireEvent.click(screen.getByRole('button', { name: /edit songs/i }));
+      expect(screen.getByRole('dialog')).toBeInTheDocument();
     });
 
-    it('adds a song to a book when Add Song is clicked', () => {
-      render(<IndexPage {...defaultProps()} expandedBook={bookId} />);
-      const addSongBtn = screen.getByRole('button', { name: /add song/i });
-      fireEvent.click(addSongBtn);
-      expect(useStore.getState().userBooks[0].songs).toHaveLength(2);
-    });
-
-    it('opens delete song confirmation dialog', () => {
-      render(<IndexPage {...defaultProps()} expandedBook={bookId} />);
-      const deleteBtn = screen.getByRole('button', { name: /delete song/i });
-      fireEvent.click(deleteBtn);
+    it('opens delete confirm dialog from Edit Songs dialog', () => {
+      render(<IndexPage {...defaultProps()} />);
+      fireEvent.click(screen.getByRole('button', { name: /select song/i }));
+      fireEvent.click(screen.getByRole('button', { name: /edit songs/i }));
       const dialog = screen.getByRole('dialog');
-      expect(dialog).toBeInTheDocument();
+      fireEvent.click(within(dialog).getByRole('button', { name: /delete songs/i }));
+      expect(screen.getByRole('dialog')).toBeInTheDocument();
+      expect(screen.getByText(/1 song/i)).toBeInTheDocument();
     });
 
-    it('deletes song after confirmation', () => {
-      render(<IndexPage {...defaultProps()} expandedBook={bookId} />);
-      fireEvent.click(screen.getByRole('button', { name: /delete song/i }));
-      const dialog = screen.getByRole('dialog');
-      // The confirm delete button inside the dialog
-      const confirmBtn = within(dialog).getAllByRole('button', {
-        name: /delete song/i,
-      })[0];
-      fireEvent.click(confirmBtn);
-      expect(useStore.getState().userBooks[0].songs).toHaveLength(0);
+    it('deletes selected songs after confirmation', () => {
+      render(<IndexPage {...defaultProps()} />);
+      fireEvent.click(screen.getByRole('button', { name: /select song/i }));
+      fireEvent.click(screen.getByRole('button', { name: /edit songs/i }));
+      fireEvent.click(screen.getByRole('button', { name: /delete songs/i }));
+      const confirmDialog = screen.getByRole('dialog');
+      fireEvent.click(
+        within(confirmDialog).getByRole('button', { name: /delete songs/i })
+      );
+      expect(useStore.getState().songs).toHaveLength(0);
     });
 
-    it('cancels delete song dialog without deleting', () => {
-      render(<IndexPage {...defaultProps()} expandedBook={bookId} />);
-      fireEvent.click(screen.getByRole('button', { name: /delete song/i }));
+    it('cancels delete without deleting', () => {
+      render(<IndexPage {...defaultProps()} />);
+      fireEvent.click(screen.getByRole('button', { name: /select song/i }));
+      fireEvent.click(screen.getByRole('button', { name: /edit songs/i }));
+      fireEvent.click(screen.getByRole('button', { name: /delete songs/i }));
       fireEvent.click(screen.getByRole('button', { name: /cancel/i }));
-      expect(useStore.getState().userBooks[0].songs).toHaveLength(1);
+      expect(useStore.getState().songs).toHaveLength(1);
     });
 
-    describe('Edit book dialog', () => {
-      it('opens when Edit Book button is clicked', () => {
-        render(<IndexPage {...defaultProps()} expandedBook={bookId} />);
-        fireEvent.click(screen.getByRole('button', { name: /edit book/i }));
-        expect(screen.getByRole('dialog')).toBeInTheDocument();
+    it('triggers export download when Export Songs is clicked', () => {
+      const createObjectURL = vi.fn(() => 'blob:test');
+      const revokeObjectURL = vi.fn();
+      const click = vi.fn();
+      URL.createObjectURL = createObjectURL;
+      URL.revokeObjectURL = revokeObjectURL;
+      const origCreateElement = document.createElement.bind(document);
+      const createElement = vi.spyOn(document, 'createElement');
+      createElement.mockImplementation((tag: string) => {
+        if (tag === 'a') {
+          return { href: '', download: '', click } as unknown as HTMLAnchorElement;
+        }
+        return origCreateElement(tag) as HTMLElement;
       });
 
-      it('renames book when new title entered and Save clicked', () => {
-        render(<IndexPage {...defaultProps()} expandedBook={bookId} />);
-        fireEvent.click(screen.getByRole('button', { name: /edit book/i }));
-        const input = screen.getByRole('textbox');
-        fireEvent.change(input, { target: { value: 'Renamed Book' } });
-        fireEvent.click(screen.getByRole('button', { name: /save/i }));
-        expect(useStore.getState().userBooks[0].title).toBe('Renamed Book');
-      });
+      render(<IndexPage {...defaultProps()} />);
+      fireEvent.click(screen.getByRole('button', { name: /select song/i }));
+      fireEvent.click(screen.getByRole('button', { name: /edit songs/i }));
+      const dialog = screen.getByRole('dialog');
+      fireEvent.click(within(dialog).getByRole('button', { name: /export songs/i }));
+      expect(createObjectURL).toHaveBeenCalled();
+      expect(click).toHaveBeenCalled();
+    });
+  });
 
-      it('renames book when Enter pressed', () => {
-        render(<IndexPage {...defaultProps()} expandedBook={bookId} />);
-        fireEvent.click(screen.getByRole('button', { name: /edit book/i }));
-        const input = screen.getByRole('textbox');
-        fireEvent.change(input, { target: { value: 'Enter Rename' } });
-        fireEvent.keyDown(input, { key: 'Enter' });
-        expect(useStore.getState().userBooks[0].title).toBe('Enter Rename');
-      });
-
-      it('does not rename book when Cancel clicked', () => {
-        render(<IndexPage {...defaultProps()} expandedBook={bookId} />);
-        fireEvent.click(screen.getByRole('button', { name: /edit book/i }));
-        const input = screen.getByRole('textbox');
-        fireEvent.change(input, { target: { value: 'Cancelled Rename' } });
-        fireEvent.click(screen.getByRole('button', { name: /cancel/i }));
-        expect(useStore.getState().userBooks[0].title).toBe('My Favourites');
-      });
-
-      it('opens delete book confirmation from edit dialog', () => {
-        render(<IndexPage {...defaultProps()} expandedBook={bookId} />);
-        fireEvent.click(screen.getByRole('button', { name: /edit book/i }));
-        fireEvent.click(screen.getByRole('button', { name: /delete book/i }));
-        // Now should see delete confirm dialog
-        expect(screen.getByRole('dialog')).toBeInTheDocument();
-      });
-
-      it('deletes book after confirming from delete dialog', () => {
-        render(<IndexPage {...defaultProps()} expandedBook={bookId} />);
-        fireEvent.click(screen.getByRole('button', { name: /edit book/i }));
-        // Click "Delete Book" in edit dialog to open confirm dialog
-        const editDialog = screen.getByRole('dialog');
-        fireEvent.click(
-          within(editDialog).getByRole('button', { name: /delete book/i })
-        );
-        // Now confirm deletion
-        const confirmDialog = screen.getByRole('dialog');
-        fireEvent.click(
-          within(confirmDialog).getByRole('button', { name: /delete book/i })
-        );
-        expect(useStore.getState().userBooks).toHaveLength(0);
-      });
+  describe('Add Song menu', () => {
+    it('opens menu when + button is clicked', () => {
+      render(<IndexPage {...defaultProps()} />);
+      fireEvent.click(screen.getByRole('button', { name: /add song/i }));
+      expect(screen.getByRole('menu')).toBeInTheDocument();
     });
 
-    describe('Export book dialog', () => {
-      it('opens when Export button is clicked', () => {
-        render(<IndexPage {...defaultProps()} expandedBook={bookId} />);
-        fireEvent.click(screen.getByRole('button', { name: /^export$/i }));
-        expect(screen.getByRole('dialog')).toBeInTheDocument();
-      });
-
-      it('does not trigger download when Cancel is clicked', () => {
-        const createObjectURL = vi.fn(() => 'blob:test');
-        URL.createObjectURL = createObjectURL;
-        render(<IndexPage {...defaultProps()} expandedBook={bookId} />);
-        fireEvent.click(screen.getByRole('button', { name: /^export$/i }));
-        fireEvent.click(screen.getByRole('button', { name: /cancel/i }));
-        expect(createObjectURL).not.toHaveBeenCalled();
-      });
-
-      it('triggers download when Download is clicked', () => {
-        const createObjectURL = vi.fn(() => 'blob:test');
-        const revokeObjectURL = vi.fn();
-        const click = vi.fn();
-        URL.createObjectURL = createObjectURL;
-        URL.revokeObjectURL = revokeObjectURL;
-        // Capture original before spying to avoid recursion
-        const origCreateElement = document.createElement.bind(document);
-        const createElement = vi.spyOn(document, 'createElement');
-        createElement.mockImplementation((tag: string) => {
-          if (tag === 'a') {
-            const a = {
-              href: '',
-              download: '',
-              click,
-            } as unknown as HTMLAnchorElement;
-            return a;
-          }
-          return origCreateElement(tag) as HTMLElement;
-        });
-
-        render(<IndexPage {...defaultProps()} expandedBook={bookId} />);
-        fireEvent.click(screen.getByRole('button', { name: /^export$/i }));
-        fireEvent.click(screen.getByRole('button', { name: /download/i }));
-        expect(createObjectURL).toHaveBeenCalled();
-        expect(click).toHaveBeenCalled();
-      });
+    it('adds an empty song when Add Empty Song is clicked', () => {
+      render(<IndexPage {...defaultProps()} />);
+      fireEvent.click(screen.getByRole('button', { name: /add song/i }));
+      fireEvent.click(screen.getByRole('menuitem', { name: /add empty song/i }));
+      expect(useStore.getState().songs).toHaveLength(1);
     });
   });
 

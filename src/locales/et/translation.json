@@ -1,7 +1,19 @@
 {
   "appTitle": "Fluyten",
   "settings": "Seaded",
+  "settingsTabGeneral": "Üldine",
+  "settingsTabInstrument": "Instrument",
+  "settingsTabPlayback": "Taasesitus",
   "addSong": "Lisa laul",
+  "filterSongs": "Filter songs",
+  "addEmptySong": "Lisa tühi laul",
+  "editSong": "Muuda laulu",
+  "editSongs": "Muuda laule",
+  "exportSongs": "Ekspordi laulud",
+  "deleteSongs": "Kustuta laulud",
+  "selectSong": "Vali laul",
+  "deselectSong": "Tühista laulu valik",
+  "exportSong": "Ekspordi laul",
   "addOtherSong": "Lisa teine laul",
   "addEmptyBook": "Lisa tühi raamat",
   "importFromFile": "Impordi failist",
@@ -106,5 +118,7 @@
     "Maarial oli väike tall",
     "Sära, säri tähteke",
     "Sõua, sõua paadiga"
-  ]
+  ],
+  "confirmDeleteSongs_one": "Kustutada 1 laulu? Seda ei saa tagasi võtta.",
+  "confirmDeleteSongs_other": "Kustutada {{count}} laulu? Seda ei saa tagasi võtta."
 }

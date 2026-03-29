@@ -1,7 +1,19 @@
 {
   "appTitle": "Fluyten",
   "settings": "সেটিংস",
+  "settingsTabGeneral": "সাধারণ",
+  "settingsTabInstrument": "বাদ্যযন্ত্র",
+  "settingsTabPlayback": "প্লেব্যাক",
   "addSong": "গান যোগ করুন",
+  "filterSongs": "Filter songs",
+  "addEmptySong": "খালি গান যোগ করুন",
+  "editSong": "গান সম্পাদনা করুন",
+  "editSongs": "গান সম্পাদনা করুন",
+  "exportSongs": "গান রফতানি করুন",
+  "deleteSongs": "গান মুছুন",
+  "selectSong": "গান নির্বাচন করুন",
+  "deselectSong": "গান অনির্বাচন করুন",
+  "exportSong": "গান রফতানি করুন",
   "addOtherSong": "অন্য গান যোগ করুন",
   "addEmptyBook": "খালি বই যোগ করুন",
   "importFromFile": "ফাইল থেকে আমদানি করুন",
@@ -106,5 +118,7 @@
     "মেরির একটি ছোট্ট ভেড়া ছিল",
     "জ্বলো জ্বলো ছোট্ট তারা",
     "চালাও চালাও তোমার নৌকা"
-  ]
+  ],
+  "confirmDeleteSongs_one": "1টি গান মুছবেন? এটি পূর্বাবস্থায় ফেরানো যাবে না।",
+  "confirmDeleteSongs_other": "{{count}}টি গান মুছবেন? এটি পূর্বাবস্থায় ফেরানো যাবে না।"
 }

@@ -1,7 +1,19 @@
 {
   "appTitle": "Fluyten",
   "settings": "설정",
+  "settingsTabGeneral": "일반",
+  "settingsTabInstrument": "악기",
+  "settingsTabPlayback": "재생",
   "addSong": "곡 추가",
+  "filterSongs": "Filter songs",
+  "addEmptySong": "빈 곡 추가",
+  "editSong": "곡 편집",
+  "editSongs": "곡 편집",
+  "exportSongs": "곡 내보내기",
+  "deleteSongs": "곡 삭제",
+  "selectSong": "곡 선택",
+  "deselectSong": "곡 선택 해제",
+  "exportSong": "곡 내보내기",
   "addOtherSong": "다른 곡 추가",
   "addEmptyBook": "빈 책 추가",
   "importFromFile": "파일에서 가져오기",
@@ -106,5 +118,7 @@
     "메리에게 작은 양이 있었네",
     "반짝반짝 작은 별",
     "노 저어라 노 저어라"
-  ]
+  ],
+  "confirmDeleteSongs_one": "1곡을 삭제하시겠습니까? 이 작업은 취소할 수 없습니다.",
+  "confirmDeleteSongs_other": "{{count}}곡을 삭제하시겠습니까? 이 작업은 취소할 수 없습니다."
 }

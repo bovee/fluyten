@@ -16,6 +16,8 @@ import Switch from '@mui/material/Switch';
 import Stepper from '@mui/material/Stepper';
 import Step from '@mui/material/Step';
 import StepLabel from '@mui/material/StepLabel';
+import Tab from '@mui/material/Tab';
+import Tabs from '@mui/material/Tabs';
 import GraphicEq from '@mui/icons-material/GraphicEq';
 import { useTranslation } from 'react-i18next';
 import { useStore } from './store';
@@ -45,6 +47,7 @@ export function SettingsDialog({ open, onClose }: SettingsDialogProps) {
   const checkPlayingMode = useStore((state) => state.checkPlayingMode);
   const setCheckPlayingMode = useStore((state) => state.setCheckPlayingMode);
 
+  const [tab, setTab] = useState(0);
   const [detectOpen, setDetectOpen] = useState(false);
   const [detectStep, setDetectStep] = useState<0 | 1>(0);
   const [detectedVolume, setDetectedVolume] = useState(0);
@@ -90,9 +93,19 @@ export function SettingsDialog({ open, onClose }: SettingsDialogProps) {
     <>
       <Dialog open={open} onClose={onClose} fullWidth maxWidth="sm">
         <DialogTitle>{t('settings')}</DialogTitle>
-        <DialogContent>
-          <Box sx={{ mt: 2, display: 'flex', flexDirection: 'column', gap: 4 }}>
-            <Box>
+        <DialogContent sx={{ px: 0, pb: 0 }}>
+          <Tabs
+            value={tab}
+            onChange={(_, v) => setTab(v)}
+            sx={{ px: 3, borderBottom: 1, borderColor: 'divider' }}
+          >
+            <Tab label={t('settingsTabGeneral')} />
+            <Tab label={t('settingsTabInstrument')} />
+            <Tab label={t('settingsTabPlayback')} />
+          </Tabs>
+
+          {tab === 0 && (
+            <Box sx={{ px: 3, pt: 3, pb: 1, display: 'flex', flexDirection: 'column', gap: 4 }}>
               <FormControl fullWidth>
                 <InputLabel id="language-label">{t('language')}</InputLabel>
                 <Select
@@ -160,58 +173,60 @@ export function SettingsDialog({ open, onClose }: SettingsDialogProps) {
                 </Select>
               </FormControl>
             </Box>
+          )}
 
-            <Box sx={{ display: 'flex', gap: 1, alignItems: 'flex-start' }}>
-              <FormControl fullWidth>
-                <InputLabel id="instrument-type-label">
-                  {t('recorderType')}
-                </InputLabel>
-                <Select
-                  labelId="instrument-type-label"
-                  id="instrument-type-select"
-                  value={instrumentType}
-                  label={t('instrumentType')}
-                  onChange={(e) =>
-                    setInstrumentType(
-                      e.target.value as keyof typeof RECORDER_TYPES
-                    )
-                  }
+          {tab === 1 && (
+            <Box sx={{ px: 3, pt: 3, pb: 1, display: 'flex', flexDirection: 'column', gap: 4 }}>
+              <Box sx={{ display: 'flex', gap: 1, alignItems: 'flex-start' }}>
+                <FormControl fullWidth>
+                  <InputLabel id="instrument-type-label">
+                    {t('recorderType')}
+                  </InputLabel>
+                  <Select
+                    labelId="instrument-type-label"
+                    id="instrument-type-select"
+                    value={instrumentType}
+                    label={t('instrumentType')}
+                    onChange={(e) =>
+                      setInstrumentType(
+                        e.target.value as keyof typeof RECORDER_TYPES
+                      )
+                    }
+                  >
+                    {Object.keys(RECORDER_TYPES)
+                      .filter((key) => key !== 'ALL')
+                      .map((key) => (
+                        <MenuItem key={key} value={key}>
+                          {t(`recorderTypes.${key}`)}
+                        </MenuItem>
+                      ))}
+                  </Select>
+                </FormControl>
+                <Button
+                  variant="outlined"
+                  startIcon={<GraphicEq />}
+                  onClick={openDetect}
+                  sx={{ whiteSpace: 'nowrap', height: 56, px: 2 }}
                 >
-                  {Object.keys(RECORDER_TYPES)
-                    .filter((key) => key !== 'ALL')
-                    .map((key) => (
-                      <MenuItem key={key} value={key}>
-                        {t(`recorderTypes.${key}`)}
-                      </MenuItem>
-                    ))}
-                </Select>
-              </FormControl>
-              <Button
-                variant="outlined"
-                startIcon={<GraphicEq />}
-                onClick={openDetect}
-                sx={{ whiteSpace: 'nowrap', height: 56, px: 2 }}
-              >
-                {t('detect')}
-              </Button>
-            </Box>
+                  {t('detect')}
+                </Button>
+              </Box>
 
-            <Box>
-              <Typography id="tuning-slider" gutterBottom>
-                {t('tuningRatio', { tuning: tuning.toFixed(2) })}
-              </Typography>
-              <Slider
-                aria-label="Tuning"
-                value={tuning}
-                onChange={(_, newValue) => setTuning(newValue as number)}
-                valueLabelDisplay="auto"
-                step={0.01}
-                min={0.8}
-                max={1.2}
-              />
-            </Box>
+              <Box>
+                <Typography id="tuning-slider" gutterBottom>
+                  {t('tuningRatio', { tuning: tuning.toFixed(2) })}
+                </Typography>
+                <Slider
+                  aria-label="Tuning"
+                  value={tuning}
+                  onChange={(_, newValue) => setTuning(newValue as number)}
+                  valueLabelDisplay="auto"
+                  step={0.01}
+                  min={0.8}
+                  max={1.2}
+                />
+              </Box>
 
-            <Box>
               <FormControlLabel
                 control={
                   <Switch
@@ -222,8 +237,10 @@ export function SettingsDialog({ open, onClose }: SettingsDialogProps) {
                 label={t('germanFingering')}
               />
             </Box>
+          )}
 
-            <Box>
+          {tab === 2 && (
+            <Box sx={{ px: 3, pt: 3, pb: 1, display: 'flex', flexDirection: 'column', gap: 4 }}>
               <FormControl fullWidth>
                 <InputLabel id="playback-voices-label">
                   {t('playbackVoices')}
@@ -245,9 +262,7 @@ export function SettingsDialog({ open, onClose }: SettingsDialogProps) {
                   <MenuItem value="all">{t('playbackVoicesAll')}</MenuItem>
                 </Select>
               </FormControl>
-            </Box>
 
-            <Box>
               <FormControl fullWidth>
                 <InputLabel id="check-playing-label">
                   {t('checkPlaying')}
@@ -271,7 +286,7 @@ export function SettingsDialog({ open, onClose }: SettingsDialogProps) {
                 </Select>
               </FormControl>
             </Box>
-          </Box>
+          )}
         </DialogContent>
       </Dialog>
 

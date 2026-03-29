@@ -1,7 +1,19 @@
 {
   "appTitle": "Fluyten",
   "settings": "सेटिंग्ज",
+  "settingsTabGeneral": "सामान्य",
+  "settingsTabInstrument": "वाद्य",
+  "settingsTabPlayback": "प्लेबॅक",
   "addSong": "गाणे जोडा",
+  "filterSongs": "Filter songs",
+  "addEmptySong": "रिकामे गाणे जोडा",
+  "editSong": "गाणे संपादित करा",
+  "editSongs": "गाणी संपादित करा",
+  "exportSongs": "गाणी निर्यात करा",
+  "deleteSongs": "गाणी हटवा",
+  "selectSong": "गाणे निवडा",
+  "deselectSong": "गाणे अनसिलेक्ट करा",
+  "exportSong": "गाणे निर्यात करा",
   "addOtherSong": "दुसरे गाणे जोडा",
   "addEmptyBook": "रिकामे पुस्तक जोडा",
   "importFromFile": "फाइलमधून आयात करा",
@@ -106,5 +118,7 @@
     "मेरीला एक छोटे कोकरू होते",
     "लुकलुकती तारा",
     "वल्हव वल्हव तुझी होडी"
-  ]
+  ],
+  "confirmDeleteSongs_one": "1 गाणी हटवायची? हे पूर्ववत करता येणार नाही.",
+  "confirmDeleteSongs_other": "{{count}} गाणी हटवायची? हे पूर्ववत करता येणार नाही."
 }

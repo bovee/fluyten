@@ -1,7 +1,19 @@
 {
   "appTitle": "Fluyten",
   "settings": "Ρυθμίσεις",
+  "settingsTabGeneral": "Γενικά",
+  "settingsTabInstrument": "Όργανο",
+  "settingsTabPlayback": "Αναπαραγωγή",
   "addSong": "Προσθήκη τραγουδιού",
+  "filterSongs": "Filter songs",
+  "addEmptySong": "Προσθήκη κενού τραγουδιού",
+  "editSong": "Επεξεργασία τραγουδιού",
+  "editSongs": "Επεξεργασία τραγουδιών",
+  "exportSongs": "Εξαγωγή τραγουδιών",
+  "deleteSongs": "Διαγραφή τραγουδιών",
+  "selectSong": "Επιλογή τραγουδιού",
+  "deselectSong": "Αποεπιλογή τραγουδιού",
+  "exportSong": "Εξαγωγή τραγουδιού",
   "addOtherSong": "Προσθήκη άλλου τραγουδιού",
   "addEmptyBook": "Προσθήκη κενού βιβλίου",
   "importFromFile": "Εισαγωγή από αρχείο",
@@ -106,5 +118,7 @@
     "Η Μαρία είχε ένα αρνάκι",
     "Αστεράκι μου λαμπρό",
     "Κωπηλάτα, κωπηλάτα"
-  ]
+  ],
+  "confirmDeleteSongs_one": "Διαγραφή 1 τραγουδιών; Αυτό δεν μπορεί να αναιρεθεί.",
+  "confirmDeleteSongs_other": "Διαγραφή {{count}} τραγουδιών; Αυτό δεν μπορεί να αναιρεθεί."
 }

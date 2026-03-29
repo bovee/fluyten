@@ -1,7 +1,19 @@
 {
   "appTitle": "Fluyten",
   "settings": "Configuración",
+  "settingsTabGeneral": "General",
+  "settingsTabInstrument": "Instrumento",
+  "settingsTabPlayback": "Reproducción",
   "addSong": "Añadir canción",
+  "filterSongs": "Filter songs",
+  "addEmptySong": "Añadir canción vacía",
+  "editSong": "Editar canción",
+  "editSongs": "Editar canciones",
+  "exportSongs": "Exportar canciones",
+  "deleteSongs": "Eliminar canciones",
+  "selectSong": "Seleccionar canción",
+  "deselectSong": "Deseleccionar canción",
+  "exportSong": "Exportar canción",
   "addOtherSong": "Añadir otra canción",
   "addEmptyBook": "Añadir libro vacío",
   "importFromFile": "Importar desde archivo",
@@ -106,5 +118,7 @@
     "María tenía un corderito",
     "Estrellita, ¿dónde estás?",
     "Rema, Rema, Rema tu Barca"
-  ]
+  ],
+  "confirmDeleteSongs_one": "¿Eliminar 1 canciones? Esto no se puede deshacer.",
+  "confirmDeleteSongs_other": "¿Eliminar {{count}} canciones? Esto no se puede deshacer."
 }
