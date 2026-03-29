@@ -5,6 +5,7 @@ vi.mock('./utils', () => ({
 }));
 import { render, screen, fireEvent, act } from '@testing-library/react';
 import { SongPage } from './SongPage';
+import { axe } from 'jest-axe';
 import { useStore } from './store';
 
 // Mock audio-related classes so they don't fail in jsdom
@@ -47,6 +48,11 @@ beforeEach(() => {
 });
 
 describe('SongPage', () => {
+
+  it('should have no accessibility violations', async () => {
+    const { container } = render(<SongPage {...defaultProps()} />);
+    expect(await axe(container)).toHaveNoViolations();
+  });
   it('renders the song title', () => {
     render(<SongPage {...defaultProps()} />);
     expect(screen.getByRole('heading', { level: 1 })).toBeInTheDocument();
@@ -183,18 +189,14 @@ describe('SongPage', () => {
     const clickFab = () =>
       fireEvent.click(screen.getByRole('button', { name: /play/i }));
 
-    it('has 3 action buttons inside the SpeedDial', () => {
+    it('has 2 action buttons inside the SpeedDial', () => {
       render(<SongPage {...defaultProps()} />);
       clickFab();
-      expect(getActionButtons()).toHaveLength(3);
+      expect(getActionButtons()).toHaveLength(2);
     });
 
-    // SpeedDialAction order in DOM: Mic (startRecording), MusicNote (startPlaying), Speed (startMetronome)
-    // They appear after the main FAB button; the FAB is last in tab order.
-    // We find action buttons by querying all and taking the new ones.
+    // SpeedDialAction order in DOM: Mic (Practice), MusicNote (Play Song)
     const getActionButtons = () => {
-      // After opening, the action buttons are present. Since they have no
-      // accessible names we find them via the speed dial actions container.
       const container = document.querySelector(
         '[class*="MuiSpeedDial-actions"]'
       )!;
@@ -205,7 +207,7 @@ describe('SongPage', () => {
       render(<SongPage {...defaultProps()} />);
       clickFab();
       const actions = getActionButtons();
-      expect(actions.length).toBe(3);
+      expect(actions.length).toBe(2);
       fireEvent.click(actions[1]); // MusicNote = Play Song
       expect(screen.getByRole('button', { name: /play/i })).toBeInTheDocument();
     });
@@ -216,22 +218,6 @@ describe('SongPage', () => {
       fireEvent.click(getActionButtons()[1]);
       clickFab();
       fireEvent.click(getActionButtons()[1]);
-      expect(screen.getByRole('button', { name: /play/i })).toBeInTheDocument();
-    });
-
-    it('clicking Metronome action (index 2) starts metronome', () => {
-      render(<SongPage {...defaultProps()} />);
-      clickFab();
-      fireEvent.click(getActionButtons()[2]); // Speed = Metronome
-      expect(screen.getByRole('button', { name: /play/i })).toBeInTheDocument();
-    });
-
-    it('clicking Metronome action twice stops metronome', () => {
-      render(<SongPage {...defaultProps()} />);
-      clickFab();
-      fireEvent.click(getActionButtons()[2]);
-      clickFab();
-      fireEvent.click(getActionButtons()[2]);
       expect(screen.getByRole('button', { name: /play/i })).toBeInTheDocument();
     });
 

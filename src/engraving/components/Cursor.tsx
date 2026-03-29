@@ -7,13 +7,14 @@ interface CursorProps {
   layout: LayoutResult;
 }
 
-/** Build a flat map from musicNoteIndex → {x, lineY} for all notes in the layout. */
-function buildNotePosMap(layout: LayoutResult): Map<number, { x: number; lineY: number }> {
-  const map = new Map<number, { x: number; lineY: number }>();
+/** Build a flat map from musicNoteIndex → {x, lineY, barRight} for all notes in the layout. */
+function buildNotePosMap(layout: LayoutResult): Map<number, { x: number; lineY: number; barRight: number }> {
+  const map = new Map<number, { x: number; lineY: number; barRight: number }>();
   for (const line of layout.lines) {
     for (const bar of line.bars) {
+      const barRight = bar.x + bar.width;
       for (const note of bar.notes) {
-        map.set(note.musicNoteIndex, { x: note.x, lineY: line.y });
+        map.set(note.musicNoteIndex, { x: note.x, lineY: line.y, barRight });
       }
     }
   }
@@ -34,6 +35,9 @@ export function Cursor({ noteIdx, layout }: CursorProps) {
     const posB = posMap.get(floor + 1);
     if (posB && posB.lineY === posA.lineY) {
       x = posA.x + frac * (posB.x - posA.x);
+    } else {
+      // Next note is on a different line (or doesn't exist): advance toward bar's right edge.
+      x = posA.x + frac * (posA.barRight - posA.x);
     }
   }
 

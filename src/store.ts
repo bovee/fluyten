@@ -4,7 +4,7 @@ import { persist, createJSONStorage } from 'zustand/middleware';
 import { type RecorderType } from './instrument';
 
 export type PlaybackVoices = 'selected' | 'others' | 'all';
-export type CheckPlayingMode = 'correct-then-advance' | 'in-tempo';
+export type PracticeMode = 'correct-then-advance' | 'in-tempo' | 'metronome-only';
 
 export interface UserSong {
   id: string;
@@ -26,8 +26,10 @@ interface SettingsState {
   setLanguage: (language: string) => void;
   playbackVoices: PlaybackVoices;
   setPlaybackVoices: (v: PlaybackVoices) => void;
-  checkPlayingMode: CheckPlayingMode;
-  setCheckPlayingMode: (mode: CheckPlayingMode) => void;
+  practiceMode: PracticeMode;
+  setPracticeMode: (mode: PracticeMode) => void;
+  playMetronome: boolean;
+  setPlayMetronome: (v: boolean) => void;
   songs: UserSong[];
   addSong: (song: UserSong) => void;
   importSongs: (songs: UserSong[]) => void;
@@ -52,8 +54,10 @@ export const useStore = create<SettingsState>()(
       setLanguage: (language) => set({ language }),
       playbackVoices: 'selected',
       setPlaybackVoices: (playbackVoices) => set({ playbackVoices }),
-      checkPlayingMode: 'correct-then-advance',
-      setCheckPlayingMode: (checkPlayingMode) => set({ checkPlayingMode }),
+      practiceMode: 'correct-then-advance',
+      setPracticeMode: (practiceMode) => set({ practiceMode }),
+      playMetronome: false,
+      setPlayMetronome: (playMetronome) => set({ playMetronome }),
       songs: [],
       addSong: (song) =>
         set((state) => ({ songs: [...state.songs, song] })),

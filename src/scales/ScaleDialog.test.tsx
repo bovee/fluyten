@@ -1,6 +1,7 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest';
 import { render, screen, fireEvent } from '@testing-library/react';
 import { ScaleDialog } from './ScaleDialog';
+import { axe } from 'jest-axe';
 import { useStore } from '../store';
 
 beforeEach(() => {
@@ -17,6 +18,11 @@ const renderDialog = (props?: Partial<Parameters<typeof ScaleDialog>[0]>) => {
 };
 
 describe('ScaleDialog', () => {
+
+  it('should have no accessibility violations', async () => {
+    const { container } = renderDialog();
+    expect(await axe(container)).toHaveNoViolations();
+  });
   it('renders with default state when open', () => {
     renderDialog();
     expect(screen.getByRole('dialog')).toBeInTheDocument();

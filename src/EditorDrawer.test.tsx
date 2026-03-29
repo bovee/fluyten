@@ -5,6 +5,7 @@ vi.mock('./utils', () => ({
   debounce: (fn: (...args: unknown[]) => void) => ({ call: fn, cancel: vi.fn() }),
 }));
 import { EditorDrawer } from './EditorDrawer';
+import { axe } from 'jest-axe';
 import { useStore } from './store';
 import { Music } from './music';
 
@@ -37,6 +38,11 @@ beforeEach(() => {
 });
 
 describe('EditorDrawer', () => {
+
+  it('should have no accessibility violations', async () => {
+    const { container } = render(<EditorDrawer {...defaultProps()} />);
+    expect(await axe(container)).toHaveNoViolations();
+  });
   it('renders the ABC textarea with the current value', () => {
     render(<EditorDrawer {...defaultProps()} />);
     const textarea = screen.getByRole('textbox');

@@ -11,6 +11,7 @@ import FormControl from '@mui/material/FormControl';
 import InputLabel from '@mui/material/InputLabel';
 import Select from '@mui/material/Select';
 import MenuItem from '@mui/material/MenuItem';
+import Checkbox from '@mui/material/Checkbox';
 import FormControlLabel from '@mui/material/FormControlLabel';
 import Switch from '@mui/material/Switch';
 import Stepper from '@mui/material/Stepper';
@@ -44,8 +45,10 @@ export function SettingsDialog({ open, onClose }: SettingsDialogProps) {
   const setLanguage = useStore((state) => state.setLanguage);
   const playbackVoices = useStore((state) => state.playbackVoices);
   const setPlaybackVoices = useStore((state) => state.setPlaybackVoices);
-  const checkPlayingMode = useStore((state) => state.checkPlayingMode);
-  const setCheckPlayingMode = useStore((state) => state.setCheckPlayingMode);
+  const practiceMode = useStore((state) => state.practiceMode);
+  const setPracticeMode = useStore((state) => state.setPracticeMode);
+  const playMetronome = useStore((state) => state.playMetronome);
+  const setPlayMetronome = useStore((state) => state.setPlayMetronome);
 
   const [tab, setTab] = useState(0);
   const [detectOpen, setDetectOpen] = useState(false);
@@ -101,7 +104,7 @@ export function SettingsDialog({ open, onClose }: SettingsDialogProps) {
           >
             <Tab label={t('settingsTabGeneral')} />
             <Tab label={t('settingsTabInstrument')} />
-            <Tab label={t('settingsTabPlayback')} />
+            <Tab label={t('settingsTabPractice')} />
           </Tabs>
 
           {tab === 0 && (
@@ -170,6 +173,28 @@ export function SettingsDialog({ open, onClose }: SettingsDialogProps) {
                   <MenuItem value="th">ภาษาไทย</MenuItem>
                   <MenuItem value="uk">Українська</MenuItem>
                   <MenuItem value="vi">Tiếng Việt</MenuItem>
+                </Select>
+              </FormControl>
+
+              <FormControl fullWidth>
+                <InputLabel id="playback-voices-label">
+                  {t('playbackVoices')}
+                </InputLabel>
+                <Select
+                  labelId="playback-voices-label"
+                  value={playbackVoices}
+                  label={t('playbackVoices')}
+                  onChange={(e) =>
+                    setPlaybackVoices(e.target.value as typeof playbackVoices)
+                  }
+                >
+                  <MenuItem value="selected">
+                    {t('playbackVoicesSelected')}
+                  </MenuItem>
+                  <MenuItem value="others">
+                    {t('playbackVoicesOthers')}
+                  </MenuItem>
+                  <MenuItem value="all">{t('playbackVoicesAll')}</MenuItem>
                 </Select>
               </FormControl>
             </Box>
@@ -242,49 +267,41 @@ export function SettingsDialog({ open, onClose }: SettingsDialogProps) {
           {tab === 2 && (
             <Box sx={{ px: 3, pt: 3, pb: 1, display: 'flex', flexDirection: 'column', gap: 4 }}>
               <FormControl fullWidth>
-                <InputLabel id="playback-voices-label">
-                  {t('playbackVoices')}
+                <InputLabel id="practice-mode-label">
+                  {t('practiceMode')}
                 </InputLabel>
                 <Select
-                  labelId="playback-voices-label"
-                  value={playbackVoices}
-                  label={t('playbackVoices')}
+                  labelId="practice-mode-label"
+                  value={practiceMode}
+                  label={t('practiceMode')}
                   onChange={(e) =>
-                    setPlaybackVoices(e.target.value as typeof playbackVoices)
-                  }
-                >
-                  <MenuItem value="selected">
-                    {t('playbackVoicesSelected')}
-                  </MenuItem>
-                  <MenuItem value="others">
-                    {t('playbackVoicesOthers')}
-                  </MenuItem>
-                  <MenuItem value="all">{t('playbackVoicesAll')}</MenuItem>
-                </Select>
-              </FormControl>
-
-              <FormControl fullWidth>
-                <InputLabel id="check-playing-label">
-                  {t('checkPlaying')}
-                </InputLabel>
-                <Select
-                  labelId="check-playing-label"
-                  value={checkPlayingMode}
-                  label={t('checkPlaying')}
-                  onChange={(e) =>
-                    setCheckPlayingMode(
-                      e.target.value as typeof checkPlayingMode
+                    setPracticeMode(
+                      e.target.value as typeof practiceMode
                     )
                   }
                 >
+                  <MenuItem value="metronome-only">
+                    {t('practiceDontCheck')}
+                  </MenuItem>
                   <MenuItem value="correct-then-advance">
-                    {t('checkPlayingCorrectThenAdvance')}
+                    {t('practiceAsPlayed')}
                   </MenuItem>
                   <MenuItem value="in-tempo">
-                    {t('checkPlayingInTempo')}
+                    {t('practiceRealTime')}
                   </MenuItem>
                 </Select>
               </FormControl>
+
+              <FormControlLabel
+                control={
+                  <Checkbox
+                    checked={playMetronome}
+                    onChange={(e) => setPlayMetronome(e.target.checked)}
+                    disabled={practiceMode === 'metronome-only'}
+                  />
+                }
+                label={t('playMetronome')}
+              />
             </Box>
           )}
         </DialogContent>

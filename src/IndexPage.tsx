@@ -167,10 +167,14 @@ export function IndexPage({ onSelectSong }: IndexPageProps) {
       const parsed = await parseSongsFromUrl(current.value);
       const isStarter = isStarterBookUrl(current.value);
       (isStarter
-        ? parsed.map((s, i) => ({
-            ...s,
-            title: t(`beginnerSongs.${i}`, { defaultValue: s.title }),
-          }))
+        ? parsed.map((s, i) => {
+            const translatedTitle = t(`beginnerSongs.${i}`, { defaultValue: s.title });
+            return {
+              ...s,
+              title: translatedTitle,
+              abc: s.abc.replace(/^T:.*$/m, `T:${translatedTitle}`),
+            };
+          })
         : parsed
       ).forEach((s) => addSong(s));
       setImportUrl(null);
@@ -288,6 +292,7 @@ export function IndexPage({ onSelectSong }: IndexPageProps) {
         <TextField
           size="small"
           placeholder={t('filterSongs')}
+          inputProps={{ 'aria-label': t('filterSongs') }}
           value={filterText}
           onChange={(e) => setFilterText(e.target.value)}
           sx={{ width: 'min(400px, 95vw)', mb: 1 }}

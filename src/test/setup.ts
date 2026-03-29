@@ -1,4 +1,5 @@
 import '@testing-library/jest-dom';
+import 'jest-axe/extend-expect';
 import '../i18n';
 import { setupAudioMocks } from './audioMocks';
 import { useStore } from '../store';

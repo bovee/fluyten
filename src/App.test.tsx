@@ -5,6 +5,7 @@ vi.mock('./utils', () => ({
 }));
 import { render, screen, fireEvent, waitFor } from '@testing-library/react';
 import App from './App';
+import { axe } from 'jest-axe';
 import { useStore } from './store';
 
 vi.mock('./audio/FrequencyTracker', () => ({
@@ -55,6 +56,11 @@ beforeEach(() => {
 });
 
 describe('App', () => {
+
+  it('should have no accessibility violations', async () => {
+    const { container } = render(<App />);
+    expect(await axe(container)).toHaveNoViolations();
+  });
   describe('onboarding', () => {
     it('shows OnboardingDialog when not yet onboarded', () => {
       useStore.setState({ onboarded: false });

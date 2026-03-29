@@ -10,7 +10,6 @@ import Edit from '@mui/icons-material/Edit';
 import Mic from '@mui/icons-material/Mic';
 import MusicNote from '@mui/icons-material/MusicNote';
 import PlayArrow from '@mui/icons-material/PlayArrow';
-import Speed from '@mui/icons-material/Speed';
 
 import {
   voicesFromAbc,
@@ -57,7 +56,6 @@ function usePitchDetection(
     originalIndices: number[];
     idx: number;
   }>,
-  setPlayedNotes: React.Dispatch<React.SetStateAction<number>>,
   setStatusMessage: (msg: string) => void
 ) {
   const { t } = useTranslation();
@@ -68,18 +66,11 @@ function usePitchDetection(
     new FrequencyTracker(
       (pitch: number) => {
         setDetectedPitch(pitch);
-        setPlayedNotes((nNotes) => {
-          const tracking = expandedTrackingRef.current;
-          const expandedNote = tracking.notes[tracking.idx];
-          if (expandedNote && expandedNote.pitches[0] === pitch) {
-            const origIdx = tracking.originalIndices[tracking.idx];
-            tracking.idx++;
-            // Keep colorNotes monotonically increasing so notes stay green
-            // even as the repeat loops back to earlier original indices.
-            return Math.max(nNotes, origIdx + 1);
-          }
-          return nNotes;
-        });
+        const tracking = expandedTrackingRef.current;
+        const expandedNote = tracking.notes[tracking.idx];
+        if (expandedNote && expandedNote.pitches[0] === pitch) {
+          tracking.idx++;
+        }
       },
       () => setDetectedPitch(null)
     )
@@ -99,7 +90,6 @@ function usePitchDetection(
 
     try {
       await freqTrackerRef.current.start();
-      setPlayedNotes(0);
       expandedTrackingRef.current.idx = 0; // reset expanded tracking position
       const id = window.setInterval(() => {
         freqTrackerRef.current?.checkFrequency({ instrumentType, tuning });
@@ -299,7 +289,6 @@ function useAudioPlayback(
   voicesRef: React.MutableRefObject<VoiceInfo[]>,
   selectedVoiceIdxRef: React.MutableRefObject<number>,
   tempoRef: React.MutableRefObject<number>,
-  setPlayedNotes: React.Dispatch<React.SetStateAction<number>>,
   setStatusMessage: (msg: string) => void
 ) {
   const { t } = useTranslation();
@@ -351,7 +340,6 @@ function useAudioPlayback(
       .filter((e): e is PlayerEntry => e !== null);
 
     musicPlayersRef.current = entries;
-    setPlayedNotes(0);
 
     // If the selected voice has no audible player, use a MusicTimeline for cursor.
     const selectedVoice = voices[selectedIdx];
@@ -418,14 +406,15 @@ function useMetronome(
   const metronomeRef = useRef<NotePlayer>(new NotePlayer());
   const metronomeInterval = useIntervalRef();
 
-  const startMetronome = () => {
-    if (metronomeInterval.isActive) {
-      metronomeInterval.clear();
-      metronomeRef.current?.stop();
-      setStatusMessage(t('metronomeStopped'));
-      return;
-    }
+  const stopMetronome = () => {
+    if (!metronomeInterval.isActive) return;
+    metronomeInterval.clear();
+    metronomeRef.current?.stop();
+    setStatusMessage(t('metronomeStopped'));
+  };
 
+  const startMetronome = () => {
+    if (metronomeInterval.isActive) return;
     metronomeRef.current?.start();
     metronomeRef.current?.scheduleNotes(tempoRef.current);
     const id = window.setInterval(() => {
@@ -437,7 +426,7 @@ function useMetronome(
 
   useEffect(() => () => metronomeInterval.clear(), []);
 
-  return { isMetronomeActive: metronomeInterval.isActive, startMetronome };
+  return { isMetronomeActive: metronomeInterval.isActive, startMetronome, stopMetronome };
 }
 
 interface SongPageProps {
@@ -473,7 +462,6 @@ export function SongPage({
   const [selectedVoiceIdx, setSelectedVoiceIdx] = useState(0);
   const music =
     voices[Math.min(selectedVoiceIdx, voices.length - 1)]?.music ?? new Music();
-  const [, setPlayedNotes] = useState(0);
   const [statusMessage, setStatusMessage] = useState('');
   const [tempo, setTempo] = useState(song.tempo ?? music.signatures[0].tempo ?? 120);
   const scoreContainerRef = useRef<HTMLDivElement>(null);
@@ -526,13 +514,14 @@ export function SongPage({
     onTempoChange?.(newTempo);
   };
 
-  const checkPlayingMode = useStore((s) => s.checkPlayingMode);
+  const practiceMode = useStore((s) => s.practiceMode);
+  const playMetronomeOnStart = useStore((s) => s.playMetronome);
 
   const {
     detectedPitch: pitchA,
     isRecording: isRecordingA,
     startRecording: startRecordingA,
-  } = usePitchDetection(expandedTrackingRef, setPlayedNotes, setStatusMessage);
+  } = usePitchDetection(expandedTrackingRef, setStatusMessage);
 
   const {
     detectedPitch: pitchB,
@@ -543,12 +532,11 @@ export function SongPage({
     countdown,
   } = useInTempoChecking(musicRef, tempoRef, setStatusMessage);
 
-  const detectedPitch = checkPlayingMode === 'in-tempo' ? pitchB : pitchA;
+  const detectedPitch = practiceMode === 'in-tempo' ? pitchB : pitchA;
   const isRecording =
-    checkPlayingMode === 'in-tempo' ? isRecordingB : isRecordingA;
+    practiceMode === 'in-tempo' ? isRecordingB : isRecordingA;
   const startRecording =
-    checkPlayingMode === 'in-tempo' ? startRecordingB : startRecordingA;
-
+    practiceMode === 'in-tempo' ? startRecordingB : startRecordingA;
   const {
     isPlaying,
     startPlaying,
@@ -557,13 +545,18 @@ export function SongPage({
     voicesRef,
     selectedVoiceIdxRef,
     tempoRef,
-    setPlayedNotes,
     setStatusMessage
   );
-  const { isMetronomeActive, startMetronome } = useMetronome(
+  const { isMetronomeActive, startMetronome, stopMetronome } = useMetronome(
     tempoRef,
     setStatusMessage
   );
+
+  const isPracticing = isMetronomeActive || isRecording;
+
+  useEffect(() => {
+    if (!isRecording) stopMetronome();
+  }, [isRecording]);
 
   useEffect(() => {
     try {
@@ -704,10 +697,18 @@ export function SongPage({
       >
         <SpeedDialAction
           icon={<Mic />}
-          onClick={startRecording}
+          onClick={() => {
+            if (practiceMode === 'metronome-only') {
+              if (isMetronomeActive) stopMetronome();
+              else startMetronome();
+            } else {
+              startRecording();
+              if (playMetronomeOnStart && !isRecording) startMetronome();
+            }
+          }}
           slotProps={{
-            tooltip: { title: t('checkPlaying') },
-            fab: { sx: { bgcolor: isRecording ? 'primary.main' : 'default' } },
+            tooltip: { title: t('settingsTabPractice') },
+            fab: { sx: { bgcolor: isPracticing ? 'primary.main' : 'default' } },
           }}
         />
         <SpeedDialAction
@@ -716,16 +717,6 @@ export function SongPage({
           slotProps={{
             tooltip: { title: t('playSong') },
             fab: { sx: { bgcolor: isPlaying ? 'primary.main' : 'default' } },
-          }}
-        />
-        <SpeedDialAction
-          icon={<Speed />}
-          onClick={startMetronome}
-          slotProps={{
-            tooltip: { title: t('metronome') },
-            fab: {
-              sx: { bgcolor: isMetronomeActive ? 'primary.main' : 'default' },
-            },
           }}
         />
       </SpeedDial>

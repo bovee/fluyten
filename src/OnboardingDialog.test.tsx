@@ -1,6 +1,7 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest';
 import { render, screen, fireEvent } from '@testing-library/react';
 import { OnboardingDialog } from './OnboardingDialog';
+import { axe } from 'jest-axe';
 import { useStore } from './store';
 
 vi.mock('./audio/RecorderDetector', () => ({
@@ -32,6 +33,11 @@ const renderDialog = (
 ) => render(<OnboardingDialog open={true} onComplete={vi.fn()} {...props} />);
 
 describe('OnboardingDialog', () => {
+
+  it('should have no accessibility violations', async () => {
+    const { container } = render(<OnboardingDialog open={true} onComplete={vi.fn()} />);
+    expect(await axe(container)).toHaveNoViolations();
+  });
   it('renders when open is true', () => {
     renderDialog();
     expect(screen.getByRole('dialog')).toBeInTheDocument();

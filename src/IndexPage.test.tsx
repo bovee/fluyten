@@ -1,6 +1,7 @@
 import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest';
 import { render, screen, fireEvent, within } from '@testing-library/react';
 import { IndexPage } from './IndexPage';
+import { axe } from 'jest-axe';
 import { useStore } from './store';
 
 // Mock RecorderDetector used transitively via SettingsDialog
@@ -32,6 +33,11 @@ afterEach(() => {
 });
 
 describe('IndexPage', () => {
+
+  it('should have no accessibility violations', async () => {
+    const { container } = render(<IndexPage {...defaultProps()} />);
+    expect(await axe(container)).toHaveNoViolations();
+  });
   it('renders the app title and settings button', () => {
     render(<IndexPage {...defaultProps()} />);
     expect(screen.getByRole('heading')).toBeInTheDocument();

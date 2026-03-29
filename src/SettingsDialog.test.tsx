@@ -1,6 +1,7 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest';
 import { render, screen, fireEvent, within } from '@testing-library/react';
 import { SettingsDialog } from './SettingsDialog';
+import { axe } from 'jest-axe';
 import { useStore } from './store';
 import i18n from './i18n';
 
@@ -40,6 +41,11 @@ const clickTab = (name: RegExp) =>
   fireEvent.click(screen.getByRole('tab', { name }));
 
 describe('SettingsDialog', () => {
+
+  it('should have no accessibility violations', async () => {
+    const { container } = render(<SettingsDialog open={true} onClose={vi.fn()} />);
+    expect(await axe(container)).toHaveNoViolations();
+  });
   it('does not render content when closed', () => {
     renderDialog(false);
     expect(
