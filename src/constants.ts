@@ -33,22 +33,6 @@ export const NOTE_VALUES = {
   Z: -1,
 } as const;
 
-// Pitch to Vexflow note name mapping (chromatic scale)
-export const PITCH_TO_VEXFLOW = {
-  0: 'c',
-  1: 'd', // C# or Db
-  2: 'd',
-  3: 'e', // D# or Eb
-  4: 'e',
-  5: 'f',
-  6: 'g', // F# or Gb
-  7: 'g',
-  8: 'a', // G# or Ab
-  9: 'a',
-  10: 'b', // A# or Bb
-  11: 'b',
-} as const;
-
 // Pitch conversion constants
 export const PITCH_CONSTANTS = {
   // Standard tuning: A4 = 440 Hz
@@ -60,8 +44,6 @@ export const PITCH_CONSTANTS = {
   OCTAVE_OFFSET: 24,
   // Semitones per octave
   SEMITONES_PER_OCTAVE: 12,
-  // Vexflow octave offset (Vexflow uses octave - 1)
-  VEXFLOW_OCTAVE_OFFSET: 1,
 } as const;
 
 // Frequency tracker constants

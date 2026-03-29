@@ -120,6 +120,8 @@ export const AbcChangePersisted: Story = {
       editor,
       'X:1\nT:Edited Song\nM:C\nL:1/4\nK:G\nG A B c |'
     );
+    // Wait for the debounce to flush before navigating away.
+    await new Promise((r) => setTimeout(r, 400));
 
     // Navigate back then return to the song (title was renamed to "Edited Song")
     await userEvent.click(

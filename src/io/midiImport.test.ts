@@ -194,8 +194,8 @@ describe('fromMidi', () => {
     ];
     const [music] = fromMidi(buildMidi(tpq, track));
 
-    expect(music.beatsPerBar).toBe(3);
-    expect(music.beatValue).toBe(4);
+    expect(music.signatures[0].beatsPerBar).toBe(3);
+    expect(music.signatures[0].beatValue).toBe(4);
   });
 
   it('reads key signature meta event (G major)', () => {
@@ -208,7 +208,7 @@ describe('fromMidi', () => {
     ];
     const [music] = fromMidi(buildMidi(tpq, track));
 
-    expect(music.keySignature).toBe('G');
+    expect(music.signatures[0].keySignature).toBe('G');
   });
 
   it('reads key signature meta event (D minor)', () => {
@@ -221,7 +221,7 @@ describe('fromMidi', () => {
     ];
     const [music] = fromMidi(buildMidi(tpq, track));
 
-    expect(music.keySignature).toBe('Dm');
+    expect(music.signatures[0].keySignature).toBe('Dm');
   });
 
   it('reads track name meta event', () => {
@@ -269,7 +269,7 @@ describe('fromMidi', () => {
     const [music] = fromMidi(buildMidi(tpq, metaTrack, noteTrack));
 
     expect(music.title).toBe('Song Title');
-    expect(music.beatsPerBar).toBe(4);
+    expect(music.signatures[0].beatsPerBar).toBe(4);
     expect(music.notes.filter((n) => n.pitches.length > 0).length).toBe(2);
   });
 
@@ -394,7 +394,7 @@ describe('fromMidi', () => {
 
     expect(voices[0].title).toBe('Test');
     expect(voices[1].title).toBe('Test');
-    expect(voices[0].keySignature).toBe('G');
-    expect(voices[1].keySignature).toBe('G');
+    expect(voices[0].signatures[0].keySignature).toBe('G');
+    expect(voices[1].signatures[0].keySignature).toBe('G');
   });
 });

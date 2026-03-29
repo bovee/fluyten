@@ -53,13 +53,13 @@ describe('SettingsDialog', () => {
     ).not.toBeInTheDocument();
   });
 
-  it('language select shows all 14 language options', () => {
+  it('language select shows all 44 language options', () => {
     renderDialog();
     const select = screen.getByLabelText(/language/i);
     fireEvent.mouseDown(select);
-    // 14 languages
+    // 44 languages
     const options = screen.getAllByRole('option');
-    expect(options.length).toBe(14);
+    expect(options.length).toBe(44);
   });
 
   it('changing language calls setLanguage and i18n.changeLanguage', () => {

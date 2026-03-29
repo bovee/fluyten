@@ -16,7 +16,7 @@ export class MusicTimeline {
   private startedAt: number | null = null;
 
   constructor(music: Music, tempo: number) {
-    const beatValue = music.beatValue ?? 4;
+    const beatValue = music.signatures[0].beatValue;
     const { notes, originalIndices } = expandRepeats(music);
     const lengthToTime = (ticks: number) =>
       (60 / tempo) * (ticks / 1024) * (4 / beatValue);

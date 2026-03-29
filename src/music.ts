@@ -1,6 +1,5 @@
 import {
   NOTE_VALUES,
-  PITCH_TO_VEXFLOW,
   PITCH_CONSTANTS,
   DURATION_TICKS,
 } from './constants';
@@ -24,40 +23,50 @@ export const DurationModifier = {
 export type DurationModifier =
   (typeof DurationModifier)[keyof typeof DurationModifier];
 
-// TODO: support other modes besides ionian
-export const KEYS: { [key: string]: string[] } = {
-  // Major keys
-  'C#': ['F#', 'C#', 'G#', 'D#', 'A#', 'E#', 'B#'],
-  'F#': ['F#', 'C#', 'G#', 'D#', 'A#', 'E#'],
-  B: ['F#', 'C#', 'G#', 'D#', 'A#'],
-  E: ['F#', 'C#', 'G#', 'D#'],
-  A: ['F#', 'C#', 'G#'],
-  D: ['F#', 'C#'],
-  G: ['F#'],
-  C: [],
-  F: ['Bb'],
-  Bb: ['Bb', 'Eb'],
-  Eb: ['Bb', 'Eb', 'Ab'],
-  Ab: ['Bb', 'Eb', 'Ab', 'Db'],
-  Db: ['Bb', 'Eb', 'Ab', 'Db', 'Gb'],
-  Gb: ['Bb', 'Eb', 'Ab', 'Db', 'Gb', 'Cb'],
-  Cb: ['Bb', 'Eb', 'Ab', 'Db', 'Gb', 'Cb', 'Fb'],
-  // minor keys
-  'A#m': ['F#', 'C#', 'G#', 'D#', 'A#', 'E#', 'B#'],
-  'D#m': ['F#', 'C#', 'G#', 'D#', 'A#', 'E#'],
-  'G#m': ['F#', 'C#', 'G#', 'D#', 'A#'],
-  'C#m': ['F#', 'C#', 'G#', 'D#'],
-  'F#m': ['F#', 'C#', 'G#'],
-  Bm: ['F#', 'C#'],
-  Em: ['F#'],
-  Am: [],
-  Dm: ['Bb'],
-  Gm: ['Bb', 'Eb'],
-  Cm: ['Bb', 'Eb', 'Ab'],
-  Fm: ['Bb', 'Eb', 'Ab', 'Db'],
-  Bbm: ['Bb', 'Eb', 'Ab', 'Db', 'Gb'],
-  Ebm: ['Bb', 'Eb', 'Ab', 'Db', 'Gb', 'Cb'],
-  Abm: ['Bb', 'Eb', 'Ab', 'Db', 'Gb', 'Cb', 'Fb'],
+/** Maps a key signature name to its position on the circle of fifths
+ *  (positive = sharps, negative = flats). */
+export const KEYS: Record<string, number> = {
+  // Ionian (major)
+  'C#': 7, 'F#': 6, B: 5, E: 4, A: 3, D: 2, G: 1, C: 0,
+  F: -1, Bb: -2, Eb: -3, Ab: -4, Db: -5, Gb: -6, Cb: -7,
+  // Aeolian (natural minor)
+  'A#m': 7, 'D#m': 6, 'G#m': 5, 'C#m': 4, 'F#m': 3, Bm: 2, Em: 1, Am: 0,
+  Dm: -1, Gm: -2, Cm: -3, Fm: -4, Bbm: -5, Ebm: -6, Abm: -7,
+  // Mixolydian (one flat relative to major)
+  'G#Mix': 7, 'C#Mix': 6, 'F#Mix': 5, BMix: 4, EMix: 3, AMix: 2, DMix: 1, GMix: 0,
+  CMix: -1, FMix: -2, BbMix: -3, EbMix: -4, AbMix: -5, DbMix: -6, GbMix: -7,
+  // Dorian (two flats relative to major)
+  'D#Dor': 7, 'G#Dor': 6, 'C#Dor': 5, 'F#Dor': 4, BDor: 3, EDor: 2, ADor: 1, DDor: 0,
+  GDor: -1, CDor: -2, FDor: -3, BbDor: -4, EbDor: -5, AbDor: -6, DbDor: -7,
+  // Phrygian (three flats relative to major)
+  'E#Phr': 7, 'A#Phr': 6, 'D#Phr': 5, 'G#Phr': 4, 'C#Phr': 3, 'F#Phr': 2, BPhr: 1, EPhr: 0,
+  APhr: -1, DPhr: -2, GPhr: -3, CPhr: -4, FPhr: -5, BbPhr: -6, EbPhr: -7,
+  // Lydian (one sharp relative to major)
+  'F#Lyd': 7, BLyd: 6, ELyd: 5, ALyd: 4, DLyd: 3, GLyd: 2, CLyd: 1, FLyd: 0,
+  BbLyd: -1, EbLyd: -2, AbLyd: -3, DbLyd: -4, GbLyd: -5, CbLyd: -6, FbLyd: -7,
+  // Locrian (four flats relative to major)
+  'B#Loc': 7, 'E#Loc': 6, 'A#Loc': 5, 'D#Loc': 4, 'G#Loc': 3, 'C#Loc': 2, 'F#Loc': 1, BLoc: 0,
+  ELoc: -1, ALoc: -2, DLoc: -3, GLoc: -4, CLoc: -5, FLoc: -6, BbLoc: -7,
+};
+
+/** Maps a circle-of-fifths position to the accidentals active in that key
+ *  (e.g. 1 → ['F#'], -2 → ['Bb', 'Eb']). */
+export const FIFTHS_TO_ACCIDENTALS: Record<number, string[]> = {
+  7: ['F#', 'C#', 'G#', 'D#', 'A#', 'E#', 'B#'],
+  6: ['F#', 'C#', 'G#', 'D#', 'A#', 'E#'],
+  5: ['F#', 'C#', 'G#', 'D#', 'A#'],
+  4: ['F#', 'C#', 'G#', 'D#'],
+  3: ['F#', 'C#', 'G#'],
+  2: ['F#', 'C#'],
+  1: ['F#'],
+  0: [],
+  [-1]: ['Bb'],
+  [-2]: ['Bb', 'Eb'],
+  [-3]: ['Bb', 'Eb', 'Ab'],
+  [-4]: ['Bb', 'Eb', 'Ab', 'Db'],
+  [-5]: ['Bb', 'Eb', 'Ab', 'Db', 'Gb'],
+  [-6]: ['Bb', 'Eb', 'Ab', 'Db', 'Gb', 'Cb'],
+  [-7]: ['Bb', 'Eb', 'Ab', 'Db', 'Gb', 'Cb', 'Fb'],
 };
 
 export type BarLineType =
@@ -273,60 +282,6 @@ export class Note {
       .join('/');
   }
 
-  private pitchToVexflow(
-    pitch: number,
-    accidental: Accidental,
-    useSharpSpelling: boolean
-  ): string {
-    const pitchClass = pitch % PITCH_CONSTANTS.SEMITONES_PER_OCTAVE;
-    let note = PITCH_TO_VEXFLOW[pitchClass as keyof typeof PITCH_TO_VEXFLOW];
-    const isBlackKey =
-      pitchClass === 1 ||
-      pitchClass === 3 ||
-      pitchClass === 6 ||
-      pitchClass === 8 ||
-      pitchClass === 10;
-    if (isBlackKey) {
-      const asSharp =
-        accidental === '#' || (accidental === undefined && useSharpSpelling);
-      if (asSharp) {
-        note =
-          PITCH_TO_VEXFLOW[(pitchClass - 1) as keyof typeof PITCH_TO_VEXFLOW];
-      }
-    }
-    const octave = Math.floor(
-      pitch / PITCH_CONSTANTS.SEMITONES_PER_OCTAVE -
-        PITCH_CONSTANTS.VEXFLOW_OCTAVE_OFFSET
-    );
-    return `${note}/${octave}`;
-  }
-
-  toVexflowPitchAndDuration(
-    useSharpSpelling: boolean = true,
-    displayPitchOffset: number = 0
-  ): [string[], string] {
-    const vexDuration =
-      this.duration === Duration.GRACE
-        ? 'q'
-        : this.durationModifier === DurationModifier.TRIPLET
-          ? this.duration // TODO: triplets render as base duration (VexFlow tuplet grouping deferred)
-          : this.duration + this.durationModifier;
-
-    if (this.pitches.length === 0) {
-      return [['b/4'], vexDuration + 'r'];
-    }
-
-    return [
-      this.pitches.map((p, i) =>
-        this.pitchToVexflow(
-          p + displayPitchOffset,
-          this.accidentals[i],
-          useSharpSpelling
-        )
-      ),
-      vexDuration,
-    ];
-  }
 }
 
 export interface Song {
@@ -340,6 +295,30 @@ export interface BarLine {
   afterNoteNum?: number;
   type: BarLineType;
   volta?: number; // 1 = first ending, 2 = second ending, etc.
+}
+
+/** A key/meter/tempo snapshot that applies from `atNoteIndex` onward.
+ *  All required fields are always present so each entry is self-contained.
+ *  The array on Music is sorted by atNoteIndex; signatures[0].atNoteIndex === 0. */
+export interface Signature {
+  atNoteIndex: number;
+  keySignature: string;
+  beatsPerBar: number;
+  beatValue: number;
+  tempo?: number;
+  tempoText?: string;
+  /** Unit note length (L: field) — retained only for round-trip ABC export. */
+  defaultDuration?: Duration;
+}
+
+/** Returns the signature active at the given note index. */
+export function signatureAt(music: Music, noteIndex: number): Signature {
+  let result = music.signatures[0];
+  for (const sig of music.signatures) {
+    if (sig.atNoteIndex > noteIndex) break;
+    result = sig;
+  }
+  return result;
 }
 
 const TICKS_ORDERED: [number, Duration, DurationModifier][] = [
@@ -390,14 +369,11 @@ function splitTicks(ticks: number): [Duration, DurationModifier][] {
 export class Music {
   title?: string = '';
   composer?: string;
-  beatsPerBar: number = 4;
-  beatValue: number = 4;
-  keySignature: string = 'G';
   clef: 'treble' | 'bass' | 'alto' | 'treble8va' = 'treble';
-  // Tempo in BPM parsed from Q: header, if present.
-  tempo?: number;
-  // Tempo text label parsed from Q: header (e.g. "Allegro"), if present.
-  tempoText?: string;
+  /** Key/meter/tempo snapshots. Always has at least one entry with atNoteIndex === 0. */
+  signatures: Signature[] = [
+    { atNoteIndex: 0, keySignature: 'C', beatsPerBar: 4, beatValue: 4 },
+  ];
   notes: Note[] = [];
   beams: number[][] = [];
   curves: number[][] = [];
@@ -408,8 +384,11 @@ export class Music {
   endLyrics?: string;
 
   reflow(): Music {
-    const barCapacity =
-      (DURATION_TICKS.WHOLE / this.beatValue) * this.beatsPerBar;
+    // Signatures are sorted by atNoteIndex; track which one is current.
+    let sigIdx = 0;
+    let barCapacity =
+      (DURATION_TICKS.WHOLE / this.signatures[0].beatValue) *
+      this.signatures[0].beatsPerBar;
 
     // Phase A: merge consecutive tied same-pitch notes back into single notes
     // where the combined duration is expressible as a single notated value.
@@ -443,6 +422,12 @@ export class Music {
         s > idx + 1 ? s - 1 : s,
         e > idx + 1 ? e - 1 : e,
       ]);
+      // Shift signature indices past the removed note.
+      this.signatures = this.signatures.map((sig) =>
+        sig.atNoteIndex > idx + 1
+          ? { ...sig, atNoteIndex: sig.atNoteIndex - 1 }
+          : sig
+      );
     }
 
     // Phase B: rebuild bars, splitting any note that crosses a bar boundary
@@ -451,6 +436,17 @@ export class Music {
     let currentTicks = 0;
     let noteIx = 0;
     while (noteIx < this.notes.length) {
+      // Advance to the next signature that applies at this note index.
+      while (
+        sigIdx + 1 < this.signatures.length &&
+        this.signatures[sigIdx + 1].atNoteIndex <= noteIx
+      ) {
+        sigIdx++;
+        const sig = this.signatures[sigIdx];
+        barCapacity = (DURATION_TICKS.WHOLE / sig.beatValue) * sig.beatsPerBar;
+        currentTicks = 0; // meter change resets the bar position
+      }
+
       const note = this.notes[noteIx];
       const noteTicks = note.ticks();
       const total = currentTicks + noteTicks;
@@ -503,6 +499,12 @@ export class Music {
             s > noteIx ? s + insertCount : s,
             e > noteIx ? e + insertCount : e,
           ]);
+          // Shift signature indices past the inserted notes.
+          this.signatures = this.signatures.map((sig) =>
+            sig.atNoteIndex > noteIx
+              ? { ...sig, atNoteIndex: sig.atNoteIndex + insertCount }
+              : sig
+          );
           // Tie first → overflow[0] → overflow[1] → … → overflow[N-1]
           for (let i = 0; i < insertCount; i++) {
             this.curves.push([noteIx + i, noteIx + i + 1]);

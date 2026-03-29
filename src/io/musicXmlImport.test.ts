@@ -112,7 +112,7 @@ describe('fromMusicXml', () => {
         </attributes>
         ${note('C', 4, 'whole')}
       </measure>`);
-      expect(fromMusicXml(xml).keySignature).toBe(expectedKey);
+      expect(fromMusicXml(xml).signatures[0].keySignature).toBe(expectedKey);
     });
 
     it('maps minor key correctly', () => {
@@ -125,7 +125,7 @@ describe('fromMusicXml', () => {
         </attributes>
         ${note('A', 4, 'whole')}
       </measure>`);
-      expect(fromMusicXml(xml).keySignature).toBe('Am');
+      expect(fromMusicXml(xml).signatures[0].keySignature).toBe('Am');
     });
   });
 
@@ -141,8 +141,8 @@ describe('fromMusicXml', () => {
         ${note('C', 4, 'quarter')}${note('D', 4, 'quarter')}${note('E', 4, 'quarter')}
       </measure>`);
       const music = fromMusicXml(xml);
-      expect(music.beatsPerBar).toBe(3);
-      expect(music.beatValue).toBe(4);
+      expect(music.signatures[0].beatsPerBar).toBe(3);
+      expect(music.signatures[0].beatValue).toBe(4);
     });
 
     it('parses common time symbol', () => {
@@ -156,8 +156,8 @@ describe('fromMusicXml', () => {
         ${note('C', 4, 'whole')}
       </measure>`);
       const music = fromMusicXml(xml);
-      expect(music.beatsPerBar).toBe(4);
-      expect(music.beatValue).toBe(4);
+      expect(music.signatures[0].beatsPerBar).toBe(4);
+      expect(music.signatures[0].beatValue).toBe(4);
     });
 
     it('parses cut time symbol', () => {
@@ -171,8 +171,8 @@ describe('fromMusicXml', () => {
         ${note('C', 4, 'half')}${note('G', 4, 'half')}
       </measure>`);
       const music = fromMusicXml(xml);
-      expect(music.beatsPerBar).toBe(2);
-      expect(music.beatValue).toBe(2);
+      expect(music.signatures[0].beatsPerBar).toBe(2);
+      expect(music.signatures[0].beatValue).toBe(2);
     });
   });
 
@@ -851,8 +851,8 @@ describe('fromMusicXml', () => {
         </measure>`
       );
       const music = fromMusicXml(xml);
-      expect(music.beatsPerBar).toBe(4);
-      expect(music.keySignature).toBe('C');
+      expect(music.signatures[0].beatsPerBar).toBe(4);
+      expect(music.signatures[0].keySignature).toBe('C');
     });
   });
 

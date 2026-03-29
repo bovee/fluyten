@@ -66,3 +66,7 @@ Before submitting:
 ## License
 
 MIT -- see [LICENSE](./LICENSE).
+
+### Third-party assets
+
+The [Bravura](https://www.steinberg.net/developers/) music font by Steinberg Media Technologies GmbH is included under the [SIL Open Font License 1.1](./public/OFL.txt).

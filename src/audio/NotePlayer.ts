@@ -243,7 +243,7 @@ export class NotePlayer {
         return;
       }
       while (this.lastNoteTime < endTime) {
-        this.enqueueNote(tempo, music.beatValue ?? 4);
+        this.enqueueNote(tempo, music.signatures[0].beatValue);
         if (this.lastNoteIx >= this.expandedNotes.length) {
           this.active = false;
           return;

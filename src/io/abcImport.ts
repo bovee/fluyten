@@ -2,11 +2,14 @@ import {
   type Accidental,
   type BarLineType,
   type Decoration,
+  type Signature,
   Duration,
   DurationModifier,
   KEYS,
+  FIFTHS_TO_ACCIDENTALS,
   Music,
   Note,
+  signatureAt,
 } from '../music';
 import { PITCH_CONSTANTS, TIME_SIGNATURES } from '../constants';
 import { type RecorderType } from '../instrument';
@@ -21,6 +24,26 @@ export function defaultClefForInstrument(
 }
 
 // https://abcnotation.com/wiki/abc:standard:v2.1
+
+/** Normalize an ABC key field (after stripping clef/middle) to the canonical
+ *  form used in KEYS, e.g. "G Mix", "G Mixolydian", "gmix" → "GMix". */
+function normalizeKeySignature(raw: string): string {
+  // Match: optional accidental (b/#), optional "m"/"min"/"maj" or mode name
+  const m = raw.match(
+    /^([A-Ga-g])(#|b)?\s*(maj(?:or)?|ion(?:ian)?|mix(?:olydian)?|m(?:in(?:or)?)?|aeo(?:lian)?|dor(?:ian)?|phr(?:ygian)?|lyd(?:ian)?|loc(?:rian)?)?$/i
+  );
+  if (!m) return raw;
+  const root = m[1].toUpperCase() + (m[2] ?? '');
+  const modeSuffix = (m[3] ?? '').toLowerCase();
+  if (!modeSuffix || modeSuffix.startsWith('maj') || modeSuffix.startsWith('ion')) return root;
+  if (modeSuffix.startsWith('mix')) return root + 'Mix';
+  if (modeSuffix.startsWith('m') || modeSuffix.startsWith('aeo')) return root + 'm';
+  if (modeSuffix.startsWith('dor')) return root + 'Dor';
+  if (modeSuffix.startsWith('phr')) return root + 'Phr';
+  if (modeSuffix.startsWith('lyd')) return root + 'Lyd';
+  if (modeSuffix.startsWith('loc')) return root + 'Loc';
+  return raw;
+}
 
 export const BAR_MAPPINGS: { [key: string]: BarLineType } = {
   '|': 'standard' as BarLineType,
@@ -137,7 +160,7 @@ type ScoreToken =
   | { type: 'beam_break' }
   | { type: 'beam_join' }
   | { type: 'broken_rhythm'; dir: '<' | '>' }
-  | { type: 'inline_field' };
+  | { type: 'inline_field'; field: string; value: string };
 
 // Note sub-pattern (no ^ anchor; named groups survive the outer alternation
 // because only one branch can match at a time)
@@ -169,8 +192,8 @@ const TOKEN_RE = new RegExp(
     '\\{/',
     '\\{',
     '\\}',
-    // inline fields like [K:C] — consume "[X:" so the "[" isn't mistaken for chord
-    '\\[[A-Z]:',
+    // inline fields like [K:C] — match the full [X:value] content
+    '\\[[A-Z]:[^\\]]*\\]',
     // volta bracket [1, [2 — must precede chord bracket "["
     '\\[\\d',
     // chord brackets
@@ -230,9 +253,9 @@ export function tokenize(score: string): ScoreToken[] {
       tokens.push({ type: 'grace_open' });
     } else if (raw === '}') {
       tokens.push({ type: 'grace_close' });
-    } else if (raw[0] === '[' && raw.length > 1) {
-      // matched "[X:" inline field
-      tokens.push({ type: 'inline_field' });
+    } else if (raw[0] === '[' && raw[1] !== undefined && raw[1] !== '[' && raw[2] === ':') {
+      // matched "[X:value]" inline field
+      tokens.push({ type: 'inline_field', field: raw[1], value: raw.slice(3, -1).trim() });
     } else if (raw === '[') {
       tokens.push({ type: 'chord_open' });
     } else if (raw[0] === ']') {
@@ -327,6 +350,9 @@ export function parseScore(
   keyAdjustment: { [n: string]: number },
   isFreeTime = false
 ): void {
+  // Local mutable copies so inline fields can update them mid-score.
+  let curDefaultDuration = defaultDuration;
+  const curKeyAdjustment: { [n: string]: number } = { ...keyAdjustment };
   let noteType: 'grace' | 'grace_slash' | 'triplet' | 'chord' | null = null;
   let tupletCounter = 0;
   let startSlur: number | null = null;
@@ -365,7 +391,8 @@ export function parseScore(
           closeBeam();
           const barCount = abcDuration ? parseInt(abcDuration, 10) || 1 : 1;
           // Compute one bar's duration in thirtyseconds (each unit = SIXTEENTH/2 = 128 ticks)
-          const barThirtyseconds = (music.beatsPerBar * 32) / music.beatValue;
+          const sig = music.signatures[0];
+          const barThirtyseconds = (sig.beatsPerBar * 32) / sig.beatValue;
           const barDurations = splitSixteenths(barThirtyseconds);
           for (let b = 0; b < barCount; b++) {
             for (const [dur, mod] of barDurations) {
@@ -384,7 +411,7 @@ export function parseScore(
         let noteDuration: Duration;
         let noteDurationModifier: DurationModifier = DurationModifier.NONE;
 
-        const parsedDur = parseAbcDuration(abcDuration, defaultDuration);
+        const parsedDur = parseAbcDuration(abcDuration, curDefaultDuration);
         const parsedDurs = parsedDur ?? null;
         if (parsedDurs && parsedDurs.length > 0) {
           [noteDuration, noteDurationModifier] = parsedDurs[0];
@@ -393,7 +420,7 @@ export function parseScore(
         } else if (noteType === 'grace_slash') {
           noteDuration = Duration.GRACE_SLASH;
         } else {
-          noteDuration = defaultDuration;
+          noteDuration = curDefaultDuration;
         }
 
         if (noteType === 'triplet') {
@@ -420,7 +447,7 @@ export function parseScore(
           groups.note,
           noteDuration,
           noteDurationModifier,
-          keyAdjustment,
+          curKeyAdjustment,
           groups.accidental,
           groups.decoration
         );
@@ -499,7 +526,7 @@ export function parseScore(
         chordAccum = {
           pitches: [],
           accidentals: [],
-          duration: defaultDuration,
+          duration: curDefaultDuration,
           durationModifier: DurationModifier.NONE,
           decorations: [],
         };
@@ -508,7 +535,7 @@ export function parseScore(
       case 'chord_close':
         if (chordAccum) {
           // Duration after ']' overrides the duration taken from the first note inside
-          const trailingDur = parseAbcDuration(token.duration, defaultDuration);
+          const trailingDur = parseAbcDuration(token.duration, curDefaultDuration);
           if (trailingDur && trailingDur.length > 0) {
             [chordAccum.duration, chordAccum.durationModifier] = trailingDur[0];
           }
@@ -583,16 +610,73 @@ export function parseScore(
         break;
       }
 
-      case 'inline_field':
-        throw new Error(
-          'Unimplemented. Mid-score information fields not supported yet.'
-        );
+      case 'inline_field': {
+        const noteIndex = music.notes.length;
+        const prev = signatureAt(music, noteIndex);
+        const next: Signature = { ...prev, atNoteIndex: noteIndex };
+        if (token.field === 'M') {
+          if (token.value === 'C') {
+            next.beatsPerBar = TIME_SIGNATURES.COMMON_TIME.beatsPerBar;
+            next.beatValue = TIME_SIGNATURES.COMMON_TIME.beatValue;
+          } else if (token.value === 'C|') {
+            next.beatsPerBar = TIME_SIGNATURES.CUT_TIME.beatsPerBar;
+            next.beatValue = TIME_SIGNATURES.CUT_TIME.beatValue;
+          } else {
+            const parts = token.value.split('/');
+            if (parts.length === 2) {
+              const bpb = parseInt(parts[0], 10);
+              const bv = parseInt(parts[1], 10);
+              if (!isNaN(bpb) && !isNaN(bv)) {
+                next.beatsPerBar = bpb;
+                next.beatValue = bv;
+              }
+            }
+          }
+        } else if (token.field === 'L') {
+          next.defaultDuration = parseLDuration(token.value);
+          curDefaultDuration = next.defaultDuration;
+        } else if (token.field === 'Q') {
+          const labelMatch = token.value.match(/^"([^"]*)"/);
+          if (labelMatch) next.tempoText = labelMatch[1];
+          const tempoMatch = token.value.match(/(?:[\d/]+=)?(\d+)\s*$/);
+          if (tempoMatch) {
+            const bpm = parseInt(tempoMatch[1], 10);
+            if (!isNaN(bpm)) next.tempo = bpm;
+          }
+        } else if (token.field === 'K') {
+          const rawKey = token.value
+            .replace(/\s*clef=[\w+]+/i, '')
+            .replace(/\s*middle=[A-Ga-g][,']*/i, '')
+            .trim();
+          const keyPart = normalizeKeySignature(rawKey);
+          if (keyPart in KEYS) {
+            next.keySignature = keyPart;
+            // Rebuild the key adjustment map for subsequent notes.
+            for (const k of Object.keys(curKeyAdjustment)) delete curKeyAdjustment[k];
+            for (const note of FIFTHS_TO_ACCIDENTALS[KEYS[keyPart] ?? 0] ?? []) {
+              curKeyAdjustment[note[0]] = note[1] === '#' ? 1 : -1;
+            }
+          }
+        }
+        // Only push a new signature if something actually changed.
+        if (
+          next.keySignature !== prev.keySignature ||
+          next.beatsPerBar !== prev.beatsPerBar ||
+          next.beatValue !== prev.beatValue ||
+          next.tempo !== prev.tempo ||
+          next.defaultDuration !== prev.defaultDuration
+        ) {
+          music.signatures.push(next);
+        }
+        break;
+      }
 
       case 'beam_break':
       case 'beam_join':
         break; // beam state already managed above the switch
     }
   }
+  closeBeam();
 }
 
 // ---- Header parser ----------------------------------------------------------
@@ -664,11 +748,11 @@ export function parseHeaders(
       if (!music.composer && line.startsWith('C:')) music.composer = fieldData;
       if (line.startsWith('M:')) {
         if (fieldData === 'C') {
-          music.beatsPerBar = TIME_SIGNATURES.COMMON_TIME.beatsPerBar;
-          music.beatValue = TIME_SIGNATURES.COMMON_TIME.beatValue;
+          music.signatures[0].beatsPerBar = TIME_SIGNATURES.COMMON_TIME.beatsPerBar;
+          music.signatures[0].beatValue = TIME_SIGNATURES.COMMON_TIME.beatValue;
         } else if (fieldData === 'C|') {
-          music.beatsPerBar = TIME_SIGNATURES.CUT_TIME.beatsPerBar;
-          music.beatValue = TIME_SIGNATURES.CUT_TIME.beatValue;
+          music.signatures[0].beatsPerBar = TIME_SIGNATURES.CUT_TIME.beatsPerBar;
+          music.signatures[0].beatValue = TIME_SIGNATURES.CUT_TIME.beatValue;
         } else if (fieldData === '' || fieldData === 'none') {
           // Free time / no meter: leave beatsPerBar/beatValue at defaults,
           // bars will remain empty which triggers free time rendering.
@@ -677,34 +761,36 @@ export function parseHeaders(
           const parts = fieldData.split('/');
           if (parts.length !== 2)
             throw new Error(`Can't understand meter: ${fieldData}`);
-          music.beatsPerBar = parseInt(parts[0], 10);
-          music.beatValue = parseInt(parts[1], 10);
-          if (isNaN(music.beatsPerBar) || isNaN(music.beatValue))
+          music.signatures[0].beatsPerBar = parseInt(parts[0], 10);
+          music.signatures[0].beatValue = parseInt(parts[1], 10);
+          if (isNaN(music.signatures[0].beatsPerBar) || isNaN(music.signatures[0].beatValue))
             throw new Error(`Can't understand meter: ${fieldData}`);
         }
       } else if (line.startsWith('L:')) {
         defaultDuration = parseLDuration(fieldData);
+        music.signatures[0].defaultDuration = defaultDuration;
       } else if (line.startsWith('Q:')) {
         // Q: ["<label>"] [<note-length>=]<bpm>
         // e.g. Q:"Allegro" 1/4=120  or  Q:120  or  Q:"Andante"
         const qText = fieldData.trim();
         const labelMatch = qText.match(/^"([^"]*)"/);
-        if (labelMatch && !music.tempoText) music.tempoText = labelMatch[1];
+        if (labelMatch && !music.signatures[0].tempoText) music.signatures[0].tempoText = labelMatch[1];
         const tempoMatch = qText.match(/(?:[\d/]+=)?(\d+)\s*$/);
-        if (tempoMatch && !music.tempo) {
+        if (tempoMatch && !music.signatures[0].tempo) {
           const bpm = parseInt(tempoMatch[1], 10);
-          if (!isNaN(bpm)) music.tempo = bpm;
+          if (!isNaN(bpm)) music.signatures[0].tempo = bpm;
         }
       } else if (line.startsWith('K:')) {
         const clefMatch = fieldData.match(/\bclef=([\w+]+)/i);
         const middleMatch = fieldData.match(/\bmiddle=([A-Ga-g][,'']*)/);
-        const keyPart = fieldData
+        const rawKey = fieldData
           .replace(/\s*clef=[\w+]+/i, '')
           .replace(/\s*middle=[A-Ga-g][,']*/i, '')
           .trim();
-        if (!(keyPart in KEYS)) throw new Error(`Can't parse key: ${keyPart}`);
-        music.keySignature = keyPart;
-        for (const note of KEYS[keyPart]) {
+        const keyPart = normalizeKeySignature(rawKey);
+        if (!(keyPart in KEYS)) throw new Error(`Can't parse key: ${rawKey}`);
+        music.signatures[0].keySignature = keyPart;
+        for (const note of FIFTHS_TO_ACCIDENTALS[KEYS[keyPart] ?? 0] ?? []) {
           keyAdjustment[note[0]] = note[1] === '#' ? 1 : -1;
         }
         if (clefMatch) {
@@ -1137,7 +1223,9 @@ export function parseFragment(
   );
 
   const music = new Music();
-  music.keySignature = headerMusic.keySignature;
+  music.signatures[0].keySignature = headerMusic.signatures[0].keySignature;
+  music.signatures[0].beatsPerBar = headerMusic.signatures[0].beatsPerBar;
+  music.signatures[0].beatValue = headerMusic.signatures[0].beatValue;
   const tokens = tokenize(fragment);
   parseScore(tokens, music, defaultDuration, keyAdjustment);
 
@@ -1147,7 +1235,7 @@ export function parseFragment(
     }
   }
 
-  return { music, keySignature: headerMusic.keySignature, defaultDuration };
+  return { music, keySignature: headerMusic.signatures[0].keySignature, defaultDuration };
 }
 
 /** Split a multi-tune ABC file into individual tunes with their titles. */

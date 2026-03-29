@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useRef, useState } from 'react';
+import { useCallback, useEffect, useRef, useState, useLayoutEffect } from 'react';
 import { useTranslation } from 'react-i18next';
 import IconButton from '@mui/material/IconButton';
 import SpeedDial from '@mui/material/SpeedDial';
@@ -21,7 +21,7 @@ import { Music, expandRepeats } from './music';
 import { FrequencyTracker } from './audio/FrequencyTracker';
 import { NotePlayer } from './audio/NotePlayer';
 import { MusicTimeline } from './audio/MusicTimeline';
-import { Vexflow } from './Vexflow.tsx';
+import { Score } from './engraving';
 import { useStore } from './store';
 import { type Song } from './music';
 import { NOTE_NAMES } from './constants';
@@ -473,13 +473,25 @@ export function SongPage({
   const [selectedVoiceIdx, setSelectedVoiceIdx] = useState(0);
   const music =
     voices[Math.min(selectedVoiceIdx, voices.length - 1)]?.music ?? new Music();
-  const [playedNotes, setPlayedNotes] = useState(0);
+  const [, setPlayedNotes] = useState(0);
   const [statusMessage, setStatusMessage] = useState('');
-  const [tempo, setTempo] = useState(song.tempo ?? music.tempo ?? 120);
+  const [tempo, setTempo] = useState(song.tempo ?? music.signatures[0].tempo ?? 120);
+  const scoreContainerRef = useRef<HTMLDivElement>(null);
+  const [scoreWidth, setScoreWidth] = useState(800);
   const tempoRef = useRef(tempo);
   useEffect(() => {
     tempoRef.current = tempo;
   }, [tempo]);
+
+  useLayoutEffect(() => {
+    const el = scoreContainerRef.current;
+    if (!el) return;
+    const ro = new ResizeObserver(([entry]) => {
+      setScoreWidth(entry.contentRect.width);
+    });
+    ro.observe(el);
+    return () => ro.disconnect();
+  }, []);
 
   const voicesRef = useRef<VoiceInfo[]>(voices);
   useEffect(() => {
@@ -628,12 +640,14 @@ export function SongPage({
           <Edit />
         </IconButton>
       </Tooltip>
-      <Vexflow
-        music={music}
-        colorNotes={isRecordingB ? 0 : playedNotes}
-        noteResults={isRecordingB ? noteResults : undefined}
-        cursor={isRecordingB ? inTempoCursor : playbackCursor}
-      />
+      <div ref={scoreContainerRef} style={{ width: '100%' }}>
+        <Score
+          music={music}
+          width={scoreWidth}
+          noteResults={isRecordingB ? noteResults : undefined}
+          cursor={isRecordingB ? inTempoCursor : playbackCursor}
+        />
+      </div>
       {countdown !== null && (
         <div
           style={{

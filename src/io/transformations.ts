@@ -1,4 +1,4 @@
-import { type Music, Duration, DurationModifier, KEYS } from '../music';
+import { type Music, Duration, DurationModifier, KEYS, FIFTHS_TO_ACCIDENTALS } from '../music';
 import { parseFragment } from './abcImport';
 import { notesToAbc } from './abcExport';
 
@@ -67,7 +67,7 @@ interface KeyAccidentalMaps {
 }
 
 function buildKeyAccidentalMaps(keySignature: string): KeyAccidentalMaps {
-  const keyNotes = KEYS[keySignature] ?? [];
+  const keyNotes = FIFTHS_TO_ACCIDENTALS[KEYS[keySignature] ?? 0] ?? [];
   const inKeyPitchClasses = new Map<number, '#' | 'b'>();
   const naturalPitchClasses = new Set<number>();
 
@@ -186,7 +186,7 @@ export const TRANSFORMATIONS: Transformation[] = [
     labelKey: 'transformSimplifyAccidentals',
     apply: (music) => {
       const { inKeyPitchClasses, naturalPitchClasses, keyDirection } =
-        buildKeyAccidentalMaps(music.keySignature);
+        buildKeyAccidentalMaps(music.signatures[0].keySignature);
       for (const note of music.notes) {
         for (let i = 0; i < note.pitches.length; i++) {
           const pitchClass = note.pitches[i] % 12;
@@ -211,7 +211,7 @@ export const TRANSFORMATIONS: Transformation[] = [
     labelKey: 'transformAddAllAccidentals',
     apply: (music) => {
       const { inKeyPitchClasses, naturalPitchClasses, keyDirection } =
-        buildKeyAccidentalMaps(music.keySignature);
+        buildKeyAccidentalMaps(music.signatures[0].keySignature);
       for (const note of music.notes) {
         for (let i = 0; i < note.pitches.length; i++) {
           const pitchClass = note.pitches[i] % 12;

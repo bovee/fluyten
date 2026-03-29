@@ -51,13 +51,24 @@ describe('fromAbc', () => {
     it('parses K: with clef=bass', () => {
       const music = fromAbc(`T:Test\nM:4/4\nL:1/4\nK:C clef=bass\nC D E F`);
       expect(music.clef).toBe('bass');
-      expect(music.keySignature).toBe('C');
+      expect(music.signatures[0].keySignature).toBe('C');
+    });
+
+    it('parses mode key signatures', () => {
+      expect(fromAbc(`T:T\nM:4/4\nL:1/4\nK:G Mix\nG`).signatures[0].keySignature).toBe('GMix');
+      expect(fromAbc(`T:T\nM:4/4\nL:1/4\nK:G Mixolydian\nG`).signatures[0].keySignature).toBe('GMix');
+      expect(fromAbc(`T:T\nM:4/4\nL:1/4\nK:D Dor\nD`).signatures[0].keySignature).toBe('DDor');
+      expect(fromAbc(`T:T\nM:4/4\nL:1/4\nK:A Dorian\nA`).signatures[0].keySignature).toBe('ADor');
+      expect(fromAbc(`T:T\nM:4/4\nL:1/4\nK:E Phr\nE`).signatures[0].keySignature).toBe('EPhr');
+      expect(fromAbc(`T:T\nM:4/4\nL:1/4\nK:F Lyd\nF`).signatures[0].keySignature).toBe('FLyd');
+      expect(fromAbc(`T:T\nM:4/4\nL:1/4\nK:B Loc\nB`).signatures[0].keySignature).toBe('BLoc');
+      expect(fromAbc(`T:T\nM:4/4\nL:1/4\nK:Gmix\nG`).signatures[0].keySignature).toBe('GMix');
     });
 
     it('parses K: with clef=alto', () => {
       const music = fromAbc(`T:Test\nM:4/4\nL:1/4\nK:G clef=alto\nG`);
       expect(music.clef).toBe('alto');
-      expect(music.keySignature).toBe('G');
+      expect(music.signatures[0].keySignature).toBe('G');
     });
 
     it('parses %%clef bass directive', () => {
@@ -129,7 +140,7 @@ describe('fromAbc', () => {
         const music = fromAbc(
           `T:Test\nM:4/4\nL:1/4\nK:G clef=bass middle=D\nG`
         );
-        expect(music.keySignature).toBe('G');
+        expect(music.signatures[0].keySignature).toBe('G');
         expect(music.clef).toBe('bass');
       });
     });
@@ -137,29 +148,29 @@ describe('fromAbc', () => {
     it('should parse common time (C)', () => {
       const abc = `T:Test\nM:C\nL:1/4\nK:C\nC`;
       const music = fromAbc(abc);
-      expect(music.beatsPerBar).toBe(4);
-      expect(music.beatValue).toBe(4);
+      expect(music.signatures[0].beatsPerBar).toBe(4);
+      expect(music.signatures[0].beatValue).toBe(4);
     });
 
     it('should parse cut time (C|)', () => {
       const abc = `T:Test\nM:C|\nL:1/4\nK:C\nC`;
       const music = fromAbc(abc);
-      expect(music.beatsPerBar).toBe(2);
-      expect(music.beatValue).toBe(2);
+      expect(music.signatures[0].beatsPerBar).toBe(2);
+      expect(music.signatures[0].beatValue).toBe(2);
     });
 
     it('should parse 3/4 time', () => {
       const abc = `T:Test\nM:3/4\nL:1/4\nK:C\nC`;
       const music = fromAbc(abc);
-      expect(music.beatsPerBar).toBe(3);
-      expect(music.beatValue).toBe(4);
+      expect(music.signatures[0].beatsPerBar).toBe(3);
+      expect(music.signatures[0].beatValue).toBe(4);
     });
 
     it('should parse 6/8 time', () => {
       const abc = `T:Test\nM:6/8\nL:1/8\nK:C\nC`;
       const music = fromAbc(abc);
-      expect(music.beatsPerBar).toBe(6);
-      expect(music.beatValue).toBe(8);
+      expect(music.signatures[0].beatsPerBar).toBe(6);
+      expect(music.signatures[0].beatValue).toBe(8);
     });
 
     it('should parse default note length 1/4', () => {
@@ -183,14 +194,14 @@ describe('fromAbc', () => {
     it('should parse key signature C', () => {
       const abc = `T:Test\nM:4/4\nL:1/4\nK:C\nF`;
       const music = fromAbc(abc);
-      expect(music.keySignature).toBe('C');
+      expect(music.signatures[0].keySignature).toBe('C');
       expect(music.notes[0].pitches[0]).toBe(65); // F natural
     });
 
     it('should parse key signature G', () => {
       const abc = `T:Test\nM:4/4\nL:1/4\nK:G\nF f`;
       const music = fromAbc(abc);
-      expect(music.keySignature).toBe('G');
+      expect(music.signatures[0].keySignature).toBe('G');
       expect(music.notes[0].pitches[0]).toBe(66); // F# in G major
       expect(music.notes[1].pitches[0]).toBe(78); // F# in G major
     });
@@ -198,7 +209,7 @@ describe('fromAbc', () => {
     it('should parse key signature F', () => {
       const abc = `T:Test\nM:4/4\nL:1/4\nK:F\nB b`;
       const music = fromAbc(abc);
-      expect(music.keySignature).toBe('F');
+      expect(music.signatures[0].keySignature).toBe('F');
       expect(music.notes[0].pitches[0]).toBe(70); // Bb in F major
       expect(music.notes[1].pitches[0]).toBe(82); // Bb in F major
     });
@@ -603,9 +614,33 @@ describe('fromAbc', () => {
       expect(music.notes).toHaveLength(0);
     });
 
-    it('inline field [K:G] throws', () => {
-      const abc = `T:Test\nM:4/4\nL:1/4\nK:C\nC [K:G] D`;
-      expect(() => fromAbc(abc)).toThrow('Mid-score information fields');
+    it('inline [K:] changes key signature mid-score', () => {
+      const music = fromAbc(`T:Test\nM:4/4\nL:1/4\nK:C\nC [K:G] D`);
+      expect(music.signatures[0].keySignature).toBe('C');
+      expect(music.signatures.length).toBe(2);
+      expect(music.signatures[1].keySignature).toBe('G');
+      expect(music.signatures[1].atNoteIndex).toBe(1);
+    });
+
+    it('inline [M:] changes meter mid-score', () => {
+      const music = fromAbc(`T:Test\nM:4/4\nL:1/4\nK:C\nC D E F | [M:3/4] G A B |`);
+      expect(music.signatures[0].beatsPerBar).toBe(4);
+      expect(music.signatures.length).toBe(2);
+      expect(music.signatures[1].beatsPerBar).toBe(3);
+      expect(music.signatures[1].beatValue).toBe(4);
+    });
+
+    it('inline [Q:] changes tempo mid-score', () => {
+      const music = fromAbc(`T:Test\nM:4/4\nL:1/4\nK:C\nC D [Q:200] E F |`);
+      expect(music.signatures[0].tempo).toBeUndefined();
+      expect(music.signatures.length).toBe(2);
+      expect(music.signatures[1].tempo).toBe(200);
+    });
+
+    it('inline [L:] changes default duration mid-score', () => {
+      const music = fromAbc(`T:Test\nM:4/4\nL:1/4\nK:C\nC D [L:1/8] E F |`);
+      expect(music.signatures.length).toBe(2);
+      expect(music.signatures[1].defaultDuration).toBe('8');
     });
   });
 
@@ -671,8 +706,8 @@ describe('fromAbc', () => {
       const abc = `T:Duet\nM:3/4\nL:1/4\nV:1\nV:2\nK:G\n[V:1] G A B |[V:2] D E F# |`;
       const voices = voicesFromAbc(abc);
       expect(voices[0].music.title).toBe('Duet');
-      expect(voices[0].music.beatsPerBar).toBe(3);
-      expect(voices[1].music.beatsPerBar).toBe(3);
+      expect(voices[0].music.signatures[0].beatsPerBar).toBe(3);
+      expect(voices[1].music.signatures[0].beatsPerBar).toBe(3);
     });
 
     it('sets clef from V: clef= attribute', () => {
@@ -700,9 +735,9 @@ describe('fromAbc', () => {
       // The ABC for a dotted-sixteenth with default L:1/8 is "A3/4" (3/4 of an eighth).
       // This regresses a bug where 3/4 * 2 = 1.5 thirty-seconds had no map entry and threw.
       const music = new Music();
-      music.keySignature = 'C';
-      music.beatsPerBar = 4;
-      music.beatValue = 4;
+      music.signatures[0].keySignature = 'C';
+      music.signatures[0].beatsPerBar = 4;
+      music.signatures[0].beatValue = 4;
       music.notes.push(
         new Note(69, Duration.SIXTEENTH, [], undefined, DurationModifier.DOTTED)
       );
@@ -734,9 +769,9 @@ E D C2 | E D C2 | C/2 C/2 C/2 C/2 D/2 D/2 D/2 D/2 | E D C2 |]`;
 
       expect(music.title).toBe('Hot Cross Buns');
       expect(music.composer).toBe('Traditional');
-      expect(music.beatsPerBar).toBe(4);
-      expect(music.beatValue).toBe(4);
-      expect(music.keySignature).toBe('C');
+      expect(music.signatures[0].beatsPerBar).toBe(4);
+      expect(music.signatures[0].beatValue).toBe(4);
+      expect(music.signatures[0].keySignature).toBe('C');
       expect(music.notes.length).toBeGreaterThan(0);
     });
   });

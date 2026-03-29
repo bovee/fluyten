@@ -284,142 +284,6 @@ describe('Note', () => {
     });
   });
 
-  describe('toVexflowPitchAndDuration', () => {
-    it('should convert whole note', () => {
-      const note = new Note(60, Duration.WHOLE);
-      const [pitches, duration] = note.toVexflowPitchAndDuration();
-      expect(duration).toBe('w');
-      expect(pitches[0]).toBe('c/4');
-    });
-
-    it('should convert half note', () => {
-      const note = new Note(60, Duration.HALF);
-      const [, duration] = note.toVexflowPitchAndDuration();
-      expect(duration).toBe('h');
-    });
-
-    it('should convert quarter note', () => {
-      const note = new Note(60, Duration.QUARTER);
-      const [, duration] = note.toVexflowPitchAndDuration();
-      expect(duration).toBe('q');
-    });
-
-    it('should convert eighth note', () => {
-      const note = new Note(60, Duration.EIGHTH);
-      const [, duration] = note.toVexflowPitchAndDuration();
-      expect(duration).toBe('8');
-    });
-
-    it('should convert sixteenth note', () => {
-      const note = new Note(60, Duration.SIXTEENTH);
-      const [, duration] = note.toVexflowPitchAndDuration();
-      expect(duration).toBe('16');
-    });
-
-    it('should convert dotted notes', () => {
-      const halfDotted = new Note(
-        60,
-        Duration.HALF,
-        [],
-        undefined,
-        DurationModifier.DOTTED
-      );
-      expect(halfDotted.toVexflowPitchAndDuration()[1]).toBe('hd');
-
-      const quarterDotted = new Note(
-        60,
-        Duration.QUARTER,
-        [],
-        undefined,
-        DurationModifier.DOTTED
-      );
-      expect(quarterDotted.toVexflowPitchAndDuration()[1]).toBe('qd');
-
-      const eighthDotted = new Note(
-        60,
-        Duration.EIGHTH,
-        [],
-        undefined,
-        DurationModifier.DOTTED
-      );
-      expect(eighthDotted.toVexflowPitchAndDuration()[1]).toBe('8d');
-    });
-
-    it('should convert triplet notes', () => {
-      const halfTriplet = new Note(
-        60,
-        Duration.HALF,
-        [],
-        undefined,
-        DurationModifier.TRIPLET
-      );
-      expect(halfTriplet.toVexflowPitchAndDuration()[1]).toBe('h');
-
-      const quarterTriplet = new Note(
-        60,
-        Duration.QUARTER,
-        [],
-        undefined,
-        DurationModifier.TRIPLET
-      );
-      expect(quarterTriplet.toVexflowPitchAndDuration()[1]).toBe('q');
-    });
-
-    it('should convert pitch to Vexflow format', () => {
-      const c4 = new Note(60, Duration.QUARTER);
-      expect(c4.toVexflowPitchAndDuration()[0][0]).toBe('c/4');
-
-      const d4 = new Note(62, Duration.QUARTER);
-      expect(d4.toVexflowPitchAndDuration()[0][0]).toBe('d/4');
-
-      const e4 = new Note(64, Duration.QUARTER);
-      expect(e4.toVexflowPitchAndDuration()[0][0]).toBe('e/4');
-    });
-
-    it('should handle different octaves', () => {
-      const c3 = new Note(48, Duration.QUARTER);
-      expect(c3.toVexflowPitchAndDuration()[0][0]).toBe('c/3');
-
-      const c5 = new Note(72, Duration.QUARTER);
-      expect(c5.toVexflowPitchAndDuration()[0][0]).toBe('c/5');
-    });
-
-    it('should convert rests', () => {
-      const rest = new Note(undefined, Duration.QUARTER);
-      const [pitches, duration] = rest.toVexflowPitchAndDuration();
-      expect(pitches[0]).toBe('b/4');
-      expect(duration).toBe('qr');
-    });
-
-    it('should handle sharp accidentals in Vexflow conversion', () => {
-      const cSharp = new Note(61, Duration.QUARTER, [], '#');
-      const [pitches] = cSharp.toVexflowPitchAndDuration();
-      expect(pitches[0]).toBe('c/4');
-    });
-
-    it('should use sharp spelling for black keys in sharp keys', () => {
-      // F# in G major: pitch 66, no explicit accidental, useSharpSpelling=true
-      const fSharp = new Note(66, Duration.QUARTER);
-      expect(fSharp.toVexflowPitchAndDuration(true)[0][0]).toBe('f/4');
-    });
-
-    it('should use flat spelling for black keys in flat keys', () => {
-      // Bb in F major: pitch 70, no explicit accidental, useSharpSpelling=false
-      const bFlat = new Note(70, Duration.QUARTER);
-      expect(bFlat.toVexflowPitchAndDuration(false)[0][0]).toBe('b/4');
-    });
-
-    it('explicit flat accidental overrides sharp key spelling', () => {
-      const bFlat = new Note(70, Duration.QUARTER, [], 'b');
-      expect(bFlat.toVexflowPitchAndDuration(true)[0][0]).toBe('b/4');
-    });
-
-    it('explicit sharp accidental overrides flat key spelling', () => {
-      const fSharp = new Note(66, Duration.QUARTER, [], '#');
-      expect(fSharp.toVexflowPitchAndDuration(false)[0][0]).toBe('f/4');
-    });
-  });
-
   describe('name', () => {
     it('returns natural note names', () => {
       expect(new Note(60, Duration.QUARTER).name()).toBe('C');
@@ -477,22 +341,14 @@ describe('Note', () => {
     });
   });
 
-  describe('toVexflowPitchAndDuration for grace note', () => {
-    it('renders grace note as quarter duration', () => {
-      const note = new Note(60, Duration.GRACE);
-      const [pitches, duration] = note.toVexflowPitchAndDuration();
-      expect(duration).toBe('q'); // grace renders as q
-      expect(pitches[0]).toBe('c/4');
-    });
-  });
 });
 
 describe('Music', () => {
   describe('reflow', () => {
     it('should create bars for 4/4 time', () => {
       const music = new Music();
-      music.beatsPerBar = 4;
-      music.beatValue = 4;
+      music.signatures[0].beatsPerBar = 4;
+      music.signatures[0].beatValue = 4;
       music.notes = [
         new Note(60, Duration.QUARTER),
         new Note(62, Duration.QUARTER),
@@ -511,8 +367,8 @@ describe('Music', () => {
 
     it('should create multiple bars', () => {
       const music = new Music();
-      music.beatsPerBar = 4;
-      music.beatValue = 4;
+      music.signatures[0].beatsPerBar = 4;
+      music.signatures[0].beatValue = 4;
       music.notes = [
         new Note(60, Duration.QUARTER),
         new Note(62, Duration.QUARTER),
@@ -533,8 +389,8 @@ describe('Music', () => {
 
     it('should handle 3/4 time', () => {
       const music = new Music();
-      music.beatsPerBar = 3;
-      music.beatValue = 4;
+      music.signatures[0].beatsPerBar = 3;
+      music.signatures[0].beatValue = 4;
       music.notes = [
         new Note(60, Duration.QUARTER),
         new Note(62, Duration.QUARTER),
@@ -550,8 +406,8 @@ describe('Music', () => {
 
     it('empty Music: only begin bar', () => {
       const music = new Music();
-      music.beatsPerBar = 4;
-      music.beatValue = 4;
+      music.signatures[0].beatsPerBar = 4;
+      music.signatures[0].beatValue = 4;
       music.notes = [];
       music.reflow();
       expect(music.bars).toHaveLength(1);
@@ -560,8 +416,8 @@ describe('Music', () => {
 
     it('should handle 6/8 time with eighth notes', () => {
       const music = new Music();
-      music.beatsPerBar = 6;
-      music.beatValue = 8;
+      music.signatures[0].beatsPerBar = 6;
+      music.signatures[0].beatValue = 8;
       // 6 eighth notes = one bar of 6/8 (6 × 512 = 3072 ticks)
       music.notes = [
         new Note(60, Duration.EIGHTH),
@@ -579,8 +435,8 @@ describe('Music', () => {
 
     it('splits a note that overflows a bar boundary with a tie', () => {
       const music = new Music();
-      music.beatsPerBar = 4;
-      music.beatValue = 4;
+      music.signatures[0].beatsPerBar = 4;
+      music.signatures[0].beatValue = 4;
       // Dotted half (3072 ticks) + half (2048 ticks) = 5 beats, overflows 4/4
       // Expected: dotted-half fits bar 1, remaining quarter+half split into bar 2
       // Actually: dotted-half = 3 beats, bar = 4 beats, remainder = 1 beat (quarter)
@@ -608,8 +464,8 @@ describe('Music', () => {
       // z8 (whole = 4096 ticks) in 3/8 (bar = 1536 ticks): overflow of 2560 is
       // not a single standard duration — should still split correctly.
       const music = new Music();
-      music.beatsPerBar = 3;
-      music.beatValue = 8;
+      music.signatures[0].beatsPerBar = 3;
+      music.signatures[0].beatValue = 8;
       music.notes = [new Note(undefined, Duration.WHOLE)];
       music.reflow();
       // whole rest should have been split into multiple notes across bars
@@ -627,8 +483,8 @@ describe('Music', () => {
       // currentTicks=2048 (half), whole(4096) overflows by 6144-4096=... let's
       // use a simpler case: two whole notes in 3/8 (each spans ~2.67 bars).
       const music = new Music();
-      music.beatsPerBar = 3;
-      music.beatValue = 8;
+      music.signatures[0].beatsPerBar = 3;
+      music.signatures[0].beatValue = 8;
       music.notes = [
         new Note(undefined, Duration.WHOLE),
         new Note(undefined, Duration.WHOLE),
@@ -643,8 +499,8 @@ describe('Music', () => {
 
     it('merges tied same-pitch notes whose combined duration is standard', () => {
       const music = new Music();
-      music.beatsPerBar = 4;
-      music.beatValue = 4;
+      music.signatures[0].beatsPerBar = 4;
+      music.signatures[0].beatValue = 4;
       // Two quarter notes tied = half note
       music.notes = [
         new Note(60, Duration.QUARTER),

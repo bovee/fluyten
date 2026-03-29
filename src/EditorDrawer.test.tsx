@@ -1,5 +1,9 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest';
 import { render, screen, fireEvent } from '@testing-library/react';
+
+vi.mock('./utils', () => ({
+  debounce: (fn: (...args: unknown[]) => void) => ({ call: fn, cancel: vi.fn() }),
+}));
 import { EditorDrawer } from './EditorDrawer';
 import { useStore } from './store';
 import { Music } from './music';

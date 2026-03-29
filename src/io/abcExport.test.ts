@@ -8,40 +8,40 @@ describe('toAbc', () => {
     it('should emit title', () => {
       const music = new Music();
       music.title = 'Hot Cross Buns';
-      music.keySignature = 'C';
+      music.signatures[0].keySignature = 'C';
       expect(toAbc(music)).toContain('T:Hot Cross Buns');
     });
 
     it('should emit composer', () => {
       const music = new Music();
       music.composer = 'Bach';
-      music.keySignature = 'C';
+      music.signatures[0].keySignature = 'C';
       expect(toAbc(music)).toContain('C:Bach');
     });
 
     it('should omit composer line when absent', () => {
       const music = new Music();
-      music.keySignature = 'C';
+      music.signatures[0].keySignature = 'C';
       expect(toAbc(music)).not.toContain('C:');
     });
 
     it('should emit time signature', () => {
       const music = new Music();
-      music.beatsPerBar = 3;
-      music.beatValue = 4;
-      music.keySignature = 'C';
+      music.signatures[0].beatsPerBar = 3;
+      music.signatures[0].beatValue = 4;
+      music.signatures[0].keySignature = 'C';
       expect(toAbc(music)).toContain('M:3/4');
     });
 
     it('should always emit L:1/8', () => {
       const music = new Music();
-      music.keySignature = 'C';
+      music.signatures[0].keySignature = 'C';
       expect(toAbc(music)).toContain('L:1/8');
     });
 
     it('should emit key signature', () => {
       const music = new Music();
-      music.keySignature = 'G';
+      music.signatures[0].keySignature = 'G';
       expect(toAbc(music)).toContain('K:G');
     });
   });
@@ -52,7 +52,7 @@ describe('toAbc', () => {
       modifier: DurationModifier = DurationModifier.NONE
     ): string {
       const music = new Music();
-      music.keySignature = 'C';
+      music.signatures[0].keySignature = 'C';
       music.notes = [new Note(60, duration, [], undefined, modifier)];
       return toAbc(music);
     }
@@ -107,49 +107,49 @@ describe('toAbc', () => {
   describe('pitch encoding', () => {
     it('encodes C4 (octave 3) as uppercase C', () => {
       const music = new Music();
-      music.keySignature = 'C';
+      music.signatures[0].keySignature = 'C';
       music.notes = [new Note(60, Duration.EIGHTH)]; // C4
       expect(toAbc(music)).toContain('C');
     });
 
     it('encodes C5 (octave 4) as lowercase c', () => {
       const music = new Music();
-      music.keySignature = 'C';
+      music.signatures[0].keySignature = 'C';
       music.notes = [new Note(72, Duration.EIGHTH)]; // C5
       expect(toAbc(music)).toContain('c');
     });
 
     it('encodes C3 (octave 2) as C with comma', () => {
       const music = new Music();
-      music.keySignature = 'C';
+      music.signatures[0].keySignature = 'C';
       music.notes = [new Note(48, Duration.EIGHTH)]; // C3
       expect(toAbc(music)).toContain('C,');
     });
 
     it('encodes C6 (octave 5) as c with apostrophe', () => {
       const music = new Music();
-      music.keySignature = 'C';
+      music.signatures[0].keySignature = 'C';
       music.notes = [new Note(84, Duration.EIGHTH)]; // C6
       expect(toAbc(music)).toContain("c'");
     });
 
     it('encodes sharp with ^ prefix', () => {
       const music = new Music();
-      music.keySignature = 'C';
+      music.signatures[0].keySignature = 'C';
       music.notes = [new Note(61, Duration.EIGHTH, [], '#')]; // C#4 = app octave 3 = uppercase
       expect(toAbc(music)).toContain('^C');
     });
 
     it('encodes flat with _ prefix', () => {
       const music = new Music();
-      music.keySignature = 'C';
+      music.signatures[0].keySignature = 'C';
       music.notes = [new Note(70, Duration.EIGHTH, [], 'b')]; // Bb4 = app octave 3 = uppercase
       expect(toAbc(music)).toContain('_B');
     });
 
     it('encodes rest as z', () => {
       const music = new Music();
-      music.keySignature = 'C';
+      music.signatures[0].keySignature = 'C';
       music.notes = [new Note(undefined, Duration.QUARTER)];
       expect(toAbc(music)).toContain('z');
     });
@@ -158,7 +158,7 @@ describe('toAbc', () => {
   describe('bar lines', () => {
     it('emits standard bar lines', () => {
       const music = new Music();
-      music.keySignature = 'C';
+      music.signatures[0].keySignature = 'C';
       music.notes = [
         new Note(60, Duration.QUARTER),
         new Note(62, Duration.QUARTER),
@@ -169,7 +169,7 @@ describe('toAbc', () => {
 
     it('emits end bar line', () => {
       const music = new Music();
-      music.keySignature = 'C';
+      music.signatures[0].keySignature = 'C';
       music.notes = [new Note(60, Duration.QUARTER)];
       music.bars = [{ afterNoteNum: 0, type: 'end' }];
       expect(toAbc(music)).toContain('|]');
@@ -177,7 +177,7 @@ describe('toAbc', () => {
 
     it('emits repeat begin', () => {
       const music = new Music();
-      music.keySignature = 'C';
+      music.signatures[0].keySignature = 'C';
       music.notes = [new Note(60, Duration.QUARTER)];
       music.bars = [{ afterNoteNum: 0, type: 'begin_repeat' }];
       expect(toAbc(music)).toContain('|:');
@@ -185,7 +185,7 @@ describe('toAbc', () => {
 
     it('emits repeat end', () => {
       const music = new Music();
-      music.keySignature = 'C';
+      music.signatures[0].keySignature = 'C';
       music.notes = [new Note(60, Duration.QUARTER)];
       music.bars = [{ afterNoteNum: 0, type: 'end_repeat' }];
       expect(toAbc(music)).toContain(':|');
@@ -193,7 +193,7 @@ describe('toAbc', () => {
 
     it('emits begin_end_repeat as ::', () => {
       const music = new Music();
-      music.keySignature = 'C';
+      music.signatures[0].keySignature = 'C';
       music.notes = [
         new Note(60, Duration.QUARTER),
         new Note(62, Duration.QUARTER),
@@ -206,28 +206,28 @@ describe('toAbc', () => {
   describe('decorations', () => {
     it('emits staccato', () => {
       const music = new Music();
-      music.keySignature = 'C';
+      music.signatures[0].keySignature = 'C';
       music.notes = [new Note(60, Duration.QUARTER, ['staccato'])];
       expect(toAbc(music)).toContain('.');
     });
 
     it('emits fermata', () => {
       const music = new Music();
-      music.keySignature = 'C';
+      music.signatures[0].keySignature = 'C';
       music.notes = [new Note(60, Duration.QUARTER, ['fermata'])];
       expect(toAbc(music)).toContain('!fermata!');
     });
 
     it('emits trill', () => {
       const music = new Music();
-      music.keySignature = 'C';
+      music.signatures[0].keySignature = 'C';
       music.notes = [new Note(60, Duration.QUARTER, ['trill'])];
       expect(toAbc(music)).toContain('!trill!');
     });
 
     it('emits dynamic markings', () => {
       const music = new Music();
-      music.keySignature = 'C';
+      music.signatures[0].keySignature = 'C';
       music.notes = [new Note(60, Duration.QUARTER, ['pp'])];
       expect(toAbc(music)).toContain('!pp!');
     });
@@ -236,7 +236,7 @@ describe('toAbc', () => {
   describe('beams', () => {
     it('groups beamed notes without spaces', () => {
       const music = new Music();
-      music.keySignature = 'C';
+      music.signatures[0].keySignature = 'C';
       music.notes = [
         new Note(60, Duration.EIGHTH),
         new Note(62, Duration.EIGHTH),
@@ -251,7 +251,7 @@ describe('toAbc', () => {
 
     it('separates non-beamed notes with spaces', () => {
       const music = new Music();
-      music.keySignature = 'C';
+      music.signatures[0].keySignature = 'C';
       music.notes = [
         new Note(60, Duration.QUARTER),
         new Note(62, Duration.QUARTER),
@@ -265,7 +265,7 @@ describe('toAbc', () => {
   describe('slurs', () => {
     it('wraps slurred notes in parentheses', () => {
       const music = new Music();
-      music.keySignature = 'C';
+      music.signatures[0].keySignature = 'C';
       music.notes = [
         new Note(60, Duration.EIGHTH),
         new Note(62, Duration.EIGHTH),
@@ -280,7 +280,7 @@ describe('toAbc', () => {
   describe('ties', () => {
     it('exports same-pitch curve as `-` not `(...)`', () => {
       const music = new Music();
-      music.keySignature = 'C';
+      music.signatures[0].keySignature = 'C';
       music.notes = [
         new Note(64, Duration.QUARTER),
         new Note(64, Duration.QUARTER),
@@ -294,7 +294,7 @@ describe('toAbc', () => {
 
     it('exports different-pitch curve as `(...)` not `-`', () => {
       const music = new Music();
-      music.keySignature = 'C';
+      music.signatures[0].keySignature = 'C';
       music.notes = [
         new Note(64, Duration.QUARTER),
         new Note(62, Duration.QUARTER),
@@ -308,7 +308,7 @@ describe('toAbc', () => {
 
     it('exports chain tie [0,2] as n-n-n', () => {
       const music = new Music();
-      music.keySignature = 'C';
+      music.signatures[0].keySignature = 'C';
       music.notes = [
         new Note(64, Duration.QUARTER),
         new Note(64, Duration.QUARTER),
@@ -324,7 +324,7 @@ describe('toAbc', () => {
     it('exports slur ending on tied note as `...)-` not `...-)`', () => {
       // (c b a)-a : slur [0,2] over different pitches, tie [2,3] same pitch
       const music = new Music();
-      music.keySignature = 'C';
+      music.signatures[0].keySignature = 'C';
       // pitches: c5=72, b4=71, a4=69
       music.notes = [
         new Note(72, Duration.QUARTER),
@@ -346,7 +346,7 @@ describe('toAbc', () => {
     it('exports tie into slur as `D-(D...)`', () => {
       // D-(D E F) : tie [0,1] same pitch, slur [1,3] different pitches
       const music = new Music();
-      music.keySignature = 'C';
+      music.signatures[0].keySignature = 'C';
       // pitches: D4=62, E4=64, F4=65
       music.notes = [
         new Note(62, Duration.QUARTER),
@@ -368,7 +368,7 @@ describe('toAbc', () => {
 
     it('round-trips ties: export then re-import preserves tie arcs', () => {
       const music = new Music();
-      music.keySignature = 'C';
+      music.signatures[0].keySignature = 'C';
       music.notes = [
         new Note(64, Duration.QUARTER),
         new Note(64, Duration.QUARTER),
@@ -385,7 +385,7 @@ describe('toAbc', () => {
   describe('chords', () => {
     it('exports chord with [ and ] brackets', () => {
       const music = new Music();
-      music.keySignature = 'C';
+      music.signatures[0].keySignature = 'C';
       music.notes = [new Note([60, 64, 67], Duration.QUARTER)];
       const abc = toAbc(music);
       expect(abc).toContain('[');
@@ -396,7 +396,7 @@ describe('toAbc', () => {
   describe('bass clef', () => {
     it('exports clef=bass in K: line', () => {
       const music = new Music();
-      music.keySignature = 'C';
+      music.signatures[0].keySignature = 'C';
       music.clef = 'bass';
       const abc = toAbc(music);
       expect(abc).toContain('K:C clef=bass');
@@ -415,8 +415,8 @@ E2 D2 C4 |E2 D2 C4 |]`;
       const exported = toAbc(music1);
       const music2 = fromAbc(exported);
       expect(music2.title).toBe(music1.title);
-      expect(music2.keySignature).toBe(music1.keySignature);
-      expect(music2.beatsPerBar).toBe(music1.beatsPerBar);
+      expect(music2.signatures[0].keySignature).toBe(music1.signatures[0].keySignature);
+      expect(music2.signatures[0].beatsPerBar).toBe(music1.signatures[0].beatsPerBar);
       expect(music2.notes.length).toBe(music1.notes.length);
       for (let i = 0; i < music1.notes.length; i++) {
         expect(music2.notes[i].pitches).toEqual(music1.notes[i].pitches);

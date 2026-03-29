@@ -438,9 +438,9 @@ export function fromMidi(buffer: ArrayBuffer): Music[] {
   function makeBaseMusic(): Music {
     const m = new Music();
     m.title = title;
-    m.beatsPerBar = beatsPerBar;
-    m.beatValue = beatValue;
-    m.keySignature = keySignature;
+    m.signatures[0].beatsPerBar = beatsPerBar;
+    m.signatures[0].beatValue = beatValue;
+    m.signatures[0].keySignature = keySignature;
     return m;
   }
 

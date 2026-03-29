@@ -267,7 +267,7 @@ export function fromMusicXml(xmlText: string): Music {
         const mode = childText(keyEl, 'mode').toLowerCase() || 'major';
         const keyMap =
           mode === 'minor' ? FIFTHS_TO_MINOR_KEY : FIFTHS_TO_MAJOR_KEY;
-        music.keySignature = keyMap[fifths] ?? 'C';
+        music.signatures[0].keySignature = keyMap[fifths] ?? 'C';
       }
 
       const timeEl =
@@ -276,14 +276,14 @@ export function fromMusicXml(xmlText: string): Music {
       if (timeEl) {
         const symbol = timeEl.getAttribute('symbol');
         if (symbol === 'common') {
-          music.beatsPerBar = 4;
-          music.beatValue = 4;
+          music.signatures[0].beatsPerBar = 4;
+          music.signatures[0].beatValue = 4;
         } else if (symbol === 'cut') {
-          music.beatsPerBar = 2;
-          music.beatValue = 2;
+          music.signatures[0].beatsPerBar = 2;
+          music.signatures[0].beatValue = 2;
         } else {
-          music.beatsPerBar = parseInt(childText(timeEl, 'beats') || '4', 10);
-          music.beatValue = parseInt(childText(timeEl, 'beat-type') || '4', 10);
+          music.signatures[0].beatsPerBar = parseInt(childText(timeEl, 'beats') || '4', 10);
+          music.signatures[0].beatValue = parseInt(childText(timeEl, 'beat-type') || '4', 10);
         }
       }
 

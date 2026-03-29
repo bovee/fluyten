@@ -1,4 +1,5 @@
 import type { Preview } from '@storybook/react-vite';
+import '../src/index.css';
 import { ThemeProvider, createTheme, CssBaseline } from '@mui/material';
 import React, { useEffect } from 'react';
 import { setupAudioMocks } from '../src/test/audioMocks';

@@ -8,7 +8,16 @@ import {
   Music,
   Note,
   KEYS,
+  FIFTHS_TO_ACCIDENTALS,
 } from '../music';
+
+const DURATION_TO_L: Partial<Record<Duration, string>> = {
+  [Duration.WHOLE]: '1/1',
+  [Duration.HALF]: '1/2',
+  [Duration.QUARTER]: '1/4',
+  [Duration.EIGHTH]: '1/8',
+  [Duration.SIXTEENTH]: '1/16',
+};
 import { PITCH_CONSTANTS } from '../constants';
 import { voicesFromAbc } from './abcImport';
 
@@ -187,7 +196,7 @@ function decorationToAbc(decoration: Decoration): string {
 
 function buildKeyAdjustment(keySignature: string): { [n: string]: number } {
   const keyAdjustment: { [n: string]: number } = {};
-  for (const note of KEYS[keySignature] ?? []) {
+  for (const note of FIFTHS_TO_ACCIDENTALS[KEYS[keySignature] ?? 0] ?? []) {
     keyAdjustment[note[0]] = note[1] === '#' ? 1 : -1;
   }
   return keyAdjustment;
@@ -204,6 +213,13 @@ function scoreToAbc(
     if (bar.afterNoteNum !== undefined) {
       barAfter.set(bar.afterNoteNum, bar);
     }
+  }
+
+  // Build a map from note index to the signature that starts there (index > 0 only,
+  // since index 0 is emitted as a header field).
+  const sigAtNote: Map<number, (typeof music.signatures)[number]> = new Map();
+  for (const sig of music.signatures.slice(1)) {
+    sigAtNote.set(sig.atNoteIndex, sig);
   }
 
   // Build beam groups: set of note indices that are in a beam group
@@ -237,10 +253,43 @@ function scoreToAbc(
     }
   }
 
+  // Track current key adjustment and default duration so we can update them
+  // when a mid-tune signature change is encountered.
+  const curKeyAdjustment = { ...keyAdjustment };
+  let curDefaultDuration = defaultDuration;
+
   const noteParts: string[] = [];
   for (let noteIx = 0; noteIx < music.notes.length; noteIx++) {
     const note = music.notes[noteIx];
     let part = '';
+
+    // Inline field before this note if a new signature begins here.
+    const sig = sigAtNote.get(noteIx);
+    if (sig) {
+      const prev = music.signatures
+        .slice()
+        .reverse()
+        .find((s) => s.atNoteIndex < noteIx);
+      if (sig.beatsPerBar !== prev?.beatsPerBar || sig.beatValue !== prev?.beatValue) {
+        part += `[M:${sig.beatsPerBar}/${sig.beatValue}]`;
+      }
+      if (sig.keySignature !== prev?.keySignature) {
+        part += `[K:${sig.keySignature}]`;
+        // Update key adjustment for subsequent notes.
+        for (const k of Object.keys(curKeyAdjustment)) delete curKeyAdjustment[k];
+        for (const acc of FIFTHS_TO_ACCIDENTALS[KEYS[sig.keySignature] ?? 0] ?? []) {
+          curKeyAdjustment[acc[0]] = acc[1] === '#' ? 1 : -1;
+        }
+      }
+      if (sig.tempo !== prev?.tempo && sig.tempo !== undefined) {
+        const label = sig.tempoText ? `"${sig.tempoText}" ` : '';
+        part += `[Q:${label}1/4=${sig.tempo}]`;
+      }
+      if (sig.defaultDuration !== prev?.defaultDuration && sig.defaultDuration !== undefined) {
+        part += `[L:${DURATION_TO_L[sig.defaultDuration] ?? '1/8'}]`;
+        curDefaultDuration = sig.defaultDuration;
+      }
+    }
 
     // Slur open
     if (slurStartAt.has(noteIx)) part += '(';
@@ -251,13 +300,13 @@ function scoreToAbc(
     }
 
     // Pitch
-    part += noteToAbcPitch(note, keyAdjustment);
+    part += noteToAbcPitch(note, curKeyAdjustment);
 
     // Duration
     part += durationToAbc(
       note.duration,
       note.durationModifier,
-      defaultDuration
+      curDefaultDuration
     );
 
     // Slur close (before tie, per ABC convention: `a)-`)
@@ -329,19 +378,21 @@ export function toAbc(music: Music): string {
 
   if (music.title) lines.push(`T:${music.title}`);
   if (music.composer) lines.push(`C:${music.composer}`);
-  lines.push(`M:${music.beatsPerBar}/${music.beatValue}`);
-  if (music.tempo !== undefined) {
-    const label = music.tempoText ? `"${music.tempoText}" ` : '';
-    lines.push(`Q:${label}1/4=${music.tempo}`);
+  const sig0 = music.signatures[0];
+  lines.push(`M:${sig0.beatsPerBar}/${sig0.beatValue}`);
+  if (sig0.tempo !== undefined) {
+    const label = sig0.tempoText ? `"${sig0.tempoText}" ` : '';
+    lines.push(`Q:${label}1/4=${sig0.tempo}`);
   }
-  lines.push('L:1/8');
+  const defaultDuration = sig0.defaultDuration ?? Duration.EIGHTH;
+  lines.push(`L:${DURATION_TO_L[defaultDuration] ?? '1/8'}`);
   lines.push(
     music.clef !== 'treble'
-      ? `K:${music.keySignature} clef=${music.clef}`
-      : `K:${music.keySignature}`
+      ? `K:${sig0.keySignature} clef=${music.clef}`
+      : `K:${sig0.keySignature}`
   );
 
-  lines.push(scoreToAbc(music, buildKeyAdjustment(music.keySignature)));
+  lines.push(scoreToAbc(music, buildKeyAdjustment(sig0.keySignature), defaultDuration));
 
   for (const verse of music.lyrics) {
     const wLine = buildWLine(music, verse);
@@ -401,7 +452,7 @@ export function reflowAbc(abc: string): string {
   const parts: string[] = [...globalHeaders];
   for (const v of voices) {
     parts.push(`V:${v.id}`);
-    parts.push(notesToAbc(v.music, v.music.keySignature));
+    parts.push(notesToAbc(v.music, v.music.signatures[0].keySignature));
   }
   return parts.join('\n');
 }

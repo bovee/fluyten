@@ -18,8 +18,10 @@ export function isMidiPath(path: string): boolean {
 }
 
 export class HttpError extends Error {
-  constructor(public readonly status: number) {
+  readonly status: number;
+  constructor(status: number) {
     super(`HTTP error ${status}`);
+    this.status = status;
   }
 }
 
@@ -33,14 +35,14 @@ function musicVoicesToAbc(voices: Music[]): string {
   const first = voices[0];
   const header = [
     first.title ? `T:${first.title}` : null,
-    `M:${first.beatsPerBar}/${first.beatValue}`,
+    `M:${first.signatures[0].beatsPerBar}/${first.signatures[0].beatValue}`,
     'L:1/8',
-    `K:${first.keySignature}`,
+    `K:${first.signatures[0].keySignature}`,
   ]
     .filter(Boolean)
     .join('\n');
   const voiceParts = voices
-    .map((m, i) => `V:${i + 1}\n${notesToAbc(m, m.keySignature)}`)
+    .map((m, i) => `V:${i + 1}\n${notesToAbc(m, m.signatures[0].keySignature)}`)
     .join('\n');
   return `X:1\n${header}\n${voiceParts}`;
 }

@@ -1,4 +1,5 @@
-import { useEffect, useLayoutEffect, useRef, useState } from 'react';
+import { useEffect, useLayoutEffect, useRef, useState, useCallback, useMemo } from 'react';
+import { debounce } from './utils';
 import { useTranslation } from 'react-i18next';
 import Box from '@mui/material/Box';
 import Drawer from '@mui/material/Drawer';
@@ -73,6 +74,33 @@ export function EditorDrawer({
   const drawerRef = useRef<HTMLDivElement>(null);
   const abcTextareaRef = useRef<HTMLTextAreaElement>(null);
   const [abcSelection, setAbcSelection] = useState({ start: 0, end: 0 });
+
+  // Local copy of ABC text for immediate textarea feedback; debounce the
+  // expensive upstream re-render triggered by onAbcChange.
+  const [localAbc, setLocalAbc] = useState(abcMusic);
+  // Track what we last sent upstream so we can distinguish echoed-back props
+  // (which we should ignore) from genuine external changes (transforms, reflow).
+  const lastSentRef = useRef(abcMusic);
+
+  useEffect(() => {
+    if (abcMusic !== lastSentRef.current) {
+      setLocalAbc(abcMusic);
+      lastSentRef.current = abcMusic;
+    }
+  }, [abcMusic]);
+
+  const debouncedOnAbcChange = useMemo(
+    () => debounce((value: string) => {
+      lastSentRef.current = value;
+      onAbcChange(value);
+    }, 300),
+    [onAbcChange]
+  );
+
+  const handleAbcChange = useCallback((value: string) => {
+    setLocalAbc(value);
+    debouncedOnAbcChange.call(value);
+  }, [debouncedOnAbcChange]);
   const pendingSelectionRef = useRef<{ start: number; end: number } | null>(
     null
   );
@@ -121,7 +149,7 @@ export function EditorDrawer({
   // Find the character index where the notes section begins (after the K: line).
   const notesStartIndex = (() => {
     let pos = 0;
-    for (const line of abcMusic.split('\n')) {
+    for (const line of localAbc.split('\n')) {
       pos += line.length + 1;
       if (line.startsWith('K:')) return pos;
     }
@@ -380,9 +408,9 @@ export function EditorDrawer({
             error={!!parseError}
             helperText={parseError || undefined}
             label={t('abcNotation')}
-            value={abcMusic}
+            value={localAbc}
             onChange={(e) => {
-              onAbcChange(e.target.value);
+              handleAbcChange(e.target.value);
               updateAbcSelection();
             }}
             onSelect={updateAbcSelection}
