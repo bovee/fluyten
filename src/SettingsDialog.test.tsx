@@ -41,9 +41,10 @@ const clickTab = (name: RegExp) =>
   fireEvent.click(screen.getByRole('tab', { name }));
 
 describe('SettingsDialog', () => {
-
   it('should have no accessibility violations', async () => {
-    const { container } = render(<SettingsDialog open={true} onClose={vi.fn()} />);
+    const { container } = render(
+      <SettingsDialog open={true} onClose={vi.fn()} />
+    );
     expect(await axe(container)).toHaveNoViolations();
   });
   it('does not render content when closed', () => {

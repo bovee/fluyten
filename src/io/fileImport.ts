@@ -60,7 +60,9 @@ async function parseSongsFromContent(
       const { fromMidi } = await import('./midiImport');
       const voices = fromMidi(content);
       const title = voices[0]?.title || fallbackTitle;
-      return [{ id: crypto.randomUUID(), title, abc: musicVoicesToAbc(voices) }];
+      return [
+        { id: crypto.randomUUID(), title, abc: musicVoicesToAbc(voices) },
+      ];
     }
     if (lower.endsWith('.mxl')) {
       const { fromMusicXml, extractMxl } = await import('./musicXmlImport');
@@ -123,10 +125,9 @@ export async function parseSongsFromUrl(url: string): Promise<UserSong[]> {
   if (!response.ok) throw new HttpError(response.status);
 
   const urlPath = new URL(url).pathname;
-  const fallbackTitle = (urlPath.split('/').pop()?.split('?')[0] ?? 'Imported').replace(
-    /\.[^.]+$/,
-    ''
-  );
+  const fallbackTitle = (
+    urlPath.split('/').pop()?.split('?')[0] ?? 'Imported'
+  ).replace(/\.[^.]+$/, '');
 
   const lower = urlPath.toLowerCase();
   let content: string | ArrayBuffer;

@@ -123,5 +123,7 @@
     "Rema, Rema, Rema o Barco"
   ],
   "confirmDeleteSongs_one": "Excluir 1 músicas? Isso não pode ser desfeito.",
-  "confirmDeleteSongs_other": "Excluir {{count}} músicas? Isso não pode ser desfeito."
+  "confirmDeleteSongs_other": "Excluir {{count}} músicas? Isso não pode ser desfeito.",
+  "practiceComplete": "Você tocou {{correct}} de {{total}} notas corretamente.",
+  "practiceAgain": "Praticar Novamente"
 }

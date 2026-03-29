@@ -4,7 +4,10 @@ import { persist, createJSONStorage } from 'zustand/middleware';
 import { type RecorderType } from './instrument';
 
 export type PlaybackVoices = 'selected' | 'others' | 'all';
-export type PracticeMode = 'correct-then-advance' | 'in-tempo' | 'metronome-only';
+export type PracticeMode =
+  | 'correct-then-advance'
+  | 'in-tempo'
+  | 'metronome-only';
 
 export interface UserSong {
   id: string;
@@ -59,15 +62,16 @@ export const useStore = create<SettingsState>()(
       playMetronome: false,
       setPlayMetronome: (playMetronome) => set({ playMetronome }),
       songs: [],
-      addSong: (song) =>
-        set((state) => ({ songs: [...state.songs, song] })),
+      addSong: (song) => set((state) => ({ songs: [...state.songs, song] })),
       importSongs: (songs) =>
         set((state) => ({ songs: [...state.songs, ...songs] })),
       removeSong: (songId) =>
         set((state) => ({ songs: state.songs.filter((s) => s.id !== songId) })),
       renameSong: (songId, title) =>
         set((state) => ({
-          songs: state.songs.map((s) => (s.id === songId ? { ...s, title } : s)),
+          songs: state.songs.map((s) =>
+            s.id === songId ? { ...s, title } : s
+          ),
         })),
       updateSongAbc: (songId, abc) =>
         set((state) => ({
@@ -75,7 +79,9 @@ export const useStore = create<SettingsState>()(
         })),
       updateSongTempo: (songId, tempo) =>
         set((state) => ({
-          songs: state.songs.map((s) => (s.id === songId ? { ...s, tempo } : s)),
+          songs: state.songs.map((s) =>
+            s.id === songId ? { ...s, tempo } : s
+          ),
         })),
     }),
     {
@@ -84,9 +90,9 @@ export const useStore = create<SettingsState>()(
       migrate: (persistedState: unknown, version: number) => {
         const state = persistedState as Record<string, unknown>;
         if (version === 0 && Array.isArray(state.userBooks)) {
-          state.songs = (state.userBooks as Array<{ songs?: UserSong[] }>).flatMap(
-            (b) => b.songs ?? []
-          );
+          state.songs = (
+            state.userBooks as Array<{ songs?: UserSong[] }>
+          ).flatMap((b) => b.songs ?? []);
           delete state.userBooks;
         }
         return state;

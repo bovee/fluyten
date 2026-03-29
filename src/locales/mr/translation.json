@@ -123,5 +123,7 @@
     "वल्हव वल्हव तुझी होडी"
   ],
   "confirmDeleteSongs_one": "1 गाणी हटवायची? हे पूर्ववत करता येणार नाही.",
-  "confirmDeleteSongs_other": "{{count}} गाणी हटवायची? हे पूर्ववत करता येणार नाही."
+  "confirmDeleteSongs_other": "{{count}} गाणी हटवायची? हे पूर्ववत करता येणार नाही.",
+  "practiceComplete": "तुम्ही {{total}} पैकी {{correct}} नोट्स बरोबर वाजवल्या.",
+  "practiceAgain": "पुन्हा सराव करा"
 }

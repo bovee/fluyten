@@ -123,5 +123,7 @@
     "ボートをこいで"
   ],
   "confirmDeleteSongs_one": "1曲を削除しますか？この操作は元に戻せません。",
-  "confirmDeleteSongs_other": "{{count}}曲を削除しますか？この操作は元に戻せません。"
+  "confirmDeleteSongs_other": "{{count}}曲を削除しますか？この操作は元に戻せません。",
+  "practiceComplete": "{{total}}音中{{correct}}音を正しく演奏しました。",
+  "practiceAgain": "もう一度練習する"
 }

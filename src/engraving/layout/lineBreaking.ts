@@ -37,11 +37,15 @@ export function breakIntoLines(
       1,
       Math.floor(availableWidth / BAR_TARGET_WIDTH)
     );
-    let candidate = Math.min(barStart + estimatedBarsPerLine, barSizings.length);
+    let candidate = Math.min(
+      barStart + estimatedBarsPerLine,
+      barSizings.length
+    );
 
     // Shrink until the line fits within availableWidth.
     while (candidate > barStart + 1) {
-      if (minLineWidth(barSizings, barStart, candidate) <= availableWidth) break;
+      if (minLineWidth(barSizings, barStart, candidate) <= availableWidth)
+        break;
       candidate--;
     }
     lineEnd = candidate;
@@ -82,19 +86,25 @@ function buildLinePlan(
 ): LinePlan {
   const count = end - start;
   const preambles = Array.from({ length: count }, (_, k) =>
-    k === 0 ? sizings[start + k].preambleIfFirst : sizings[start + k].preambleIfNotFirst
+    k === 0
+      ? sizings[start + k].preambleIfFirst
+      : sizings[start + k].preambleIfNotFirst
   );
   const minNoteAreas = Array.from(
     { length: count },
     (_, k) => sizings[start + k].minNoteAreaWidth
   );
 
-  const minTotal = preambles.reduce((s, p) => s + p, 0) +
+  const minTotal =
+    preambles.reduce((s, p) => s + p, 0) +
     minNoteAreas.reduce((s, w) => s + w, 0);
   const surplus = Math.max(0, targetWidth - minTotal);
 
   // Distribute surplus space proportionally by tick count.
-  const ticks = Array.from({ length: count }, (_, k) => sizings[start + k].totalTicks);
+  const ticks = Array.from(
+    { length: count },
+    (_, k) => sizings[start + k].totalTicks
+  );
   const totalTicks = ticks.reduce((s, t) => s + t, 0);
 
   const barWidths = Array.from({ length: count }, (_, k) => {

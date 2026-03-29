@@ -123,5 +123,7 @@
     "Wiosłuj, wiosłuj łódką swą"
   ],
   "confirmDeleteSongs_one": "Usunąć 1 piosenek? Tego nie można cofnąć.",
-  "confirmDeleteSongs_other": "Usunąć {{count}} piosenek? Tego nie można cofnąć."
+  "confirmDeleteSongs_other": "Usunąć {{count}} piosenek? Tego nie można cofnąć.",
+  "practiceComplete": "Zagrałeś {{correct}} z {{total}} nut poprawnie.",
+  "practiceAgain": "Ćwicz ponownie"
 }

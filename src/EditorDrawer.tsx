@@ -1,4 +1,11 @@
-import { useEffect, useLayoutEffect, useRef, useState, useCallback, useMemo } from 'react';
+import {
+  useEffect,
+  useLayoutEffect,
+  useRef,
+  useState,
+  useCallback,
+  useMemo,
+} from 'react';
 import { debounce } from './utils';
 import { useTranslation } from 'react-i18next';
 import Box from '@mui/material/Box';
@@ -90,17 +97,21 @@ export function EditorDrawer({
   }, [abcMusic]);
 
   const debouncedOnAbcChange = useMemo(
-    () => debounce((value: string) => {
-      lastSentRef.current = value;
-      onAbcChange(value);
-    }, 300),
+    () =>
+      debounce((value: string) => {
+        lastSentRef.current = value;
+        onAbcChange(value);
+      }, 300),
     [onAbcChange]
   );
 
-  const handleAbcChange = useCallback((value: string) => {
-    setLocalAbc(value);
-    debouncedOnAbcChange.call(value);
-  }, [debouncedOnAbcChange]);
+  const handleAbcChange = useCallback(
+    (value: string) => {
+      setLocalAbc(value);
+      debouncedOnAbcChange.call(value);
+    },
+    [debouncedOnAbcChange]
+  );
   const pendingSelectionRef = useRef<{ start: number; end: number } | null>(
     null
   );
@@ -353,6 +364,8 @@ export function EditorDrawer({
       variant="persistent"
       anchor="bottom"
       open={open}
+      role="region"
+      aria-label={t('editMusic')}
       PaperProps={{ ref: drawerRef }}
     >
       <Box
@@ -367,11 +380,11 @@ export function EditorDrawer({
         }}
       >
         <Box sx={{ flex: 1 }}>
-          <Typography variant="caption" color="text.secondary">
+          <Typography id="tempo-label" variant="caption" color="text.secondary">
             {t('tempoLabel', { tempo })}
           </Typography>
           <Slider
-            aria-label="Tempo"
+            aria-labelledby="tempo-label"
             size="small"
             value={tempo}
             onChange={(_, v) => onTempoChange(v as number)}

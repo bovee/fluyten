@@ -54,8 +54,7 @@ export function pitchToStaffPosition(
   //   treble: B4  = 6   → clefOffset = −6
   //   bass:   D3  = −6  → clefOffset = +6
   //   alto:   C4  = 0   → clefOffset = 0
-  const clefOffset =
-    clef === 'bass' ? 6 : clef === 'alto' ? 0 : -6; // treble and treble8va both use −6
+  const clefOffset = clef === 'bass' ? 6 : clef === 'alto' ? 0 : -6; // treble and treble8va both use −6
 
   return stepsFromC4 + clefOffset;
 }

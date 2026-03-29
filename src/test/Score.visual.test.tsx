@@ -47,7 +47,8 @@ describe('Score visual regression', () => {
       // applied to DOM elements even though document.fonts.ready resolved).
       // eslint-disable-next-line @typescript-eslint/no-explicit-any
       await (cdp() as any).send('Runtime.evaluate', {
-        expression: 'new Promise(r => requestAnimationFrame(() => requestAnimationFrame(r)))',
+        expression:
+          'new Promise(r => requestAnimationFrame(() => requestAnimationFrame(r)))',
         awaitPromise: true,
       });
       const base64 = await captureBase64();

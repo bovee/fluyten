@@ -2,7 +2,10 @@ import { describe, it, expect, vi, beforeEach } from 'vitest';
 import { render, screen, fireEvent } from '@testing-library/react';
 
 vi.mock('./utils', () => ({
-  debounce: (fn: (...args: unknown[]) => void) => ({ call: fn, cancel: vi.fn() }),
+  debounce: (fn: (...args: unknown[]) => void) => ({
+    call: fn,
+    cancel: vi.fn(),
+  }),
 }));
 import { EditorDrawer } from './EditorDrawer';
 import { axe } from 'jest-axe';
@@ -38,7 +41,6 @@ beforeEach(() => {
 });
 
 describe('EditorDrawer', () => {
-
   it('should have no accessibility violations', async () => {
     const { container } = render(<EditorDrawer {...defaultProps()} />);
     expect(await axe(container)).toHaveNoViolations();

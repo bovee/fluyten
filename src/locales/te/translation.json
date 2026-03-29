@@ -123,5 +123,7 @@
     "వల్లించు వల్లించు నీ పడవను"
   ],
   "confirmDeleteSongs_one": "1 పాటలు తొలగించాలా? దీన్ని రద్దు చేయలేరు.",
-  "confirmDeleteSongs_other": "{{count}} పాటలు తొలగించాలా? దీన్ని రద్దు చేయలేరు."
+  "confirmDeleteSongs_other": "{{count}} పాటలు తొలగించాలా? దీన్ని రద్దు చేయలేరు.",
+  "practiceComplete": "మీరు {{total}} నోట్లలో {{correct}} సరిగ్గా వాయించారు.",
+  "practiceAgain": "మళ్ళీ సాధన చేయండి"
 }

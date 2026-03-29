@@ -123,5 +123,7 @@
     "ਖੇਵੋ ਖੇਵੋ ਕਿਸ਼ਤੀ"
   ],
   "confirmDeleteSongs_one": "1 ਗੀਤ ਮਿਟਾਓ? ਇਹ ਵਾਪਸ ਨਹੀਂ ਕੀਤਾ ਜਾ ਸਕਦਾ।",
-  "confirmDeleteSongs_other": "{{count}} ਗੀਤ ਮਿਟਾਓ? ਇਹ ਵਾਪਸ ਨਹੀਂ ਕੀਤਾ ਜਾ ਸਕਦਾ।"
+  "confirmDeleteSongs_other": "{{count}} ਗੀਤ ਮਿਟਾਓ? ਇਹ ਵਾਪਸ ਨਹੀਂ ਕੀਤਾ ਜਾ ਸਕਦਾ।",
+  "practiceComplete": "ਤੁਸੀਂ {{total}} ਵਿੱਚੋਂ {{correct}} ਸੁਰਾਂ ਸਹੀ ਵਜਾਈਆਂ।",
+  "practiceAgain": "ਦੁਬਾਰਾ ਅਭਿਆਸ ਕਰੋ"
 }

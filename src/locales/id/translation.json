@@ -123,5 +123,7 @@
     "Dayung, Dayung, Dayung Perahumu"
   ],
   "confirmDeleteSongs_one": "Hapus 1 lagu? Ini tidak dapat dibatalkan.",
-  "confirmDeleteSongs_other": "Hapus {{count}} lagu? Ini tidak dapat dibatalkan."
+  "confirmDeleteSongs_other": "Hapus {{count}} lagu? Ini tidak dapat dibatalkan.",
+  "practiceComplete": "Anda memainkan {{correct}} dari {{total}} nada dengan benar.",
+  "practiceAgain": "Latih Lagi"
 }

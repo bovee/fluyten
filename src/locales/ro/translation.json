@@ -123,5 +123,7 @@
     "Vâslește, vâslește barca"
   ],
   "confirmDeleteSongs_one": "Ștergeți 1 cântece? Aceasta nu poate fi anulată.",
-  "confirmDeleteSongs_other": "Ștergeți {{count}} cântece? Aceasta nu poate fi anulată."
+  "confirmDeleteSongs_other": "Ștergeți {{count}} cântece? Aceasta nu poate fi anulată.",
+  "practiceComplete": "Ați cântat {{correct}} din {{total}} note corect.",
+  "practiceAgain": "Exersați din nou"
 }

@@ -14,26 +14,34 @@ interface DecorationProps {
 
 // Dynamic decorations rendered as text below the staff
 const DYNAMICS: Partial<Record<Decoration, string>> = {
-  pppp: 'pppp', ppp: 'ppp', pp: 'pp', p: 'p',
-  mp: 'mp', mf: 'mf', f: 'f', ff: 'ff', fff: 'fff', ffff: 'ffff',
+  pppp: 'pppp',
+  ppp: 'ppp',
+  pp: 'pp',
+  p: 'p',
+  mp: 'mp',
+  mf: 'mf',
+  f: 'f',
+  ff: 'ff',
+  fff: 'fff',
+  ffff: 'ffff',
 };
 
 // Maps decoration → SMuFL glyph name (above-note versions)
 const GLYPH_MAP: Partial<Record<Decoration, string>> = {
-  accent:   'articAccentAbove',
+  accent: 'articAccentAbove',
   staccato: 'articStaccatoAbove',
-  tenuto:   'articTenutoAbove',
-  fermata:  'fermataAbove',
-  trill:    'ornamentTrill',
+  tenuto: 'articTenutoAbove',
+  fermata: 'fermataAbove',
+  trill: 'ornamentTrill',
 };
 
 // Horizontal offset to visually center each glyph on the notehead.
 // Staccato origin is already at its center (offset 0); others have left-edge origins.
 const GLYPH_X_CENTER_OFFSET: Partial<Record<Decoration, number>> = {
-  accent:   -5,   // ~10px wide
-  tenuto:   -5,   // ~10px wide
-  trill:    -5,   // ~10px wide
-  fermata:  -10,  // ~20px wide
+  accent: -5, // ~10px wide
+  tenuto: -5, // ~10px wide
+  trill: -5, // ~10px wide
+  fermata: -10, // ~20px wide
   staccato: 0,
 };
 
@@ -44,7 +52,12 @@ const DYNAMIC_GLYPHS: Record<string, string> = {
   f: 'dynamicForte',
 };
 
-export function DecorationGroup({ decorations, x, stemEndY, staffTopY }: DecorationProps) {
+export function DecorationGroup({
+  decorations,
+  x,
+  stemEndY,
+  staffTopY,
+}: DecorationProps) {
   if (decorations.length === 0) return null;
 
   const aboveY = Math.min(stemEndY, staffTopY) - 8;
@@ -81,7 +94,9 @@ export function DecorationGroup({ decorations, x, stemEndY, staffTopY }: Decorat
               {dynText.split('').map((ch, ci) => {
                 const glyphName = DYNAMIC_GLYPHS[ch];
                 if (!glyphName) return null;
-                const el = <Glyph key={ci} name={glyphName} x={gx} y={belowStaffY} />;
+                const el = (
+                  <Glyph key={ci} name={glyphName} x={gx} y={belowStaffY} />
+                );
                 gx += 8;
                 return el;
               })}

@@ -38,5 +38,7 @@ export function getStarterBookUrl(instrumentType: RecorderType): string {
 }
 
 export function isStarterBookUrl(url: string): boolean {
-  return Object.values(RECORDER_TYPES).some((rt) => url.endsWith(rt.starterBook));
+  return Object.values(RECORDER_TYPES).some((rt) =>
+    url.endsWith(rt.starterBook)
+  );
 }

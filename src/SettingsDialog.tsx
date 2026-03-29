@@ -100,6 +100,8 @@ export function SettingsDialog({ open, onClose }: SettingsDialogProps) {
           <Tabs
             value={tab}
             onChange={(_, v) => setTab(v)}
+            variant="scrollable"
+            scrollButtons="auto"
             sx={{ px: 3, borderBottom: 1, borderColor: 'divider' }}
           >
             <Tab label={t('settingsTabGeneral')} />
@@ -108,7 +110,16 @@ export function SettingsDialog({ open, onClose }: SettingsDialogProps) {
           </Tabs>
 
           {tab === 0 && (
-            <Box sx={{ px: 3, pt: 3, pb: 1, display: 'flex', flexDirection: 'column', gap: 4 }}>
+            <Box
+              sx={{
+                px: 3,
+                pt: 3,
+                pb: 1,
+                display: 'flex',
+                flexDirection: 'column',
+                gap: 4,
+              }}
+            >
               <FormControl fullWidth>
                 <InputLabel id="language-label">{t('language')}</InputLabel>
                 <Select
@@ -201,7 +212,16 @@ export function SettingsDialog({ open, onClose }: SettingsDialogProps) {
           )}
 
           {tab === 1 && (
-            <Box sx={{ px: 3, pt: 3, pb: 1, display: 'flex', flexDirection: 'column', gap: 4 }}>
+            <Box
+              sx={{
+                px: 3,
+                pt: 3,
+                pb: 1,
+                display: 'flex',
+                flexDirection: 'column',
+                gap: 4,
+              }}
+            >
               <Box sx={{ display: 'flex', gap: 1, alignItems: 'flex-start' }}>
                 <FormControl fullWidth>
                   <InputLabel id="instrument-type-label">
@@ -265,7 +285,16 @@ export function SettingsDialog({ open, onClose }: SettingsDialogProps) {
           )}
 
           {tab === 2 && (
-            <Box sx={{ px: 3, pt: 3, pb: 1, display: 'flex', flexDirection: 'column', gap: 4 }}>
+            <Box
+              sx={{
+                px: 3,
+                pt: 3,
+                pb: 1,
+                display: 'flex',
+                flexDirection: 'column',
+                gap: 4,
+              }}
+            >
               <FormControl fullWidth>
                 <InputLabel id="practice-mode-label">
                   {t('practiceMode')}
@@ -275,9 +304,7 @@ export function SettingsDialog({ open, onClose }: SettingsDialogProps) {
                   value={practiceMode}
                   label={t('practiceMode')}
                   onChange={(e) =>
-                    setPracticeMode(
-                      e.target.value as typeof practiceMode
-                    )
+                    setPracticeMode(e.target.value as typeof practiceMode)
                   }
                 >
                   <MenuItem value="metronome-only">
@@ -286,9 +313,7 @@ export function SettingsDialog({ open, onClose }: SettingsDialogProps) {
                   <MenuItem value="correct-then-advance">
                     {t('practiceAsPlayed')}
                   </MenuItem>
-                  <MenuItem value="in-tempo">
-                    {t('practiceRealTime')}
-                  </MenuItem>
+                  <MenuItem value="in-tempo">{t('practiceRealTime')}</MenuItem>
                 </Select>
               </FormControl>
 

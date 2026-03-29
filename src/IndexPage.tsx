@@ -50,7 +50,9 @@ export function IndexPage({ onSelectSong }: IndexPageProps) {
   const [isDragOver, setIsDragOver] = useState(false);
   const [filterText, setFilterText] = useState('');
   const [selectedIds, setSelectedIds] = useState<Set<string>>(new Set());
-  const longPressTimers = useRef<Map<string, ReturnType<typeof setTimeout>>>(new Map());
+  const longPressTimers = useRef<Map<string, ReturnType<typeof setTimeout>>>(
+    new Map()
+  );
   const suppressNextClick = useRef<Set<string>>(new Set());
   const importFileRef = useRef<HTMLInputElement>(null);
 
@@ -168,7 +170,9 @@ export function IndexPage({ onSelectSong }: IndexPageProps) {
       const isStarter = isStarterBookUrl(current.value);
       (isStarter
         ? parsed.map((s, i) => {
-            const translatedTitle = t(`beginnerSongs.${i}`, { defaultValue: s.title });
+            const translatedTitle = t(`beginnerSongs.${i}`, {
+              defaultValue: s.title,
+            });
             return {
               ...s,
               title: translatedTitle,
@@ -305,7 +309,8 @@ export function IndexPage({ onSelectSong }: IndexPageProps) {
           width: 'min(1200px, 95vw)',
           margin: '0 auto',
           display: 'grid',
-          gridTemplateColumns: 'repeat(auto-fill, minmax(min(280px, 100%), 1fr))',
+          gridTemplateColumns:
+            'repeat(auto-fill, minmax(min(280px, 100%), 1fr))',
         }}
       >
         {filteredSongs.map((song) => {
@@ -322,7 +327,11 @@ export function IndexPage({ onSelectSong }: IndexPageProps) {
                   size="small"
                   aria-label={selected ? t('deselectSong') : t('selectSong')}
                   onClick={() => handleCircleClick(song.id)}
-                  sx={{ ml: 0.5, color: selected ? 'primary.main' : 'text.disabled', flexShrink: 0 }}
+                  sx={{
+                    ml: 0.5,
+                    color: selected ? 'primary.main' : 'text.disabled',
+                    flexShrink: 0,
+                  }}
                 >
                   {selected ? (
                     <CheckCircle fontSize="small" />

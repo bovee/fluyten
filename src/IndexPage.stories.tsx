@@ -36,10 +36,22 @@ type Story = StoryObj<typeof meta>;
 export const EmptyState: Story = {};
 
 const manySongs: UserSong[] = [
-  { id: 's1', title: 'Greensleeves', abc: 'X:1\nT:Greensleeves\nM:3/4\nK:Am\nA2' },
-  { id: 's2', title: 'Scarborough Fair', abc: 'X:1\nT:Scarborough Fair\nM:3/4\nK:Dm\nD2' },
+  {
+    id: 's1',
+    title: 'Greensleeves',
+    abc: 'X:1\nT:Greensleeves\nM:3/4\nK:Am\nA2',
+  },
+  {
+    id: 's2',
+    title: 'Scarborough Fair',
+    abc: 'X:1\nT:Scarborough Fair\nM:3/4\nK:Dm\nD2',
+  },
   { id: 's3', title: 'Twinkle Twinkle', abc: 'X:1\nT:Twinkle\nM:C\nK:C\nC D' },
-  { id: 's4', title: 'Hot Cross Buns', abc: 'X:1\nT:Hot Cross Buns\nM:C\nK:C\nE D C' },
+  {
+    id: 's4',
+    title: 'Hot Cross Buns',
+    abc: 'X:1\nT:Hot Cross Buns\nM:C\nK:C\nE D C',
+  },
 ];
 
 export const WithSongs: Story = {
@@ -55,7 +67,11 @@ export const AddSongMenu: Story = {
 };
 
 const oneSong: UserSong[] = [
-  { id: 's1', title: 'Example Song', abc: 'X:1\nT:Example\nM:C\nK:C\nC D E F |' },
+  {
+    id: 's1',
+    title: 'Example Song',
+    abc: 'X:1\nT:Example\nM:C\nK:C\nC D E F |',
+  },
 ];
 
 export const EditSongDialog: Story = {
@@ -63,8 +79,12 @@ export const EditSongDialog: Story = {
   play: async ({ canvasElement }) => {
     const canvas = within(canvasElement);
     // Select the song first, then open the Edit Songs dialog
-    await userEvent.click(await canvas.findByRole('button', { name: /select song/i }));
-    await userEvent.click(await canvas.findByRole('button', { name: /edit songs/i }));
+    await userEvent.click(
+      await canvas.findByRole('button', { name: /select song/i })
+    );
+    await userEvent.click(
+      await canvas.findByRole('button', { name: /edit songs/i })
+    );
     await within(document.body).findByRole('dialog');
   },
 };

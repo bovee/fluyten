@@ -1,11 +1,20 @@
-import { useCallback, useEffect, useRef, useState, useLayoutEffect } from 'react';
+import {
+  useCallback,
+  useEffect,
+  useRef,
+  useState,
+  useLayoutEffect,
+} from 'react';
 import { useTranslation } from 'react-i18next';
+import Button from '@mui/material/Button';
 import IconButton from '@mui/material/IconButton';
+import Snackbar from '@mui/material/Snackbar';
 import SpeedDial from '@mui/material/SpeedDial';
 import Tooltip from '@mui/material/Tooltip';
 import SpeedDialAction from '@mui/material/SpeedDialAction';
 import Typography from '@mui/material/Typography';
 import ArrowBack from '@mui/icons-material/ArrowBack';
+import Close from '@mui/icons-material/Close';
 import Edit from '@mui/icons-material/Edit';
 import Mic from '@mui/icons-material/Mic';
 import MusicNote from '@mui/icons-material/MusicNote';
@@ -56,10 +65,16 @@ function usePitchDetection(
     originalIndices: number[];
     idx: number;
   }>,
-  setStatusMessage: (msg: string) => void
+  setStatusMessage: (msg: string) => void,
+  onFinish: (results: ReadonlyMap<number, 'correct' | 'wrong'>) => void
 ) {
   const { t } = useTranslation();
   const [detectedPitch, setDetectedPitch] = useState<number | null>(null);
+  const [noteResults, setNoteResults] = useState<
+    ReadonlyMap<number, 'correct' | 'wrong'>
+  >(new Map());
+  const [cursor, setCursor] = useState<{ noteIdx: number } | undefined>();
+  const noteResultsMapRef = useRef(new Map<number, 'correct' | 'wrong'>());
   const freqTrackerInterval = useIntervalRef();
   /* eslint-disable react-hooks/refs */
   const freqTrackerRef = useRef<FrequencyTracker>(
@@ -69,7 +84,27 @@ function usePitchDetection(
         const tracking = expandedTrackingRef.current;
         const expandedNote = tracking.notes[tracking.idx];
         if (expandedNote && expandedNote.pitches[0] === pitch) {
+          const originalIdx = tracking.originalIndices[tracking.idx];
+          if (originalIdx !== undefined) {
+            noteResultsMapRef.current.set(originalIdx, 'correct');
+            setNoteResults(new Map(noteResultsMapRef.current));
+          }
           tracking.idx++;
+          if (tracking.idx >= tracking.notes.length) {
+            freqTrackerInterval.clear();
+            freqTrackerRef.current.stop();
+            setDetectedPitch(null);
+            setCursor(undefined);
+            setStatusMessage(t('recordingStopped'));
+            onFinish(new Map(noteResultsMapRef.current));
+          } else {
+            const nextOriginalIdx = tracking.originalIndices[tracking.idx];
+            setCursor(
+              nextOriginalIdx !== undefined
+                ? { noteIdx: nextOriginalIdx }
+                : undefined
+            );
+          }
         }
       },
       () => setDetectedPitch(null)
@@ -82,15 +117,23 @@ function usePitchDetection(
       freqTrackerInterval.clear();
       freqTrackerRef.current?.stop();
       setDetectedPitch(null);
+      setCursor(undefined);
       setStatusMessage(t('recordingStopped'));
       return;
     }
+
+    noteResultsMapRef.current = new Map();
+    setNoteResults(new Map());
+    expandedTrackingRef.current.idx = 0;
+    const firstOriginalIdx = expandedTrackingRef.current.originalIndices[0];
+    setCursor(
+      firstOriginalIdx !== undefined ? { noteIdx: firstOriginalIdx } : undefined
+    );
 
     const { instrumentType, tuning } = useStore.getState();
 
     try {
       await freqTrackerRef.current.start();
-      expandedTrackingRef.current.idx = 0; // reset expanded tracking position
       const id = window.setInterval(() => {
         freqTrackerRef.current?.checkFrequency({ instrumentType, tuning });
       }, RECORD_SAMPLE_RATE);
@@ -108,13 +151,16 @@ function usePitchDetection(
     detectedPitch,
     isRecording: freqTrackerInterval.isActive,
     startRecording,
+    noteResults,
+    cursor,
   };
 }
 
 function useInTempoChecking(
   musicRef: React.MutableRefObject<Music>,
   tempoRef: React.MutableRefObject<number>,
-  setStatusMessage: (msg: string) => void
+  setStatusMessage: (msg: string) => void,
+  onFinish: (results: ReadonlyMap<number, 'correct' | 'wrong'>) => void
 ) {
   const { t } = useTranslation();
   const [detectedPitch, setDetectedPitch] = useState<number | null>(null);
@@ -236,7 +282,17 @@ function useInTempoChecking(
         if (!tl) return;
 
         if (tl.isFinished()) {
+          const lastIdx = currentNoteIdxRef.current;
+          const lastNote = music.notes[lastIdx];
+          if (lastIdx >= 0 && lastNote && lastNote.pitches.length > 0) {
+            noteResultsMapRef.current.set(
+              lastIdx,
+              correctSeenRef.current ? 'correct' : 'wrong'
+            );
+            setNoteResults(new Map(noteResultsMapRef.current));
+          }
           stopAll();
+          onFinish(new Map(noteResultsMapRef.current));
           return;
         }
 
@@ -426,7 +482,11 @@ function useMetronome(
 
   useEffect(() => () => metronomeInterval.clear(), []);
 
-  return { isMetronomeActive: metronomeInterval.isActive, startMetronome, stopMetronome };
+  return {
+    isMetronomeActive: metronomeInterval.isActive,
+    startMetronome,
+    stopMetronome,
+  };
 }
 
 interface SongPageProps {
@@ -463,7 +523,9 @@ export function SongPage({
   const music =
     voices[Math.min(selectedVoiceIdx, voices.length - 1)]?.music ?? new Music();
   const [statusMessage, setStatusMessage] = useState('');
-  const [tempo, setTempo] = useState(song.tempo ?? music.signatures[0].tempo ?? 120);
+  const [tempo, setTempo] = useState(
+    song.tempo ?? music.signatures[0].tempo ?? 120
+  );
   const scoreContainerRef = useRef<HTMLDivElement>(null);
   const [scoreWidth, setScoreWidth] = useState(800);
   const tempoRef = useRef(tempo);
@@ -517,11 +579,27 @@ export function SongPage({
   const practiceMode = useStore((s) => s.practiceMode);
   const playMetronomeOnStart = useStore((s) => s.playMetronome);
 
+  const [practiceSummary, setPracticeSummary] = useState<{
+    noteResults: ReadonlyMap<number, 'correct' | 'wrong'>;
+  } | null>(null);
+  const onPracticeFinish = useCallback(
+    (results: ReadonlyMap<number, 'correct' | 'wrong'>) => {
+      if (results.size > 0) setPracticeSummary({ noteResults: results });
+    },
+    []
+  );
+
   const {
     detectedPitch: pitchA,
     isRecording: isRecordingA,
     startRecording: startRecordingA,
-  } = usePitchDetection(expandedTrackingRef, setStatusMessage);
+    noteResults: asPlayedNoteResults,
+    cursor: asPlayedCursor,
+  } = usePitchDetection(
+    expandedTrackingRef,
+    setStatusMessage,
+    onPracticeFinish
+  );
 
   const {
     detectedPitch: pitchB,
@@ -530,11 +608,15 @@ export function SongPage({
     noteResults,
     cursor: inTempoCursor,
     countdown,
-  } = useInTempoChecking(musicRef, tempoRef, setStatusMessage);
+  } = useInTempoChecking(
+    musicRef,
+    tempoRef,
+    setStatusMessage,
+    onPracticeFinish
+  );
 
   const detectedPitch = practiceMode === 'in-tempo' ? pitchB : pitchA;
-  const isRecording =
-    practiceMode === 'in-tempo' ? isRecordingB : isRecordingA;
+  const isRecording = practiceMode === 'in-tempo' ? isRecordingB : isRecordingA;
   const startRecording =
     practiceMode === 'in-tempo' ? startRecordingB : startRecordingA;
   const {
@@ -637,8 +719,20 @@ export function SongPage({
         <Score
           music={music}
           width={scoreWidth}
-          noteResults={isRecordingB ? noteResults : undefined}
-          cursor={isRecordingB ? inTempoCursor : playbackCursor}
+          noteResults={
+            isRecordingB
+              ? noteResults
+              : isRecordingA
+                ? asPlayedNoteResults
+                : practiceSummary?.noteResults
+          }
+          cursor={
+            isRecordingB
+              ? inTempoCursor
+              : isRecordingA
+                ? asPlayedCursor
+                : playbackCursor
+          }
         />
       </div>
       {countdown !== null && (
@@ -654,6 +748,7 @@ export function SongPage({
           }}
         >
           <span
+            aria-live="assertive"
             style={{
               fontSize: '30vw',
               fontWeight: 'bold',
@@ -746,6 +841,40 @@ export function SongPage({
       >
         {statusMessage}
       </span>
+      <Snackbar
+        open={practiceSummary !== null}
+        onClose={() => setPracticeSummary(null)}
+        message={t('practiceComplete', {
+          correct: practiceSummary
+            ? [...practiceSummary.noteResults.values()].filter(
+                (v) => v === 'correct'
+              ).length
+            : 0,
+          total: music.notes.filter((n) => n.pitches.length > 0).length,
+        })}
+        action={
+          <>
+            <Button
+              color="inherit"
+              size="small"
+              onClick={() => {
+                setPracticeSummary(null);
+                startRecording();
+              }}
+            >
+              {t('practiceAgain')}
+            </Button>
+            <IconButton
+              color="inherit"
+              size="small"
+              aria-label={t('close')}
+              onClick={() => setPracticeSummary(null)}
+            >
+              <Close fontSize="small" />
+            </IconButton>
+          </>
+        }
+      />
       <EditorDrawer
         open={editOpen}
         onHeightChange={setDrawerHeight}

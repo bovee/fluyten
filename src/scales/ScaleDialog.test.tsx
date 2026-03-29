@@ -18,7 +18,6 @@ const renderDialog = (props?: Partial<Parameters<typeof ScaleDialog>[0]>) => {
 };
 
 describe('ScaleDialog', () => {
-
   it('should have no accessibility violations', async () => {
     const { container } = renderDialog();
     expect(await axe(container)).toHaveNoViolations();

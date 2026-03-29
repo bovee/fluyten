@@ -123,5 +123,7 @@
     "Греби, Греби, Греби свою Лодку"
   ],
   "confirmDeleteSongs_one": "Удалить 1 песен? Это действие нельзя отменить.",
-  "confirmDeleteSongs_other": "Удалить {{count}} песен? Это действие нельзя отменить."
+  "confirmDeleteSongs_other": "Удалить {{count}} песен? Это действие нельзя отменить.",
+  "practiceComplete": "Вы сыграли {{correct}} из {{total}} нот правильно.",
+  "practiceAgain": "Повторить упражнение"
 }

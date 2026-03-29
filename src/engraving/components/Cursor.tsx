@@ -8,7 +8,9 @@ interface CursorProps {
 }
 
 /** Build a flat map from musicNoteIndex → {x, lineY, barRight} for all notes in the layout. */
-function buildNotePosMap(layout: LayoutResult): Map<number, { x: number; lineY: number; barRight: number }> {
+function buildNotePosMap(
+  layout: LayoutResult
+): Map<number, { x: number; lineY: number; barRight: number }> {
   const map = new Map<number, { x: number; lineY: number; barRight: number }>();
   for (const line of layout.lines) {
     for (const bar of line.bars) {

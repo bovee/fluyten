@@ -90,14 +90,18 @@ export function OnboardingDialog({ open, onComplete }: OnboardingDialogProps) {
     fetch(bookUrl)
       .then((r) => r.text())
       .then((text) => {
-        const songs: UserSong[] = parseAbcFile(text).map(({ title, abc }, i) => {
-          const translatedTitle = t(`beginnerSongs.${i}`, { defaultValue: title });
-          return {
-            id: crypto.randomUUID(),
-            title: translatedTitle,
-            abc: abc.replace(/^T:.*$/m, `T:${translatedTitle}`),
-          };
-        });
+        const songs: UserSong[] = parseAbcFile(text).map(
+          ({ title, abc }, i) => {
+            const translatedTitle = t(`beginnerSongs.${i}`, {
+              defaultValue: title,
+            });
+            return {
+              id: crypto.randomUUID(),
+              title: translatedTitle,
+              abc: abc.replace(/^T:.*$/m, `T:${translatedTitle}`),
+            };
+          }
+        );
         importSongs(songs);
       })
       .catch((err) => {

@@ -123,5 +123,7 @@
     "Dayung, dayung perahumu"
   ],
   "confirmDeleteSongs_one": "Hapus 1 lagu? Iki ora bisa dibatalke.",
-  "confirmDeleteSongs_other": "Hapus {{count}} lagu? Iki ora bisa dibatalke."
+  "confirmDeleteSongs_other": "Hapus {{count}} lagu? Iki ora bisa dibatalke.",
+  "practiceComplete": "Sampeyan main {{correct}} saka {{total}} nada kanthi bener.",
+  "practiceAgain": "Latihan Maneh"
 }

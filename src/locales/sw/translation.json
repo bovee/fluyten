@@ -123,5 +123,7 @@
     "Piga makasia mashuani mwako"
   ],
   "confirmDeleteSongs_one": "Futa nyimbo 1? Hii haiwezi kutenduliwa.",
-  "confirmDeleteSongs_other": "Futa nyimbo {{count}}? Hii haiwezi kutenduliwa."
+  "confirmDeleteSongs_other": "Futa nyimbo {{count}}? Hii haiwezi kutenduliwa.",
+  "practiceComplete": "Ulicheza noti {{correct}} kati ya {{total}} kwa usahihi.",
+  "practiceAgain": "Fanya mazoezi tena"
 }

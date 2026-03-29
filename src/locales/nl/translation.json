@@ -123,5 +123,7 @@
     "Roei, Roei, Roei je Boot"
   ],
   "confirmDeleteSongs_one": "1 nummers verwijderen? Dit kan niet ongedaan worden gemaakt.",
-  "confirmDeleteSongs_other": "{{count}} nummers verwijderen? Dit kan niet ongedaan worden gemaakt."
+  "confirmDeleteSongs_other": "{{count}} nummers verwijderen? Dit kan niet ongedaan worden gemaakt.",
+  "practiceComplete": "Je speelde {{correct}} van de {{total}} noten correct.",
+  "practiceAgain": "Opnieuw oefenen"
 }

@@ -9,7 +9,8 @@ interface TieProps {
 }
 
 export function Tie({ tie }: TieProps) {
-  const { startX, startY, endX, endY, curveDirection, isOpenEnd, isOpenStart } = tie;
+  const { startX, startY, endX, endY, curveDirection, isOpenEnd, isOpenStart } =
+    tie;
 
   const cx1 = startX + (endX - startX) / 3;
   const cx2 = startX + (2 * (endX - startX)) / 3;
@@ -47,12 +48,40 @@ export function TupletBracket({ tuplet }: TupletBracketProps) {
   return (
     <g>
       {/* Left arm */}
-      <line x1={startX} y1={y} x2={startX} y2={y - BRACKET_HEIGHT} stroke="black" strokeWidth={1} />
+      <line
+        x1={startX}
+        y1={y}
+        x2={startX}
+        y2={y - BRACKET_HEIGHT}
+        stroke="black"
+        strokeWidth={1}
+      />
       {/* Horizontal line, broken in the middle for the number */}
-      <line x1={startX} y1={y - BRACKET_HEIGHT} x2={midX - 8} y2={y - BRACKET_HEIGHT} stroke="black" strokeWidth={1} />
-      <line x1={midX + 8} y1={y - BRACKET_HEIGHT} x2={endX} y2={y - BRACKET_HEIGHT} stroke="black" strokeWidth={1} />
+      <line
+        x1={startX}
+        y1={y - BRACKET_HEIGHT}
+        x2={midX - 8}
+        y2={y - BRACKET_HEIGHT}
+        stroke="black"
+        strokeWidth={1}
+      />
+      <line
+        x1={midX + 8}
+        y1={y - BRACKET_HEIGHT}
+        x2={endX}
+        y2={y - BRACKET_HEIGHT}
+        stroke="black"
+        strokeWidth={1}
+      />
       {/* Right arm */}
-      <line x1={endX} y1={y} x2={endX} y2={y - BRACKET_HEIGHT} stroke="black" strokeWidth={1} />
+      <line
+        x1={endX}
+        y1={y}
+        x2={endX}
+        y2={y - BRACKET_HEIGHT}
+        stroke="black"
+        strokeWidth={1}
+      />
       {/* Number */}
       <text
         x={midX}
@@ -89,18 +118,45 @@ export function VoltaBracket({ volta, staffTopY }: VoltaBracketProps) {
   return (
     <g>
       {/* Top horizontal line */}
-      <line x1={x} y1={y} x2={x + width} y2={y} stroke="black" strokeWidth={1.5} />
+      <line
+        x1={x}
+        y1={y}
+        x2={x + width}
+        y2={y}
+        stroke="black"
+        strokeWidth={1.5}
+      />
       {/* Left arm */}
       {showLeftArm && (
-        <line x1={x} y1={y} x2={x} y2={y + VOLTA_HEIGHT} stroke="black" strokeWidth={1.5} />
+        <line
+          x1={x}
+          y1={y}
+          x2={x}
+          y2={y + VOLTA_HEIGHT}
+          stroke="black"
+          strokeWidth={1.5}
+        />
       )}
       {/* Right arm */}
       {showRightArm && (
-        <line x1={x + width} y1={y} x2={x + width} y2={y + VOLTA_HEIGHT} stroke="black" strokeWidth={1.5} />
+        <line
+          x1={x + width}
+          y1={y}
+          x2={x + width}
+          y2={y + VOLTA_HEIGHT}
+          stroke="black"
+          strokeWidth={1.5}
+        />
       )}
       {/* Volta number */}
       {showLeftArm && (
-        <text x={x + 4} y={y + 10} fontSize={10} fontFamily="serif" fill="black">
+        <text
+          x={x + 4}
+          y={y + 10}
+          fontSize={10}
+          fontFamily="serif"
+          fill="black"
+        >
           {number}.
         </text>
       )}

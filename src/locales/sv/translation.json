@@ -123,5 +123,7 @@
     "Ro, ro, ro din båt"
   ],
   "confirmDeleteSongs_one": "Ta bort 1 stycken? Det går inte att ångra.",
-  "confirmDeleteSongs_other": "Ta bort {{count}} stycken? Det går inte att ångra."
+  "confirmDeleteSongs_other": "Ta bort {{count}} stycken? Det går inte att ångra.",
+  "practiceComplete": "Du spelade {{correct}} av {{total}} noter rätt.",
+  "practiceAgain": "Öva igen"
 }

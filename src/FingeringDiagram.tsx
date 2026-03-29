@@ -75,6 +75,8 @@ const FINGERINGS: { [offset: number]: Hole[][] } = parseFingerings({
   23: ['HCCOCCCO'],
   24: ['HCCOCCOO'],
   25: ['HCOOCCOO'], // C
+  26: ['HCOCCOCCC'],
+  27: ['HCOCCOCH'],
 });
 
 const GERMAN_FINGERINGS: { [offset: number]: Hole[][] } = parseFingerings({
@@ -105,14 +107,21 @@ const FRONT_Y = CIRCLE_RADIUS + 2;
 const THUMB_X = 12;
 const THUMB_Y = FRONT_Y + CIRCLE_SPACING * 0.5;
 const JOINT_GAP = 4;
-const DIAGRAM_HEIGHT = CIRCLE_SPACING * 7 + CIRCLE_RADIUS * 2 + 4 + JOINT_GAP;
-const DIAGRAM_WIDTH = FRONT_X + CIRCLE_RADIUS + 4;
 const DOUBLE_SMALL_R = 4;
 const DOUBLE_LARGE_R = 7;
+const BELL_RADIUS = CIRCLE_RADIUS;
+const BELL_ARC_RADIUS = BELL_RADIUS * 1.4;
+const LAST_HOLE_Y = FRONT_Y + 6 * CIRCLE_SPACING + JOINT_GAP;
+const BELL_Y = LAST_HOLE_Y + DOUBLE_LARGE_R + 8;
+const BELL_DEPTH =
+  BELL_ARC_RADIUS - Math.sqrt(BELL_ARC_RADIUS ** 2 - BELL_RADIUS ** 2);
+const DIAGRAM_HEIGHT = BELL_Y + BELL_DEPTH + 4;
+const DIAGRAM_WIDTH = FRONT_X + CIRCLE_RADIUS + 4;
 const DOUBLE_LEFT_X = FRONT_X - 10;
 const DOUBLE_RIGHT_X = FRONT_X + 3;
 const EMPTY_DIAGRAM = (
   <svg
+    aria-hidden="true"
     width={DIAGRAM_WIDTH}
     height={DIAGRAM_HEIGHT}
     style={{ display: 'block', margin: '0 auto' }}
@@ -348,6 +357,18 @@ export function FingeringDiagram({
         stroke={f !== 0 ? 'grey' : 'black'}
         strokeWidth={1}
       />
+      <path
+        d={`M ${FRONT_X - BELL_RADIUS} ${BELL_Y} A ${BELL_ARC_RADIUS} ${BELL_ARC_RADIUS} 0 0 1 ${FRONT_X + BELL_RADIUS} ${BELL_Y}`}
+        fill="none"
+        stroke={f !== 0 ? 'grey' : 'black'}
+        strokeWidth={STROKE_WIDTH}
+      />
+      {fingering[8] === Hole.Closed && (
+        <path
+          d={`M ${FRONT_X - BELL_RADIUS} ${BELL_Y} A ${BELL_ARC_RADIUS} ${BELL_ARC_RADIUS} 0 0 1 ${FRONT_X + BELL_RADIUS} ${BELL_Y} Z`}
+          fill={f !== 0 ? 'grey' : 'black'}
+        />
+      )}
     </svg>
   ));
 

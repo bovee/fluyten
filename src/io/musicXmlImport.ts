@@ -282,8 +282,14 @@ export function fromMusicXml(xmlText: string): Music {
           music.signatures[0].beatsPerBar = 2;
           music.signatures[0].beatValue = 2;
         } else {
-          music.signatures[0].beatsPerBar = parseInt(childText(timeEl, 'beats') || '4', 10);
-          music.signatures[0].beatValue = parseInt(childText(timeEl, 'beat-type') || '4', 10);
+          music.signatures[0].beatsPerBar = parseInt(
+            childText(timeEl, 'beats') || '4',
+            10
+          );
+          music.signatures[0].beatValue = parseInt(
+            childText(timeEl, 'beat-type') || '4',
+            10
+          );
         }
       }
 

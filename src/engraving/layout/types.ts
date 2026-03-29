@@ -1,4 +1,11 @@
-import type { Accidental, BarLineType, Decoration, Duration, DurationModifier, Signature } from '../../music';
+import type {
+  Accidental,
+  BarLineType,
+  Decoration,
+  Duration,
+  DurationModifier,
+  Signature,
+} from '../../music';
 
 // ---------------------------------------------------------------------------
 // Spatial constants (all in SVG user units / pixels)

@@ -123,5 +123,7 @@
     "Chèo thuyền, chèo thuyền"
   ],
   "confirmDeleteSongs_one": "Xóa 1 bài hát? Không thể hoàn tác.",
-  "confirmDeleteSongs_other": "Xóa {{count}} bài hát? Không thể hoàn tác."
+  "confirmDeleteSongs_other": "Xóa {{count}} bài hát? Không thể hoàn tác.",
+  "practiceComplete": "Bạn đã chơi đúng {{correct}} trong {{total}} nốt nhạc.",
+  "practiceAgain": "Luyện tập lại"
 }

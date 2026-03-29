@@ -340,7 +340,6 @@ describe('Note', () => {
       expect(chord.accidentals).toHaveLength(3);
     });
   });
-
 });
 
 describe('Music', () => {

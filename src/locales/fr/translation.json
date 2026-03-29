@@ -123,5 +123,7 @@
     "Rame, Rame, Rame ton Bateau"
   ],
   "confirmDeleteSongs_one": "Supprimer 1 chansons ? Cette action est irréversible.",
-  "confirmDeleteSongs_other": "Supprimer {{count}} chansons ? Cette action est irréversible."
+  "confirmDeleteSongs_other": "Supprimer {{count}} chansons ? Cette action est irréversible.",
+  "practiceComplete": "Vous avez joué {{correct}} notes sur {{total}} correctement.",
+  "practiceAgain": "Pratiquer à nouveau"
 }

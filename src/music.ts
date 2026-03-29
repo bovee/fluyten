@@ -1,8 +1,4 @@
-import {
-  NOTE_VALUES,
-  PITCH_CONSTANTS,
-  DURATION_TICKS,
-} from './constants';
+import { NOTE_VALUES, PITCH_CONSTANTS, DURATION_TICKS } from './constants';
 
 export const Duration = {
   WHOLE: 'w',
@@ -27,26 +23,117 @@ export type DurationModifier =
  *  (positive = sharps, negative = flats). */
 export const KEYS: Record<string, number> = {
   // Ionian (major)
-  'C#': 7, 'F#': 6, B: 5, E: 4, A: 3, D: 2, G: 1, C: 0,
-  F: -1, Bb: -2, Eb: -3, Ab: -4, Db: -5, Gb: -6, Cb: -7,
+  'C#': 7,
+  'F#': 6,
+  B: 5,
+  E: 4,
+  A: 3,
+  D: 2,
+  G: 1,
+  C: 0,
+  F: -1,
+  Bb: -2,
+  Eb: -3,
+  Ab: -4,
+  Db: -5,
+  Gb: -6,
+  Cb: -7,
   // Aeolian (natural minor)
-  'A#m': 7, 'D#m': 6, 'G#m': 5, 'C#m': 4, 'F#m': 3, Bm: 2, Em: 1, Am: 0,
-  Dm: -1, Gm: -2, Cm: -3, Fm: -4, Bbm: -5, Ebm: -6, Abm: -7,
+  'A#m': 7,
+  'D#m': 6,
+  'G#m': 5,
+  'C#m': 4,
+  'F#m': 3,
+  Bm: 2,
+  Em: 1,
+  Am: 0,
+  Dm: -1,
+  Gm: -2,
+  Cm: -3,
+  Fm: -4,
+  Bbm: -5,
+  Ebm: -6,
+  Abm: -7,
   // Mixolydian (one flat relative to major)
-  'G#Mix': 7, 'C#Mix': 6, 'F#Mix': 5, BMix: 4, EMix: 3, AMix: 2, DMix: 1, GMix: 0,
-  CMix: -1, FMix: -2, BbMix: -3, EbMix: -4, AbMix: -5, DbMix: -6, GbMix: -7,
+  'G#Mix': 7,
+  'C#Mix': 6,
+  'F#Mix': 5,
+  BMix: 4,
+  EMix: 3,
+  AMix: 2,
+  DMix: 1,
+  GMix: 0,
+  CMix: -1,
+  FMix: -2,
+  BbMix: -3,
+  EbMix: -4,
+  AbMix: -5,
+  DbMix: -6,
+  GbMix: -7,
   // Dorian (two flats relative to major)
-  'D#Dor': 7, 'G#Dor': 6, 'C#Dor': 5, 'F#Dor': 4, BDor: 3, EDor: 2, ADor: 1, DDor: 0,
-  GDor: -1, CDor: -2, FDor: -3, BbDor: -4, EbDor: -5, AbDor: -6, DbDor: -7,
+  'D#Dor': 7,
+  'G#Dor': 6,
+  'C#Dor': 5,
+  'F#Dor': 4,
+  BDor: 3,
+  EDor: 2,
+  ADor: 1,
+  DDor: 0,
+  GDor: -1,
+  CDor: -2,
+  FDor: -3,
+  BbDor: -4,
+  EbDor: -5,
+  AbDor: -6,
+  DbDor: -7,
   // Phrygian (three flats relative to major)
-  'E#Phr': 7, 'A#Phr': 6, 'D#Phr': 5, 'G#Phr': 4, 'C#Phr': 3, 'F#Phr': 2, BPhr: 1, EPhr: 0,
-  APhr: -1, DPhr: -2, GPhr: -3, CPhr: -4, FPhr: -5, BbPhr: -6, EbPhr: -7,
+  'E#Phr': 7,
+  'A#Phr': 6,
+  'D#Phr': 5,
+  'G#Phr': 4,
+  'C#Phr': 3,
+  'F#Phr': 2,
+  BPhr: 1,
+  EPhr: 0,
+  APhr: -1,
+  DPhr: -2,
+  GPhr: -3,
+  CPhr: -4,
+  FPhr: -5,
+  BbPhr: -6,
+  EbPhr: -7,
   // Lydian (one sharp relative to major)
-  'F#Lyd': 7, BLyd: 6, ELyd: 5, ALyd: 4, DLyd: 3, GLyd: 2, CLyd: 1, FLyd: 0,
-  BbLyd: -1, EbLyd: -2, AbLyd: -3, DbLyd: -4, GbLyd: -5, CbLyd: -6, FbLyd: -7,
+  'F#Lyd': 7,
+  BLyd: 6,
+  ELyd: 5,
+  ALyd: 4,
+  DLyd: 3,
+  GLyd: 2,
+  CLyd: 1,
+  FLyd: 0,
+  BbLyd: -1,
+  EbLyd: -2,
+  AbLyd: -3,
+  DbLyd: -4,
+  GbLyd: -5,
+  CbLyd: -6,
+  FbLyd: -7,
   // Locrian (four flats relative to major)
-  'B#Loc': 7, 'E#Loc': 6, 'A#Loc': 5, 'D#Loc': 4, 'G#Loc': 3, 'C#Loc': 2, 'F#Loc': 1, BLoc: 0,
-  ELoc: -1, ALoc: -2, DLoc: -3, GLoc: -4, CLoc: -5, FLoc: -6, BbLoc: -7,
+  'B#Loc': 7,
+  'E#Loc': 6,
+  'A#Loc': 5,
+  'D#Loc': 4,
+  'G#Loc': 3,
+  'C#Loc': 2,
+  'F#Loc': 1,
+  BLoc: 0,
+  ELoc: -1,
+  ALoc: -2,
+  DLoc: -3,
+  GLoc: -4,
+  CLoc: -5,
+  FLoc: -6,
+  BbLoc: -7,
 };
 
 /** Maps a circle-of-fifths position to the accidentals active in that key
@@ -281,7 +368,6 @@ export class Note {
       .map((p, i) => this.namePitch(p, this.accidentals[i], useSharpSpelling))
       .join('/');
   }
-
 }
 
 export interface Song {
@@ -729,7 +815,10 @@ export function expandRepeats(music: Music): {
     const eIdxs = origToResultIndices.get(e) ?? [];
     for (const si of sIdxs) {
       for (const ei of eIdxs) {
-        if (ei > si && !resultCurves.some(([rs, re]) => rs === si && re === ei)) {
+        if (
+          ei > si &&
+          !resultCurves.some(([rs, re]) => rs === si && re === ei)
+        ) {
           resultCurves.push([si, ei]);
         }
       }

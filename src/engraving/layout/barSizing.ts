@@ -60,7 +60,11 @@ export function computeBarSizings(
     const minNoteAreaWidth = Math.max(
       mainNotes.reduce((sum, idx) => {
         const hasAccidental = notes[idx].accidentals.some((a) => a);
-        return sum + MIN_NOTE_SPACING + (hasAccidental ? ACCIDENTAL_EXTRA_SPACING : 0);
+        return (
+          sum +
+          MIN_NOTE_SPACING +
+          (hasAccidental ? ACCIDENTAL_EXTRA_SPACING : 0)
+        );
       }, 0),
       MIN_NOTE_SPACING
     );
@@ -69,6 +73,12 @@ export function computeBarSizings(
       return sum + notes[idx].ticks();
     }, 0);
 
-    return { preambleIfFirst, preambleIfNotFirst, timeSigChanged, minNoteAreaWidth, totalTicks };
+    return {
+      preambleIfFirst,
+      preambleIfNotFirst,
+      timeSigChanged,
+      minNoteAreaWidth,
+      totalTicks,
+    };
   });
 }

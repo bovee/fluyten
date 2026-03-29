@@ -270,14 +270,19 @@ function scoreToAbc(
         .slice()
         .reverse()
         .find((s) => s.atNoteIndex < noteIx);
-      if (sig.beatsPerBar !== prev?.beatsPerBar || sig.beatValue !== prev?.beatValue) {
+      if (
+        sig.beatsPerBar !== prev?.beatsPerBar ||
+        sig.beatValue !== prev?.beatValue
+      ) {
         part += `[M:${sig.beatsPerBar}/${sig.beatValue}]`;
       }
       if (sig.keySignature !== prev?.keySignature) {
         part += `[K:${sig.keySignature}]`;
         // Update key adjustment for subsequent notes.
-        for (const k of Object.keys(curKeyAdjustment)) delete curKeyAdjustment[k];
-        for (const acc of FIFTHS_TO_ACCIDENTALS[KEYS[sig.keySignature] ?? 0] ?? []) {
+        for (const k of Object.keys(curKeyAdjustment))
+          delete curKeyAdjustment[k];
+        for (const acc of FIFTHS_TO_ACCIDENTALS[KEYS[sig.keySignature] ?? 0] ??
+          []) {
           curKeyAdjustment[acc[0]] = acc[1] === '#' ? 1 : -1;
         }
       }
@@ -285,7 +290,10 @@ function scoreToAbc(
         const label = sig.tempoText ? `"${sig.tempoText}" ` : '';
         part += `[Q:${label}1/4=${sig.tempo}]`;
       }
-      if (sig.defaultDuration !== prev?.defaultDuration && sig.defaultDuration !== undefined) {
+      if (
+        sig.defaultDuration !== prev?.defaultDuration &&
+        sig.defaultDuration !== undefined
+      ) {
         part += `[L:${DURATION_TO_L[sig.defaultDuration] ?? '1/8'}]`;
         curDefaultDuration = sig.defaultDuration;
       }
@@ -392,7 +400,9 @@ export function toAbc(music: Music): string {
       : `K:${sig0.keySignature}`
   );
 
-  lines.push(scoreToAbc(music, buildKeyAdjustment(sig0.keySignature), defaultDuration));
+  lines.push(
+    scoreToAbc(music, buildKeyAdjustment(sig0.keySignature), defaultDuration)
+  );
 
   for (const verse of music.lyrics) {
     const wLine = buildWLine(music, verse);

@@ -10,10 +10,12 @@ import { BarlineStart, BarlineEnd } from './Barline';
 // Sharps: F5, C5, G5, D5, A4, E5, B4 = staff positions +5, +2, +6, +3, 0, +4, +1
 // Flats:  Bb4, Eb5, Ab4, Db5, Gb4, Cb5, Fb4 = -1, +3, -2, +2, -3, +1, -4
 const SHARP_STAFF_POSITIONS_TREBLE = [5, 2, 6, 3, 0, 4, 1];
-const FLAT_STAFF_POSITIONS_TREBLE  = [-1, 3, -2, 2, -3, 1, -4];
+const FLAT_STAFF_POSITIONS_TREBLE = [-1, 3, -2, 2, -3, 1, -4];
 // Bass clef accidentals are shifted down by 2 staff positions
-const SHARP_STAFF_POSITIONS_BASS = SHARP_STAFF_POSITIONS_TREBLE.map((p) => p - 2);
-const FLAT_STAFF_POSITIONS_BASS  = FLAT_STAFF_POSITIONS_TREBLE.map((p) => p - 2);
+const SHARP_STAFF_POSITIONS_BASS = SHARP_STAFF_POSITIONS_TREBLE.map(
+  (p) => p - 2
+);
+const FLAT_STAFF_POSITIONS_BASS = FLAT_STAFF_POSITIONS_TREBLE.map((p) => p - 2);
 
 type Clef = 'treble' | 'treble8va' | 'bass' | 'alto';
 
@@ -48,7 +50,9 @@ function timeSigDigitGlyph(digit: number): string {
   return `timeSig${digit}`;
 }
 
-function buildTimeSigParts(timeSig: string): { num: number; den: number } | null {
+function buildTimeSigParts(
+  timeSig: string
+): { num: number; den: number } | null {
   const m = timeSig.match(/^(\d+)\/(\d+)$/);
   if (!m) return null;
   return { num: parseInt(m[1]), den: parseInt(m[2]) };
@@ -62,7 +66,8 @@ interface PreambleBarProps {
 
 export function PreambleBar({ item, staffTopY, clef }: PreambleBarProps) {
   const { x, preamble } = item;
-  if (!preamble.showClef && !preamble.showTimeSig && !preamble.showKeySig) return null;
+  if (!preamble.showClef && !preamble.showTimeSig && !preamble.showKeySig)
+    return null;
 
   const parts: React.ReactNode[] = [];
 
@@ -81,9 +86,14 @@ export function PreambleBar({ item, staffTopY, clef }: PreambleBarProps) {
   // Key signature
   if (preamble.showKeySig && preamble.numKeyAccidentals > 0) {
     const isSharp = preamble.accidentalType === 'sharp';
-    const staffPositions = clef === 'bass'
-      ? (isSharp ? SHARP_STAFF_POSITIONS_BASS : FLAT_STAFF_POSITIONS_BASS)
-      : (isSharp ? SHARP_STAFF_POSITIONS_TREBLE : FLAT_STAFF_POSITIONS_TREBLE);
+    const staffPositions =
+      clef === 'bass'
+        ? isSharp
+          ? SHARP_STAFF_POSITIONS_BASS
+          : FLAT_STAFF_POSITIONS_BASS
+        : isSharp
+          ? SHARP_STAFF_POSITIONS_TREBLE
+          : FLAT_STAFF_POSITIONS_TREBLE;
     const glyphName = isSharp ? 'accidentalSharp' : 'accidentalFlat';
 
     for (let i = 0; i < preamble.numKeyAccidentals; i++) {
@@ -106,8 +116,18 @@ export function PreambleBar({ item, staffTopY, clef }: PreambleBarProps) {
     if (ts) {
       const tx = x + preamble.timeSigX;
       parts.push(
-        <Glyph key="tsNum" name={timeSigDigitGlyph(ts.num)} x={tx} y={staffPositionToY(2, staffTopY)} />,
-        <Glyph key="tsDen" name={timeSigDigitGlyph(ts.den)} x={tx} y={staffPositionToY(-2, staffTopY)} />,
+        <Glyph
+          key="tsNum"
+          name={timeSigDigitGlyph(ts.num)}
+          x={tx}
+          y={staffPositionToY(2, staffTopY)}
+        />,
+        <Glyph
+          key="tsDen"
+          name={timeSigDigitGlyph(ts.den)}
+          x={tx}
+          y={staffPositionToY(-2, staffTopY)}
+        />
       );
     }
   }
@@ -126,14 +146,24 @@ function beamedNoteSet(bar: BarLayout): Set<number> {
   return beamed;
 }
 
-export function Bar({ bar, staffTopY, noteFills, wrongNotes, onNoteClick }: BarProps) {
+export function Bar({
+  bar,
+  staffTopY,
+  noteFills,
+  wrongNotes,
+  onNoteClick,
+}: BarProps) {
   const beamed = beamedNoteSet(bar);
   return (
     <g>
       <BarlineStart x={bar.x} staffTopY={staffTopY} type={bar.barlineStart} />
 
       {/* Barline at end of bar */}
-      <BarlineEnd x={bar.x + bar.width} staffTopY={staffTopY} type={bar.barlineEnd} />
+      <BarlineEnd
+        x={bar.x + bar.width}
+        staffTopY={staffTopY}
+        type={bar.barlineEnd}
+      />
 
       {/* Notes, grace notes, beams */}
       {bar.notes.map((note, i) => {
@@ -166,4 +196,3 @@ export function Bar({ bar, staffTopY, noteFills, wrongNotes, onNoteClick }: BarP
     </g>
   );
 }
-

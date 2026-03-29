@@ -35,15 +35,18 @@ export function Beam({ beam, notes, fill = 'black' }: BeamProps) {
   // Stem-up: beam extends downward from stem tips (+thickness).
   // Stem-down: beam extends upward from stem tips (-thickness).
   const t = stemDir === 'up' ? BEAM_THICKNESS : -BEAM_THICKNESS;
-  const gap = stemDir === 'up' ? BEAM_THICKNESS + BEAM_GAP : -(BEAM_THICKNESS + BEAM_GAP);
+  const gap =
+    stemDir === 'up' ? BEAM_THICKNESS + BEAM_GAP : -(BEAM_THICKNESS + BEAM_GAP);
 
   return (
     <g>
       <BeamSlant x1={x1} y1={y1} x2={x2} y2={y2} thickness={t} fill={fill} />
       {hasSecondBeam && (
         <BeamSlant
-          x1={x1} y1={y1 + gap}
-          x2={x2} y2={y2 + gap}
+          x1={x1}
+          y1={y1 + gap}
+          x2={x2}
+          y2={y2 + gap}
           thickness={t}
           fill={fill}
         />
@@ -53,8 +56,10 @@ export function Beam({ beam, notes, fill = 'black' }: BeamProps) {
 }
 
 interface BeamSlantProps {
-  x1: number; y1: number;
-  x2: number; y2: number;
+  x1: number;
+  y1: number;
+  x2: number;
+  y2: number;
   /** Positive = beam extends downward, negative = upward. */
   thickness: number;
   fill: string;

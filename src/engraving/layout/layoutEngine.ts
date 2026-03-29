@@ -1,4 +1,9 @@
-import { DurationModifier, FIFTHS_TO_ACCIDENTALS, KEYS, type Music } from '../../music';
+import {
+  DurationModifier,
+  FIFTHS_TO_ACCIDENTALS,
+  KEYS,
+  type Music,
+} from '../../music';
 import { assignNotesToBars } from './barAssignment';
 import { computeBarSizings } from './barSizing';
 import { breakIntoLines } from './lineBreaking';
@@ -25,7 +30,10 @@ import {
 } from './types';
 
 /** Entry point: convert a Music object and container width into a full LayoutResult. */
-export function computeLayout(music: Music, containerWidth: number): LayoutResult {
+export function computeLayout(
+  music: Music,
+  containerWidth: number
+): LayoutResult {
   const sig = music.signatures[0];
   const clef = music.clef as Clef;
   const displayPitchOffset = music.clef === 'treble8va' ? -12 : 0;
@@ -43,7 +51,12 @@ export function computeLayout(music: Music, containerWidth: number): LayoutResul
   // ---------------------------------------------------------------------------
   const barData = assignNotesToBars(music, containerWidth);
   if (barData.length === 0) {
-    return { width: containerWidth, height: TOP_MARGIN + lineHeight, lineHeight, lines: [] };
+    return {
+      width: containerWidth,
+      height: TOP_MARGIN + lineHeight,
+      lineHeight,
+      lines: [],
+    };
   }
 
   // ---------------------------------------------------------------------------
@@ -113,15 +126,15 @@ export function computeLayout(music: Music, containerWidth: number): LayoutResul
       music.lyrics
     );
 
-    const beams = computeBarBeams(
-      notes,
-      bar.noteIndices,
-      music.beams
-    );
+    const beams = computeBarBeams(notes, bar.noteIndices, music.beams);
 
     const unifiedNotes = unifyBeamStems(notes, beams, staffTopY);
 
-    const { barlineStart, barlineEnd } = resolveBarlineTypes(bar, barData, barIdx);
+    const { barlineStart, barlineEnd } = resolveBarlineTypes(
+      bar,
+      barData,
+      barIdx
+    );
 
     // Recompute beam stemEndYs and stemXs, then interpolate middle stems onto the beam line.
     const beamsWithStemXs = beams.map((beam) => {
@@ -129,8 +142,12 @@ export function computeLayout(music: Music, containerWidth: number): LayoutResul
       const stemOffset = dir === 'up' ? 5 : -5;
       return {
         ...beam,
-        stemEndYs: beam.noteIndices.map((li) => unifiedNotes[li]?.stemEndY ?? 0),
-        stemXs: beam.noteIndices.map((li) => (unifiedNotes[li]?.x ?? 0) + stemOffset),
+        stemEndYs: beam.noteIndices.map(
+          (li) => unifiedNotes[li]?.stemEndY ?? 0
+        ),
+        stemXs: beam.noteIndices.map(
+          (li) => (unifiedNotes[li]?.x ?? 0) + stemOffset
+        ),
       };
     });
 
@@ -150,9 +167,11 @@ export function computeLayout(music: Music, containerWidth: number): LayoutResul
       let maxShift = 0;
       for (let k = 1; k < n - 1; k++) {
         const sx = beam.stemXs[k];
-        const interpolated = x2 === x1 ? y1 : y1 + (y2 - y1) * (sx - x1) / (x2 - x1);
+        const interpolated =
+          x2 === x1 ? y1 : y1 + ((y2 - y1) * (sx - x1)) / (x2 - x1);
         const noteEndY = beam.stemEndYs[k];
-        const overshoot = dir === 'up' ? interpolated - noteEndY : noteEndY - interpolated;
+        const overshoot =
+          dir === 'up' ? interpolated - noteEndY : noteEndY - interpolated;
         if (overshoot > maxShift) maxShift = overshoot;
       }
       if (maxShift > 0) {
@@ -161,12 +180,13 @@ export function computeLayout(music: Music, containerWidth: number): LayoutResul
         y2 += shift;
       }
       const interpolatedEndYs = beam.stemXs.map((sx) =>
-        x2 === x1 ? y1 : y1 + (y2 - y1) * (sx - x1) / (x2 - x1)
+        x2 === x1 ? y1 : y1 + ((y2 - y1) * (sx - x1)) / (x2 - x1)
       );
       // Update each note's stemEndY to match the beam line.
       beam.noteIndices.forEach((li, k) => {
         const nl = interpolatedNotes[li];
-        if (nl) interpolatedNotes[li] = { ...nl, stemEndY: interpolatedEndYs[k] };
+        if (nl)
+          interpolatedNotes[li] = { ...nl, stemEndY: interpolatedEndYs[k] };
       });
       return { ...beam, stemEndYs: interpolatedEndYs };
     });
@@ -253,7 +273,7 @@ export function computeLayout(music: Music, containerWidth: number): LayoutResul
         0,
         'none',
         false, // no clef
-        true,  // show time sig only
+        true, // show time sig only
         timeSig
       );
       preambleBars.push({
@@ -292,9 +312,7 @@ function buildPreambleLayout(
 ): PreambleLayout {
   const clefX = 5; // small left margin
   const keySigX = showClef ? clefX + 30 : clefX;
-  const timeSigX = showClef
-    ? keySigX + numKeyAccidentals * 10
-    : clefX; // mid-line: no clef or key sig before it
+  const timeSigX = showClef ? keySigX + numKeyAccidentals * 10 : clefX; // mid-line: no clef or key sig before it
   return {
     width: totalWidth,
     showClef,
@@ -323,7 +341,10 @@ function resolveBarlineTypes(
 
   // Determine left-edge barline type
   let barlineStart: BarlineStartType = 'none';
-  if (bar.barLineStartType === 'begin_repeat' || bar.barLineStartType === 'begin_end_repeat') {
+  if (
+    bar.barLineStartType === 'begin_repeat' ||
+    bar.barLineStartType === 'begin_end_repeat'
+  ) {
     barlineStart = 'begin_repeat';
   } else if (barIdx > 0) {
     const prevType = allBars[barIdx - 1].barLineType;
@@ -347,17 +368,29 @@ function computeTies(
   const lineFirstNoteAreaX = new Map<number, number>();
   for (const bar of barLayouts) {
     const loc = barToLine.get(bar.barIndex)!;
-    if (loc.posInLine === 0) lineFirstNoteAreaX.set(loc.lineIndex, bar.noteAreaX);
+    if (loc.posInLine === 0)
+      lineFirstNoteAreaX.set(loc.lineIndex, bar.noteAreaX);
   }
 
   // Build a lookup from musicNoteIndex → { x, topY, bottomY, lineIndex }
   // topY = Y of the highest notehead (smallest SVG y); bottomY = Y of the lowest notehead.
-  const notePosMap = new Map<number, { x: number; topY: number; bottomY: number; lineIndex: number; stemDirection: 'up' | 'down' }>();
+  const notePosMap = new Map<
+    number,
+    {
+      x: number;
+      topY: number;
+      bottomY: number;
+      lineIndex: number;
+      stemDirection: 'up' | 'down';
+    }
+  >();
   for (const bar of barLayouts) {
     const loc = barToLine.get(bar.barIndex)!;
     for (const note of bar.notes) {
       const staffTopY = TOP_MARGIN + loc.lineIndex * lineHeight;
-      const noteYs = note.staffPositions.map((sp) => staffPositionToY(sp, staffTopY));
+      const noteYs = note.staffPositions.map((sp) =>
+        staffPositionToY(sp, staffTopY)
+      );
       notePosMap.set(note.musicNoteIndex, {
         x: note.x,
         topY: Math.min(...noteYs),
@@ -379,10 +412,13 @@ function computeTies(
     if (!startPos || !endPos) continue;
 
     // Curve direction set by start note's stem: stem-up → below (notehead side), stem-down → above.
-    const curveDirection: 'above' | 'below' = startPos.stemDirection === 'down' ? 'above' : 'below';
+    const curveDirection: 'above' | 'below' =
+      startPos.stemDirection === 'down' ? 'above' : 'below';
     // Attach to the correct notehead at each end regardless of individual stem directions.
-    const tieY = (curveDirection === 'above' ? startPos.topY - 8 : startPos.bottomY + 8);
-    const endTieY = (curveDirection === 'above' ? endPos.topY - 8 : endPos.bottomY + 8);
+    const tieY =
+      curveDirection === 'above' ? startPos.topY - 8 : startPos.bottomY + 8;
+    const endTieY =
+      curveDirection === 'above' ? endPos.topY - 8 : endPos.bottomY + 8;
 
     if (startPos.lineIndex === endPos.lineIndex) {
       result[startPos.lineIndex].push({
@@ -437,10 +473,14 @@ function computeTuplets(
   const lineFirstNoteAreaX = new Map<number, number>();
   for (const bar of barLayouts) {
     const loc = barToLine.get(bar.barIndex)!;
-    if (loc.posInLine === 0) lineFirstNoteAreaX.set(loc.lineIndex, bar.noteAreaX);
+    if (loc.posInLine === 0)
+      lineFirstNoteAreaX.set(loc.lineIndex, bar.noteAreaX);
   }
 
-  const notePosMap = new Map<number, { x: number; stemEndY: number; lineIndex: number }>();
+  const notePosMap = new Map<
+    number,
+    { x: number; stemEndY: number; lineIndex: number }
+  >();
   for (const bar of barLayouts) {
     const loc = barToLine.get(bar.barIndex)!;
     for (const note of bar.notes) {
@@ -468,7 +508,11 @@ function computeTuplets(
       const posA = notePosMap.get(tripletStart);
       const posB = notePosMap.get(i - 1);
       const crossedLine =
-        isTriplet && groupSize > 0 && posA && posB && posA.lineIndex !== posB.lineIndex;
+        isTriplet &&
+        groupSize > 0 &&
+        posA &&
+        posB &&
+        posA.lineIndex !== posB.lineIndex;
 
       if (!isTriplet || crossedLine || groupSize === 3) {
         if (groupSize > 0 && posA && posB) {

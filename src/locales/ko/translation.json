@@ -123,5 +123,7 @@
     "노 저어라 노 저어라"
   ],
   "confirmDeleteSongs_one": "1곡을 삭제하시겠습니까? 이 작업은 취소할 수 없습니다.",
-  "confirmDeleteSongs_other": "{{count}}곡을 삭제하시겠습니까? 이 작업은 취소할 수 없습니다."
+  "confirmDeleteSongs_other": "{{count}}곡을 삭제하시겠습니까? 이 작업은 취소할 수 없습니다.",
+  "practiceComplete": "{{total}}개 음표 중 {{correct}}개를 올바르게 연주했습니다.",
+  "practiceAgain": "다시 연습하기"
 }

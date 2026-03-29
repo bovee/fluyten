@@ -123,5 +123,7 @@
     "தோணி விடு தோணி விடு"
   ],
   "confirmDeleteSongs_one": "1 பாடல்களை நீக்கவா? இதை மாற்ற முடியாது.",
-  "confirmDeleteSongs_other": "{{count}} பாடல்களை நீக்கவா? இதை மாற்ற முடியாது."
+  "confirmDeleteSongs_other": "{{count}} பாடல்களை நீக்கவா? இதை மாற்ற முடியாது.",
+  "practiceComplete": "நீங்கள் {{total}} குறிப்புகளில் {{correct}} சரியாக வாசித்தீர்கள்.",
+  "practiceAgain": "மீண்டும் பயிற்சி செய்"
 }

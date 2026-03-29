@@ -55,14 +55,31 @@ describe('fromAbc', () => {
     });
 
     it('parses mode key signatures', () => {
-      expect(fromAbc(`T:T\nM:4/4\nL:1/4\nK:G Mix\nG`).signatures[0].keySignature).toBe('GMix');
-      expect(fromAbc(`T:T\nM:4/4\nL:1/4\nK:G Mixolydian\nG`).signatures[0].keySignature).toBe('GMix');
-      expect(fromAbc(`T:T\nM:4/4\nL:1/4\nK:D Dor\nD`).signatures[0].keySignature).toBe('DDor');
-      expect(fromAbc(`T:T\nM:4/4\nL:1/4\nK:A Dorian\nA`).signatures[0].keySignature).toBe('ADor');
-      expect(fromAbc(`T:T\nM:4/4\nL:1/4\nK:E Phr\nE`).signatures[0].keySignature).toBe('EPhr');
-      expect(fromAbc(`T:T\nM:4/4\nL:1/4\nK:F Lyd\nF`).signatures[0].keySignature).toBe('FLyd');
-      expect(fromAbc(`T:T\nM:4/4\nL:1/4\nK:B Loc\nB`).signatures[0].keySignature).toBe('BLoc');
-      expect(fromAbc(`T:T\nM:4/4\nL:1/4\nK:Gmix\nG`).signatures[0].keySignature).toBe('GMix');
+      expect(
+        fromAbc(`T:T\nM:4/4\nL:1/4\nK:G Mix\nG`).signatures[0].keySignature
+      ).toBe('GMix');
+      expect(
+        fromAbc(`T:T\nM:4/4\nL:1/4\nK:G Mixolydian\nG`).signatures[0]
+          .keySignature
+      ).toBe('GMix');
+      expect(
+        fromAbc(`T:T\nM:4/4\nL:1/4\nK:D Dor\nD`).signatures[0].keySignature
+      ).toBe('DDor');
+      expect(
+        fromAbc(`T:T\nM:4/4\nL:1/4\nK:A Dorian\nA`).signatures[0].keySignature
+      ).toBe('ADor');
+      expect(
+        fromAbc(`T:T\nM:4/4\nL:1/4\nK:E Phr\nE`).signatures[0].keySignature
+      ).toBe('EPhr');
+      expect(
+        fromAbc(`T:T\nM:4/4\nL:1/4\nK:F Lyd\nF`).signatures[0].keySignature
+      ).toBe('FLyd');
+      expect(
+        fromAbc(`T:T\nM:4/4\nL:1/4\nK:B Loc\nB`).signatures[0].keySignature
+      ).toBe('BLoc');
+      expect(
+        fromAbc(`T:T\nM:4/4\nL:1/4\nK:Gmix\nG`).signatures[0].keySignature
+      ).toBe('GMix');
     });
 
     it('parses K: with clef=alto', () => {
@@ -623,7 +640,9 @@ describe('fromAbc', () => {
     });
 
     it('inline [M:] changes meter mid-score', () => {
-      const music = fromAbc(`T:Test\nM:4/4\nL:1/4\nK:C\nC D E F | [M:3/4] G A B |`);
+      const music = fromAbc(
+        `T:Test\nM:4/4\nL:1/4\nK:C\nC D E F | [M:3/4] G A B |`
+      );
       expect(music.signatures[0].beatsPerBar).toBe(4);
       expect(music.signatures.length).toBe(2);
       expect(music.signatures[1].beatsPerBar).toBe(3);

@@ -123,5 +123,7 @@
     "اجدف اجدف اجدف قاربك"
   ],
   "confirmDeleteSongs_one": "هل تريد حذف 1 أغنية؟ لا يمكن التراجع عن هذا.",
-  "confirmDeleteSongs_other": "هل تريد حذف {{count}} أغنية؟ لا يمكن التراجع عن هذا."
+  "confirmDeleteSongs_other": "هل تريد حذف {{count}} أغنية؟ لا يمكن التراجع عن هذا.",
+  "practiceComplete": "لقد عزفت {{correct}} من أصل {{total}} نغمة بشكل صحيح.",
+  "practiceAgain": "تدرب مرة أخرى"
 }

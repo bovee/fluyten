@@ -123,5 +123,7 @@
     "Rudere, Rudere dein Boot"
   ],
   "confirmDeleteSongs_one": "1 Lieder löschen? Dies kann nicht rückgängig gemacht werden.",
-  "confirmDeleteSongs_other": "{{count}} Lieder löschen? Dies kann nicht rückgängig gemacht werden."
+  "confirmDeleteSongs_other": "{{count}} Lieder löschen? Dies kann nicht rückgängig gemacht werden.",
+  "practiceComplete": "Sie haben {{correct}} von {{total}} Noten richtig gespielt.",
+  "practiceAgain": "Erneut üben"
 }

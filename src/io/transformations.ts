@@ -1,4 +1,10 @@
-import { type Music, Duration, DurationModifier, KEYS, FIFTHS_TO_ACCIDENTALS } from '../music';
+import {
+  type Music,
+  Duration,
+  DurationModifier,
+  KEYS,
+  FIFTHS_TO_ACCIDENTALS,
+} from '../music';
 import { parseFragment } from './abcImport';
 import { notesToAbc } from './abcExport';
 

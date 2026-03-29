@@ -123,5 +123,7 @@
     "Rema, Rema, Rema tu Barca"
   ],
   "confirmDeleteSongs_one": "¿Eliminar 1 canciones? Esto no se puede deshacer.",
-  "confirmDeleteSongs_other": "¿Eliminar {{count}} canciones? Esto no se puede deshacer."
+  "confirmDeleteSongs_other": "¿Eliminar {{count}} canciones? Esto no se puede deshacer.",
+  "practiceComplete": "Tocaste {{correct}} de {{total}} notas correctamente.",
+  "practiceAgain": "Practicar de nuevo"
 }

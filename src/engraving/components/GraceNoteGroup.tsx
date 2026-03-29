@@ -18,7 +18,11 @@ function accidentalGlyph(acc: string): string | null {
   return null;
 }
 
-export function GraceNoteGroup({ graceNote, staffTopY, fill = 'black' }: GraceNoteGroupProps) {
+export function GraceNoteGroup({
+  graceNote,
+  staffTopY,
+  fill = 'black',
+}: GraceNoteGroupProps) {
   const { x, staffPositions, isSlash, accidentals } = graceNote;
   const sp = staffPositions[0] ?? 0;
 
@@ -32,7 +36,9 @@ export function GraceNoteGroup({ graceNote, staffTopY, fill = 'black' }: GraceNo
   const stemY2 = stemY1 - GRACE_STEM_LENGTH;
 
   return (
-    <g transform={`scale(${GRACE_FONT_SIZE_RATIO}) translate(${x * (1 - 1/GRACE_FONT_SIZE_RATIO)}, ${noteheadY * (1 - 1/GRACE_FONT_SIZE_RATIO)})`}>
+    <g
+      transform={`scale(${GRACE_FONT_SIZE_RATIO}) translate(${x * (1 - 1 / GRACE_FONT_SIZE_RATIO)}, ${noteheadY * (1 - 1 / GRACE_FONT_SIZE_RATIO)})`}
+    >
       {/* Accidental */}
       {staffPositions.map((s, i) => {
         const raw = accidentals[i];
@@ -46,7 +52,14 @@ export function GraceNoteGroup({ graceNote, staffTopY, fill = 'black' }: GraceNo
       <Glyph name="noteheadBlack" x={x - 5} y={noteheadY} fill={fill} />
 
       {/* Stem */}
-      <line x1={stemX} y1={stemY1} x2={stemX} y2={stemY2} stroke={fill} strokeWidth={1.5} />
+      <line
+        x1={stemX}
+        y1={stemY1}
+        x2={stemX}
+        y2={stemY2}
+        stroke={fill}
+        strokeWidth={1.5}
+      />
 
       {/* Slash (grace-slash) through stem */}
       {isSlash && (

@@ -123,5 +123,7 @@
     "Soutele soutele venettäsi"
   ],
   "confirmDeleteSongs_one": "Poistetaanko 1 kappaletta? Tätä ei voi kumota.",
-  "confirmDeleteSongs_other": "Poistetaanko {{count}} kappaletta? Tätä ei voi kumota."
+  "confirmDeleteSongs_other": "Poistetaanko {{count}} kappaletta? Tätä ei voi kumota.",
+  "practiceComplete": "Soitit {{correct}} / {{total}} nuottia oikein.",
+  "practiceAgain": "Harjoittele uudelleen"
 }

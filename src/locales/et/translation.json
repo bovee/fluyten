@@ -123,5 +123,7 @@
     "Sõua, sõua paadiga"
   ],
   "confirmDeleteSongs_one": "Kustutada 1 laulu? Seda ei saa tagasi võtta.",
-  "confirmDeleteSongs_other": "Kustutada {{count}} laulu? Seda ei saa tagasi võtta."
+  "confirmDeleteSongs_other": "Kustutada {{count}} laulu? Seda ei saa tagasi võtta.",
+  "practiceComplete": "Mängisite {{correct}} nooti {{total}}-st õigesti.",
+  "practiceAgain": "Harjuta uuesti"
 }

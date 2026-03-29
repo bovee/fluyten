@@ -7,7 +7,11 @@ import { computeLayout } from './layout/layoutEngine';
 import { LEFT_MARGIN } from './layout/types';
 import { StaffLines } from './components/StaffLines';
 import { Bar, PreambleBar } from './components/Bar';
-import { Tie, TupletBracket, VoltaBracket } from './components/CrossBarElements';
+import {
+  Tie,
+  TupletBracket,
+  VoltaBracket,
+} from './components/CrossBarElements';
 import { TempoMark } from './components/TempoMark';
 import { Cursor } from './components/Cursor';
 import { FingeringDiagram } from '../FingeringDiagram';
@@ -33,12 +37,13 @@ export function Score({ music, width, noteResults, cursor }: ScoreProps) {
   const layout = useMemo(() => computeLayout(music, width), [music, width]);
   const clef = music.clef as Clef;
   const sig0 = music.signatures[0];
-const tempoText = sig0?.tempoText;
+  const tempoText = sig0?.tempoText;
   const tempo = sig0?.tempo;
 
   // Sharp spelling: use sharps unless the key has flats
   const useSharpSpelling = useMemo(() => {
-    const accs = FIFTHS_TO_ACCIDENTALS[KEYS[sig0?.keySignature ?? 'C'] ?? 0] ?? [];
+    const accs =
+      FIFTHS_TO_ACCIDENTALS[KEYS[sig0?.keySignature ?? 'C'] ?? 0] ?? [];
     return accs.length === 0 || accs[0].includes('#');
   }, [sig0]);
 
@@ -47,7 +52,10 @@ const tempoText = sig0?.tempoText;
     const map = new Map<number, string>();
     if (noteResults) {
       for (const [idx, result] of noteResults) {
-        map.set(idx, result === 'correct' ? NOTE_COLORS.correct : NOTE_COLORS.wrong);
+        map.set(
+          idx,
+          result === 'correct' ? NOTE_COLORS.correct : NOTE_COLORS.wrong
+        );
       }
     }
     if (cursor !== undefined && cursor.noteIdx >= 0) {
@@ -68,7 +76,10 @@ const tempoText = sig0?.tempoText;
   }, [noteResults]);
 
   // Popover state: screen coordinates set at click time
-  const [popoverPos, setPopoverPos] = useState<{ top: number; left: number } | null>(null);
+  const [popoverPos, setPopoverPos] = useState<{
+    top: number;
+    left: number;
+  } | null>(null);
   const [popoverNote, setPopoverNote] = useState<Note | null>(null);
   const [svgEl, setSvgEl] = useState<SVGSVGElement | null>(null);
 
@@ -92,6 +103,8 @@ const tempoText = sig0?.tempoText;
     <>
       <svg
         ref={setSvgEl}
+        role="img"
+        aria-label={music.title || 'Sheet music'}
         width={layout.width}
         height={layout.height}
         style={{ display: 'block', direction: 'ltr' }}
@@ -170,11 +183,27 @@ const tempoText = sig0?.tempoText;
         open={Boolean(popoverPos && popoverNote)}
         anchorReference="anchorPosition"
         anchorPosition={popoverPos ?? { top: 0, left: 0 }}
-        onClose={() => { setPopoverPos(null); setPopoverNote(null); }}
+        onClose={() => {
+          setPopoverPos(null);
+          setPopoverNote(null);
+        }}
         anchorOrigin={{ vertical: 'top', horizontal: 'center' }}
         transformOrigin={{ vertical: 'bottom', horizontal: 'center' }}
+        aria-label={
+          popoverNote
+            ? `Fingering for ${popoverNote.name(useSharpSpelling)}`
+            : undefined
+        }
       >
-        <Typography sx={{ px: 1.5, pt: 1.5, pb: 0.5, fontWeight: 'bold', textAlign: 'center' }}>
+        <Typography
+          sx={{
+            px: 1.5,
+            pt: 1.5,
+            pb: 0.5,
+            fontWeight: 'bold',
+            textAlign: 'center',
+          }}
+        >
           {popoverNote?.name(useSharpSpelling)}
         </Typography>
         {popoverNote && <FingeringDiagram note={popoverNote} />}

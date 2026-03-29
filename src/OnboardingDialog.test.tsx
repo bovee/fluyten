@@ -33,9 +33,10 @@ const renderDialog = (
 ) => render(<OnboardingDialog open={true} onComplete={vi.fn()} {...props} />);
 
 describe('OnboardingDialog', () => {
-
   it('should have no accessibility violations', async () => {
-    const { container } = render(<OnboardingDialog open={true} onComplete={vi.fn()} />);
+    const { container } = render(
+      <OnboardingDialog open={true} onComplete={vi.fn()} />
+    );
     expect(await axe(container)).toHaveNoViolations();
   });
   it('renders when open is true', () => {

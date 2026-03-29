@@ -1,4 +1,3 @@
-
 interface TempoMarkProps {
   tempoText?: string;
   tempo?: number;

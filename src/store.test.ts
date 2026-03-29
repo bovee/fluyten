@@ -47,7 +47,9 @@ describe('store', () => {
 
   describe('addSong', () => {
     it('appends a song', () => {
-      useStore.getState().addSong({ id: 's1', title: 'My Song', abc: 'K:C\nC' });
+      useStore
+        .getState()
+        .addSong({ id: 's1', title: 'My Song', abc: 'K:C\nC' });
       const songs = useStore.getState().songs;
       expect(songs).toHaveLength(1);
       expect(songs[0].title).toBe('My Song');
@@ -73,8 +75,12 @@ describe('store', () => {
     });
 
     it('appends to existing songs', () => {
-      useStore.getState().addSong({ id: 's0', title: 'Existing', abc: 'K:C\nC' });
-      useStore.getState().importSongs([{ id: 's1', title: 'New', abc: 'K:G\nG' }]);
+      useStore
+        .getState()
+        .addSong({ id: 's0', title: 'Existing', abc: 'K:C\nC' });
+      useStore
+        .getState()
+        .importSongs([{ id: 's1', title: 'New', abc: 'K:G\nG' }]);
       expect(useStore.getState().songs).toHaveLength(2);
     });
   });
@@ -122,8 +128,16 @@ describe('store', () => {
       const { migrate } = useStore.persist.getOptions();
       const oldState = {
         userBooks: [
-          { id: 'b1', title: 'Book A', songs: [{ id: 's1', title: 'Song 1', abc: 'K:C\nC' }] },
-          { id: 'b2', title: 'Book B', songs: [{ id: 's2', title: 'Song 2', abc: 'K:G\nG' }] },
+          {
+            id: 'b1',
+            title: 'Book A',
+            songs: [{ id: 's1', title: 'Song 1', abc: 'K:C\nC' }],
+          },
+          {
+            id: 'b2',
+            title: 'Book B',
+            songs: [{ id: 's2', title: 'Song 2', abc: 'K:G\nG' }],
+          },
         ],
       };
       const migrated = migrate!(oldState, 0) as Record<string, unknown>;

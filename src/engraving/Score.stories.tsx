@@ -1,6 +1,12 @@
 // eslint-disable-next-line storybook/no-renderer-packages
 import type { Meta, StoryObj } from '@storybook/react';
-import { Music, Note, Duration, DurationModifier, type BarLine } from '../music';
+import {
+  Music,
+  Note,
+  Duration,
+  DurationModifier,
+  type BarLine,
+} from '../music';
 import { Score } from './Score';
 
 const meta = {
@@ -214,7 +220,10 @@ export const Slurs: Story = {
       music.signatures[0].beatsPerBar = 4;
       music.signatures[0].beatValue = 4;
       music.notes = [Q(60), Q(62), Q(64), Q(65)];
-      music.curves = [[0, 1], [2, 3]];
+      music.curves = [
+        [0, 1],
+        [2, 3],
+      ];
       music.reflow();
       return music;
     })(),
@@ -279,10 +288,20 @@ export const CrossLineTriplets: Story = {
         new Note(p, Duration.QUARTER, [], undefined, DurationModifier.TRIPLET);
       const Qn = (p: number) => new Note(p, Duration.QUARTER);
       music.notes = [
-        Qn(60), Qn(62), Qn(64), Qn(65),
-        Qn(60), Qn(62), Qn(64), Qn(65),
-        Qn(60), Qn(62), Qn(64),
-        T(64), T(62), T(60),
+        Qn(60),
+        Qn(62),
+        Qn(64),
+        Qn(65),
+        Qn(60),
+        Qn(62),
+        Qn(64),
+        Qn(65),
+        Qn(60),
+        Qn(62),
+        Qn(64),
+        T(64),
+        T(62),
+        T(60),
       ];
       music.bars = [
         { afterNoteNum: undefined, type: 'standard' },
@@ -305,9 +324,18 @@ export const VoltaBrackets: Story = {
       music.signatures[0].beatsPerBar = 4;
       music.signatures[0].beatValue = 4;
       music.notes = [
-        Q(60), Q(62), Q(64), Q(65), // common
-        Q(67), Q(69), Q(71), Q(72), // volta 1
-        Q(62), Q(64), Q(65), Q(72), // volta 2
+        Q(60),
+        Q(62),
+        Q(64),
+        Q(65), // common
+        Q(67),
+        Q(69),
+        Q(71),
+        Q(72), // volta 1
+        Q(62),
+        Q(64),
+        Q(65),
+        Q(72), // volta 2
       ];
       const bars: BarLine[] = [
         { afterNoteNum: undefined, type: 'begin_repeat' },

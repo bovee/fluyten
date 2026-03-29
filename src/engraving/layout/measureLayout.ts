@@ -1,5 +1,12 @@
 import { Duration, type Note } from '../../music';
-import { GRACE_NOTE_SPACING, MIN_NOTE_SPACING, type BarData, type BeamLayout, type GraceNoteLayout, type NoteLayout } from './types';
+import {
+  GRACE_NOTE_SPACING,
+  MIN_NOTE_SPACING,
+  type BarData,
+  type BeamLayout,
+  type GraceNoteLayout,
+  type NoteLayout,
+} from './types';
 
 const ACCIDENTAL_EXTRA_SPACING = 15; // extra px reserved when a note has an accidental
 import {
@@ -40,7 +47,10 @@ export function layoutBar(
   if (mainGroups.length === 0) return [];
 
   // Compute proportional x positions for main notes.
-  const totalTicks = mainGroups.reduce((sum, g) => sum + notes[g.mainIndex].ticks(), 0);
+  const totalTicks = mainGroups.reduce(
+    (sum, g) => sum + notes[g.mainIndex].ticks(),
+    0
+  );
 
   const layouts: NoteLayout[] = [];
   let accTicks = 0;
@@ -63,7 +73,8 @@ export function layoutBar(
     // Enforce minimum spacing from the previous main note.
     // Notes with accidentals need extra room to the left.
     const hasAccidental = note.accidentals.some((a) => a);
-    const minSpacing = MIN_NOTE_SPACING + (hasAccidental ? ACCIDENTAL_EXTRA_SPACING : 0);
+    const minSpacing =
+      MIN_NOTE_SPACING + (hasAccidental ? ACCIDENTAL_EXTRA_SPACING : 0);
     if (layouts.length > 0) {
       const prevX = layouts[layouts.length - 1].x;
       if (x - prevX < minSpacing) {
@@ -83,7 +94,12 @@ export function layoutBar(
       noteY = staffPositionToY(restPos, staffTopY);
     } else {
       staffPositions = note.pitches.map((pitch, i) =>
-        pitchToStaffPosition(pitch, note.accidentals[i], clef, displayPitchOffset)
+        pitchToStaffPosition(
+          pitch,
+          note.accidentals[i],
+          clef,
+          displayPitchOffset
+        )
       );
       // Reference Y: top notehead (stem down) or bottom notehead (stem up).
       const dir = stemDirection(staffPositions);
@@ -144,13 +160,19 @@ interface NoteGroup {
 }
 
 /** Group grace notes with the main note that follows them. */
-function groupNotesWithGraces(noteIndices: number[], notes: Note[]): NoteGroup[] {
+function groupNotesWithGraces(
+  noteIndices: number[],
+  notes: Note[]
+): NoteGroup[] {
   const groups: NoteGroup[] = [];
   let pendingGrace: number[] = [];
 
   for (const idx of noteIndices) {
     const note = notes[idx];
-    if (note.duration === Duration.GRACE || note.duration === Duration.GRACE_SLASH) {
+    if (
+      note.duration === Duration.GRACE ||
+      note.duration === Duration.GRACE_SLASH
+    ) {
       pendingGrace.push(idx);
     } else {
       groups.push({ graceIndices: pendingGrace, mainIndex: idx });
@@ -257,7 +279,9 @@ export function unifyBeamStems(
 
   for (const beam of beams) {
     // Collect all staff positions across the group
-    const allPositions = beam.noteIndices.flatMap((li) => result[li]?.staffPositions ?? []);
+    const allPositions = beam.noteIndices.flatMap(
+      (li) => result[li]?.staffPositions ?? []
+    );
     if (allPositions.length === 0) continue;
 
     const avg = allPositions.reduce((s, p) => s + p, 0) / allPositions.length;
@@ -266,13 +290,24 @@ export function unifyBeamStems(
     for (const li of beam.noteIndices) {
       const nl = result[li];
       if (!nl) continue;
-      const { stemStartY, stemEndY } = stemEndpoints(nl.staffPositions, staffTopY, dir);
+      const { stemStartY, stemEndY } = stemEndpoints(
+        nl.staffPositions,
+        staffTopY,
+        dir
+      );
       // Also update the reference notehead Y to match the unified direction:
       // stem up → bottom notehead (min staff pos → max Y); stem down → top notehead (max staff pos → min Y)
-      const noteY = dir === 'up'
-        ? staffPositionToY(Math.min(...nl.staffPositions), staffTopY)
-        : staffPositionToY(Math.max(...nl.staffPositions), staffTopY);
-      result[li] = { ...nl, stemDirection: dir, stemStartY, stemEndY, y: noteY };
+      const noteY =
+        dir === 'up'
+          ? staffPositionToY(Math.min(...nl.staffPositions), staffTopY)
+          : staffPositionToY(Math.max(...nl.staffPositions), staffTopY);
+      result[li] = {
+        ...nl,
+        stemDirection: dir,
+        stemStartY,
+        stemEndY,
+        y: noteY,
+      };
     }
   }
 

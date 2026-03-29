@@ -1,9 +1,9 @@
 import { Duration } from '../../music';
-import { staffPositionToY, staffPositionToY as spToY } from '../layout/pitchLayout';
 import {
-  STAFF_SPACE,
-  type NoteLayout,
-} from '../layout/types';
+  staffPositionToY,
+  staffPositionToY as spToY,
+} from '../layout/pitchLayout';
+import { STAFF_SPACE, type NoteLayout } from '../layout/types';
 import { Glyph } from '../glyphs/Glyph';
 import { DecorationGroup } from './Decoration';
 import { LyricsSyllables } from './Lyrics';
@@ -34,29 +34,44 @@ function ledgerLinePositions(staffPositions: number[]): number[] {
 
 function noteheadGlyph(duration: Duration): string | null {
   switch (duration) {
-    case Duration.WHOLE: return 'noteheadWhole';
-    case Duration.HALF: return 'noteheadHalf';
+    case Duration.WHOLE:
+      return 'noteheadWhole';
+    case Duration.HALF:
+      return 'noteheadHalf';
     case Duration.QUARTER:
     case Duration.EIGHTH:
-    case Duration.SIXTEENTH: return 'noteheadBlack';
-    default: return null;
+    case Duration.SIXTEENTH:
+      return 'noteheadBlack';
+    default:
+      return null;
   }
 }
 
 function restGlyph(duration: Duration): string | null {
   switch (duration) {
-    case Duration.WHOLE: return 'restWhole';
-    case Duration.HALF: return 'restHalf';
-    case Duration.QUARTER: return 'restQuarter';
-    case Duration.EIGHTH: return 'rest8th';
-    case Duration.SIXTEENTH: return 'rest16th';
-    default: return null;
+    case Duration.WHOLE:
+      return 'restWhole';
+    case Duration.HALF:
+      return 'restHalf';
+    case Duration.QUARTER:
+      return 'restQuarter';
+    case Duration.EIGHTH:
+      return 'rest8th';
+    case Duration.SIXTEENTH:
+      return 'rest16th';
+    default:
+      return null;
   }
 }
 
-function flagGlyph(duration: Duration, direction: 'up' | 'down'): string | null {
-  if (duration === Duration.EIGHTH) return direction === 'up' ? 'flag8thUp' : 'flag8thDown';
-  if (duration === Duration.SIXTEENTH) return direction === 'up' ? 'flag16thUp' : 'flag16thDown';
+function flagGlyph(
+  duration: Duration,
+  direction: 'up' | 'down'
+): string | null {
+  if (duration === Duration.EIGHTH)
+    return direction === 'up' ? 'flag8thUp' : 'flag8thDown';
+  if (duration === Duration.SIXTEENTH)
+    return direction === 'up' ? 'flag16thUp' : 'flag16thDown';
   return null;
 }
 
@@ -68,22 +83,43 @@ function accidentalGlyph(acc: string): string | null {
 }
 
 const ACCIDENTAL_X_OFFSET = 15; // px to the left of notehead center per accidental
-const SHARP_EXTRA_OFFSET = 2;  // sharps need 2px more clearance than flats/naturals
+const SHARP_EXTRA_OFFSET = 2; // sharps need 2px more clearance than flats/naturals
 
-export function NoteGroup({ note, staffTopY, fill = 'black', isBeamed = false, isWrong = false, onClick }: NoteGroupProps) {
-  const { x, staffPositions, stemDirection, stemStartY, stemEndY, duration, durationModifier, accidentals, isRest } = note;
+export function NoteGroup({
+  note,
+  staffTopY,
+  fill = 'black',
+  isBeamed = false,
+  isWrong = false,
+  onClick,
+}: NoteGroupProps) {
+  const {
+    x,
+    staffPositions,
+    stemDirection,
+    stemStartY,
+    stemEndY,
+    duration,
+    durationModifier,
+    accidentals,
+    isRest,
+  } = note;
 
   const hasStem = !isRest && duration !== Duration.WHOLE;
-  const hasFlag = hasStem && !isBeamed && (duration === Duration.EIGHTH || duration === Duration.SIXTEENTH);
+  const hasFlag =
+    hasStem &&
+    !isBeamed &&
+    (duration === Duration.EIGHTH || duration === Duration.SIXTEENTH);
   const isDotted = durationModifier === 'd';
   const stemX = stemDirection === 'up' ? x + 5 : x - 5;
 
   if (isRest) {
     const glyph = restGlyph(duration);
     // SMuFL glyph anchor = baseline = visual center. Whole rest hangs from pos +2, others at pos 0.
-    const restY = duration === Duration.WHOLE
-      ? staffPositionToY(2, staffTopY)
-      : staffPositionToY(0, staffTopY);
+    const restY =
+      duration === Duration.WHOLE
+        ? staffPositionToY(2, staffTopY)
+        : staffPositionToY(0, staffTopY);
     return (
       <g>
         {glyph && <Glyph name={glyph} x={x - 6} y={restY} fill={fill} />}
@@ -130,7 +166,12 @@ export function NoteGroup({ note, staffTopY, fill = 'black', isBeamed = false, i
           <Glyph
             key={i}
             name={accGlyph}
-            x={x - ACCIDENTAL_X_OFFSET - (acc === '#' ? SHARP_EXTRA_OFFSET : 0) - (staffPositions.length - 1 - i) * 8}
+            x={
+              x -
+              ACCIDENTAL_X_OFFSET -
+              (acc === '#' ? SHARP_EXTRA_OFFSET : 0) -
+              (staffPositions.length - 1 - i) * 8
+            }
             y={ay}
             fill={fill}
           />
@@ -141,9 +182,7 @@ export function NoteGroup({ note, staffTopY, fill = 'black', isBeamed = false, i
       {staffPositions.map((sp, i) => {
         if (!nhGlyph) return null;
         const ny = spToY(sp, staffTopY);
-        return (
-          <Glyph key={i} name={nhGlyph} x={x - 5} y={ny} fill={fill} />
-        );
+        return <Glyph key={i} name={nhGlyph} x={x - 5} y={ny} fill={fill} />;
       })}
 
       {/* Stem */}
@@ -159,23 +198,27 @@ export function NoteGroup({ note, staffTopY, fill = 'black', isBeamed = false, i
       )}
 
       {/* Flag */}
-      {hasFlag && (() => {
-        const fg = flagGlyph(duration, stemDirection);
-        if (!fg) return null;
-        // Flag baseline: for stem up, flag attaches at stem end; for stem down likewise.
-        // Bravura flag glyphs are positioned at stem tip.
-        const fy = stemEndY + (stemDirection === 'up' ? STAFF_SPACE / 2 : -STAFF_SPACE / 2);
-        return <Glyph name={fg} x={stemX} y={fy} fill={fill} />;
-      })()}
+      {hasFlag &&
+        (() => {
+          const fg = flagGlyph(duration, stemDirection);
+          if (!fg) return null;
+          // Flag baseline: for stem up, flag attaches at stem end; for stem down likewise.
+          // Bravura flag glyphs are positioned at stem tip.
+          const fy =
+            stemEndY +
+            (stemDirection === 'up' ? STAFF_SPACE / 2 : -STAFF_SPACE / 2);
+          return <Glyph name={fg} x={stemX} y={fy} fill={fill} />;
+        })()}
 
       {/* Augmentation dot */}
-      {isDotted && (() => {
-        // Dot goes in the space to the right. If note is on a line, shift up half a space.
-        const sp = staffPositions[0];
-        const dotSp = sp % 2 === 0 ? sp + 1 : sp; // push to space if on a line
-        const dy = spToY(dotSp, staffTopY);
-        return <circle cx={x + 10} cy={dy} r={2} fill={fill} />;
-      })()}
+      {isDotted &&
+        (() => {
+          // Dot goes in the space to the right. If note is on a line, shift up half a space.
+          const sp = staffPositions[0];
+          const dotSp = sp % 2 === 0 ? sp + 1 : sp; // push to space if on a line
+          const dy = spToY(dotSp, staffTopY);
+          return <circle cx={x + 10} cy={dy} r={2} fill={fill} />;
+        })()}
 
       {/* Decorations */}
       <DecorationGroup

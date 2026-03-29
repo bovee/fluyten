@@ -1,7 +1,10 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest';
 
 vi.mock('./utils', () => ({
-  debounce: (fn: (...args: unknown[]) => void) => ({ call: fn, cancel: vi.fn() }),
+  debounce: (fn: (...args: unknown[]) => void) => ({
+    call: fn,
+    cancel: vi.fn(),
+  }),
 }));
 import { render, screen, fireEvent, waitFor } from '@testing-library/react';
 import App from './App';
@@ -56,7 +59,6 @@ beforeEach(() => {
 });
 
 describe('App', () => {
-
   it('should have no accessibility violations', async () => {
     const { container } = render(<App />);
     expect(await axe(container)).toHaveNoViolations();

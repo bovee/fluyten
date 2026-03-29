@@ -123,5 +123,7 @@
     "ચલાવ ચલાવ તારી નૌકા"
   ],
   "confirmDeleteSongs_one": "1 ગીત કાઢી નાખો? આ પૂર્વવત્ કરી શકાશે નહીં.",
-  "confirmDeleteSongs_other": "{{count}} ગીત કાઢી નાખો? આ પૂર્વવત્ કરી શકાશે નહીં."
+  "confirmDeleteSongs_other": "{{count}} ગીત કાઢી નાખો? આ પૂર્વવત્ કરી શકાશે નહીં.",
+  "practiceComplete": "તમે {{total}} નોંધોમાંથી {{correct}} સાચી રીતે વગાડી.",
+  "practiceAgain": "ફરીથી પ્રેક્ટિસ કરો"
 }

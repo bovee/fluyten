@@ -123,5 +123,7 @@
     "划呀划呀划小船"
   ],
   "confirmDeleteSongs_one": "删除 1 首歌曲？此操作无法撤销。",
-  "confirmDeleteSongs_other": "删除 {{count}} 首歌曲？此操作无法撤销。"
+  "confirmDeleteSongs_other": "删除 {{count}} 首歌曲？此操作无法撤销。",
+  "practiceComplete": "您正确演奏了 {{total}} 个音符中的 {{correct}} 个。",
+  "practiceAgain": "再次练习"
 }

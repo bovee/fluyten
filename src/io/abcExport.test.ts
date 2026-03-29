@@ -415,8 +415,12 @@ E2 D2 C4 |E2 D2 C4 |]`;
       const exported = toAbc(music1);
       const music2 = fromAbc(exported);
       expect(music2.title).toBe(music1.title);
-      expect(music2.signatures[0].keySignature).toBe(music1.signatures[0].keySignature);
-      expect(music2.signatures[0].beatsPerBar).toBe(music1.signatures[0].beatsPerBar);
+      expect(music2.signatures[0].keySignature).toBe(
+        music1.signatures[0].keySignature
+      );
+      expect(music2.signatures[0].beatsPerBar).toBe(
+        music1.signatures[0].beatsPerBar
+      );
       expect(music2.notes.length).toBe(music1.notes.length);
       for (let i = 0; i < music1.notes.length; i++) {
         expect(music2.notes[i].pitches).toEqual(music1.notes[i].pitches);

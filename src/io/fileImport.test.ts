@@ -20,7 +20,15 @@ vi.mock('./abcExport', () => ({
 }));
 
 vi.mock('./midiImport', () => ({
-  fromMidi: vi.fn(() => [{ title: 'MIDI Song', signatures: [{ atNoteIndex: 0, keySignature: 'C', beatsPerBar: 4, beatValue: 4 }], notes: [] }]),
+  fromMidi: vi.fn(() => [
+    {
+      title: 'MIDI Song',
+      signatures: [
+        { atNoteIndex: 0, keySignature: 'C', beatsPerBar: 4, beatValue: 4 },
+      ],
+      notes: [],
+    },
+  ]),
 }));
 
 beforeEach(() => {
@@ -30,7 +38,13 @@ beforeEach(() => {
   vi.mocked(toAbc).mockReturnValue('T:XML Song\nK:C\nC D E F |');
   vi.mocked(notesToAbc).mockReturnValue('C D E F |');
   vi.mocked(fromMidi).mockReturnValue([
-    { title: 'MIDI Song', signatures: [{ atNoteIndex: 0, keySignature: 'C', beatsPerBar: 4, beatValue: 4 }], notes: [] } as never,
+    {
+      title: 'MIDI Song',
+      signatures: [
+        { atNoteIndex: 0, keySignature: 'C', beatsPerBar: 4, beatValue: 4 },
+      ],
+      notes: [],
+    } as never,
   ]);
 });
 
@@ -137,7 +151,13 @@ describe('parseSongsFromFile', () => {
 
   it('uses fallback title when MIDI Music has no title', async () => {
     vi.mocked(fromMidi).mockReturnValueOnce([
-      { title: '', signatures: [{ atNoteIndex: 0, keySignature: 'C', beatsPerBar: 4, beatValue: 4 }], notes: [] } as never,
+      {
+        title: '',
+        signatures: [
+          { atNoteIndex: 0, keySignature: 'C', beatsPerBar: 4, beatValue: 4 },
+        ],
+        notes: [],
+      } as never,
     ]);
     const file = new File([new Uint8Array([0])], 'my-piece.mid');
     const songs = await parseSongsFromFile(file);
@@ -145,8 +165,20 @@ describe('parseSongsFromFile', () => {
   });
 
   it('assembles multi-voice ABC with V: lines for multi-channel MIDI', async () => {
-    const voice1 = { title: 'Multi', signatures: [{ atNoteIndex: 0, keySignature: 'C', beatsPerBar: 4, beatValue: 4 }], notes: [] };
-    const voice2 = { title: 'Multi', signatures: [{ atNoteIndex: 0, keySignature: 'C', beatsPerBar: 4, beatValue: 4 }], notes: [] };
+    const voice1 = {
+      title: 'Multi',
+      signatures: [
+        { atNoteIndex: 0, keySignature: 'C', beatsPerBar: 4, beatValue: 4 },
+      ],
+      notes: [],
+    };
+    const voice2 = {
+      title: 'Multi',
+      signatures: [
+        { atNoteIndex: 0, keySignature: 'C', beatsPerBar: 4, beatValue: 4 },
+      ],
+      notes: [],
+    };
     vi.mocked(fromMidi).mockReturnValueOnce([voice1, voice2] as never);
     const file = new File([new Uint8Array([0])], 'multi.mid');
     const songs = await parseSongsFromFile(file);
@@ -232,7 +264,10 @@ describe('parseSongsFromUrl', () => {
   });
 
   it('propagates network failures as-is', async () => {
-    vi.stubGlobal('fetch', vi.fn().mockRejectedValue(new TypeError('Failed to fetch')));
+    vi.stubGlobal(
+      'fetch',
+      vi.fn().mockRejectedValue(new TypeError('Failed to fetch'))
+    );
     await expect(
       parseSongsFromUrl('https://example.com/tune.abc')
     ).rejects.toThrow('Failed to fetch');

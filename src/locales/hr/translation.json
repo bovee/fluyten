@@ -123,5 +123,7 @@
     "Veslaj, veslaj čamcem"
   ],
   "confirmDeleteSongs_one": "Obrisati 1 pjesama? Ovo se ne može poništiti.",
-  "confirmDeleteSongs_other": "Obrisati {{count}} pjesama? Ovo se ne može poništiti."
+  "confirmDeleteSongs_other": "Obrisati {{count}} pjesama? Ovo se ne može poništiti.",
+  "practiceComplete": "Odsvirao si {{correct}} od {{total}} nota ispravno.",
+  "practiceAgain": "Vježbaj ponovo"
 }
