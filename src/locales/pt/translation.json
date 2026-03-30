@@ -125,5 +125,11 @@
   "confirmDeleteSongs_one": "Excluir 1 músicas? Isso não pode ser desfeito.",
   "confirmDeleteSongs_other": "Excluir {{count}} músicas? Isso não pode ser desfeito.",
   "practiceComplete": "Você tocou {{correct}} de {{total}} notas corretamente.",
-  "practiceAgain": "Praticar Novamente"
+  "practiceAgain": "Praticar Novamente",
+  "sortSongs": "Ordenar músicas",
+  "sortOrder": "Ordem",
+  "sortTitle": "Título",
+  "sortLength": "Duração",
+  "method": "Método",
+  "sortDifficulty": "Dificuldade"
 }

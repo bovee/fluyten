@@ -125,5 +125,11 @@
   "confirmDeleteSongs_one": "1 گانے حذف کریں؟ یہ واپس نہیں ہو سکتا۔",
   "confirmDeleteSongs_other": "{{count}} گانے حذف کریں؟ یہ واپس نہیں ہو سکتا۔",
   "practiceComplete": "آپ نے {{total}} میں سے {{correct}} سر صحیح بجائے۔",
-  "practiceAgain": "دوبارہ مشق کریں"
+  "practiceAgain": "دوبارہ مشق کریں",
+  "sortSongs": "گانے ترتیب دیں",
+  "sortOrder": "ترتیب",
+  "sortTitle": "عنوان",
+  "sortLength": "لمبائی",
+  "method": "طریقہ",
+  "sortDifficulty": "مشکل"
 }

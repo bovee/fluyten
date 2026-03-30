@@ -125,5 +125,11 @@
   "confirmDeleteSongs_one": "1টি গান মুছবেন? এটি পূর্বাবস্থায় ফেরানো যাবে না।",
   "confirmDeleteSongs_other": "{{count}}টি গান মুছবেন? এটি পূর্বাবস্থায় ফেরানো যাবে না।",
   "practiceComplete": "আপনি {{total}}টির মধ্যে {{correct}}টি নোট সঠিকভাবে বাজিয়েছেন।",
-  "practiceAgain": "আবার অনুশীলন করুন"
+  "practiceAgain": "আবার অনুশীলন করুন",
+  "sortSongs": "গান সাজান",
+  "sortOrder": "ক্রম",
+  "sortTitle": "শিরোনাম",
+  "sortLength": "দৈর্ঘ্য",
+  "method": "পদ্ধতি",
+  "sortDifficulty": "কঠিনতা"
 }

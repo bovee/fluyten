@@ -125,5 +125,11 @@
   "confirmDeleteSongs_one": "Usunąć 1 piosenek? Tego nie można cofnąć.",
   "confirmDeleteSongs_other": "Usunąć {{count}} piosenek? Tego nie można cofnąć.",
   "practiceComplete": "Zagrałeś {{correct}} z {{total}} nut poprawnie.",
-  "practiceAgain": "Ćwicz ponownie"
+  "practiceAgain": "Ćwicz ponownie",
+  "sortSongs": "Sortuj piosenki",
+  "sortOrder": "Kolejność",
+  "sortTitle": "Tytuł",
+  "sortLength": "Długość",
+  "method": "Metoda",
+  "sortDifficulty": "Trudność"
 }

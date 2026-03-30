@@ -125,5 +125,11 @@
   "confirmDeleteSongs_one": "1 పాటలు తొలగించాలా? దీన్ని రద్దు చేయలేరు.",
   "confirmDeleteSongs_other": "{{count}} పాటలు తొలగించాలా? దీన్ని రద్దు చేయలేరు.",
   "practiceComplete": "మీరు {{total}} నోట్లలో {{correct}} సరిగ్గా వాయించారు.",
-  "practiceAgain": "మళ్ళీ సాధన చేయండి"
+  "practiceAgain": "మళ్ళీ సాధన చేయండి",
+  "sortSongs": "పాటలను క్రమబద్ధీకరించు",
+  "sortOrder": "క్రమం",
+  "sortTitle": "శీర్షిక",
+  "sortLength": "పొడవు",
+  "method": "పద్ధతి",
+  "sortDifficulty": "కష్టం"
 }

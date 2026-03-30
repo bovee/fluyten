@@ -125,5 +125,11 @@
   "confirmDeleteSongs_one": "Zmazať 1 piesní? Toto nie je možné vrátiť.",
   "confirmDeleteSongs_other": "Zmazať {{count}} piesní? Toto nie je možné vrátiť.",
   "practiceComplete": "Zahrali ste {{correct}} z {{total}} nôt správne.",
-  "practiceAgain": "Cvičiť znovu"
+  "practiceAgain": "Cvičiť znovu",
+  "sortSongs": "Zoradiť piesne",
+  "sortOrder": "Poradie",
+  "sortTitle": "Názov",
+  "sortLength": "Dĺžka",
+  "method": "Metóda",
+  "sortDifficulty": "Náročnosť"
 }

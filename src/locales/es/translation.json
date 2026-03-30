@@ -125,5 +125,11 @@
   "confirmDeleteSongs_one": "¿Eliminar 1 canciones? Esto no se puede deshacer.",
   "confirmDeleteSongs_other": "¿Eliminar {{count}} canciones? Esto no se puede deshacer.",
   "practiceComplete": "Tocaste {{correct}} de {{total}} notas correctamente.",
-  "practiceAgain": "Practicar de nuevo"
+  "practiceAgain": "Practicar de nuevo",
+  "sortSongs": "Ordenar canciones",
+  "sortOrder": "Orden",
+  "sortTitle": "Título",
+  "sortLength": "Duración",
+  "method": "Método",
+  "sortDifficulty": "Dificultad"
 }

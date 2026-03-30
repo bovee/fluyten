@@ -125,5 +125,11 @@
   "confirmDeleteSongs_one": "Slet 1 sange? Dette kan ikke fortrydes.",
   "confirmDeleteSongs_other": "Slet {{count}} sange? Dette kan ikke fortrydes.",
   "practiceComplete": "Du spillede {{correct}} af {{total}} noder korrekt.",
-  "practiceAgain": "Øv igen"
+  "practiceAgain": "Øv igen",
+  "sortSongs": "Sorter sange",
+  "sortOrder": "Rækkefølge",
+  "sortTitle": "Titel",
+  "sortLength": "Længde",
+  "method": "Metode",
+  "sortDifficulty": "Sværhedsgrad"
 }

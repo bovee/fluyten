@@ -49,17 +49,12 @@ function App() {
   const [selected, setSelected] = useState<SelectedSong | null>(null);
   const updateSongAbc = useStore((state) => state.updateSongAbc);
   const updateSongTempo = useStore((state) => state.updateSongTempo);
-  const renameSong = useStore((state) => state.renameSong);
 
   if (selected) {
     const { song, readOnly } = selected;
     const onAbcChange = readOnly
       ? undefined
-      : (abc: string) => {
-          updateSongAbc(song.id, abc);
-          const titleMatch = abc.match(/^T:\s*(.+)/m);
-          if (titleMatch) renameSong(song.id, titleMatch[1].trim());
-        };
+      : (abc: string) => updateSongAbc(song.id, abc);
     const onTempoChange = readOnly
       ? undefined
       : (tempo: number) => updateSongTempo(song.id, tempo);

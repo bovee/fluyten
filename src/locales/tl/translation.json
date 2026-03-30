@@ -125,5 +125,11 @@
   "confirmDeleteSongs_one": "Burahin ang 1 kanta? Hindi ito maaaring ibalik.",
   "confirmDeleteSongs_other": "Burahin ang {{count}} kanta? Hindi ito maaaring ibalik.",
   "practiceComplete": "Nilaro mo nang tama ang {{correct}} sa {{total}} nota.",
-  "practiceAgain": "Magsanay Muli"
+  "practiceAgain": "Magsanay Muli",
+  "sortSongs": "Ayusin ang mga kanta",
+  "sortOrder": "Pagkakasunod",
+  "sortTitle": "Pamagat",
+  "sortLength": "Haba",
+  "method": "Pamamaraan",
+  "sortDifficulty": "Kahirapan"
 }

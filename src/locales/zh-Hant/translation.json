@@ -125,5 +125,11 @@
   "confirmDeleteSongs_one": "刪除 1 首歌曲？此操作無法撤銷。",
   "confirmDeleteSongs_other": "刪除 {{count}} 首歌曲？此操作無法撤銷。",
   "practiceComplete": "您正確演奏了 {{total}} 個音符中的 {{correct}} 個。",
-  "practiceAgain": "再次練習"
+  "practiceAgain": "再次練習",
+  "sortSongs": "排序歌曲",
+  "sortOrder": "順序",
+  "sortTitle": "標題",
+  "sortLength": "長度",
+  "method": "教材",
+  "sortDifficulty": "難度"
 }

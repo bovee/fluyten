@@ -125,5 +125,11 @@
   "confirmDeleteSongs_one": "Eliminare 1 brani? Questa azione non può essere annullata.",
   "confirmDeleteSongs_other": "Eliminare {{count}} brani? Questa azione non può essere annullata.",
   "practiceComplete": "Hai suonato {{correct}} note su {{total}} correttamente.",
-  "practiceAgain": "Esercitati ancora"
+  "practiceAgain": "Esercitati ancora",
+  "sortSongs": "Ordina canzoni",
+  "sortOrder": "Ordine",
+  "sortTitle": "Titolo",
+  "sortLength": "Durata",
+  "method": "Metodo",
+  "sortDifficulty": "Difficoltà"
 }

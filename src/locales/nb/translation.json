@@ -125,5 +125,11 @@
   "confirmDeleteSongs_one": "Slette 1 sanger? Dette kan ikke angres.",
   "confirmDeleteSongs_other": "Slette {{count}} sanger? Dette kan ikke angres.",
   "practiceComplete": "Du spilte {{correct}} av {{total}} noter riktig.",
-  "practiceAgain": "Øv igjen"
+  "practiceAgain": "Øv igjen",
+  "sortSongs": "Sorter sanger",
+  "sortOrder": "Rekkefølge",
+  "sortTitle": "Tittel",
+  "sortLength": "Lengde",
+  "method": "Metode",
+  "sortDifficulty": "Vanskelighetsgrad"
 }

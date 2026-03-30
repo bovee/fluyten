@@ -125,5 +125,11 @@
   "confirmDeleteSongs_one": "Ta bort 1 stycken? Det går inte att ångra.",
   "confirmDeleteSongs_other": "Ta bort {{count}} stycken? Det går inte att ångra.",
   "practiceComplete": "Du spelade {{correct}} av {{total}} noter rätt.",
-  "practiceAgain": "Öva igen"
+  "practiceAgain": "Öva igen",
+  "sortSongs": "Sortera låtar",
+  "sortOrder": "Ordning",
+  "sortTitle": "Titel",
+  "sortLength": "Längd",
+  "method": "Metod",
+  "sortDifficulty": "Svårighetsgrad"
 }

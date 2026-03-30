@@ -125,5 +125,11 @@
   "confirmDeleteSongs_one": "Xóa 1 bài hát? Không thể hoàn tác.",
   "confirmDeleteSongs_other": "Xóa {{count}} bài hát? Không thể hoàn tác.",
   "practiceComplete": "Bạn đã chơi đúng {{correct}} trong {{total}} nốt nhạc.",
-  "practiceAgain": "Luyện tập lại"
+  "practiceAgain": "Luyện tập lại",
+  "sortSongs": "Sắp xếp bài hát",
+  "sortOrder": "Thứ tự",
+  "sortTitle": "Tiêu đề",
+  "sortLength": "Độ dài",
+  "method": "Phương pháp",
+  "sortDifficulty": "Độ khó"
 }

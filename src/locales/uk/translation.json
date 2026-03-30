@@ -125,5 +125,11 @@
   "confirmDeleteSongs_one": "Видалити 1 пісень? Цю дію не можна скасувати.",
   "confirmDeleteSongs_other": "Видалити {{count}} пісень? Цю дію не можна скасувати.",
   "practiceComplete": "Ви зіграли {{correct}} з {{total}} нот правильно.",
-  "practiceAgain": "Практикуватися знову"
+  "practiceAgain": "Практикуватися знову",
+  "sortSongs": "Сортувати пісні",
+  "sortOrder": "Порядок",
+  "sortTitle": "Назва",
+  "sortLength": "Довжина",
+  "method": "Метод",
+  "sortDifficulty": "Складність"
 }

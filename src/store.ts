@@ -2,6 +2,8 @@ import { create } from 'zustand';
 import { persist, createJSONStorage } from 'zustand/middleware';
 
 import { type RecorderType } from './instrument';
+import { fromAbc } from './io/abcImport';
+import { featuresFromMusic, difficultyFromFeatures } from './method';
 
 export type PlaybackVoices = 'selected' | 'others' | 'all';
 export type PracticeMode =
@@ -14,6 +16,21 @@ export interface UserSong {
   title: string;
   abc: string;
   tempo?: number;
+  beats?: number;
+  difficulty?: string;
+}
+
+function derivedFields(
+  abc: string,
+  method: string
+): Pick<UserSong, 'title' | 'beats' | 'difficulty'> {
+  const music = fromAbc(abc);
+  const title = music.title ?? '';
+  const barCount = music.bars.filter((b) => b.type !== 'begin').length;
+  const beats = barCount * music.signatures[0].beatsPerBar;
+  const features = featuresFromMusic(music);
+  const difficulty = difficultyFromFeatures(features, method);
+  return { title, beats, difficulty };
 }
 
 interface SettingsState {
@@ -27,6 +44,8 @@ interface SettingsState {
   setIsGerman: (isGerman: boolean) => void;
   language: string;
   setLanguage: (language: string) => void;
+  method: string;
+  setMethod: (method: string) => void;
   playbackVoices: PlaybackVoices;
   setPlaybackVoices: (v: PlaybackVoices) => void;
   practiceMode: PracticeMode;
@@ -34,10 +53,8 @@ interface SettingsState {
   playMetronome: boolean;
   setPlayMetronome: (v: boolean) => void;
   songs: UserSong[];
-  addSong: (song: UserSong) => void;
-  importSongs: (songs: UserSong[]) => void;
+  addSongs: (songs: UserSong[]) => void;
   removeSong: (songId: string) => void;
-  renameSong: (songId: string, title: string) => void;
   updateSongAbc: (songId: string, abc: string) => void;
   updateSongTempo: (songId: string, tempo: number) => void;
 }
@@ -55,6 +72,15 @@ export const useStore = create<SettingsState>()(
       setIsGerman: (isGerman) => set({ isGerman }),
       language: '',
       setLanguage: (language) => set({ language }),
+      method: 'zeitlinSoprano',
+      setMethod: (method) =>
+        set((state) => ({
+          method,
+          songs: state.songs.map((s) => ({
+            ...s,
+            ...derivedFields(s.abc, method),
+          })),
+        })),
       playbackVoices: 'selected',
       setPlaybackVoices: (playbackVoices) => set({ playbackVoices }),
       practiceMode: 'correct-then-advance',
@@ -62,20 +88,20 @@ export const useStore = create<SettingsState>()(
       playMetronome: false,
       setPlayMetronome: (playMetronome) => set({ playMetronome }),
       songs: [],
-      addSong: (song) => set((state) => ({ songs: [...state.songs, song] })),
-      importSongs: (songs) =>
-        set((state) => ({ songs: [...state.songs, ...songs] })),
+      addSongs: (songs) =>
+        set((state) => ({
+          songs: [
+            ...state.songs,
+            ...songs.map((s) => ({ ...s, ...derivedFields(s.abc, state.method) })),
+          ],
+        })),
       removeSong: (songId) =>
         set((state) => ({ songs: state.songs.filter((s) => s.id !== songId) })),
-      renameSong: (songId, title) =>
-        set((state) => ({
-          songs: state.songs.map((s) =>
-            s.id === songId ? { ...s, title } : s
-          ),
-        })),
       updateSongAbc: (songId, abc) =>
         set((state) => ({
-          songs: state.songs.map((s) => (s.id === songId ? { ...s, abc } : s)),
+          songs: state.songs.map((s) =>
+            s.id === songId ? { ...s, abc, ...derivedFields(abc, state.method) } : s
+          ),
         })),
       updateSongTempo: (songId, tempo) =>
         set((state) => ({

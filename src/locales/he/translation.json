@@ -125,5 +125,11 @@
   "confirmDeleteSongs_one": "למחוק 1 שירים? לא ניתן לבטל פעולה זו.",
   "confirmDeleteSongs_other": "למחוק {{count}} שירים? לא ניתן לבטל פעולה זו.",
   "practiceComplete": "ניגנת {{correct}} מתוך {{total}} תווים נכון.",
-  "practiceAgain": "תרגל שוב"
+  "practiceAgain": "תרגל שוב",
+  "sortSongs": "מיין שירים",
+  "sortOrder": "סדר",
+  "sortTitle": "כותרת",
+  "sortLength": "אורך",
+  "method": "שיטה",
+  "sortDifficulty": "קושי"
 }

@@ -125,5 +125,11 @@
   "confirmDeleteSongs_one": "1 गाने हटाएं? यह पूर्ववत नहीं किया जा सकता।",
   "confirmDeleteSongs_other": "{{count}} गाने हटाएं? यह पूर्ववत नहीं किया जा सकता।",
   "practiceComplete": "आपने {{total}} में से {{correct}} नोट सही बजाए।",
-  "practiceAgain": "फिर से अभ्यास करें"
+  "practiceAgain": "फिर से अभ्यास करें",
+  "sortSongs": "गाने क्रमबद्ध करें",
+  "sortOrder": "क्रम",
+  "sortTitle": "शीर्षक",
+  "sortLength": "लंबाई",
+  "method": "विधि",
+  "sortDifficulty": "कठिनाई"
 }

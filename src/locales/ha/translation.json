@@ -125,5 +125,11 @@
   "confirmDeleteSongs_one": "Goge waƙoƙi 1? Ba za a iya mayar da wannan ba.",
   "confirmDeleteSongs_other": "Goge waƙoƙi {{count}}? Ba za a iya mayar da wannan ba.",
   "practiceComplete": "Kun buga {{correct}} daga cikin {{total}} kalmomi daidai.",
-  "practiceAgain": "Yi aiki sake"
+  "practiceAgain": "Yi aiki sake",
+  "sortSongs": "Tsara waƙoƙi",
+  "sortOrder": "Tsari",
+  "sortTitle": "Take",
+  "sortLength": "Tsawo",
+  "method": "Hanya",
+  "sortDifficulty": "Wahala"
 }

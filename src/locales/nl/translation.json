@@ -125,5 +125,11 @@
   "confirmDeleteSongs_one": "1 nummers verwijderen? Dit kan niet ongedaan worden gemaakt.",
   "confirmDeleteSongs_other": "{{count}} nummers verwijderen? Dit kan niet ongedaan worden gemaakt.",
   "practiceComplete": "Je speelde {{correct}} van de {{total}} noten correct.",
-  "practiceAgain": "Opnieuw oefenen"
+  "practiceAgain": "Opnieuw oefenen",
+  "sortSongs": "Liedjes sorteren",
+  "sortOrder": "Volgorde",
+  "sortTitle": "Titel",
+  "sortLength": "Lengte",
+  "method": "Methode",
+  "sortDifficulty": "Moeilijkheid"
 }

@@ -125,5 +125,11 @@
   "confirmDeleteSongs_one": "Smazat 1 písní? Tuto akci nelze vrátit zpět.",
   "confirmDeleteSongs_other": "Smazat {{count}} písní? Tuto akci nelze vrátit zpět.",
   "practiceComplete": "Zahráli jste {{correct}} z {{total}} not správně.",
-  "practiceAgain": "Procvičit znovu"
+  "practiceAgain": "Procvičit znovu",
+  "sortSongs": "Seřadit písně",
+  "sortOrder": "Pořadí",
+  "sortTitle": "Název",
+  "sortLength": "Délka",
+  "method": "Metoda",
+  "sortDifficulty": "Obtížnost"
 }

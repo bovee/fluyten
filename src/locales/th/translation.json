@@ -125,5 +125,11 @@
   "confirmDeleteSongs_one": "ลบ 1 เพลง? ไม่สามารถยกเลิกได้",
   "confirmDeleteSongs_other": "ลบ {{count}} เพลง? ไม่สามารถยกเลิกได้",
   "practiceComplete": "คุณเล่น {{correct}} จาก {{total}} โน้ตได้ถูกต้อง",
-  "practiceAgain": "ฝึกอีกครั้ง"
+  "practiceAgain": "ฝึกอีกครั้ง",
+  "sortSongs": "เรียงเพลง",
+  "sortOrder": "ลำดับ",
+  "sortTitle": "ชื่อเรื่อง",
+  "sortLength": "ความยาว",
+  "method": "วิธี",
+  "sortDifficulty": "ความยาก"
 }

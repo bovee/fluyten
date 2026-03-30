@@ -125,5 +125,11 @@
   "confirmDeleteSongs_one": "1 آهنگ حذف شود؟ این قابل برگشت نیست.",
   "confirmDeleteSongs_other": "{{count}} آهنگ حذف شود؟ این قابل برگشت نیست.",
   "practiceComplete": "شما {{correct}} از {{total}} نت را به درستی نواختید.",
-  "practiceAgain": "دوباره تمرین کنید"
+  "practiceAgain": "دوباره تمرین کنید",
+  "sortSongs": "مرتب‌سازی آهنگ‌ها",
+  "sortOrder": "ترتیب",
+  "sortTitle": "عنوان",
+  "sortLength": "طول",
+  "method": "متد",
+  "sortDifficulty": "سختی"
 }

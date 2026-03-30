@@ -43,7 +43,7 @@ export function OnboardingDialog({ open, onComplete }: OnboardingDialogProps) {
   const isGerman = useStore((state) => state.isGerman);
   const setIsGerman = useStore((state) => state.setIsGerman);
   const setTuning = useStore((state) => state.setTuning);
-  const importSongs = useStore((state) => state.importSongs);
+  const addSongs = useStore((state) => state.addSongs);
 
   const [detectOpen, setDetectOpen] = useState(false);
   const [detectStep, setDetectStep] = useState<0 | 1>(0);
@@ -102,7 +102,7 @@ export function OnboardingDialog({ open, onComplete }: OnboardingDialogProps) {
             };
           }
         );
-        importSongs(songs);
+        addSongs(songs);
       })
       .catch((err) => {
         console.error('Failed to fetch beginner songs:', err);

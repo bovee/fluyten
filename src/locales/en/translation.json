@@ -125,5 +125,11 @@
   "confirmDeleteSongs_one": "Delete 1 song? This cannot be undone.",
   "confirmDeleteSongs_other": "Delete {{count}} songs? This cannot be undone.",
   "practiceComplete": "You played {{correct}} of {{total}} notes correctly.",
-  "practiceAgain": "Practice Again"
+  "practiceAgain": "Practice Again",
+  "sortSongs": "Sort songs",
+  "sortOrder": "Order",
+  "sortTitle": "Title",
+  "sortLength": "Length",
+  "method": "Method",
+  "sortDifficulty": "Difficulty"
 }

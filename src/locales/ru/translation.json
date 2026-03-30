@@ -125,5 +125,11 @@
   "confirmDeleteSongs_one": "Удалить 1 песен? Это действие нельзя отменить.",
   "confirmDeleteSongs_other": "Удалить {{count}} песен? Это действие нельзя отменить.",
   "practiceComplete": "Вы сыграли {{correct}} из {{total}} нот правильно.",
-  "practiceAgain": "Повторить упражнение"
+  "practiceAgain": "Повторить упражнение",
+  "sortSongs": "Сортировать песни",
+  "sortOrder": "Порядок",
+  "sortTitle": "Название",
+  "sortLength": "Длина",
+  "method": "Метод",
+  "sortDifficulty": "Сложность"
 }

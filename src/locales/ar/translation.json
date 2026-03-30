@@ -125,5 +125,11 @@
   "confirmDeleteSongs_one": "هل تريد حذف 1 أغنية؟ لا يمكن التراجع عن هذا.",
   "confirmDeleteSongs_other": "هل تريد حذف {{count}} أغنية؟ لا يمكن التراجع عن هذا.",
   "practiceComplete": "لقد عزفت {{correct}} من أصل {{total}} نغمة بشكل صحيح.",
-  "practiceAgain": "تدرب مرة أخرى"
+  "practiceAgain": "تدرب مرة أخرى",
+  "sortSongs": "ترتيب الأغاني",
+  "sortOrder": "الترتيب",
+  "sortTitle": "العنوان",
+  "sortLength": "الطول",
+  "method": "المنهج",
+  "sortDifficulty": "الصعوبة"
 }

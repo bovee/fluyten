@@ -1,10 +1,13 @@
 import { useCallback, useEffect, useRef, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import Add from '@mui/icons-material/Add';
+import ArrowDownward from '@mui/icons-material/ArrowDownward';
+import ArrowUpward from '@mui/icons-material/ArrowUpward';
 import CheckCircle from '@mui/icons-material/CheckCircle';
 import EditNote from '@mui/icons-material/EditNote';
 import RadioButtonUnchecked from '@mui/icons-material/RadioButtonUnchecked';
 import Settings from '@mui/icons-material/Settings';
+import Sort from '@mui/icons-material/Sort';
 import Box from '@mui/material/Box';
 import Button from '@mui/material/Button';
 import Dialog from '@mui/material/Dialog';
@@ -49,6 +52,9 @@ export function IndexPage({ onSelectSong }: IndexPageProps) {
   } | null>(null);
   const [isDragOver, setIsDragOver] = useState(false);
   const [filterText, setFilterText] = useState('');
+  const [sortMenuAnchor, setSortMenuAnchor] = useState<HTMLElement | null>(null);
+  const [sortKey, setSortKey] = useState<'order' | 'title' | 'length' | 'difficulty'>('order');
+  const [sortDir, setSortDir] = useState<'asc' | 'desc'>('desc');
   const [selectedIds, setSelectedIds] = useState<Set<string>>(new Set());
   const longPressTimers = useRef<Map<string, ReturnType<typeof setTimeout>>>(
     new Map()
@@ -59,12 +65,26 @@ export function IndexPage({ onSelectSong }: IndexPageProps) {
   const isSelecting = selectedIds.size > 0;
 
   const songs = useStore((state) => state.songs);
-  const filteredSongs = filterText
-    ? songs.filter((s) =>
-        s.title.toLowerCase().includes(filterText.toLowerCase())
-      )
-    : songs;
-  const addSong = useStore((state) => state.addSong);
+  const filteredSongs = (() => {
+    const base = filterText
+      ? songs.filter((s) =>
+          s.title.toLowerCase().includes(filterText.toLowerCase())
+        )
+      : [...songs];
+    if (sortKey === 'title') {
+      base.sort((a, b) => a.title.localeCompare(b.title));
+    } else if (sortKey === 'length') {
+      base.sort((a, b) => (a.beats ?? 0) - (b.beats ?? 0));
+    } else if (sortKey === 'difficulty') {
+      base.sort((a, b) => (a.difficulty ?? '').localeCompare(b.difficulty ?? ''));
+    } else {
+      // 'order': store order is oldest-first; desc = most recent first
+      if (sortDir === 'desc') base.reverse();
+    }
+    if (sortKey !== 'order' && sortDir === 'desc') base.reverse();
+    return base;
+  })();
+  const addSongs = useStore((state) => state.addSongs);
   const removeSong = useStore((state) => state.removeSong);
 
   useEffect(() => {
@@ -82,7 +102,7 @@ export function IndexPage({ onSelectSong }: IndexPageProps) {
       if (!file || !/\.(abc|txt|musicxml|xml|mxl)$/i.test(file.name)) return;
       try {
         const parsed = await parseSongsFromFile(file);
-        parsed.forEach((s) => addSong(s));
+        addSongs(parsed);
       } catch (err) {
         alert(`Failed to import file: ${(err as Error).message}`);
       }
@@ -95,7 +115,7 @@ export function IndexPage({ onSelectSong }: IndexPageProps) {
       window.removeEventListener('dragleave', onDragLeave);
       window.removeEventListener('drop', onDrop);
     };
-  }, [addSong]);
+  }, [addSongs]);
 
   const handleLongPressStart = useCallback((songId: string) => {
     const timer = setTimeout(() => {
@@ -135,11 +155,11 @@ export function IndexPage({ onSelectSong }: IndexPageProps) {
   }, []);
 
   const handleAddEmptySong = () => {
-    addSong({
+    addSongs([{
       id: crypto.randomUUID(),
       title: 'New Song',
       abc: `X:1\nT:New Song\nM:C\nL:1/4\nK:C\nC D E F |`,
-    });
+    }]);
     setAddSongMenuAnchor(null);
   };
 
@@ -149,7 +169,7 @@ export function IndexPage({ onSelectSong }: IndexPageProps) {
     e.target.value = '';
     try {
       const parsed = await parseSongsFromFile(file);
-      parsed.forEach((s) => addSong(s));
+      addSongs(parsed);
     } catch (err) {
       alert(`Failed to import file: ${(err as Error).message}`);
     }
@@ -168,7 +188,7 @@ export function IndexPage({ onSelectSong }: IndexPageProps) {
     try {
       const parsed = await parseSongsFromUrl(current.value);
       const isStarter = isStarterBookUrl(current.value);
-      (isStarter
+      const toAdd = isStarter
         ? parsed.map((s, i) => {
             const translatedTitle = t(`beginnerSongs.${i}`, {
               defaultValue: s.title,
@@ -179,8 +199,8 @@ export function IndexPage({ onSelectSong }: IndexPageProps) {
               abc: s.abc.replace(/^T:.*$/m, `T:${translatedTitle}`),
             };
           })
-        : parsed
-      ).forEach((s) => addSong(s));
+        : parsed;
+      addSongs(toAdd);
       setImportUrl(null);
     } catch (err) {
       if (err instanceof HttpError) {
@@ -207,6 +227,16 @@ export function IndexPage({ onSelectSong }: IndexPageProps) {
     a.click();
     URL.revokeObjectURL(url);
     setEditDialogOpen(false);
+  };
+
+  const handleSortSelect = (key: 'order' | 'title' | 'length' | 'difficulty') => {
+    if (key === sortKey) {
+      setSortDir((d) => (d === 'asc' ? 'desc' : 'asc'));
+    } else {
+      setSortKey(key);
+      setSortDir(key === 'order' ? 'desc' : 'asc');
+    }
+    setSortMenuAnchor(null);
   };
 
   const handleDeleteSongs = () => {
@@ -293,14 +323,25 @@ export function IndexPage({ onSelectSong }: IndexPageProps) {
       <h1 style={{ color: '#1c3248' }}>{t('appTitle')}</h1>
 
       {songs.length > 0 && (
-        <TextField
-          size="small"
-          placeholder={t('filterSongs')}
-          inputProps={{ 'aria-label': t('filterSongs') }}
-          value={filterText}
-          onChange={(e) => setFilterText(e.target.value)}
-          sx={{ width: 'min(400px, 95vw)', mb: 1 }}
-        />
+        <Box sx={{ display: 'flex', alignItems: 'center', gap: 0.5, mb: 1, justifyContent: 'center' }}>
+          <TextField
+            size="small"
+            placeholder={t('filterSongs')}
+            inputProps={{ 'aria-label': t('filterSongs') }}
+            value={filterText}
+            onChange={(e) => setFilterText(e.target.value)}
+            sx={{ width: 'min(360px, calc(95vw - 44px))' }}
+          />
+          <Tooltip title={t('sortSongs')}>
+            <IconButton
+              onClick={(e) => setSortMenuAnchor(e.currentTarget)}
+              aria-label={t('sortSongs')}
+              color={sortKey !== 'order' || sortDir !== 'desc' ? 'primary' : 'default'}
+            >
+              <Sort />
+            </IconButton>
+          </Tooltip>
+        </Box>
       )}
 
       <div
@@ -349,6 +390,42 @@ export function IndexPage({ onSelectSong }: IndexPageProps) {
                 sx={{ minWidth: 0 }}
               >
                 <ListItemText primary={song.title} />
+                {sortKey === 'length' && song.beats != null && (
+                  <Box
+                    component="span"
+                    sx={{
+                      ml: 1,
+                      px: 0.75,
+                      py: 0.25,
+                      borderRadius: 1,
+                      backgroundColor: 'action.selected',
+                      color: 'text.secondary',
+                      fontSize: '0.75rem',
+                      whiteSpace: 'nowrap',
+                      flexShrink: 0,
+                    }}
+                  >
+                    {song.beats}
+                  </Box>
+                )}
+                {sortKey === 'difficulty' && song.difficulty && (
+                  <Box
+                    component="span"
+                    sx={{
+                      ml: 1,
+                      px: 0.75,
+                      py: 0.25,
+                      borderRadius: 1,
+                      backgroundColor: 'action.selected',
+                      color: 'text.secondary',
+                      fontSize: '0.75rem',
+                      whiteSpace: 'nowrap',
+                      flexShrink: 0,
+                    }}
+                  >
+                    {song.difficulty}
+                  </Box>
+                )}
               </ListItemButton>
             </ListItem>
           );
@@ -390,6 +467,21 @@ export function IndexPage({ onSelectSong }: IndexPageProps) {
         </MenuItem>
       </Menu>
 
+      <Menu
+        anchorEl={sortMenuAnchor}
+        open={Boolean(sortMenuAnchor)}
+        onClose={() => setSortMenuAnchor(null)}
+      >
+        {(['order', 'title', 'length', 'difficulty'] as const).map((key) => (
+          <MenuItem key={key} onClick={() => handleSortSelect(key)} selected={sortKey === key}>
+            {t(`sort${key.charAt(0).toUpperCase() + key.slice(1)}` as 'sortOrder' | 'sortTitle' | 'sortLength' | 'sortDifficulty')}
+            {sortKey === key && (
+              sortDir === 'asc' ? <ArrowDownward fontSize="small" sx={{ ml: 1 }} /> : <ArrowUpward fontSize="small" sx={{ ml: 1 }} />
+            )}
+          </MenuItem>
+        ))}
+      </Menu>
+
       <input
         ref={importFileRef}
         type="file"
@@ -407,7 +499,7 @@ export function IndexPage({ onSelectSong }: IndexPageProps) {
         open={scaleDialogOpen}
         onClose={() => setScaleDialogOpen(false)}
         onCreate={(song) => {
-          addSong(song);
+          addSongs([song]);
           setScaleDialogOpen(false);
         }}
       />

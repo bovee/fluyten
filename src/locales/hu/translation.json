@@ -125,5 +125,11 @@
   "confirmDeleteSongs_one": "Törölni 1 dalt? Ez nem vonható vissza.",
   "confirmDeleteSongs_other": "Törölni {{count}} dalt? Ez nem vonható vissza.",
   "practiceComplete": "{{total}} hangból {{correct}}-t játszottál helyesen.",
-  "practiceAgain": "Gyakorolj újra"
+  "practiceAgain": "Gyakorolj újra",
+  "sortSongs": "Dalok rendezése",
+  "sortOrder": "Sorrend",
+  "sortTitle": "Cím",
+  "sortLength": "Hossz",
+  "method": "Módszer",
+  "sortDifficulty": "Nehézség"
 }

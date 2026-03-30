@@ -43,6 +43,8 @@ export function SettingsDialog({ open, onClose }: SettingsDialogProps) {
   const setIsGerman = useStore((state) => state.setIsGerman);
   const language = useStore((state) => state.language);
   const setLanguage = useStore((state) => state.setLanguage);
+  const method = useStore((state) => state.method);
+  const setMethod = useStore((state) => state.setMethod);
   const playbackVoices = useStore((state) => state.playbackVoices);
   const setPlaybackVoices = useStore((state) => state.setPlaybackVoices);
   const practiceMode = useStore((state) => state.practiceMode);
@@ -184,6 +186,19 @@ export function SettingsDialog({ open, onClose }: SettingsDialogProps) {
                   <MenuItem value="th">ภาษาไทย</MenuItem>
                   <MenuItem value="uk">Українська</MenuItem>
                   <MenuItem value="vi">Tiếng Việt</MenuItem>
+                </Select>
+              </FormControl>
+
+              <FormControl fullWidth>
+                <InputLabel id="method-label">{t('method')}</InputLabel>
+                <Select
+                  labelId="method-label"
+                  value={method}
+                  label={t('method')}
+                  onChange={(e) => setMethod(e.target.value)}
+                >
+                  <MenuItem value="orrSoprano">Orr (Soprano)</MenuItem>
+                  <MenuItem value="zeitlinSoprano">Zeitlin (Soprano)</MenuItem>
                 </Select>
               </FormControl>
 

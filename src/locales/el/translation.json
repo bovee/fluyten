@@ -125,5 +125,11 @@
   "confirmDeleteSongs_one": "Διαγραφή 1 τραγουδιών; Αυτό δεν μπορεί να αναιρεθεί.",
   "confirmDeleteSongs_other": "Διαγραφή {{count}} τραγουδιών; Αυτό δεν μπορεί να αναιρεθεί.",
   "practiceComplete": "Παίξατε {{correct}} από {{total}} νότες σωστά.",
-  "practiceAgain": "Εξάσκηση πάλι"
+  "practiceAgain": "Εξάσκηση πάλι",
+  "sortSongs": "Ταξινόμηση τραγουδιών",
+  "sortOrder": "Σειρά",
+  "sortTitle": "Τίτλος",
+  "sortLength": "Μήκος",
+  "method": "Μέθοδος",
+  "sortDifficulty": "Δυσκολία"
 }

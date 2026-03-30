@@ -125,5 +125,11 @@
   "confirmDeleteSongs_one": "1曲を削除しますか？この操作は元に戻せません。",
   "confirmDeleteSongs_other": "{{count}}曲を削除しますか？この操作は元に戻せません。",
   "practiceComplete": "{{total}}音中{{correct}}音を正しく演奏しました。",
-  "practiceAgain": "もう一度練習する"
+  "practiceAgain": "もう一度練習する",
+  "sortSongs": "曲を並び替え",
+  "sortOrder": "順番",
+  "sortTitle": "タイトル",
+  "sortLength": "長さ",
+  "method": "教本",
+  "sortDifficulty": "難易度"
 }
