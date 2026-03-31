@@ -44,7 +44,9 @@ export function IndexPage({ onSelectSong }: IndexPageProps) {
   const [scaleDialogOpen, setScaleDialogOpen] = useState(false);
   const [addSongMenuAnchor, setAddSongMenuAnchor] =
     useState<HTMLElement | null>(null);
-  const [editDialogOpen, setEditDialogOpen] = useState(false);
+  const [editMenuAnchor, setEditMenuAnchor] = useState<HTMLElement | null>(
+    null
+  );
   const [deleteConfirmOpen, setDeleteConfirmOpen] = useState(false);
   const [importUrl, setImportUrl] = useState<{
     value: string;
@@ -52,8 +54,12 @@ export function IndexPage({ onSelectSong }: IndexPageProps) {
   } | null>(null);
   const [isDragOver, setIsDragOver] = useState(false);
   const [filterText, setFilterText] = useState('');
-  const [sortMenuAnchor, setSortMenuAnchor] = useState<HTMLElement | null>(null);
-  const [sortKey, setSortKey] = useState<'order' | 'title' | 'length' | 'difficulty'>('order');
+  const [sortMenuAnchor, setSortMenuAnchor] = useState<HTMLElement | null>(
+    null
+  );
+  const [sortKey, setSortKey] = useState<
+    'order' | 'title' | 'length' | 'difficulty'
+  >('order');
   const [sortDir, setSortDir] = useState<'asc' | 'desc'>('desc');
   const [selectedIds, setSelectedIds] = useState<Set<string>>(new Set());
   const longPressTimers = useRef<Map<string, ReturnType<typeof setTimeout>>>(
@@ -76,7 +82,9 @@ export function IndexPage({ onSelectSong }: IndexPageProps) {
     } else if (sortKey === 'length') {
       base.sort((a, b) => (a.beats ?? 0) - (b.beats ?? 0));
     } else if (sortKey === 'difficulty') {
-      base.sort((a, b) => (a.difficulty ?? '').localeCompare(b.difficulty ?? ''));
+      base.sort((a, b) =>
+        (a.difficulty ?? '').localeCompare(b.difficulty ?? '')
+      );
     } else {
       // 'order': store order is oldest-first; desc = most recent first
       if (sortDir === 'desc') base.reverse();
@@ -155,11 +163,13 @@ export function IndexPage({ onSelectSong }: IndexPageProps) {
   }, []);
 
   const handleAddEmptySong = () => {
-    addSongs([{
-      id: crypto.randomUUID(),
-      title: 'New Song',
-      abc: `X:1\nT:New Song\nM:C\nL:1/4\nK:C\nC D E F |`,
-    }]);
+    addSongs([
+      {
+        id: crypto.randomUUID(),
+        title: 'New Song',
+        abc: `X:1\nT:New Song\nM:C\nL:1/4\nK:C\nC D E F |`,
+      },
+    ]);
     setAddSongMenuAnchor(null);
   };
 
@@ -226,10 +236,12 @@ export function IndexPage({ onSelectSong }: IndexPageProps) {
     a.download = 'songs.abc';
     a.click();
     URL.revokeObjectURL(url);
-    setEditDialogOpen(false);
+    setEditMenuAnchor(null);
   };
 
-  const handleSortSelect = (key: 'order' | 'title' | 'length' | 'difficulty') => {
+  const handleSortSelect = (
+    key: 'order' | 'title' | 'length' | 'difficulty'
+  ) => {
     if (key === sortKey) {
       setSortDir((d) => (d === 'asc' ? 'desc' : 'asc'));
     } else {
@@ -292,24 +304,15 @@ export function IndexPage({ onSelectSong }: IndexPageProps) {
       )}
 
       <Tooltip title={t('editSongs')}>
-        <span style={{ position: 'fixed', top: 8, right: 88 }}>
+        <span style={{ position: 'fixed', top: 8, right: 48 }}>
           <IconButton
-            onClick={() => setEditDialogOpen(true)}
+            onClick={(e) => setEditMenuAnchor(e.currentTarget)}
             aria-label={t('editSongs')}
             disabled={!isSelecting}
           >
             <EditNote />
           </IconButton>
         </span>
-      </Tooltip>
-      <Tooltip title={t('addSong')}>
-        <IconButton
-          onClick={(e) => setAddSongMenuAnchor(e.currentTarget)}
-          aria-label={t('addSong')}
-          style={{ position: 'fixed', top: 8, right: 48 }}
-        >
-          <Add />
-        </IconButton>
       </Tooltip>
       <Tooltip title={t('settingsButton')}>
         <IconButton
@@ -323,7 +326,15 @@ export function IndexPage({ onSelectSong }: IndexPageProps) {
       <h1 style={{ color: '#1c3248' }}>{t('appTitle')}</h1>
 
       {songs.length > 0 && (
-        <Box sx={{ display: 'flex', alignItems: 'center', gap: 0.5, mb: 1, justifyContent: 'center' }}>
+        <Box
+          sx={{
+            display: 'flex',
+            alignItems: 'center',
+            gap: 0.5,
+            mb: 1,
+            justifyContent: 'center',
+          }}
+        >
           <TextField
             size="small"
             placeholder={t('filterSongs')}
@@ -336,7 +347,11 @@ export function IndexPage({ onSelectSong }: IndexPageProps) {
             <IconButton
               onClick={(e) => setSortMenuAnchor(e.currentTarget)}
               aria-label={t('sortSongs')}
-              color={sortKey !== 'order' || sortDir !== 'desc' ? 'primary' : 'default'}
+              color={
+                sortKey !== 'order' || sortDir !== 'desc'
+                  ? 'primary'
+                  : 'default'
+              }
             >
               <Sort />
             </IconButton>
@@ -354,6 +369,27 @@ export function IndexPage({ onSelectSong }: IndexPageProps) {
             'repeat(auto-fill, minmax(min(280px, 100%), 1fr))',
         }}
       >
+        <ListItem role="listitem" disablePadding>
+          <ListItemButton
+            onClick={(e) => setAddSongMenuAnchor(e.currentTarget)}
+            aria-label={t('addSong')}
+            sx={{ minWidth: 0, color: 'text.secondary', pl: '10px' }}
+          >
+            <Add
+              fontSize="small"
+              sx={{ mr: '21px', flexShrink: 0, alignSelf: 'center' }}
+            />
+            <ListItemText
+              primary={t('addSong')}
+              sx={{
+                '& .MuiListItemText-primary': {
+                  position: 'relative',
+                  top: '2px',
+                },
+              }}
+            />
+          </ListItemButton>
+        </ListItem>
         {filteredSongs.map((song) => {
           const selected = selectedIds.has(song.id);
           return (
@@ -473,11 +509,24 @@ export function IndexPage({ onSelectSong }: IndexPageProps) {
         onClose={() => setSortMenuAnchor(null)}
       >
         {(['order', 'title', 'length', 'difficulty'] as const).map((key) => (
-          <MenuItem key={key} onClick={() => handleSortSelect(key)} selected={sortKey === key}>
-            {t(`sort${key.charAt(0).toUpperCase() + key.slice(1)}` as 'sortOrder' | 'sortTitle' | 'sortLength' | 'sortDifficulty')}
-            {sortKey === key && (
-              sortDir === 'asc' ? <ArrowDownward fontSize="small" sx={{ ml: 1 }} /> : <ArrowUpward fontSize="small" sx={{ ml: 1 }} />
+          <MenuItem
+            key={key}
+            onClick={() => handleSortSelect(key)}
+            selected={sortKey === key}
+          >
+            {t(
+              `sort${key.charAt(0).toUpperCase() + key.slice(1)}` as
+                | 'sortOrder'
+                | 'sortTitle'
+                | 'sortLength'
+                | 'sortDifficulty'
             )}
+            {sortKey === key &&
+              (sortDir === 'asc' ? (
+                <ArrowDownward fontSize="small" sx={{ ml: 1 }} />
+              ) : (
+                <ArrowUpward fontSize="small" sx={{ ml: 1 }} />
+              ))}
           </MenuItem>
         ))}
       </Menu>
@@ -504,29 +553,29 @@ export function IndexPage({ onSelectSong }: IndexPageProps) {
         }}
       />
 
-      {/* Edit Songs dialog */}
-      <Dialog open={editDialogOpen} onClose={() => setEditDialogOpen(false)}>
-        <DialogTitle>{t('editSongs')}</DialogTitle>
-        <DialogActions sx={{ justifyContent: 'space-between' }}>
-          <Button
-            color="error"
-            onClick={() => {
-              setEditDialogOpen(false);
-              setDeleteConfirmOpen(true);
-            }}
-          >
-            {t('deleteSongs')}
-          </Button>
-          <Box sx={{ display: 'flex', gap: 1 }}>
-            <Button variant="outlined" onClick={handleExportSongs}>
-              {t('exportSongs')}
-            </Button>
-            <Button onClick={() => setEditDialogOpen(false)}>
-              {t('cancel')}
-            </Button>
-          </Box>
-        </DialogActions>
-      </Dialog>
+      <Menu
+        anchorEl={editMenuAnchor}
+        open={Boolean(editMenuAnchor)}
+        onClose={() => setEditMenuAnchor(null)}
+      >
+        <MenuItem
+          onClick={() => {
+            setEditMenuAnchor(null);
+            setDeleteConfirmOpen(true);
+          }}
+          sx={{ color: 'error.main' }}
+        >
+          {t('deleteSongs')}
+        </MenuItem>
+        <MenuItem
+          onClick={() => {
+            setEditMenuAnchor(null);
+            handleExportSongs();
+          }}
+        >
+          {t('exportSongs')}
+        </MenuItem>
+      </Menu>
 
       {/* Delete confirmation */}
       <Dialog

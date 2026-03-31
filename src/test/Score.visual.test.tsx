@@ -21,10 +21,23 @@ const composed = composeStories(stories);
 beforeAll(async () => {
   await page.viewport(1280, 720);
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  await (cdp() as any).send('Runtime.evaluate', {
+  const cdpSession = cdp() as any;
+  await cdpSession.send('Runtime.evaluate', {
     expression: 'document.fonts.ready',
     awaitPromise: true,
   });
+  // document.fonts.ready resolves before fonts are applied to newly-mounted
+  // DOM nodes, causing the first test to capture a screenshot before glyphs
+  // are painted. Render a warmup story and wait for several frames so the
+  // browser fully applies fonts before any real test screenshot is taken.
+  const WarmupStory = Object.values(composed)[0];
+  const { unmount } = render(<WarmupStory />);
+  await cdpSession.send('Runtime.evaluate', {
+    expression:
+      'new Promise(r => requestAnimationFrame(() => requestAnimationFrame(() => requestAnimationFrame(r))))',
+    awaitPromise: true,
+  });
+  unmount();
 });
 
 afterEach(cleanup);

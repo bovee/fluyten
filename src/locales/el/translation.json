@@ -131,5 +131,6 @@
   "sortTitle": "Τίτλος",
   "sortLength": "Μήκος",
   "method": "Μέθοδος",
-  "sortDifficulty": "Δυσκολία"
+  "sortDifficulty": "Δυσκολία",
+  "methodNone": "Καμία"
 }

@@ -131,5 +131,6 @@
   "sortTitle": "शीर्षक",
   "sortLength": "लंबाई",
   "method": "विधि",
-  "sortDifficulty": "कठिनाई"
+  "sortDifficulty": "कठिनाई",
+  "methodNone": "कोई नहीं"
 }

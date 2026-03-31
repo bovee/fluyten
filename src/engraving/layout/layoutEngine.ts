@@ -36,7 +36,7 @@ export function computeLayout(
 ): LayoutResult {
   const sig = music.signatures[0];
   const clef = music.clef as Clef;
-  const displayPitchOffset = music.clef === 'treble8va' ? -12 : 0;
+  const displayPitchOffset = music.clef.endsWith('8va') ? -12 : 0;
 
   const fifths = KEYS[sig.keySignature] ?? 0;
   const keyAccidentals = FIFTHS_TO_ACCIDENTALS[fifths] ?? [];

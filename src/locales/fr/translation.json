@@ -131,5 +131,6 @@
   "sortTitle": "Titre",
   "sortLength": "Durée",
   "method": "Méthode",
-  "sortDifficulty": "Difficulté"
+  "sortDifficulty": "Difficulté",
+  "methodNone": "Aucune"
 }

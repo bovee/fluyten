@@ -23,6 +23,7 @@ import GraphicEq from '@mui/icons-material/GraphicEq';
 import { useTranslation } from 'react-i18next';
 import { useStore } from './store';
 import { RECORDER_TYPES } from './instrument';
+import { METHODS_FOR_INSTRUMENT, METHOD_DISPLAY_NAMES } from './method';
 import { FingeringDiagram } from './FingeringDiagram';
 import { RecorderDetector } from './audio/RecorderDetector';
 import { Note } from './music';
@@ -197,8 +198,12 @@ export function SettingsDialog({ open, onClose }: SettingsDialogProps) {
                   label={t('method')}
                   onChange={(e) => setMethod(e.target.value)}
                 >
-                  <MenuItem value="orrSoprano">Orr (Soprano)</MenuItem>
-                  <MenuItem value="zeitlinSoprano">Zeitlin (Soprano)</MenuItem>
+                  <MenuItem value="none">{t('methodNone')}</MenuItem>
+                  {METHODS_FOR_INSTRUMENT[instrumentType].map((m) => (
+                    <MenuItem key={m} value={m}>
+                      {METHOD_DISPLAY_NAMES[m]}
+                    </MenuItem>
+                  ))}
                 </Select>
               </FormControl>
 

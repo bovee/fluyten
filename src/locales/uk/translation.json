@@ -131,5 +131,6 @@
   "sortTitle": "Назва",
   "sortLength": "Довжина",
   "method": "Метод",
-  "sortDifficulty": "Складність"
+  "sortDifficulty": "Складність",
+  "methodNone": "Немає"
 }

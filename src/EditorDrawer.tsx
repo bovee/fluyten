@@ -224,7 +224,7 @@ export function EditorDrawer({
           }
         }
         const [dur, mod] = bestCandidate;
-        const writtenPitch = ctx.clef === 'treble8va' ? pitch - 12 : pitch;
+        const writtenPitch = ctx.clef.endsWith('8va') ? pitch - 12 : pitch;
         const pitchStr = singlePitchToAbc(
           writtenPitch,
           undefined as never,

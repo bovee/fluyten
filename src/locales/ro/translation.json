@@ -131,5 +131,6 @@
   "sortTitle": "Titlu",
   "sortLength": "Lungime",
   "method": "Metodă",
-  "sortDifficulty": "Dificultate"
+  "sortDifficulty": "Dificultate",
+  "methodNone": "Niciunul"
 }

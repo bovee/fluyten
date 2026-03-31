@@ -3,7 +3,9 @@
 export const SMUFL: Record<string, string> = {
   // Clefs
   gClef: '\uE050',
+  gClef8va: '\uE053',
   fClef: '\uE062',
+  fClef8va: '\uE065',
   cClef: '\uE05C',
   // Time signatures
   timeSig0: '\uE080',

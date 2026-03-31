@@ -394,9 +394,15 @@ export function toAbc(music: Music): string {
   }
   const defaultDuration = sig0.defaultDuration ?? Duration.EIGHTH;
   lines.push(`L:${DURATION_TO_L[defaultDuration] ?? '1/8'}`);
+  const clefName =
+    music.clef === 'treble8va'
+      ? 'treble+8'
+      : music.clef === 'bass8va'
+        ? 'bass+8'
+        : music.clef;
   lines.push(
     music.clef !== 'treble'
-      ? `K:${sig0.keySignature} clef=${music.clef}`
+      ? `K:${sig0.keySignature} clef=${clefName}`
       : `K:${sig0.keySignature}`
   );
 

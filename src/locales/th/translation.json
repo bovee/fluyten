@@ -131,5 +131,6 @@
   "sortTitle": "ชื่อเรื่อง",
   "sortLength": "ความยาว",
   "method": "วิธี",
-  "sortDifficulty": "ความยาก"
+  "sortDifficulty": "ความยาก",
+  "methodNone": "ไม่มี"
 }

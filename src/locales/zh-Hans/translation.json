@@ -131,5 +131,6 @@
   "sortTitle": "标题",
   "sortLength": "长度",
   "method": "教材",
-  "sortDifficulty": "难度"
+  "sortDifficulty": "难度",
+  "methodNone": "无"
 }

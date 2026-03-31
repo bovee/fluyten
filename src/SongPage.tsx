@@ -507,6 +507,7 @@ export function SongPage({
   const { t } = useTranslation();
   const instrumentType = useStore((s) => s.instrumentType);
   const defaultClef = defaultClefForInstrument(instrumentType);
+  const defaultMiddle = instrumentType === 'BASS' ? 'd' : undefined;
   const [editOpen, setEditOpen] = useState(false);
   const [drawerHeight, setDrawerHeight] = useState(0);
   const [speedDialOpen, setSpeedDialOpen] = useState(false);
@@ -514,7 +515,7 @@ export function SongPage({
   const [currentParseError, setCurrentParseError] = useState('');
   const [voices, setVoices] = useState(() => {
     try {
-      return voicesFromAbc(song.abc, defaultClef);
+      return voicesFromAbc(song.abc, defaultClef, defaultMiddle);
     } catch {
       return [];
     }
@@ -642,7 +643,7 @@ export function SongPage({
 
   useEffect(() => {
     try {
-      const newVoices = voicesFromAbc(abcMusic, defaultClef);
+      const newVoices = voicesFromAbc(abcMusic, defaultClef, defaultMiddle);
       // eslint-disable-next-line react-hooks/set-state-in-effect
       setVoices(newVoices);
       setSelectedVoiceIdx((idx) => Math.min(idx, newVoices.length - 1));
@@ -651,7 +652,7 @@ export function SongPage({
     } catch (error) {
       setCurrentParseError((error as Error).message);
     }
-  }, [abcMusic]);
+  }, [abcMusic, defaultClef, defaultMiddle]);
 
   const detectedNoteName =
     detectedPitch !== null ? NOTE_NAMES[detectedPitch % 12] : null;

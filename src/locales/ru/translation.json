@@ -131,5 +131,6 @@
   "sortTitle": "Название",
   "sortLength": "Длина",
   "method": "Метод",
-  "sortDifficulty": "Сложность"
+  "sortDifficulty": "Сложность",
+  "methodNone": "Нет"
 }

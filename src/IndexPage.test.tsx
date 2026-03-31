@@ -89,21 +89,18 @@ describe('IndexPage', () => {
       ).not.toBeDisabled();
     });
 
-    it('opens Edit Songs dialog when Edit Songs button is clicked after selecting', () => {
+    it('opens Edit Songs menu when Edit Songs button is clicked after selecting', () => {
       render(<IndexPage {...defaultProps()} />);
       fireEvent.click(screen.getByRole('button', { name: /select song/i }));
       fireEvent.click(screen.getByRole('button', { name: /edit songs/i }));
-      expect(screen.getByRole('dialog')).toBeInTheDocument();
+      expect(screen.getByRole('menu')).toBeInTheDocument();
     });
 
-    it('opens delete confirm dialog from Edit Songs dialog', () => {
+    it('opens delete confirm dialog from Edit Songs menu', () => {
       render(<IndexPage {...defaultProps()} />);
       fireEvent.click(screen.getByRole('button', { name: /select song/i }));
       fireEvent.click(screen.getByRole('button', { name: /edit songs/i }));
-      const dialog = screen.getByRole('dialog');
-      fireEvent.click(
-        within(dialog).getByRole('button', { name: /delete songs/i })
-      );
+      fireEvent.click(screen.getByRole('menuitem', { name: /delete songs/i }));
       expect(screen.getByRole('dialog')).toBeInTheDocument();
       expect(screen.getByText(/1 song/i)).toBeInTheDocument();
     });
@@ -112,7 +109,7 @@ describe('IndexPage', () => {
       render(<IndexPage {...defaultProps()} />);
       fireEvent.click(screen.getByRole('button', { name: /select song/i }));
       fireEvent.click(screen.getByRole('button', { name: /edit songs/i }));
-      fireEvent.click(screen.getByRole('button', { name: /delete songs/i }));
+      fireEvent.click(screen.getByRole('menuitem', { name: /delete songs/i }));
       const confirmDialog = screen.getByRole('dialog');
       fireEvent.click(
         within(confirmDialog).getByRole('button', { name: /delete songs/i })
@@ -124,7 +121,7 @@ describe('IndexPage', () => {
       render(<IndexPage {...defaultProps()} />);
       fireEvent.click(screen.getByRole('button', { name: /select song/i }));
       fireEvent.click(screen.getByRole('button', { name: /edit songs/i }));
-      fireEvent.click(screen.getByRole('button', { name: /delete songs/i }));
+      fireEvent.click(screen.getByRole('menuitem', { name: /delete songs/i }));
       fireEvent.click(screen.getByRole('button', { name: /cancel/i }));
       expect(useStore.getState().songs).toHaveLength(1);
     });
@@ -151,10 +148,7 @@ describe('IndexPage', () => {
       render(<IndexPage {...defaultProps()} />);
       fireEvent.click(screen.getByRole('button', { name: /select song/i }));
       fireEvent.click(screen.getByRole('button', { name: /edit songs/i }));
-      const dialog = screen.getByRole('dialog');
-      fireEvent.click(
-        within(dialog).getByRole('button', { name: /export songs/i })
-      );
+      fireEvent.click(screen.getByRole('menuitem', { name: /export songs/i }));
       expect(createObjectURL).toHaveBeenCalled();
       expect(click).toHaveBeenCalled();
     });

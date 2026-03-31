@@ -2,6 +2,7 @@ import { useTranslation } from 'react-i18next';
 import { type Note } from './music';
 import { useStore } from './store';
 import { NOTE_NAMES } from './constants';
+import { RECORDER_TYPES, type RecorderType } from './instrument';
 
 export const Hole = {
   Open: 0,
@@ -128,15 +129,6 @@ const EMPTY_DIAGRAM = (
   ></svg>
 );
 
-const INSTRUMENT_BASE_PITCH: { [key: string]: number } = {
-  SOPRANINO: 76,
-  SOPRANO: 71,
-  ALTO: 64,
-  TENOR: 59,
-  BASS: 40,
-  ALL: 0,
-};
-
 // eslint-disable-next-line react-refresh/only-export-components
 export function lookupFingerings(
   pitch: number,
@@ -144,7 +136,8 @@ export function lookupFingerings(
   german: boolean,
   trill = false
 ): Hole[][] | undefined {
-  const offset = pitch - (INSTRUMENT_BASE_PITCH[instrumentType] ?? 0);
+  const offset =
+    pitch - (RECORDER_TYPES[instrumentType as RecorderType]?.basePitch ?? 0);
   if (trill) return TRILLED_FINGERINGS[offset] || FINGERINGS[offset];
   if (german && offset in GERMAN_FINGERINGS) {
     return GERMAN_FINGERINGS[offset];

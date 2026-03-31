@@ -78,13 +78,13 @@ export const EditSongDialog: Story = {
   decorators: [withSongs(oneSong)],
   play: async ({ canvasElement }) => {
     const canvas = within(canvasElement);
-    // Select the song first, then open the Edit Songs dialog
+    // Select the song first, then open the Edit Songs menu
     await userEvent.click(
       await canvas.findByRole('button', { name: /select song/i })
     );
     await userEvent.click(
       await canvas.findByRole('button', { name: /edit songs/i })
     );
-    await within(document.body).findByRole('dialog');
+    await within(document.body).findByRole('menu');
   },
 };

@@ -14,12 +14,24 @@ import {
 import { PITCH_CONSTANTS, TIME_SIGNATURES } from '../constants';
 import { type RecorderType } from '../instrument';
 
+const CLEF_NAME_MAP: Record<string, Music['clef']> = {
+  bass: 'bass',
+  'bass+8': 'bass8va',
+  alto: 'alto',
+  'treble+8': 'treble8va',
+  treble: 'treble',
+};
+
+function parseClefName(name: string): Music['clef'] {
+  return CLEF_NAME_MAP[name.toLowerCase()] ?? 'treble';
+}
+
 export function defaultClefForInstrument(
   instrumentType: RecorderType
 ): Music['clef'] {
   if (instrumentType === 'SOPRANO' || instrumentType === 'SOPRANINO')
     return 'treble8va';
-  if (instrumentType === 'BASS') return 'bass';
+  if (instrumentType === 'BASS') return 'bass8va';
   return 'treble';
 }
 
@@ -733,11 +745,12 @@ function parseMidNote(note: string): number | undefined {
 
 // Default MIDI pitch of the middle line for each clef type.
 // treble middle line = B4 (MIDI 71); bass = D3 (MIDI 50); alto = A4 (MIDI 69).
-// treble+8 shares the treble default (the extra octave is handled separately).
+// treble+8 and bass+8 share their base clef default (the extra octave is handled separately).
 const DEFAULT_CLEF_MIDDLE: Record<string, number> = {
   treble: parseMidNote('B') ?? 71, // B4
   'treble+8': parseMidNote('B') ?? 71, // B4
   bass: parseMidNote('D,') ?? 50, // D3
+  'bass+8': parseMidNote('D,') ?? 50, // D3
   alto: parseMidNote('A') ?? 69, // A4
 };
 
@@ -752,13 +765,15 @@ export interface HeaderParseResult {
 export function parseHeaders(
   lines: string[],
   music: Music,
-  defaultClef: Music['clef'] = 'treble'
+  defaultClef: Music['clef'] = 'treble',
+  defaultMiddle?: string
 ): HeaderParseResult {
   let defaultDuration: Duration = Duration.QUARTER;
   const keyAdjustment: { [n: string]: number } = {};
   const scoreLines: string[] = [];
   let isFreeTime = false;
   let pitchShift = 0;
+  let explicitMiddle = false;
   music.clef = defaultClef;
 
   for (const line of lines) {
@@ -820,18 +835,16 @@ export function parseHeaders(
           keyAdjustment[note[0]] = note[1] === '#' ? 1 : -1;
         }
         if (clefMatch) {
-          const clefName = clefMatch[1].toLowerCase();
-          music.clef =
-            clefName === 'bass'
-              ? 'bass'
-              : clefName === 'alto'
-                ? 'alto'
-                : clefName === 'treble+8'
-                  ? 'treble8va'
-                  : 'treble';
+          music.clef = parseClefName(clefMatch[1]);
         }
         if (middleMatch) {
-          const clefKey = music.clef === 'treble8va' ? 'treble+8' : music.clef;
+          explicitMiddle = true;
+          const clefKey =
+            music.clef === 'treble8va'
+              ? 'treble+8'
+              : music.clef === 'bass8va'
+                ? 'bass+8'
+                : music.clef;
           const defaultMidi =
             DEFAULT_CLEF_MIDDLE[clefKey] ?? DEFAULT_CLEF_MIDDLE.treble;
           const specifiedMidi = parseMidNote(middleMatch[1]);
@@ -844,15 +857,7 @@ export function parseHeaders(
       continue;
     }
     if (line.startsWith('%%clef')) {
-      const clefName = line.slice('%%clef'.length).trim().toLowerCase();
-      music.clef =
-        clefName === 'bass'
-          ? 'bass'
-          : clefName === 'alto'
-            ? 'alto'
-            : clefName === 'treble+8'
-              ? 'treble8va'
-              : 'treble';
+      music.clef = parseClefName(line.slice('%%clef'.length).trim());
       continue;
     }
     // music line (with line-continuation support)
@@ -860,6 +865,21 @@ export function parseHeaders(
       scoreLines.push(line.slice(0, -1));
     } else {
       scoreLines.push(line);
+    }
+  }
+
+  if (!explicitMiddle && defaultMiddle !== undefined) {
+    const clefKey =
+      music.clef === 'treble8va'
+        ? 'treble+8'
+        : music.clef === 'bass8va'
+          ? 'bass+8'
+          : music.clef;
+    const defaultMidi =
+      DEFAULT_CLEF_MIDDLE[clefKey] ?? DEFAULT_CLEF_MIDDLE.treble;
+    const specifiedMidi = parseMidNote(defaultMiddle);
+    if (specifiedMidi !== undefined) {
+      pitchShift = defaultMidi - specifiedMidi;
     }
   }
 
@@ -887,7 +907,8 @@ export interface VoiceInfo {
  */
 export function voicesFromAbc(
   text: string,
-  defaultClef: Music['clef'] = 'treble'
+  defaultClef: Music['clef'] = 'treble',
+  defaultMiddle?: string
 ): VoiceInfo[] {
   // Strip comments (same preprocessing as fromAbc)
   const lines = text.split(/\r?\n/).map((l) => {
@@ -898,13 +919,18 @@ export function voicesFromAbc(
 
   // Quick check: does this ABC use voices at all?
   if (!lines.some((l) => /^V:\s*\S/.test(l))) {
-    return [{ id: '1', name: '', music: fromAbc(text, defaultClef) }];
+    return [
+      { id: '1', name: '', music: fromAbc(text, defaultClef, defaultMiddle) },
+    ];
   }
 
   // Collect voice definitions from V: lines (first occurrence per id wins)
   const voiceDefs = new Map<
     string,
-    { name: string; clef?: 'treble' | 'bass' | 'alto' | 'treble8va' }
+    {
+      name: string;
+      clef?: 'treble' | 'bass' | 'alto' | 'treble8va' | 'bass8va';
+    }
   >();
   for (const line of lines) {
     if (!line.startsWith('V:')) continue;
@@ -916,17 +942,9 @@ export function voicesFromAbc(
     const nameMatch = rest.match(/(?:name|nm)="([^"]+)"|(?:name|nm)=(\S+)/i);
     const clefMatch = rest.match(/clef=([\w+]+)/i);
     const name = nameMatch ? (nameMatch[1] ?? nameMatch[2]) : id;
-    let clef: 'treble' | 'bass' | 'alto' | 'treble8va' | undefined;
+    let clef: 'treble' | 'bass' | 'alto' | 'treble8va' | 'bass8va' | undefined;
     if (clefMatch) {
-      const c = clefMatch[1].toLowerCase();
-      clef =
-        c === 'bass'
-          ? 'bass'
-          : c === 'alto'
-            ? 'alto'
-            : c === 'treble+8'
-              ? 'treble8va'
-              : 'treble';
+      clef = parseClefName(clefMatch[1]);
     }
     voiceDefs.set(id, { name, clef });
   }
@@ -982,7 +1000,7 @@ export function voicesFromAbc(
     if (segments.length === 0) continue;
     const voiceAbc = [...globalHeaderLines, segments.join(' ')].join('\n');
     try {
-      const music = fromAbc(voiceAbc, clef ?? defaultClef);
+      const music = fromAbc(voiceAbc, clef ?? defaultClef, defaultMiddle);
       if (clef) music.clef = clef;
       result.push({ id, name, music });
     } catch {
@@ -1180,7 +1198,8 @@ function assignLyricsToNotes(
 
 export function fromAbc(
   text: string,
-  defaultClef: Music['clef'] = 'treble'
+  defaultClef: Music['clef'] = 'treble',
+  defaultMiddle?: string
 ): Music {
   const music = new Music();
   const lines = text.split(/\r?\n/).map((l) => {
@@ -1192,7 +1211,7 @@ export function fromAbc(
   const { sections, headerLines, endLyricLines } = buildSections(lines);
 
   const { defaultDuration, keyAdjustment, isFreeTime, pitchShift } =
-    parseHeaders(headerLines, music, defaultClef);
+    parseHeaders(headerLines, music, defaultClef, defaultMiddle);
 
   // Parse each section's score lines, tracking the note range produced
   const sectionNoteRanges: [number, number][] = [];
@@ -1219,7 +1238,9 @@ export function fromAbc(
     music.endLyrics = endLyricLines.join('\n');
   }
 
-  const totalShift = pitchShift + (music.clef === 'treble8va' ? 12 : 0);
+  const totalShift =
+    pitchShift +
+    (music.clef === 'treble8va' || music.clef === 'bass8va' ? 12 : 0);
   if (totalShift !== 0) {
     for (const note of music.notes) {
       note.pitches = note.pitches.map((p) => p + totalShift);

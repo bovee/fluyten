@@ -62,29 +62,33 @@ describe('store', () => {
       ];
       useStore.getState().addSongs(batch);
       expect(useStore.getState().songs).toHaveLength(2);
-      expect(useStore.getState().songs[0].id).not.toBe(useStore.getState().songs[1].id);
+      expect(useStore.getState().songs[0].id).not.toBe(
+        useStore.getState().songs[1].id
+      );
     });
 
     it('appends to existing songs', () => {
       useStore
         .getState()
         .addSongs([{ id: 's0', title: 'Existing', abc: 'K:C\nC' }]);
-      useStore
-        .getState()
-        .addSongs([{ id: 's1', title: 'New', abc: 'K:G\nG' }]);
+      useStore.getState().addSongs([{ id: 's1', title: 'New', abc: 'K:G\nG' }]);
       expect(useStore.getState().songs).toHaveLength(2);
     });
   });
 
   describe('removeSong', () => {
     it('removes an existing song', () => {
-      useStore.getState().addSongs([{ id: 's1', title: 'Song', abc: 'K:C\nC' }]);
+      useStore
+        .getState()
+        .addSongs([{ id: 's1', title: 'Song', abc: 'K:C\nC' }]);
       useStore.getState().removeSong('s1');
       expect(useStore.getState().songs).toHaveLength(0);
     });
 
     it('does nothing for non-existent ID', () => {
-      useStore.getState().addSongs([{ id: 's1', title: 'Song', abc: 'K:C\nC' }]);
+      useStore
+        .getState()
+        .addSongs([{ id: 's1', title: 'Song', abc: 'K:C\nC' }]);
       useStore.getState().removeSong('non-existent');
       expect(useStore.getState().songs).toHaveLength(1);
     });
@@ -92,7 +96,9 @@ describe('store', () => {
 
   describe('updateSongAbc', () => {
     it('updates the ABC text', () => {
-      useStore.getState().addSongs([{ id: 's1', title: 'Song', abc: 'K:C\nC' }]);
+      useStore
+        .getState()
+        .addSongs([{ id: 's1', title: 'Song', abc: 'K:C\nC' }]);
       useStore.getState().updateSongAbc('s1', 'K:G\nG');
       expect(useStore.getState().songs[0].abc).toBe('K:G\nG');
     });
@@ -120,16 +126,20 @@ describe('store', () => {
     it('updates method and recomputes difficulty for all songs', () => {
       useStore
         .getState()
-        .addSongs([{ id: 's1', title: '', abc: 'T:Test\nM:4/4\nL:1/4\nK:C\nC D E F |' }]);
-      useStore.getState().setMethod('orrSoprano');
-      expect(useStore.getState().method).toBe('orrSoprano');
+        .addSongs([
+          { id: 's1', title: '', abc: 'T:Test\nM:4/4\nL:1/4\nK:C\nC D E F |' },
+        ]);
+      useStore.getState().setMethod('orrC');
+      expect(useStore.getState().method).toBe('orrC');
       expect(useStore.getState().songs[0].difficulty).toBe('1.29');
     });
   });
 
   describe('updateSongTempo', () => {
     it('updates the tempo', () => {
-      useStore.getState().addSongs([{ id: 's1', title: 'Song', abc: 'K:C\nC' }]);
+      useStore
+        .getState()
+        .addSongs([{ id: 's1', title: 'Song', abc: 'K:C\nC' }]);
       useStore.getState().updateSongTempo('s1', 120);
       expect(useStore.getState().songs[0].tempo).toBe(120);
     });

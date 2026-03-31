@@ -17,7 +17,7 @@ const SHARP_STAFF_POSITIONS_BASS = SHARP_STAFF_POSITIONS_TREBLE.map(
 );
 const FLAT_STAFF_POSITIONS_BASS = FLAT_STAFF_POSITIONS_TREBLE.map((p) => p - 2);
 
-type Clef = 'treble' | 'treble8va' | 'bass' | 'alto';
+type Clef = 'treble' | 'treble8va' | 'bass' | 'bass8va' | 'alto';
 
 interface BarProps {
   bar: BarLayout;
@@ -32,8 +32,10 @@ interface BarProps {
 
 function clefGlyph(clef: Clef): string {
   if (clef === 'bass') return 'fClef';
+  if (clef === 'bass8va') return 'fClef8va';
   if (clef === 'alto') return 'cClef';
-  return 'gClef'; // treble and treble8va
+  if (clef === 'treble8va') return 'gClef8va';
+  return 'gClef';
 }
 
 function clefY(clef: Clef, staffTopY: number): number {
@@ -41,7 +43,8 @@ function clefY(clef: Clef, staffTopY: number): number {
   // gClef: anchor on G4 = 2nd line from bottom = staff pos -2
   // fClef: anchor on F3 = 2nd line from top  = staff pos +2
   // cClef: anchor on center line             = staff pos 0
-  if (clef === 'bass') return staffPositionToY(2, staffTopY);
+  if (clef === 'bass' || clef === 'bass8va')
+    return staffPositionToY(2, staffTopY);
   if (clef === 'alto') return staffPositionToY(0, staffTopY);
   return staffPositionToY(-2, staffTopY); // treble and treble8va
 }
@@ -87,7 +90,7 @@ export function PreambleBar({ item, staffTopY, clef }: PreambleBarProps) {
   if (preamble.showKeySig && preamble.numKeyAccidentals > 0) {
     const isSharp = preamble.accidentalType === 'sharp';
     const staffPositions =
-      clef === 'bass'
+      clef === 'bass' || clef === 'bass8va'
         ? isSharp
           ? SHARP_STAFF_POSITIONS_BASS
           : FLAT_STAFF_POSITIONS_BASS

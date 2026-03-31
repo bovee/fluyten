@@ -131,5 +131,6 @@
   "sortTitle": "శీర్షిక",
   "sortLength": "పొడవు",
   "method": "పద్ధతి",
-  "sortDifficulty": "కష్టం"
+  "sortDifficulty": "కష్టం",
+  "methodNone": "ఏదీ కాదు"
 }

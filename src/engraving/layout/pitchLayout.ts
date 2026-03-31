@@ -8,7 +8,7 @@ import { STAFF_HEIGHT, STAFF_SPACE, STEM_LENGTH } from './types';
 const SEMITONE_TO_STEP: number[] = [0, 0, 1, 1, 2, 3, 3, 4, 4, 5, 5, 6];
 
 /** Clef name as stored in Music.clef. */
-export type Clef = 'treble' | 'treble8va' | 'bass' | 'alto';
+export type Clef = 'treble' | 'treble8va' | 'bass' | 'bass8va' | 'alto';
 
 /**
  * Convert a MIDI pitch to an integer staff position.
@@ -54,7 +54,8 @@ export function pitchToStaffPosition(
   //   treble: B4  = 6   → clefOffset = −6
   //   bass:   D3  = −6  → clefOffset = +6
   //   alto:   C4  = 0   → clefOffset = 0
-  const clefOffset = clef === 'bass' ? 6 : clef === 'alto' ? 0 : -6; // treble and treble8va both use −6
+  const clefOffset =
+    clef === 'bass' || clef === 'bass8va' ? 6 : clef === 'alto' ? 0 : -6; // treble and treble8va both use −6
 
   return stepsFromC4 + clefOffset;
 }

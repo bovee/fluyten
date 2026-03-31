@@ -131,5 +131,6 @@
   "sortTitle": "العنوان",
   "sortLength": "الطول",
   "method": "المنهج",
-  "sortDifficulty": "الصعوبة"
+  "sortDifficulty": "الصعوبة",
+  "methodNone": "لا شيء"
 }

@@ -131,5 +131,6 @@
   "sortTitle": "શીર્ષક",
   "sortLength": "લંબાઈ",
   "method": "પદ્ધતિ",
-  "sortDifficulty": "મુશ્કેલી"
+  "sortDifficulty": "મુશ્કેલી",
+  "methodNone": "કોઈ નહીં"
 }

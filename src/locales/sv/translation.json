@@ -131,5 +131,6 @@
   "sortTitle": "Titel",
   "sortLength": "Längd",
   "method": "Metod",
-  "sortDifficulty": "Svårighetsgrad"
+  "sortDifficulty": "Svårighetsgrad",
+  "methodNone": "Ingen"
 }

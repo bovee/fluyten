@@ -2,7 +2,7 @@ import { create } from 'zustand';
 import { persist, createJSONStorage } from 'zustand/middleware';
 
 import { type RecorderType } from './instrument';
-import { fromAbc } from './io/abcImport';
+import { fromAbc, voicesFromAbc } from './io/abcImport';
 import { featuresFromMusic, difficultyFromFeatures } from './method';
 
 export type PlaybackVoices = 'selected' | 'others' | 'all';
@@ -28,7 +28,9 @@ function derivedFields(
   const title = music.title ?? '';
   const barCount = music.bars.filter((b) => b.type !== 'begin').length;
   const beats = barCount * music.signatures[0].beatsPerBar;
-  const features = featuresFromMusic(music);
+  const voices = voicesFromAbc(abc);
+  const firstVoice = voices.length > 0 ? voices[0].music : music;
+  const features = featuresFromMusic(firstVoice);
   const difficulty = difficultyFromFeatures(features, method);
   return { title, beats, difficulty };
 }
@@ -65,14 +67,15 @@ export const useStore = create<SettingsState>()(
       onboarded: false,
       setOnboarded: () => set({ onboarded: true }),
       instrumentType: 'SOPRANO',
-      setInstrumentType: (instrumentType) => set({ instrumentType }),
+      setInstrumentType: (instrumentType) =>
+        set({ instrumentType, method: 'none' }),
       tuning: 1.0,
       setTuning: (tuning) => set({ tuning }),
       isGerman: false,
       setIsGerman: (isGerman) => set({ isGerman }),
       language: '',
       setLanguage: (language) => set({ language }),
-      method: 'zeitlinSoprano',
+      method: 'none',
       setMethod: (method) =>
         set((state) => ({
           method,
@@ -92,7 +95,10 @@ export const useStore = create<SettingsState>()(
         set((state) => ({
           songs: [
             ...state.songs,
-            ...songs.map((s) => ({ ...s, ...derivedFields(s.abc, state.method) })),
+            ...songs.map((s) => ({
+              ...s,
+              ...derivedFields(s.abc, state.method),
+            })),
           ],
         })),
       removeSong: (songId) =>
@@ -100,7 +106,9 @@ export const useStore = create<SettingsState>()(
       updateSongAbc: (songId, abc) =>
         set((state) => ({
           songs: state.songs.map((s) =>
-            s.id === songId ? { ...s, abc, ...derivedFields(abc, state.method) } : s
+            s.id === songId
+              ? { ...s, abc, ...derivedFields(abc, state.method) }
+              : s
           ),
         })),
       updateSongTempo: (songId, tempo) =>

@@ -455,7 +455,7 @@ function splitTicks(ticks: number): [Duration, DurationModifier][] {
 export class Music {
   title?: string = '';
   composer?: string;
-  clef: 'treble' | 'bass' | 'alto' | 'treble8va' = 'treble';
+  clef: 'treble' | 'bass' | 'alto' | 'treble8va' | 'bass8va' = 'treble';
   /** Key/meter/tempo snapshots. Always has at least one entry with atNoteIndex === 0. */
   signatures: Signature[] = [
     { atNoteIndex: 0, keySignature: 'C', beatsPerBar: 4, beatValue: 4 },

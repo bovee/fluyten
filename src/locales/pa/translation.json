@@ -131,5 +131,6 @@
   "sortTitle": "ਸਿਰਲੇਖ",
   "sortLength": "ਲੰਬਾਈ",
   "method": "ਵਿਧੀ",
-  "sortDifficulty": "ਮੁਸ਼ਕਲ"
+  "sortDifficulty": "ਮੁਸ਼ਕਲ",
+  "methodNone": "ਕੋਈ ਨਹੀਂ"
 }

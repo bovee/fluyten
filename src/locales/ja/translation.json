@@ -131,5 +131,6 @@
   "sortTitle": "タイトル",
   "sortLength": "長さ",
   "method": "教本",
-  "sortDifficulty": "難易度"
+  "sortDifficulty": "難易度",
+  "methodNone": "なし"
 }

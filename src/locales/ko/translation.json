@@ -131,5 +131,6 @@
   "sortTitle": "제목",
   "sortLength": "길이",
   "method": "교본",
-  "sortDifficulty": "난이도"
+  "sortDifficulty": "난이도",
+  "methodNone": "없음"
 }

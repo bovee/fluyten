@@ -131,5 +131,6 @@
   "sortTitle": "தலைப்பு",
   "sortLength": "நீளம்",
   "method": "முறை",
-  "sortDifficulty": "சிரமம்"
+  "sortDifficulty": "சிரமம்",
+  "methodNone": "எதுவுமில்லை"
 }
