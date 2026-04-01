@@ -29,13 +29,20 @@ export function BarlineStart({
   const y2 = staffTopY + STAFF_HEIGHT;
   return (
     <g>
-      <line x1={x} y1={y1} x2={x} y2={y2} stroke="black" strokeWidth={THICK} />
+      <line
+        x1={x}
+        y1={y1}
+        x2={x}
+        y2={y2}
+        stroke="currentColor"
+        strokeWidth={THICK}
+      />
       <line
         x1={x + THICK + 1}
         y1={y1}
         x2={x + THICK + 1}
         y2={y2}
-        stroke="black"
+        stroke="currentColor"
         strokeWidth={THIN}
       />
       {DOT_Y_OFFSETS.map((dy, i) => (
@@ -44,7 +51,7 @@ export function BarlineStart({
           cx={x + THICK + 1 + DOT_GAP}
           cy={staffTopY + dy}
           r={DOT_RADIUS}
-          fill="black"
+          fill="currentColor"
         />
       ))}
     </g>
@@ -63,7 +70,14 @@ export function BarlineEnd({
   switch (type) {
     case 'standard':
       return (
-        <line x1={x} y1={y1} x2={x} y2={y2} stroke="black" strokeWidth={THIN} />
+        <line
+          x1={x}
+          y1={y1}
+          x2={x}
+          y2={y2}
+          stroke="currentColor"
+          strokeWidth={THIN}
+        />
       );
 
     case 'double':
@@ -74,7 +88,7 @@ export function BarlineEnd({
             y1={y1}
             x2={x - 3}
             y2={y2}
-            stroke="black"
+            stroke="currentColor"
             strokeWidth={THIN}
           />
           <line
@@ -82,7 +96,7 @@ export function BarlineEnd({
             y1={y1}
             x2={x}
             y2={y2}
-            stroke="black"
+            stroke="currentColor"
             strokeWidth={THIN}
           />
         </g>
@@ -96,7 +110,7 @@ export function BarlineEnd({
             y1={y1}
             x2={x - THICK - 1}
             y2={y2}
-            stroke="black"
+            stroke="currentColor"
             strokeWidth={THIN}
           />
           <line
@@ -104,7 +118,7 @@ export function BarlineEnd({
             y1={y1}
             x2={x}
             y2={y2}
-            stroke="black"
+            stroke="currentColor"
             strokeWidth={THICK}
           />
         </g>
@@ -120,7 +134,7 @@ export function BarlineEnd({
               cx={x - THICK - 1 - DOT_GAP}
               cy={staffTopY + dy}
               r={DOT_RADIUS}
-              fill="black"
+              fill="currentColor"
             />
           ))}
           <line
@@ -128,7 +142,7 @@ export function BarlineEnd({
             y1={y1}
             x2={x - THICK - 1}
             y2={y2}
-            stroke="black"
+            stroke="currentColor"
             strokeWidth={THIN}
           />
           <line
@@ -136,7 +150,7 @@ export function BarlineEnd({
             y1={y1}
             x2={x}
             y2={y2}
-            stroke="black"
+            stroke="currentColor"
             strokeWidth={THICK}
           />
         </g>
@@ -152,7 +166,7 @@ export function BarlineEnd({
               cx={x - THICK - 2 - DOT_GAP * 2}
               cy={staffTopY + dy}
               r={DOT_RADIUS}
-              fill="black"
+              fill="currentColor"
             />
           ))}
           <line
@@ -160,7 +174,7 @@ export function BarlineEnd({
             y1={y1}
             x2={x - THICK - 2}
             y2={y2}
-            stroke="black"
+            stroke="currentColor"
             strokeWidth={THIN}
           />
           <line
@@ -168,7 +182,7 @@ export function BarlineEnd({
             y1={y1}
             x2={x - THICK / 2}
             y2={y2}
-            stroke="black"
+            stroke="currentColor"
             strokeWidth={THICK}
           />
           <line
@@ -176,7 +190,7 @@ export function BarlineEnd({
             y1={y1}
             x2={x + THICK / 2 + 1}
             y2={y2}
-            stroke="black"
+            stroke="currentColor"
             strokeWidth={THIN}
           />
           {DOT_Y_OFFSETS.map((dy, i) => (
@@ -185,7 +199,7 @@ export function BarlineEnd({
               cx={x + THICK / 2 + 1 + DOT_GAP}
               cy={staffTopY + dy}
               r={DOT_RADIUS}
-              fill="black"
+              fill="currentColor"
             />
           ))}
         </g>

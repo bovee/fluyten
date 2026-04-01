@@ -40,7 +40,9 @@ export const SMUFL: Record<string, string> = {
   // Articulations
   articAccentAbove: '\uE4A0',
   articStaccatoAbove: '\uE4A2',
+  articStaccatoBelow: '\uE4A3',
   articTenutoAbove: '\uE4A4',
+  articTenutoBelow: '\uE4A5',
   fermataAbove: '\uE4C0',
   // Dynamics
   dynamicPiano: '\uE520',

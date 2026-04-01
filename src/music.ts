@@ -831,3 +831,26 @@ export function expandRepeats(music: Music): {
     originalIndices: resultOriginalIndices,
   };
 }
+
+/**
+ * Find the expanded-sequence index nearest to `currentExpandedIdx` whose
+ * original note index matches `targetOrigIdx`.  Returns -1 if no match exists.
+ */
+export function findNearestExpandedIndex(
+  originalIndices: number[],
+  targetOrigIdx: number,
+  currentExpandedIdx: number
+): number {
+  let bestIdx = -1;
+  let bestDist = Infinity;
+  for (let k = 0; k < originalIndices.length; k++) {
+    if (originalIndices[k] === targetOrigIdx) {
+      const dist = Math.abs(k - currentExpandedIdx);
+      if (dist < bestDist) {
+        bestDist = dist;
+        bestIdx = k;
+      }
+    }
+  }
+  return bestIdx;
+}

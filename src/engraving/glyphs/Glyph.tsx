@@ -9,12 +9,14 @@ export function Glyph({
   name,
   x,
   y,
-  fill = 'black',
+  fill = 'currentColor',
+  fontSize = FONT_SIZE,
 }: {
   name: string;
   x: number;
   y: number;
   fill?: string;
+  fontSize?: number;
 }) {
   const char = SMUFL[name];
   if (!char) return null;
@@ -23,7 +25,7 @@ export function Glyph({
       x={x}
       y={y}
       fontFamily="Bravura, serif"
-      fontSize={FONT_SIZE}
+      fontSize={fontSize}
       fill={fill}
       style={{ userSelect: 'none' }}
     >

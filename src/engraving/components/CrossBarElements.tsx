@@ -24,7 +24,7 @@ export function Tie({ tie }: TieProps) {
     <path
       d={d}
       fill="none"
-      stroke="black"
+      stroke="currentColor"
       strokeWidth={1.5}
       strokeLinecap={isOpenStart || isOpenEnd ? 'square' : 'round'}
     />
@@ -53,7 +53,7 @@ export function TupletBracket({ tuplet }: TupletBracketProps) {
         y1={y}
         x2={startX}
         y2={y - BRACKET_HEIGHT}
-        stroke="black"
+        stroke="currentColor"
         strokeWidth={1}
       />
       {/* Horizontal line, broken in the middle for the number */}
@@ -62,7 +62,7 @@ export function TupletBracket({ tuplet }: TupletBracketProps) {
         y1={y - BRACKET_HEIGHT}
         x2={midX - 8}
         y2={y - BRACKET_HEIGHT}
-        stroke="black"
+        stroke="currentColor"
         strokeWidth={1}
       />
       <line
@@ -70,7 +70,7 @@ export function TupletBracket({ tuplet }: TupletBracketProps) {
         y1={y - BRACKET_HEIGHT}
         x2={endX}
         y2={y - BRACKET_HEIGHT}
-        stroke="black"
+        stroke="currentColor"
         strokeWidth={1}
       />
       {/* Right arm */}
@@ -79,7 +79,7 @@ export function TupletBracket({ tuplet }: TupletBracketProps) {
         y1={y}
         x2={endX}
         y2={y - BRACKET_HEIGHT}
-        stroke="black"
+        stroke="currentColor"
         strokeWidth={1}
       />
       {/* Number */}
@@ -89,7 +89,7 @@ export function TupletBracket({ tuplet }: TupletBracketProps) {
         textAnchor="middle"
         fontSize={10}
         fontFamily="serif"
-        fill="black"
+        fill="currentColor"
       >
         {num}
       </text>
@@ -123,7 +123,7 @@ export function VoltaBracket({ volta, staffTopY }: VoltaBracketProps) {
         y1={y}
         x2={x + width}
         y2={y}
-        stroke="black"
+        stroke="currentColor"
         strokeWidth={1.5}
       />
       {/* Left arm */}
@@ -133,7 +133,7 @@ export function VoltaBracket({ volta, staffTopY }: VoltaBracketProps) {
           y1={y}
           x2={x}
           y2={y + VOLTA_HEIGHT}
-          stroke="black"
+          stroke="currentColor"
           strokeWidth={1.5}
         />
       )}
@@ -144,7 +144,7 @@ export function VoltaBracket({ volta, staffTopY }: VoltaBracketProps) {
           y1={y}
           x2={x + width}
           y2={y + VOLTA_HEIGHT}
-          stroke="black"
+          stroke="currentColor"
           strokeWidth={1.5}
         />
       )}
@@ -155,7 +155,7 @@ export function VoltaBracket({ volta, staffTopY }: VoltaBracketProps) {
           y={y + 10}
           fontSize={10}
           fontFamily="serif"
-          fill="black"
+          fill="currentColor"
         >
           {number}.
         </text>

@@ -6,6 +6,7 @@ import {
   useLayoutEffect,
 } from 'react';
 import { useTranslation } from 'react-i18next';
+import { useTheme } from '@mui/material/styles';
 import Button from '@mui/material/Button';
 import IconButton from '@mui/material/IconButton';
 import Snackbar from '@mui/material/Snackbar';
@@ -25,7 +26,7 @@ import {
   defaultClefForInstrument,
   type VoiceInfo,
 } from './io/abcImport';
-import { Music, expandRepeats } from './music';
+import { Music, expandRepeats, findNearestExpandedIndex } from './music';
 import { FrequencyTracker } from './audio/FrequencyTracker';
 import { NotePlayer } from './audio/NotePlayer';
 import { MusicTimeline } from './audio/MusicTimeline';
@@ -366,13 +367,7 @@ function useAudioPlayback(
     setCursor(undefined);
   };
 
-  const startPlaying = () => {
-    if (musicPlayerInterval.isActive) {
-      clearMusicPlayer();
-      setStatusMessage(t('playbackStopped'));
-      return;
-    }
-
+  const doStartPlaying = (startTimeOffset: number) => {
     const { playbackVoices } = useStore.getState();
     const voices = voicesRef.current;
     const selectedIdx = selectedVoiceIdxRef.current;
@@ -390,7 +385,7 @@ function useAudioPlayback(
         if (!audible) return null;
         const player = new NotePlayer();
         player.start();
-        player.scheduleNotes(tempoRef.current, v.music);
+        player.scheduleNotes(tempoRef.current, v.music, startTimeOffset);
         return { player, music: v.music, voiceIdx: i };
       })
       .filter((e): e is PlayerEntry => e !== null);
@@ -401,7 +396,11 @@ function useAudioPlayback(
     const selectedVoice = voices[selectedIdx];
     const selectedIsAudible = entries.some((e) => e.voiceIdx === selectedIdx);
     if (selectedVoice && !selectedIsAudible) {
-      const tl = new MusicTimeline(selectedVoice.music, tempoRef.current);
+      const tl = new MusicTimeline(
+        selectedVoice.music,
+        tempoRef.current,
+        startTimeOffset
+      );
       tl.start();
       cursorTimelineRef.current = tl;
     } else {
@@ -417,7 +416,7 @@ function useAudioPlayback(
       }
     }, PLAY_SAMPLE_RATE);
     musicPlayerInterval.set(id);
-    setStatusMessage(t('playbackStarted'));
+    if (startTimeOffset === 0) setStatusMessage(t('playbackStarted'));
 
     // requestAnimationFrame cursor: prefer the timeline (when selected voice is
     // silent), otherwise read from the audible selected-voice player.
@@ -449,9 +448,73 @@ function useAudioPlayback(
     cursorRafRef.current = requestAnimationFrame(animateCursor);
   };
 
+  const startPlaying = (startTimeOffset: number = 0) => {
+    if (musicPlayerInterval.isActive) {
+      clearMusicPlayer();
+      setStatusMessage(t('playbackStopped'));
+      return;
+    }
+    doStartPlaying(startTimeOffset);
+  };
+
+  const seekToNote = (origNoteIdx: number) => {
+    // Compute the time offset from the selected voice's expanded sequence.
+    const selectedVoice = voicesRef.current[selectedVoiceIdxRef.current];
+    if (!selectedVoice) return;
+
+    const { notes, originalIndices } = expandRepeats(selectedVoice.music);
+    const beatValue = selectedVoice.music.signatures[0].beatValue;
+    const tempo = tempoRef.current;
+    const lengthToTime = (ticks: number) =>
+      (60 / tempo) * (ticks / 1024) * (4 / beatValue);
+
+    // Find current expanded position from the active player or cursor timeline.
+    let currentExpandedIdx = 0;
+    const selectedEntry = musicPlayersRef.current.find(
+      (e) => e.voiceIdx === selectedVoiceIdxRef.current
+    );
+    if (selectedEntry?.player.audioCtx) {
+      const elapsed =
+        selectedEntry.player.audioCtx.currentTime -
+        selectedEntry.player.startTime;
+      // Walk the expanded sequence to find the current expanded index by time.
+      let acc = 0;
+      for (let i = 0; i < notes.length; i++) {
+        acc += lengthToTime(notes[i].ticks());
+        if (acc > elapsed) {
+          currentExpandedIdx = i;
+          break;
+        }
+        if (i === notes.length - 1) currentExpandedIdx = i;
+      }
+    }
+
+    const targetK = findNearestExpandedIndex(
+      originalIndices,
+      origNoteIdx,
+      currentExpandedIdx
+    );
+    if (targetK === -1) return;
+
+    // Sum durations up to targetK to get the time offset.
+    let startTimeOffset = 0;
+    for (let i = 0; i < targetK; i++) {
+      startTimeOffset += lengthToTime(notes[i].ticks());
+    }
+
+    // Stop current playback and restart from the computed offset.
+    clearMusicPlayer();
+    doStartPlaying(startTimeOffset);
+  };
+
   useEffect(() => () => musicPlayerInterval.clear(), []);
 
-  return { isPlaying: musicPlayerInterval.isActive, startPlaying, cursor };
+  return {
+    isPlaying: musicPlayerInterval.isActive,
+    startPlaying,
+    seekToNote,
+    cursor,
+  };
 }
 
 function useMetronome(
@@ -505,6 +568,7 @@ export function SongPage({
   onTempoChange,
 }: SongPageProps) {
   const { t } = useTranslation();
+  const theme = useTheme();
   const instrumentType = useStore((s) => s.instrumentType);
   const defaultClef = defaultClefForInstrument(instrumentType);
   const defaultMiddle = instrumentType === 'BASS' ? 'd' : undefined;
@@ -579,6 +643,7 @@ export function SongPage({
 
   const practiceMode = useStore((s) => s.practiceMode);
   const playMetronomeOnStart = useStore((s) => s.playMetronome);
+  const autoScroll = useStore((s) => s.autoScroll);
 
   const [practiceSummary, setPracticeSummary] = useState<{
     noteResults: ReadonlyMap<number, 'correct' | 'wrong'>;
@@ -623,6 +688,7 @@ export function SongPage({
   const {
     isPlaying,
     startPlaying,
+    seekToNote,
     cursor: playbackCursor,
   } = useAudioPlayback(
     voicesRef,
@@ -663,7 +729,7 @@ export function SongPage({
         style={{
           position: 'fixed',
           inset: 0,
-          backgroundColor: '#fffef9',
+          backgroundColor: theme.palette.background.default,
           zIndex: -1,
         }}
       />
@@ -680,7 +746,7 @@ export function SongPage({
         variant="h4"
         component="h1"
         sx={{
-          color: '#1c3248',
+          color: theme.palette.text.primary,
           px: '52px',
           mt: 0,
           pt: 1,
@@ -697,7 +763,7 @@ export function SongPage({
           variant="subtitle2"
           component="h2"
           sx={{
-            color: '#4a6080',
+            color: theme.palette.text.secondary,
             px: '52px',
             mt: 0.25,
             fontFamily: "'EB Garamond', Georgia, serif",
@@ -734,6 +800,8 @@ export function SongPage({
                 ? asPlayedCursor
                 : playbackCursor
           }
+          autoScroll={autoScroll}
+          onNoteClick={isPlaying ? seekToNote : undefined}
         />
       </div>
       {countdown !== null && (
@@ -794,7 +862,8 @@ export function SongPage({
         <SpeedDialAction
           icon={<Mic />}
           onClick={() => {
-            if (practiceMode === 'metronome-only') {
+            if (isPlaying) startPlaying();
+            else if (practiceMode === 'metronome-only') {
               if (isMetronomeActive) stopMetronome();
               else startMetronome();
             } else {
@@ -809,7 +878,14 @@ export function SongPage({
         />
         <SpeedDialAction
           icon={<MusicNote />}
-          onClick={startPlaying}
+          onClick={() => {
+            if (isPracticing) {
+              if (isRecording) startRecording();
+              stopMetronome();
+            } else {
+              startPlaying();
+            }
+          }}
           slotProps={{
             tooltip: { title: t('playSong') },
             fab: { sx: { bgcolor: isPlaying ? 'primary.main' : 'default' } },

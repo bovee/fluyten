@@ -18,7 +18,7 @@ export function TempoMark({ tempoText, tempo, x, staffTopY }: TempoMarkProps) {
         fontSize={13}
         fontFamily="'EB Garamond', Georgia, serif"
         fontStyle="italic"
-        fill="black"
+        fill="currentColor"
       >
         {tempoText}
       </text>
@@ -32,7 +32,7 @@ export function TempoMark({ tempoText, tempo, x, staffTopY }: TempoMarkProps) {
       y={y}
       fontSize={12}
       fontFamily="'EB Garamond', Georgia, serif"
-      fill="black"
+      fill="currentColor"
     >
       ♩ = {tempo}
     </text>

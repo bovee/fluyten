@@ -1,4 +1,5 @@
 import { useTranslation } from 'react-i18next';
+import { useTheme } from '@mui/material/styles';
 import { type Note } from './music';
 import { useStore } from './store';
 import { NOTE_NAMES } from './constants';
@@ -153,6 +154,9 @@ export function FingeringDiagram({
   forceGermanSoprano?: boolean;
 }) {
   const { t } = useTranslation();
+  const theme = useTheme();
+  const bgColor = theme.palette.background.paper;
+  const dimColor = theme.palette.text.disabled;
 
   if (!note) return EMPTY_DIAGRAM;
   const { instrumentType: storeType, isGerman: storeGerman } =
@@ -236,8 +240,8 @@ export function FingeringDiagram({
           cx={cx}
           cy={cy}
           r={CIRCLE_RADIUS}
-          fill={dim ? 'grey' : 'black'}
-          stroke={dim ? 'grey' : 'black'}
+          fill={dim ? dimColor : 'currentColor'}
+          stroke={dim ? dimColor : 'currentColor'}
           strokeWidth={STROKE_WIDTH}
         />
       );
@@ -260,15 +264,15 @@ export function FingeringDiagram({
             cx={cx}
             cy={cy}
             r={CIRCLE_RADIUS}
-            fill="white"
-            stroke={dim ? 'grey' : 'black'}
+            fill={bgColor}
+            stroke={dim ? dimColor : 'currentColor'}
             strokeWidth={STROKE_WIDTH}
           />
           <circle
             cx={cx}
             cy={cy}
             r={CIRCLE_RADIUS}
-            fill={dim ? 'grey' : 'black'}
+            fill={dim ? dimColor : 'currentColor'}
             clipPath={`url(#${clipId})`}
           />
         </g>
@@ -289,10 +293,10 @@ export function FingeringDiagram({
 
   function renderDoubleHole(hole: Hole, cy: number, key: string, dim: boolean) {
     if (TRILL_HOLES.has(hole)) return renderTrillDoubleHole(hole, cy, key, dim);
-    const color = dim ? 'grey' : 'black';
+    const color = dim ? dimColor : 'currentColor';
     const leftFill =
-      hole === Hole.Closed || hole === Hole.Half ? color : 'white';
-    const rightFill = hole === Hole.Closed ? color : 'white';
+      hole === Hole.Closed || hole === Hole.Half ? color : bgColor;
+    const rightFill = hole === Hole.Closed ? color : bgColor;
     return (
       <g key={key}>
         <circle
@@ -321,7 +325,11 @@ export function FingeringDiagram({
       aria-hidden="true"
       width={DIAGRAM_WIDTH}
       height={DIAGRAM_HEIGHT}
-      style={{ display: 'block', margin: '0 auto' }}
+      style={{
+        display: 'block',
+        margin: '0 auto',
+        color: theme.palette.text.primary,
+      }}
     >
       {renderHole(fingering[0], THUMB_X, THUMB_Y, 'thumb', f !== 0)}
       {fingering
@@ -347,19 +355,19 @@ export function FingeringDiagram({
         x2={FRONT_X + CIRCLE_RADIUS + 2}
         y1={FRONT_Y + 2.5 * CIRCLE_SPACING + JOINT_GAP / 2}
         y2={FRONT_Y + 2.5 * CIRCLE_SPACING + JOINT_GAP / 2}
-        stroke={f !== 0 ? 'grey' : 'black'}
+        stroke={f !== 0 ? dimColor : 'currentColor'}
         strokeWidth={1}
       />
       <path
         d={`M ${FRONT_X - BELL_RADIUS} ${BELL_Y} A ${BELL_ARC_RADIUS} ${BELL_ARC_RADIUS} 0 0 1 ${FRONT_X + BELL_RADIUS} ${BELL_Y}`}
         fill="none"
-        stroke={f !== 0 ? 'grey' : 'black'}
+        stroke={f !== 0 ? dimColor : 'currentColor'}
         strokeWidth={STROKE_WIDTH}
       />
       {fingering[8] === Hole.Closed && (
         <path
           d={`M ${FRONT_X - BELL_RADIUS} ${BELL_Y} A ${BELL_ARC_RADIUS} ${BELL_ARC_RADIUS} 0 0 1 ${FRONT_X + BELL_RADIUS} ${BELL_Y} Z`}
-          fill={f !== 0 ? 'grey' : 'black'}
+          fill={f !== 0 ? dimColor : 'currentColor'}
         />
       )}
     </svg>

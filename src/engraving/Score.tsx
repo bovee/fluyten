@@ -1,4 +1,5 @@
-import { useMemo, useState } from 'react';
+import { useEffect, useMemo, useRef, useState } from 'react';
+import { useTheme } from '@mui/material/styles';
 import Popover from '@mui/material/Popover';
 import Typography from '@mui/material/Typography';
 import type { Music, Note } from '../music';
@@ -25,15 +26,24 @@ export interface ScoreProps {
   /** Per-note result map: note index → 'correct' | 'wrong' */
   noteResults?: ReadonlyMap<number, 'correct' | 'wrong'>;
   cursor?: { noteIdx: number };
+  autoScroll?: boolean;
+  onNoteClick?: (noteIdx: number) => void;
 }
 
 const NOTE_COLORS = {
   correct: '#22c55e',
   wrong: '#ef4444',
-  cursor: '#3b82f6',
 } as const;
 
-export function Score({ music, width, noteResults, cursor }: ScoreProps) {
+export function Score({
+  music,
+  width,
+  noteResults,
+  cursor,
+  autoScroll = true,
+  onNoteClick: onNoteClickProp,
+}: ScoreProps) {
+  const theme = useTheme();
   const layout = useMemo(() => computeLayout(music, width), [music, width]);
   const clef = music.clef as Clef;
   const sig0 = music.signatures[0];
@@ -59,10 +69,10 @@ export function Score({ music, width, noteResults, cursor }: ScoreProps) {
       }
     }
     if (cursor !== undefined && cursor.noteIdx >= 0) {
-      map.set(Math.floor(cursor.noteIdx), NOTE_COLORS.cursor);
+      map.set(Math.floor(cursor.noteIdx), theme.palette.primary.main);
     }
     return map;
-  }, [noteResults, cursor]);
+  }, [noteResults, cursor, theme.palette.primary.main]);
 
   // Wrong-note set for X marks
   const wrongNotes = useMemo(() => {
@@ -83,9 +93,56 @@ export function Score({ music, width, noteResults, cursor }: ScoreProps) {
   const [popoverNote, setPopoverNote] = useState<Note | null>(null);
   const [svgEl, setSvgEl] = useState<SVGSVGElement | null>(null);
 
+  // Auto-scroll: keep the current staff line visible during playback/practice
+  const prevLineIdxRef = useRef<number>(-1);
+  useEffect(() => {
+    if (!autoScroll || cursor === undefined || cursor.noteIdx < 0) {
+      prevLineIdxRef.current = -1;
+      return;
+    }
+    const targetNoteIdx = Math.floor(cursor.noteIdx);
+    let lineIdx = -1;
+    outer: for (let i = 0; i < layout.lines.length; i++) {
+      for (const bar of layout.lines[i].bars) {
+        for (const note of bar.notes) {
+          if (note.musicNoteIndex === targetNoteIdx) {
+            lineIdx = i;
+            break outer;
+          }
+        }
+      }
+    }
+    if (lineIdx === -1 || lineIdx === prevLineIdxRef.current) return;
+    prevLineIdxRef.current = lineIdx;
+    if (!svgEl) return;
+    const svgRect = svgEl.getBoundingClientRect();
+    const scaleY = svgRect.height / layout.height;
+
+    const toDocY = (svgY: number) =>
+      window.scrollY + svgRect.top + svgY * scaleY;
+
+    // Anchor = top of the line after next, or the score bottom if we're near
+    // the end. Placing this at the viewport bottom means current + one lookahead
+    // line are both fully visible.
+    const anchorIdx = lineIdx + 2;
+    const docAnchorTop =
+      anchorIdx < layout.lines.length
+        ? toDocY(layout.lines[anchorIdx].y)
+        : toDocY(layout.height);
+
+    window.scrollTo({
+      top: docAnchorTop - window.innerHeight,
+      behavior: 'smooth',
+    });
+  }, [autoScroll, cursor, layout, svgEl]);
+
   const handleNoteClick = (noteIdx: number, x: number, y: number) => {
     const note = music.notes[noteIdx];
     if (!note) return;
+    if (onNoteClickProp) {
+      onNoteClickProp(noteIdx);
+      return;
+    }
     // Convert SVG user-space coords to screen coords
     if (svgEl) {
       const rect = svgEl.getBoundingClientRect();
@@ -107,15 +164,40 @@ export function Score({ music, width, noteResults, cursor }: ScoreProps) {
         aria-label={music.title || 'Sheet music'}
         width={layout.width}
         height={layout.height}
-        style={{ display: 'block', direction: 'ltr' }}
+        style={{
+          display: 'block',
+          direction: 'ltr',
+          color: theme.palette.text.primary,
+        }}
       >
         {layout.lines.map((line, lineIdx) => {
           const staffTopY = line.y;
           const lastBar = line.bars[line.bars.length - 1];
           const staffRight = lastBar ? lastBar.x + lastBar.width : LEFT_MARGIN;
 
+          // If the next line's first bar starts with a breath mark on its first note,
+          // render it here at the end of this line.
+          const nextLineFirstNote =
+            layout.lines[lineIdx + 1]?.bars[0]?.notes[0];
+          const hasTrailingBreath =
+            nextLineFirstNote?.decorations.includes('breath') ?? false;
+
           return (
             <g key={lineIdx}>
+              {hasTrailingBreath && (
+                <text
+                  x={staffRight}
+                  y={staffTopY - 10}
+                  fontSize={32}
+                  fontWeight="bold"
+                  fontFamily="serif"
+                  textAnchor="middle"
+                  fill="currentColor"
+                >
+                  ,
+                </text>
+              )}
+
               {lineIdx === 0 && line.bars[0] && (
                 <TempoMark
                   tempoText={tempoText}

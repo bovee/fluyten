@@ -1,6 +1,8 @@
 import { lazy, Suspense, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { createTheme, ThemeProvider } from '@mui/material/styles';
+import CssBaseline from '@mui/material/CssBaseline';
+import useMediaQuery from '@mui/material/useMediaQuery';
 import { CacheProvider } from '@emotion/react';
 import createCache from '@emotion/cache';
 import rtlPlugin from 'stylis-plugin-rtl';
@@ -31,9 +33,29 @@ interface SelectedSong {
 function App() {
   const { i18n } = useTranslation();
   const isRtl = RTL_LANGUAGES.has(i18n.resolvedLanguage ?? i18n.language);
+  const colorMode = useStore((state) => state.colorMode);
+  const prefersDark = useMediaQuery('(prefers-color-scheme: dark)');
+  const resolvedMode =
+    colorMode === 'system' ? (prefersDark ? 'dark' : 'light') : colorMode;
+  const DARK_SHADOW =
+    '0px 3px 10px rgba(255,255,255,0.15), 0px 1px 4px rgba(255,255,255,0.1)';
   const theme = createTheme({
     direction: isRtl ? 'rtl' : 'ltr',
-    palette: { primary: { main: '#4a6272' } },
+    typography: {
+      fontFamily: "'EB Garamond', Georgia, serif",
+    },
+    palette: {
+      mode: resolvedMode,
+      primary: { main: resolvedMode === 'dark' ? '#6a8a9e' : '#4a6272' },
+      ...(resolvedMode === 'dark' && {
+        text: { primary: '#d8d5d0' },
+      }),
+    },
+    ...(resolvedMode === 'dark' && {
+      shadows: Array.from({ length: 25 }, (_, i) =>
+        i === 0 ? 'none' : DARK_SHADOW
+      ) as import('@mui/material/styles').ThemeOptions['shadows'],
+    }),
     components: {
       MuiAccordion: {
         defaultProps: {
@@ -61,6 +83,7 @@ function App() {
     return (
       <CacheProvider value={isRtl ? cacheRtl : cacheLtr}>
         <ThemeProvider theme={theme}>
+          <CssBaseline />
           <Suspense fallback={null}>
             <SongPage
               song={song}
@@ -78,6 +101,7 @@ function App() {
   return (
     <CacheProvider value={isRtl ? cacheRtl : cacheLtr}>
       <ThemeProvider theme={theme}>
+        <CssBaseline />
         <OnboardingDialog open={!onboarded} onComplete={setOnboarded} />
         <IndexPage
           onSelectSong={(song, readOnly) => setSelected({ song, readOnly })}

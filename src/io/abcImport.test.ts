@@ -388,6 +388,17 @@ describe('fromAbc', () => {
       const music = fromAbc(abc);
       expect(music.beams).toHaveLength(0);
     });
+
+    it('should beam across slur boundaries', () => {
+      // C(C B)B: two beam groups of two notes each, slur from 2nd note to 3rd
+      const abc = `T:Test\nM:4/4\nL:1/8\nK:C\nC(C B)B`;
+      const music = fromAbc(abc);
+      expect(music.beams).toHaveLength(2);
+      expect(music.beams[0]).toEqual([0, 1]);
+      expect(music.beams[1]).toEqual([2, 3]);
+      expect(music.curves).toHaveLength(1);
+      expect(music.curves[0]).toEqual([1, 2]);
+    });
   });
 
   describe('slurs and ties', () => {

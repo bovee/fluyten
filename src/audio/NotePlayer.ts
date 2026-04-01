@@ -225,7 +225,11 @@ export class NotePlayer {
     }
   }
 
-  scheduleNotes(tempo: number = 120, music: Music | null = null) {
+  scheduleNotes(
+    tempo: number = 120,
+    music: Music | null = null,
+    startTimeOffset: number = 0
+  ) {
     if (!this.active || !this.audioCtx) return;
 
     const endTime = this.audioCtx.currentTime + this.lookForward;
@@ -236,7 +240,31 @@ export class NotePlayer {
         const expanded = expandRepeats(music);
         this.expandedNotes = expanded.notes;
         this.expandedCurves = expanded.curves;
-        this.timeline = new MusicTimeline(music, tempo);
+        this.timeline = new MusicTimeline(music, tempo, startTimeOffset);
+
+        // Skip ahead if starting from a time offset.
+        if (startTimeOffset > 0) {
+          const beatValue = music.signatures[0].beatValue;
+          const lengthToTime = (ticks: number) =>
+            (60 / tempo) * (ticks / 1024) * (4 / beatValue);
+          let accumulated = 0;
+          for (let i = 0; i < this.expandedNotes.length; i++) {
+            const dur = lengthToTime(this.expandedNotes[i].ticks());
+            if (accumulated + dur > startTimeOffset) {
+              this.lastNoteIx = i - 1;
+              break;
+            }
+            accumulated += dur;
+            if (i === this.expandedNotes.length - 1) {
+              this.lastNoteIx = i;
+            }
+          }
+          // Compensate so enqueueNote's duration-addition lands on audioCtx.currentTime
+          if (this.lastNoteIx > -1) {
+            const prevTicks = this.expandedNotes[this.lastNoteIx]?.ticks() ?? 0;
+            this.lastNoteTime -= lengthToTime(prevTicks);
+          }
+        }
       }
       if (this.lastNoteIx >= this.expandedNotes.length) {
         this.active = false;

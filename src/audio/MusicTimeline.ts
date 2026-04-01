@@ -13,19 +13,28 @@ export class MusicTimeline {
     endTime: number;
   }>;
   private readonly totalDuration: number;
+  private readonly timeOffset: number;
+  /** Maps each expanded note index to its start time in seconds. */
+  private readonly expandedIdxToTime: number[];
+  readonly expandedOriginalIndices: number[];
   private startedAt: number | null = null;
 
-  constructor(music: Music, tempo: number) {
+  constructor(music: Music, tempo: number, startTimeOffset: number = 0) {
     const beatValue = music.signatures[0].beatValue;
     const { notes, originalIndices } = expandRepeats(music);
     const lengthToTime = (ticks: number) =>
       (60 / tempo) * (ticks / 1024) * (4 / beatValue);
 
+    this.expandedOriginalIndices = originalIndices;
+    this.timeOffset = startTimeOffset;
+
     const timings: Array<{ noteIdx: number; time: number; endTime: number }> =
       [];
+    const expandedIdxToTime: number[] = [];
     let currentTime = 0;
 
     for (let idx = 0; idx < notes.length; idx++) {
+      expandedIdxToTime.push(currentTime);
       const note = notes[idx];
       const ticks = note.ticks();
       if (ticks === 0) continue; // grace notes have no duration
@@ -39,6 +48,7 @@ export class MusicTimeline {
     }
 
     this.noteTimings = timings;
+    this.expandedIdxToTime = expandedIdxToTime;
     this.totalDuration = currentTime;
   }
 
@@ -53,16 +63,22 @@ export class MusicTimeline {
     return performance.now() / 1000 - this.startedAt;
   }
 
+  /** Returns the start time (in seconds from song start) for a given expanded note index. */
+  getTimeForExpandedIndex(expandedIdx: number): number {
+    return this.expandedIdxToTime[expandedIdx] ?? 0;
+  }
+
   /** Returns a fractional note index for the given time offset (same logic as NotePlayer). */
   getNoteIdxAtTime(t: number): number {
+    const adjusted = t + this.timeOffset;
     const timings = this.noteTimings;
     for (let i = 0; i < timings.length; i++) {
-      if (timings[i].time > t) break;
+      if (timings[i].time > adjusted) break;
       const next = timings[i + 1];
-      if (!next || next.time > t) {
+      if (!next || next.time > adjusted) {
         const { noteIdx, time, endTime } = timings[i];
         const end = next ? next.time : endTime;
-        const progress = end > time ? (t - time) / (end - time) : 0;
+        const progress = end > time ? (adjusted - time) / (end - time) : 0;
         return noteIdx + Math.min(progress, 1);
       }
     }
@@ -72,6 +88,6 @@ export class MusicTimeline {
   /** True when elapsed time has passed all note timings. */
   isFinished(): boolean {
     if (this.startedAt === null) return false;
-    return this.getCurrentTime() >= this.totalDuration;
+    return this.getCurrentTime() + this.timeOffset >= this.totalDuration;
   }
 }

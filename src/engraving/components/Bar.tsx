@@ -157,6 +157,27 @@ export function Bar({
   onNoteClick,
 }: BarProps) {
   const beamed = beamedNoteSet(bar);
+
+  // Collect breath mark positions: before the note they're marked on.
+  // First note in bar, bar not first on line → just left of the opening barline.
+  // First note in bar, bar IS first on line → just left of the first note
+  //   (the previous bar is on a different line so we can't put it there).
+  // Other notes → halfway between the previous note and this one.
+  const breathMarks: { x: number }[] = [];
+  for (let i = 0; i < bar.notes.length; i++) {
+    const note = bar.notes[i];
+    if (note.decorations.includes('breath')) {
+      let bx: number;
+      if (i === 0) {
+        if (bar.isFirstOnLine) continue; // rendered at end of previous line by Score
+        bx = bar.x;
+      } else {
+        bx = (bar.notes[i - 1].x + note.x) / 2;
+      }
+      breathMarks.push({ x: bx });
+    }
+  }
+
   return (
     <g>
       <BarlineStart x={bar.x} staffTopY={staffTopY} type={bar.barlineStart} />
@@ -168,9 +189,25 @@ export function Bar({
         type={bar.barlineEnd}
       />
 
+      {/* Breath marks — rendered before the note they're attached to */}
+      {breathMarks.map((bm, i) => (
+        <text
+          key={`breath-${i}`}
+          x={bm.x}
+          y={staffTopY - 10}
+          fontSize={32}
+          fontWeight="bold"
+          fontFamily="serif"
+          textAnchor="middle"
+          fill="currentColor"
+        >
+          ,
+        </text>
+      ))}
+
       {/* Notes, grace notes, beams */}
       {bar.notes.map((note, i) => {
-        const fill = noteFills?.get(note.musicNoteIndex) ?? 'black';
+        const fill = noteFills?.get(note.musicNoteIndex) ?? 'currentColor';
         return (
           <g key={note.musicNoteIndex}>
             {note.graceNotes.map((gn) => (
@@ -194,7 +231,7 @@ export function Bar({
       })}
 
       {bar.beams.map((beam, i) => (
-        <Beam key={i} beam={beam} notes={bar.notes} fill="black" />
+        <Beam key={i} beam={beam} notes={bar.notes} />
       ))}
     </g>
   );

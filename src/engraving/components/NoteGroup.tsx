@@ -78,7 +78,7 @@ function flagGlyph(
 function accidentalGlyph(acc: string): string | null {
   if (acc === '#') return 'accidentalSharp';
   if (acc === 'b') return 'accidentalFlat';
-  if (acc === '=') return 'accidentalNatural';
+  if (acc === 'n') return 'accidentalNatural';
   return null;
 }
 
@@ -88,7 +88,7 @@ const SHARP_EXTRA_OFFSET = 2; // sharps need 2px more clearance than flats/natur
 export function NoteGroup({
   note,
   staffTopY,
-  fill = 'black',
+  fill = 'currentColor',
   isBeamed = false,
   isWrong = false,
   onClick,

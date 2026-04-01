@@ -24,7 +24,7 @@ export function StaffLines({ x, width, staffTopY }: StaffLinesProps) {
             y1={y}
             x2={x + width}
             y2={y}
-            stroke="black"
+            stroke="currentColor"
             strokeWidth={1}
           />
         );

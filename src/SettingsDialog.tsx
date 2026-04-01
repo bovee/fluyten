@@ -44,6 +44,8 @@ export function SettingsDialog({ open, onClose }: SettingsDialogProps) {
   const setIsGerman = useStore((state) => state.setIsGerman);
   const language = useStore((state) => state.language);
   const setLanguage = useStore((state) => state.setLanguage);
+  const colorMode = useStore((state) => state.colorMode);
+  const setColorMode = useStore((state) => state.setColorMode);
   const method = useStore((state) => state.method);
   const setMethod = useStore((state) => state.setMethod);
   const playbackVoices = useStore((state) => state.playbackVoices);
@@ -52,6 +54,8 @@ export function SettingsDialog({ open, onClose }: SettingsDialogProps) {
   const setPracticeMode = useStore((state) => state.setPracticeMode);
   const playMetronome = useStore((state) => state.playMetronome);
   const setPlayMetronome = useStore((state) => state.setPlayMetronome);
+  const autoScroll = useStore((state) => state.autoScroll);
+  const setAutoScroll = useStore((state) => state.setAutoScroll);
 
   const [tab, setTab] = useState(0);
   const [detectOpen, setDetectOpen] = useState(false);
@@ -191,19 +195,18 @@ export function SettingsDialog({ open, onClose }: SettingsDialogProps) {
               </FormControl>
 
               <FormControl fullWidth>
-                <InputLabel id="method-label">{t('method')}</InputLabel>
+                <InputLabel id="color-mode-label">{t('colorMode')}</InputLabel>
                 <Select
-                  labelId="method-label"
-                  value={method}
-                  label={t('method')}
-                  onChange={(e) => setMethod(e.target.value)}
+                  labelId="color-mode-label"
+                  value={colorMode}
+                  label={t('colorMode')}
+                  onChange={(e) =>
+                    setColorMode(e.target.value as 'system' | 'light' | 'dark')
+                  }
                 >
-                  <MenuItem value="none">{t('methodNone')}</MenuItem>
-                  {METHODS_FOR_INSTRUMENT[instrumentType].map((m) => (
-                    <MenuItem key={m} value={m}>
-                      {METHOD_DISPLAY_NAMES[m]}
-                    </MenuItem>
-                  ))}
+                  <MenuItem value="system">{t('colorModeSystem')}</MenuItem>
+                  <MenuItem value="light">{t('colorModeLight')}</MenuItem>
+                  <MenuItem value="dark">{t('colorModeDark')}</MenuItem>
                 </Select>
               </FormControl>
 
@@ -228,6 +231,16 @@ export function SettingsDialog({ open, onClose }: SettingsDialogProps) {
                   <MenuItem value="all">{t('playbackVoicesAll')}</MenuItem>
                 </Select>
               </FormControl>
+
+              <FormControlLabel
+                control={
+                  <Checkbox
+                    checked={autoScroll}
+                    onChange={(e) => setAutoScroll(e.target.checked)}
+                  />
+                }
+                label={t('autoScroll')}
+              />
             </Box>
           )}
 
@@ -301,6 +314,23 @@ export function SettingsDialog({ open, onClose }: SettingsDialogProps) {
                 }
                 label={t('germanFingering')}
               />
+
+              <FormControl fullWidth>
+                <InputLabel id="method-label">{t('method')}</InputLabel>
+                <Select
+                  labelId="method-label"
+                  value={method}
+                  label={t('method')}
+                  onChange={(e) => setMethod(e.target.value)}
+                >
+                  <MenuItem value="none">{t('methodNone')}</MenuItem>
+                  {METHODS_FOR_INSTRUMENT[instrumentType].map((m) => (
+                    <MenuItem key={m} value={m}>
+                      {METHOD_DISPLAY_NAMES[m]}
+                    </MenuItem>
+                  ))}
+                </Select>
+              </FormControl>
             </Box>
           )}
 

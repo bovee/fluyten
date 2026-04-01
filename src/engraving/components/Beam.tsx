@@ -13,7 +13,7 @@ const BEAM_GAP = 3; // gap between multiple beams (for 16ths)
  * Renders a beam group as one or two filled rectangles connecting note stems.
  * The beam is drawn as a slanted parallelogram between the first and last stem tips.
  */
-export function Beam({ beam, notes, fill = 'black' }: BeamProps) {
+export function Beam({ beam, notes, fill = 'currentColor' }: BeamProps) {
   const { noteIndices, stemEndYs, stemXs } = beam;
   if (noteIndices.length < 2) return null;
 

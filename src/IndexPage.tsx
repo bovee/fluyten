@@ -23,6 +23,7 @@ import MenuItem from '@mui/material/MenuItem';
 import TextField from '@mui/material/TextField';
 import Tooltip from '@mui/material/Tooltip';
 
+import { useTheme } from '@mui/material/styles';
 import {
   parseSongsFromFile,
   parseSongsFromUrl,
@@ -40,6 +41,7 @@ interface IndexPageProps {
 
 export function IndexPage({ onSelectSong }: IndexPageProps) {
   const { t } = useTranslation();
+  const theme = useTheme();
   const [settingsOpen, setSettingsOpen] = useState(false);
   const [scaleDialogOpen, setScaleDialogOpen] = useState(false);
   const [addSongMenuAnchor, setAddSongMenuAnchor] =
@@ -71,6 +73,8 @@ export function IndexPage({ onSelectSong }: IndexPageProps) {
   const isSelecting = selectedIds.size > 0;
 
   const songs = useStore((state) => state.songs);
+  const method = useStore((state) => state.method);
+  if (method === 'none' && sortKey === 'difficulty') setSortKey('order');
   const filteredSongs = (() => {
     const base = filterText
       ? songs.filter((s) =>
@@ -264,7 +268,7 @@ export function IndexPage({ onSelectSong }: IndexPageProps) {
         style={{
           position: 'fixed',
           inset: 0,
-          backgroundColor: '#fffef9',
+          backgroundColor: theme.palette.background.default,
           zIndex: -2,
         }}
       />
@@ -278,7 +282,7 @@ export function IndexPage({ onSelectSong }: IndexPageProps) {
           transform: 'translateY(-50%)',
           fontSize: '80vh',
           lineHeight: 1,
-          color: '#1a1a1a',
+          color: theme.palette.text.primary,
           opacity: 0.05,
           zIndex: -1,
           pointerEvents: 'none',
@@ -323,7 +327,7 @@ export function IndexPage({ onSelectSong }: IndexPageProps) {
           <Settings />
         </IconButton>
       </Tooltip>
-      <h1 style={{ color: '#1c3248' }}>{t('appTitle')}</h1>
+      <h1 style={{ color: theme.palette.text.primary }}>{t('appTitle')}</h1>
 
       {songs.length > 0 && (
         <Box
@@ -508,7 +512,14 @@ export function IndexPage({ onSelectSong }: IndexPageProps) {
         open={Boolean(sortMenuAnchor)}
         onClose={() => setSortMenuAnchor(null)}
       >
-        {(['order', 'title', 'length', 'difficulty'] as const).map((key) => (
+        {(
+          [
+            'order',
+            'title',
+            'length',
+            ...(method !== 'none' ? ['difficulty' as const] : []),
+          ] as const
+        ).map((key) => (
           <MenuItem
             key={key}
             onClick={() => handleSortSelect(key)}

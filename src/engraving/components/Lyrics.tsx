@@ -28,7 +28,7 @@ export function LyricsSyllables({ lyrics, x, staffTopY }: LyricsProps) {
             textAnchor="middle"
             fontSize={LYRICS_FONT_SIZE}
             fontFamily="'EB Garamond', Georgia, serif"
-            fill="black"
+            fill="currentColor"
           >
             {syllable}
           </text>

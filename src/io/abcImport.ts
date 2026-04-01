@@ -405,8 +405,15 @@ export function parseScore(
   }
 
   for (const token of tokens) {
-    // Any token other than a note or beam-join terminates the current beam group.
-    if (token.type !== 'note' && token.type !== 'beam_join') closeBeam();
+    // Any token other than a note, beam-join, or slur marker terminates the current beam group.
+    // Slur open/close are transparent to beaming so notes can be beamed across slur boundaries.
+    if (
+      token.type !== 'note' &&
+      token.type !== 'beam_join' &&
+      token.type !== 'slur_open' &&
+      token.type !== 'slur_close'
+    )
+      closeBeam();
 
     switch (token.type) {
       case 'note': {

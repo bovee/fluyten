@@ -46,6 +46,8 @@ interface SettingsState {
   setIsGerman: (isGerman: boolean) => void;
   language: string;
   setLanguage: (language: string) => void;
+  colorMode: 'system' | 'light' | 'dark';
+  setColorMode: (mode: 'system' | 'light' | 'dark') => void;
   method: string;
   setMethod: (method: string) => void;
   playbackVoices: PlaybackVoices;
@@ -54,6 +56,8 @@ interface SettingsState {
   setPracticeMode: (mode: PracticeMode) => void;
   playMetronome: boolean;
   setPlayMetronome: (v: boolean) => void;
+  autoScroll: boolean;
+  setAutoScroll: (v: boolean) => void;
   songs: UserSong[];
   addSongs: (songs: UserSong[]) => void;
   removeSong: (songId: string) => void;
@@ -75,6 +79,8 @@ export const useStore = create<SettingsState>()(
       setIsGerman: (isGerman) => set({ isGerman }),
       language: '',
       setLanguage: (language) => set({ language }),
+      colorMode: 'system',
+      setColorMode: (colorMode) => set({ colorMode }),
       method: 'none',
       setMethod: (method) =>
         set((state) => ({
@@ -90,6 +96,8 @@ export const useStore = create<SettingsState>()(
       setPracticeMode: (practiceMode) => set({ practiceMode }),
       playMetronome: false,
       setPlayMetronome: (playMetronome) => set({ playMetronome }),
+      autoScroll: true,
+      setAutoScroll: (autoScroll) => set({ autoScroll }),
       songs: [],
       addSongs: (songs) =>
         set((state) => ({
