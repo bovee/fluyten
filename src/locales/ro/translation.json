@@ -136,6 +136,10 @@
   "sortTitle": "Titlu",
   "sortLength": "Lungime",
   "method": "Metodă",
+  "methodHelperText": "Alegerea unei metode va eticheta cântecele cu numărul cărții și pagina din acea serie de metodă unde se găsește tehnica cea mai dificilă din cântec și va permite sortarea după dificultate.",
   "sortDifficulty": "Dificultate",
+  "sortPracticeCount": "De câte ori s-a practicat",
+  "sortAverageScore": "Scor mediu",
+  "practiceHistory": "Istoric practică",
   "methodNone": "Niciunul"
 }

@@ -136,6 +136,10 @@
   "sortTitle": "제목",
   "sortLength": "길이",
   "method": "교본",
+  "methodHelperText": "교본을 선택하면 해당 교본 시리즈에서 곡의 가장 어려운 기법이 나오는 권 번호와 페이지가 곡에 표시되며, 난이도 순으로 정렬할 수 있습니다.",
   "sortDifficulty": "난이도",
+  "sortPracticeCount": "연습 횟수",
+  "sortAverageScore": "평균 점수",
+  "practiceHistory": "연습 기록",
   "methodNone": "없음"
 }

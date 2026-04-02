@@ -136,6 +136,10 @@
   "sortTitle": "Titel",
   "sortLength": "Längd",
   "method": "Metod",
+  "methodHelperText": "Att välja en metod märker låtar med bokens nummer och sidan i den metodserien där den svåraste tekniken i låten finns och möjliggör sortering efter svårighetsgrad.",
   "sortDifficulty": "Svårighetsgrad",
+  "sortPracticeCount": "Antal övningar",
+  "sortAverageScore": "Genomsnittlig poäng",
+  "practiceHistory": "Övningshistorik",
   "methodNone": "Ingen"
 }

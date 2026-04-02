@@ -136,6 +136,10 @@
   "sortTitle": "Tiêu đề",
   "sortLength": "Độ dài",
   "method": "Phương pháp",
+  "methodHelperText": "Chọn một phương pháp sẽ gắn nhãn các bài hát với số sách và trang trong bộ phương pháp đó, nơi tìm thấy kỹ thuật khó nhất trong bài hát, và cho phép sắp xếp theo độ khó.",
   "sortDifficulty": "Độ khó",
+  "sortPracticeCount": "Số lần luyện tập",
+  "sortAverageScore": "Điểm trung bình",
+  "practiceHistory": "Lịch sử luyện tập",
   "methodNone": "Không có"
 }

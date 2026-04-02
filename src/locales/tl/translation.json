@@ -136,6 +136,10 @@
   "sortTitle": "Pamagat",
   "sortLength": "Haba",
   "method": "Pamamaraan",
+  "methodHelperText": "Ang pagpili ng pamamaraan ay maglalabel sa mga kanta ng numero ng libro at pahina sa seryeng iyon ng pamamaraan kung saan matatagpuan ang pinakamahirap na teknik sa kanta at magbibigay-daan sa pag-uri-uriin ayon sa kahirapan.",
   "sortDifficulty": "Kahirapan",
+  "sortPracticeCount": "Bilang ng pagsasanay",
+  "sortAverageScore": "Karaniwang marka",
+  "practiceHistory": "Kasaysayan ng pagsasanay",
   "methodNone": "Wala"
 }

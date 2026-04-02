@@ -136,6 +136,10 @@
   "sortTitle": "Title",
   "sortLength": "Length",
   "method": "Method",
+  "methodHelperText": "Choosing a method will label songs with the book number and page in that method series where the hardest technique in the song is found and allow sorting by difficulty.",
   "sortDifficulty": "Difficulty",
+  "sortPracticeCount": "Times Practiced",
+  "sortAverageScore": "Average Score",
+  "practiceHistory": "Practice History",
   "methodNone": "None"
 }

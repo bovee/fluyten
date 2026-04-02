@@ -60,7 +60,7 @@ export function IndexPage({ onSelectSong }: IndexPageProps) {
     null
   );
   const [sortKey, setSortKey] = useState<
-    'order' | 'title' | 'length' | 'difficulty'
+    'order' | 'title' | 'length' | 'difficulty' | 'practiceCount' | 'averageScore'
   >('order');
   const [sortDir, setSortDir] = useState<'asc' | 'desc'>('desc');
   const [selectedIds, setSelectedIds] = useState<Set<string>>(new Set());
@@ -75,6 +75,7 @@ export function IndexPage({ onSelectSong }: IndexPageProps) {
   const songs = useStore((state) => state.songs);
   const method = useStore((state) => state.method);
   if (method === 'none' && sortKey === 'difficulty') setSortKey('order');
+
   const filteredSongs = (() => {
     const base = filterText
       ? songs.filter((s) =>
@@ -89,6 +90,14 @@ export function IndexPage({ onSelectSong }: IndexPageProps) {
       base.sort((a, b) =>
         (a.difficulty ?? '').localeCompare(b.difficulty ?? '')
       );
+    } else if (sortKey === 'practiceCount') {
+      base.sort((a, b) => (a.practiceCount ?? 0) - (b.practiceCount ?? 0));
+    } else if (sortKey === 'averageScore') {
+      const avg = (s: (typeof base)[0]) => {
+        const h = s.practiceHistory ?? [];
+        return h.length === 0 ? 0 : h.reduce((a, b) => a + b, 0) / h.length;
+      };
+      base.sort((a, b) => avg(a) - avg(b));
     } else {
       // 'order': store order is oldest-first; desc = most recent first
       if (sortDir === 'desc') base.reverse();
@@ -171,7 +180,7 @@ export function IndexPage({ onSelectSong }: IndexPageProps) {
       {
         id: crypto.randomUUID(),
         title: 'New Song',
-        abc: `X:1\nT:New Song\nM:C\nL:1/4\nK:C\nC D E F |`,
+        abc: `X:1\nT:New Song\nM:4/4\nL:1/4\nK:C\nC D E F |`,
       },
     ]);
     setAddSongMenuAnchor(null);
@@ -244,7 +253,7 @@ export function IndexPage({ onSelectSong }: IndexPageProps) {
   };
 
   const handleSortSelect = (
-    key: 'order' | 'title' | 'length' | 'difficulty'
+    key: 'order' | 'title' | 'length' | 'difficulty' | 'practiceCount' | 'averageScore'
   ) => {
     if (key === sortKey) {
       setSortDir((d) => (d === 'asc' ? 'desc' : 'asc'));
@@ -466,6 +475,44 @@ export function IndexPage({ onSelectSong }: IndexPageProps) {
                     {song.difficulty}
                   </Box>
                 )}
+                {sortKey === 'practiceCount' && (
+                  <Box
+                    component="span"
+                    sx={{
+                      ml: 1,
+                      px: 0.75,
+                      py: 0.25,
+                      borderRadius: 1,
+                      backgroundColor: 'action.selected',
+                      color: 'text.secondary',
+                      fontSize: '0.75rem',
+                      whiteSpace: 'nowrap',
+                      flexShrink: 0,
+                    }}
+                  >
+                    {song.practiceCount ?? 0}
+                  </Box>
+                )}
+                {sortKey === 'averageScore' && (
+                  <Box
+                    component="span"
+                    sx={{
+                      ml: 1,
+                      px: 0.75,
+                      py: 0.25,
+                      borderRadius: 1,
+                      backgroundColor: 'action.selected',
+                      color: 'text.secondary',
+                      fontSize: '0.75rem',
+                      whiteSpace: 'nowrap',
+                      flexShrink: 0,
+                    }}
+                  >
+                    {song.practiceHistory?.length
+                      ? `${Math.round(song.practiceHistory.reduce((a, b) => a + b, 0) / song.practiceHistory.length)}%`
+                      : '—'}
+                  </Box>
+                )}
               </ListItemButton>
             </ListItem>
           );
@@ -518,6 +565,8 @@ export function IndexPage({ onSelectSong }: IndexPageProps) {
             'title',
             'length',
             ...(method !== 'none' ? ['difficulty' as const] : []),
+            'practiceCount',
+            'averageScore',
           ] as const
         ).map((key) => (
           <MenuItem
@@ -531,6 +580,8 @@ export function IndexPage({ onSelectSong }: IndexPageProps) {
                 | 'sortTitle'
                 | 'sortLength'
                 | 'sortDifficulty'
+                | 'sortPracticeCount'
+                | 'sortAverageScore'
             )}
             {sortKey === key &&
               (sortDir === 'asc' ? (

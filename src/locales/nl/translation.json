@@ -136,6 +136,10 @@
   "sortTitle": "Titel",
   "sortLength": "Lengte",
   "method": "Methode",
+  "methodHelperText": "Het kiezen van een methode labelt nummers met het boeknummer en de pagina in die methodereeks waar de moeilijkste techniek in het nummer wordt gevonden en maakt sorteren op moeilijkheidsgraad mogelijk.",
   "sortDifficulty": "Moeilijkheid",
+  "sortPracticeCount": "Aantal keer geoefend",
+  "sortAverageScore": "Gemiddelde score",
+  "practiceHistory": "Oefengeschiedenis",
   "methodNone": "Geen"
 }

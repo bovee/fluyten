@@ -136,6 +136,10 @@
   "sortTitle": "Judul",
   "sortLength": "Panjang",
   "method": "Metode",
+  "methodHelperText": "Memilih metode akan memberi label lagu dengan nomor buku dan halaman dalam seri metode tersebut di mana teknik paling sulit dalam lagu ditemukan dan memungkinkan pengurutan berdasarkan tingkat kesulitan.",
   "sortDifficulty": "Kesulitan",
+  "sortPracticeCount": "Jumlah latihan",
+  "sortAverageScore": "Skor rata-rata",
+  "practiceHistory": "Riwayat latihan",
   "methodNone": "Tidak ada"
 }

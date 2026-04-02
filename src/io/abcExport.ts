@@ -274,7 +274,10 @@ function scoreToAbc(
         sig.beatsPerBar !== prev?.beatsPerBar ||
         sig.beatValue !== prev?.beatValue
       ) {
-        part += `[M:${sig.beatsPerBar}/${sig.beatValue}]`;
+        const mStr = sig.commonTime
+          ? sig.beatValue === 2 ? 'C|' : 'C'
+          : `${sig.beatsPerBar}/${sig.beatValue}`;
+        part += `[M:${mStr}]`;
       }
       if (sig.keySignature !== prev?.keySignature) {
         part += `[K:${sig.keySignature}]`;
@@ -387,7 +390,10 @@ export function toAbc(music: Music): string {
   if (music.title) lines.push(`T:${music.title}`);
   if (music.composer) lines.push(`C:${music.composer}`);
   const sig0 = music.signatures[0];
-  lines.push(`M:${sig0.beatsPerBar}/${sig0.beatValue}`);
+  const mStr0 = sig0.commonTime
+    ? sig0.beatValue === 2 ? 'C|' : 'C'
+    : `${sig0.beatsPerBar}/${sig0.beatValue}`;
+  lines.push(`M:${mStr0}`);
   if (sig0.tempo !== undefined) {
     const label = sig0.tempoText ? `"${sig0.tempoText}" ` : '';
     lines.push(`Q:${label}1/4=${sig0.tempo}`);

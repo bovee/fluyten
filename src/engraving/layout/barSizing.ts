@@ -35,9 +35,7 @@ export function computeBarSizings(
 
     const keySigWidth = numKeyAccidentals * KEY_SIG_ACCIDENTAL_WIDTH;
 
-    const hasRepeatStart =
-      bar.barLineStartType === 'begin_repeat' ||
-      bar.barLineStartType === 'begin_end_repeat';
+    const hasRepeatStart = bar.barLineStartType === 'begin_repeat';
 
     const preambleIfFirst =
       CLEF_WIDTH +

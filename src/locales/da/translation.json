@@ -136,6 +136,10 @@
   "sortTitle": "Titel",
   "sortLength": "Længde",
   "method": "Metode",
+  "methodHelperText": "Valg af en metode vil mærke sange med bognummeret og siden i den metodeserie, hvor den sværeste teknik i sangen findes, og give mulighed for sortering efter sværhedsgrad.",
   "sortDifficulty": "Sværhedsgrad",
+  "sortPracticeCount": "Antal øvelser",
+  "sortAverageScore": "Gennemsnitsscore",
+  "practiceHistory": "Øvelseshistorik",
   "methodNone": "Ingen"
 }

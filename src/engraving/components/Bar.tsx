@@ -115,23 +115,43 @@ export function PreambleBar({ item, staffTopY, clef }: PreambleBarProps) {
 
   // Time signature
   if (preamble.showTimeSig) {
-    const ts = buildTimeSigParts(preamble.timeSig);
-    if (ts) {
-      const tx = x + preamble.timeSigX;
+    const tx = x + preamble.timeSigX;
+    if (preamble.timeSig === 'C') {
       parts.push(
         <Glyph
-          key="tsNum"
-          name={timeSigDigitGlyph(ts.num)}
+          key="tsCommon"
+          name="timeSigCommon"
           x={tx}
-          y={staffPositionToY(2, staffTopY)}
-        />,
-        <Glyph
-          key="tsDen"
-          name={timeSigDigitGlyph(ts.den)}
-          x={tx}
-          y={staffPositionToY(-2, staffTopY)}
+          y={staffPositionToY(0, staffTopY)}
         />
       );
+    } else if (preamble.timeSig === 'C|') {
+      parts.push(
+        <Glyph
+          key="tsCut"
+          name="timeSigCutCommon"
+          x={tx}
+          y={staffPositionToY(0, staffTopY)}
+        />
+      );
+    } else {
+      const ts = buildTimeSigParts(preamble.timeSig);
+      if (ts) {
+        parts.push(
+          <Glyph
+            key="tsNum"
+            name={timeSigDigitGlyph(ts.num)}
+            x={tx}
+            y={staffPositionToY(2, staffTopY)}
+          />,
+          <Glyph
+            key="tsDen"
+            name={timeSigDigitGlyph(ts.den)}
+            x={tx}
+            y={staffPositionToY(-2, staffTopY)}
+          />
+        );
+      }
     }
   }
 

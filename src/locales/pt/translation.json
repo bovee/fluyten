@@ -136,6 +136,10 @@
   "sortTitle": "Título",
   "sortLength": "Duração",
   "method": "Método",
+  "methodHelperText": "Escolher um método rotulará as músicas com o número do livro e a página nessa série de método onde a técnica mais difícil da música é encontrada e permitirá a ordenação por dificuldade.",
   "sortDifficulty": "Dificuldade",
+  "sortPracticeCount": "Vezes praticado",
+  "sortAverageScore": "Pontuação média",
+  "practiceHistory": "Histórico de prática",
   "methodNone": "Nenhum"
 }

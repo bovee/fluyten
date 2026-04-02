@@ -136,6 +136,10 @@
   "sortTitle": "Názov",
   "sortLength": "Dĺžka",
   "method": "Metóda",
+  "methodHelperText": "Výber metódy označí piesne číslom knihy a stránkou v danej metodickej sérii, kde sa nachádza najťažšia technika v piesni, a umožní triedenie podľa obtiažnosti.",
   "sortDifficulty": "Náročnosť",
+  "sortPracticeCount": "Počet cvičení",
+  "sortAverageScore": "Priemerné skóre",
+  "practiceHistory": "História cvičení",
   "methodNone": "Žiadna"
 }

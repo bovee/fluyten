@@ -18,6 +18,8 @@ export interface UserSong {
   tempo?: number;
   beats?: number;
   difficulty?: string;
+  practiceHistory?: number[];
+  practiceCount?: number;
 }
 
 function derivedFields(
@@ -58,6 +60,8 @@ interface SettingsState {
   setPlayMetronome: (v: boolean) => void;
   autoScroll: boolean;
   setAutoScroll: (v: boolean) => void;
+  practiceCalendar: Record<string, Record<number, number>>;
+  recordPracticeSession: (songId: string, percentCorrect: number) => void;
   songs: UserSong[];
   addSongs: (songs: UserSong[]) => void;
   removeSong: (songId: string) => void;
@@ -98,6 +102,31 @@ export const useStore = create<SettingsState>()(
       setPlayMetronome: (playMetronome) => set({ playMetronome }),
       autoScroll: true,
       setAutoScroll: (autoScroll) => set({ autoScroll }),
+      practiceCalendar: {},
+      recordPracticeSession: (songId, percentCorrect) =>
+        set((state) => {
+          const today = new Date();
+          const calKey = `${today.getFullYear()}-${today.getMonth() + 1}`;
+          const day = today.getDate();
+          return {
+            practiceCalendar: {
+              ...state.practiceCalendar,
+              [calKey]: {
+                ...state.practiceCalendar[calKey],
+                [day]: (state.practiceCalendar[calKey]?.[day] ?? 0) + 1,
+              },
+            },
+            songs: state.songs.map((s) =>
+              s.id === songId
+                ? {
+                    ...s,
+                    practiceHistory: [...(s.practiceHistory ?? []), percentCorrect].slice(-5),
+                    practiceCount: (s.practiceCount ?? 0) + 1,
+                  }
+                : s
+            ),
+          };
+        }),
       songs: [],
       addSongs: (songs) =>
         set((state) => ({
@@ -105,6 +134,8 @@ export const useStore = create<SettingsState>()(
             ...state.songs,
             ...songs.map((s) => ({
               ...s,
+              practiceHistory: s.practiceHistory ?? [],
+              practiceCount: s.practiceCount ?? 0,
               ...derivedFields(s.abc, state.method),
             })),
           ],
@@ -128,7 +159,7 @@ export const useStore = create<SettingsState>()(
     }),
     {
       name: 'fluyten-settings',
-      version: 1,
+      version: 2,
       migrate: (persistedState: unknown, version: number) => {
         const state = persistedState as Record<string, unknown>;
         if (version === 0 && Array.isArray(state.userBooks)) {
@@ -136,6 +167,13 @@ export const useStore = create<SettingsState>()(
             state.userBooks as Array<{ songs?: UserSong[] }>
           ).flatMap((b) => b.songs ?? []);
           delete state.userBooks;
+        }
+        if (version < 2) {
+          state.practiceCalendar = {};
+          (state.songs as UserSong[]).forEach((s) => {
+            s.practiceHistory = [];
+            s.practiceCount = 0;
+          });
         }
         return state;
       },

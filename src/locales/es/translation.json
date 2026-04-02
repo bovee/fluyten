@@ -136,6 +136,10 @@
   "sortTitle": "Título",
   "sortLength": "Duración",
   "method": "Método",
+  "methodHelperText": "Elegir un método etiquetará las canciones con el número de libro y la página en esa serie de método donde se encuentra la técnica más difícil de la canción y permitirá ordenar por dificultad.",
   "sortDifficulty": "Dificultad",
+  "sortPracticeCount": "Veces practicado",
+  "sortAverageScore": "Puntuación media",
+  "practiceHistory": "Historial de práctica",
   "methodNone": "Ninguno"
 }

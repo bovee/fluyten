@@ -136,6 +136,10 @@
   "sortTitle": "Tytuł",
   "sortLength": "Długość",
   "method": "Metoda",
+  "methodHelperText": "Wybranie metody spowoduje oznaczenie piosenek numerem książki i stroną w tej serii metodycznej, gdzie znajduje się najtrudniejsza technika w piosence, oraz umożliwi sortowanie według poziomu trudności.",
   "sortDifficulty": "Trudność",
+  "sortPracticeCount": "Liczba ćwiczeń",
+  "sortAverageScore": "Średni wynik",
+  "practiceHistory": "Historia ćwiczeń",
   "methodNone": "Brak"
 }

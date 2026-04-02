@@ -244,7 +244,9 @@ export function computeLayout(
       const isFirstBar = firstBarIdx === 0;
       const linePreambleWidth = sizing.preambleIfFirst - NOTE_AREA_PADDING;
       const firstBarSig = barData[firstBarIdx].signature;
-      const firstBarTimeSig = `${firstBarSig.beatsPerBar}/${firstBarSig.beatValue}`;
+      const firstBarTimeSig = firstBarSig.commonTime
+        ? firstBarSig.beatValue === 2 ? 'C|' : 'C'
+        : `${firstBarSig.beatsPerBar}/${firstBarSig.beatValue}`;
       const preamble = buildPreambleLayout(
         linePreambleWidth,
         numKeyAccidentals,
@@ -267,7 +269,9 @@ export function computeLayout(
       if (!sizing.timeSigChanged) continue;
       const barLayout = allBarLayouts[barIdx];
       const sig = barData[barIdx].signature;
-      const timeSig = `${sig.beatsPerBar}/${sig.beatValue}`;
+      const timeSig = sig.commonTime
+        ? sig.beatValue === 2 ? 'C|' : 'C'
+        : `${sig.beatsPerBar}/${sig.beatValue}`;
       const preamble = buildPreambleLayout(
         TIME_SIG_WIDTH,
         0,
@@ -341,14 +345,13 @@ function resolveBarlineTypes(
 
   // Determine left-edge barline type
   let barlineStart: BarlineStartType = 'none';
-  if (
-    bar.barLineStartType === 'begin_repeat' ||
-    bar.barLineStartType === 'begin_end_repeat'
-  ) {
+  if (bar.barLineStartType === 'begin_repeat') {
     barlineStart = 'begin_repeat';
+    // begin_end_repeat already draws the right-side begin_repeat visually in
+    // the preceding bar's barlineEnd; don't duplicate it as a barlineStart.
   } else if (barIdx > 0) {
     const prevType = allBars[barIdx - 1].barLineType;
-    if (prevType === 'begin_repeat' || prevType === 'begin_end_repeat') {
+    if (prevType === 'begin_repeat') {
       barlineStart = 'begin_repeat';
     }
   }

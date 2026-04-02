@@ -163,32 +163,32 @@ export function BarlineEnd({
           {DOT_Y_OFFSETS.map((dy, i) => (
             <circle
               key={`l${i}`}
-              cx={x - THICK - 2 - DOT_GAP * 2}
+              cx={x - THICK - 1 - DOT_GAP}
               cy={staffTopY + dy}
               r={DOT_RADIUS}
               fill="currentColor"
             />
           ))}
           <line
-            x1={x - THICK - 2}
+            x1={x - THICK - 1}
             y1={y1}
-            x2={x - THICK - 2}
+            x2={x - THICK - 1}
             y2={y2}
             stroke="currentColor"
             strokeWidth={THIN}
           />
           <line
-            x1={x - THICK / 2}
+            x1={x}
             y1={y1}
-            x2={x - THICK / 2}
+            x2={x}
             y2={y2}
             stroke="currentColor"
             strokeWidth={THICK}
           />
           <line
-            x1={x + THICK / 2 + 1}
+            x1={x + THICK + 1}
             y1={y1}
-            x2={x + THICK / 2 + 1}
+            x2={x + THICK + 1}
             y2={y2}
             stroke="currentColor"
             strokeWidth={THIN}
@@ -196,7 +196,7 @@ export function BarlineEnd({
           {DOT_Y_OFFSETS.map((dy, i) => (
             <circle
               key={`r${i}`}
-              cx={x + THICK / 2 + 1 + DOT_GAP}
+              cx={x + THICK + 1 + DOT_GAP}
               cy={staffTopY + dy}
               r={DOT_RADIUS}
               fill="currentColor"

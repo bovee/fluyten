@@ -136,6 +136,10 @@
   "sortTitle": "Název",
   "sortLength": "Délka",
   "method": "Metoda",
+  "methodHelperText": "Výběr metody označí písně číslem knihy a stránkou v dané metodické řadě, kde se nachází nejtěžší technika v písni, a umožní řazení podle obtížnosti.",
   "sortDifficulty": "Obtížnost",
+  "sortPracticeCount": "Počet cvičení",
+  "sortAverageScore": "Průměrné skóre",
+  "practiceHistory": "Historie cvičení",
   "methodNone": "Žádná"
 }

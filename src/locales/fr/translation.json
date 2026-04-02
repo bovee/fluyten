@@ -136,6 +136,10 @@
   "sortTitle": "Titre",
   "sortLength": "Durée",
   "method": "Méthode",
+  "methodHelperText": "Choisir une méthode étiquettera les chansons avec le numéro de livre et la page dans cette série de méthode où se trouve la technique la plus difficile de la chanson, et permettra le tri par difficulté.",
   "sortDifficulty": "Difficulté",
+  "sortPracticeCount": "Fois pratiquées",
+  "sortAverageScore": "Score moyen",
+  "practiceHistory": "Historique de pratique",
   "methodNone": "Aucune"
 }

@@ -136,6 +136,10 @@
   "sortTitle": "标题",
   "sortLength": "长度",
   "method": "教材",
+  "methodHelperText": "选择一个教材会将歌曲标记上该教材系列中包含歌曲最难技巧的册数和页码，并允许按难度排序。",
   "sortDifficulty": "难度",
+  "sortPracticeCount": "练习次数",
+  "sortAverageScore": "平均分数",
+  "practiceHistory": "练习记录",
   "methodNone": "无"
 }

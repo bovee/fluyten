@@ -136,6 +136,10 @@
   "sortTitle": "Take",
   "sortLength": "Tsawo",
   "method": "Hanya",
+  "methodHelperText": "Zaɓar hanya zai rubuta waƙoƙi tare da lambar littafi da shafi a cikin jerin hanyar inda ake samun mafi wuyan fasaha a cikin waƙar kuma ya ba da damar rarraba ta matakin wahala.",
   "sortDifficulty": "Wahala",
+  "sortPracticeCount": "Sau da aka yi aiki",
+  "sortAverageScore": "Matsakaicin maki",
+  "practiceHistory": "Tarihin aiki",
   "methodNone": "Babu"
 }

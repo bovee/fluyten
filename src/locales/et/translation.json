@@ -136,6 +136,10 @@
   "sortTitle": "Pealkiri",
   "sortLength": "Pikkus",
   "method": "Meetod",
+  "methodHelperText": "Meetodi valimine märgistab laulud selle meetodisarja raamatunumbri ja leheküljega, kus leitakse laulu raskeim tehnika, ning võimaldab sorteerida raskusastme järgi.",
   "sortDifficulty": "Raskus",
+  "sortPracticeCount": "Harjutamise kordade arv",
+  "sortAverageScore": "Keskmine tulemus",
+  "practiceHistory": "Harjutamise ajalugu",
   "methodNone": "Puudub"
 }

@@ -136,6 +136,10 @@
   "sortTitle": "Kichwa",
   "sortLength": "Urefu",
   "method": "Njia",
+  "methodHelperText": "Kuchagua njia kutaweka lebo kwenye nyimbo na nambari ya kitabu na ukurasa katika mfululizo huo wa njia ambapo mbinu ngumu zaidi katika wimbo inayopatikana na kuruhusu kupanga kwa kiwango cha ugumu.",
   "sortDifficulty": "Ugumu",
+  "sortPracticeCount": "Idadi ya mazoezi",
+  "sortAverageScore": "Wastani wa alama",
+  "practiceHistory": "Historia ya mazoezi",
   "methodNone": "Hakuna"
 }

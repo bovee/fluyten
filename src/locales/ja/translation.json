@@ -136,6 +136,10 @@
   "sortTitle": "タイトル",
   "sortLength": "長さ",
   "method": "教本",
+  "methodHelperText": "教本を選択すると、曲にその教本シリーズの巻番号とページ番号（その曲の最も難しいテクニックが掲載されているページ）がラベル付けされ、難易度順に並べ替えることができます。",
   "sortDifficulty": "難易度",
+  "sortPracticeCount": "練習回数",
+  "sortAverageScore": "平均スコア",
+  "practiceHistory": "練習履歴",
   "methodNone": "なし"
 }

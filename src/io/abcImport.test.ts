@@ -17,6 +17,23 @@ describe('fromAbc', () => {
       expect(music.composer).toBe('Bach');
     });
 
+    it('expands \\XX mnemonics in title and composer', () => {
+      const music = fromAbc(`T:Caf\\\'e\nC:Fran\\ccois\nM:4/4\nL:1/4\nK:C\nC`);
+      expect(music.title).toBe('Caf\u00E9');       // é
+      expect(music.composer).toBe('Fran\u00E7ois'); // ç
+    });
+
+    it('expands \\XX mnemonics in aligned lyrics', () => {
+      const music = fromAbc(`T:T\nM:4/4\nL:1/4\nK:C\nC D E F\nw: caf\\\'e Ma\\~na`);
+      expect(music.lyrics[0][0]).toBe('caf\u00E9'); // é
+      expect(music.lyrics[0][1]).toBe('Ma\u00F1a'); // ña
+    });
+
+    it('leaves unknown \\XX sequences unchanged', () => {
+      const music = fromAbc(`T:test \\XQ end\nM:4/4\nL:1/4\nK:C\nC`);
+      expect(music.title).toBe('test \\XQ end');
+    });
+
     it('should parse free time (M:none)', () => {
       const abc = `T:Test\nM:none\nL:1/4\nK:C\nC D E F`;
       const music = fromAbc(abc);
@@ -281,6 +298,36 @@ describe('fromAbc', () => {
       expect(music.notes[0].pitches[0]).toBe(61); // C#
       expect(music.notes[1].pitches[0]).toBe(61); // Db
       expect(music.notes[2].pitches[0]).toBe(64); // E natural
+    });
+
+    it('accidental carries forward within a bar', () => {
+      const music = fromAbc(`T:T\nM:4/4\nL:1/4\nK:C\n^C D C | C D C`);
+      expect(music.notes[0].pitches[0]).toBe(61); // ^C sharp
+      expect(music.notes[2].pitches[0]).toBe(61); // C carries sharp in same bar
+      expect(music.notes[3].pitches[0]).toBe(60); // barline resets → C natural
+      expect(music.notes[5].pitches[0]).toBe(60); // still natural
+    });
+
+    it('accidental does not apply retroactively', () => {
+      const music = fromAbc(`T:T\nM:4/4\nL:1/4\nK:C\nC D ^C | C D C`);
+      expect(music.notes[0].pitches[0]).toBe(60); // C natural (before accidental)
+      expect(music.notes[2].pitches[0]).toBe(61); // ^C sharp
+      expect(music.notes[3].pitches[0]).toBe(60); // barline resets → C natural
+    });
+
+    it('natural sign cancels bar-local sharp for subsequent notes', () => {
+      const music = fromAbc(`T:T\nM:4/4\nL:1/4\nK:C\n^C =C C`);
+      expect(music.notes[0].pitches[0]).toBe(61); // ^C sharp
+      expect(music.notes[1].pitches[0]).toBe(60); // =C natural
+      expect(music.notes[2].pitches[0]).toBe(60); // carries natural
+    });
+
+    it('natural sign cancels key-signature accidental within bar', () => {
+      // K:G has F#; =F should make F natural for the rest of the bar
+      const music = fromAbc(`T:T\nM:4/4\nL:1/4\nK:G\n=F F | F`);
+      expect(music.notes[0].pitches[0]).toBe(65); // =F natural
+      expect(music.notes[1].pitches[0]).toBe(65); // still natural in bar
+      expect(music.notes[2].pitches[0]).toBe(66); // new bar → F# from key sig
     });
 
     it('should parse rests', () => {

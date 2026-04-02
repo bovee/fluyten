@@ -395,6 +395,8 @@ export interface Signature {
   tempoText?: string;
   /** Unit note length (L: field) — retained only for round-trip ABC export. */
   defaultDuration?: Duration;
+  /** When true, display as C (common time) or C| (cut time) instead of numerals. */
+  commonTime?: boolean;
 }
 
 /** Returns the signature active at the given note index. */

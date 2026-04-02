@@ -136,6 +136,10 @@
   "sortTitle": "Naslov",
   "sortLength": "Duljina",
   "method": "Metoda",
+  "methodHelperText": "Odabir metode označit će pjesme brojem knjige i stranicom u toj metodološkoj seriji gdje se nalazi najteža tehnika u pjesmi i omogućiti sortiranje po težini.",
   "sortDifficulty": "Težina",
+  "sortPracticeCount": "Broj vježbi",
+  "sortAverageScore": "Prosječan rezultat",
+  "practiceHistory": "Povijest vježbanja",
   "methodNone": "Ništa"
 }

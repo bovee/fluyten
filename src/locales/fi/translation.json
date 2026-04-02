@@ -136,6 +136,10 @@
   "sortTitle": "Otsikko",
   "sortLength": "Pituus",
   "method": "Metodi",
+  "methodHelperText": "Menetelmän valitseminen merkitsee kappaleet kirjan numerolla ja sivulla kyseisessä menetelmäsarjassa, josta kappaleen vaikein tekniikka löytyy, ja mahdollistaa lajittelun vaikeusasteen mukaan.",
   "sortDifficulty": "Vaikeusaste",
+  "sortPracticeCount": "Harjoituskerrat",
+  "sortAverageScore": "Keskimääräinen pisteet",
+  "practiceHistory": "Harjoitushistoria",
   "methodNone": "Ei mitään"
 }

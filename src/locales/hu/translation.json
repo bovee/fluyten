@@ -136,6 +136,10 @@
   "sortTitle": "Cím",
   "sortLength": "Hossz",
   "method": "Módszer",
+  "methodHelperText": "Egy módszer kiválasztása felcímkézi a dalokat az adott módszer sorozat könyvszámával és oldalával, ahol a dal legnehezebb technikája található, és lehetővé teszi a nehézség szerinti rendezést.",
   "sortDifficulty": "Nehézség",
+  "sortPracticeCount": "Gyakorlások száma",
+  "sortAverageScore": "Átlagos pontszám",
+  "practiceHistory": "Gyakorlási előzmények",
   "methodNone": "Nincs"
 }

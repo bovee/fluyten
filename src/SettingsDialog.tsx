@@ -1,4 +1,5 @@
 import { useRef, useState } from 'react';
+import { useTheme } from '@mui/material/styles';
 import Dialog from '@mui/material/Dialog';
 import DialogActions from '@mui/material/DialogActions';
 import DialogContent from '@mui/material/DialogContent';
@@ -8,6 +9,7 @@ import Typography from '@mui/material/Typography';
 import Box from '@mui/material/Box';
 import Button from '@mui/material/Button';
 import FormControl from '@mui/material/FormControl';
+import FormHelperText from '@mui/material/FormHelperText';
 import InputLabel from '@mui/material/InputLabel';
 import Select from '@mui/material/Select';
 import MenuItem from '@mui/material/MenuItem';
@@ -19,7 +21,11 @@ import Step from '@mui/material/Step';
 import StepLabel from '@mui/material/StepLabel';
 import Tab from '@mui/material/Tab';
 import Tabs from '@mui/material/Tabs';
+import Tooltip from '@mui/material/Tooltip';
+import IconButton from '@mui/material/IconButton';
 import GraphicEq from '@mui/icons-material/GraphicEq';
+import ChevronLeft from '@mui/icons-material/ChevronLeft';
+import ChevronRight from '@mui/icons-material/ChevronRight';
 import { useTranslation } from 'react-i18next';
 import { useStore } from './store';
 import { RECORDER_TYPES } from './instrument';
@@ -28,6 +34,136 @@ import { FingeringDiagram } from './FingeringDiagram';
 import { RecorderDetector } from './audio/RecorderDetector';
 import { Note } from './music';
 import i18n from './i18n';
+
+const DAY_LABELS = ['S', 'M', 'T', 'W', 'T', 'F', 'S'];
+const WEEKS = 13;
+
+function cellColor(count: number, hover: string): string {
+  if (count === 0) return hover;
+  if (count <= 2) return '#86efac';
+  if (count <= 4) return '#22c55e';
+  return '#15803d';
+}
+
+function PracticeHeatmap() {
+  const { t } = useTranslation();
+  const theme = useTheme();
+  const practiceCalendar = useStore((s) => s.practiceCalendar);
+  const [offset, setOffset] = useState(0);
+
+  // Build array of 91 Date objects (oldest first), ending at today - offset*7
+  const today = new Date();
+  const endDate = new Date();
+  endDate.setDate(endDate.getDate() - offset * 7);
+  // Align endDate to the end of its week (Saturday)
+  const endDow = endDate.getDay(); // 0=Sun..6=Sat
+  const daysToSat = 6 - endDow;
+  endDate.setDate(endDate.getDate() + daysToSat);
+
+  const days: Date[] = [];
+  for (let i = WEEKS * 7 - 1; i >= 0; i--) {
+    const d = new Date(endDate);
+    d.setDate(endDate.getDate() - i);
+    days.push(d);
+  }
+
+  const getCount = (d: Date) => {
+    const key = `${d.getFullYear()}-${d.getMonth() + 1}`;
+    return practiceCalendar[key]?.[d.getDate()] ?? 0;
+  };
+
+  const isRtl = theme.direction === 'rtl';
+  const columns = Array.from({ length: WEEKS }, (_, i) => i);
+  const displayCols = isRtl ? [...columns].reverse() : columns;
+
+  return (
+    <Box sx={{ display: 'flex', flexDirection: 'column', alignItems: 'center' }}>
+      <Box sx={{ display: 'flex', alignItems: 'center', mb: 1 }}>
+        <IconButton
+          size="small"
+          onClick={() => setOffset((o) => o + 4)}
+          aria-label="previous weeks"
+        >
+          <ChevronLeft />
+        </IconButton>
+        <Typography variant="body2" sx={{ flex: 1, textAlign: 'center' }}>
+          {t('practiceHistory')}
+        </Typography>
+        <IconButton
+          size="small"
+          onClick={() => setOffset((o) => Math.max(0, o - 4))}
+          disabled={offset === 0}
+          aria-label="next weeks"
+        >
+          <ChevronRight />
+        </IconButton>
+      </Box>
+      <Box
+        sx={{
+          display: 'grid',
+          gridTemplateColumns: `20px repeat(${WEEKS}, 20px)`,
+          gridTemplateRows: `repeat(7, 20px)`,
+          gap: '2px',
+        }}
+      >
+        {DAY_LABELS.map((label, row) => (
+          <Typography
+            key={row}
+            variant="caption"
+            sx={{
+              gridColumn: 1,
+              gridRow: row + 1,
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'center',
+              fontSize: '10px',
+              color: 'text.secondary',
+            }}
+          >
+            {label}
+          </Typography>
+        ))}
+        {displayCols.map((weekIdx, colPos) =>
+          Array.from({ length: 7 }, (_, dow) => {
+            const dayIndex = weekIdx * 7 + dow;
+            const d = days[dayIndex];
+            const count = getCount(d);
+            const isToday =
+              d.getFullYear() === today.getFullYear() &&
+              d.getMonth() === today.getMonth() &&
+              d.getDate() === today.getDate();
+            const isMonthStart = d.getDate() === 1;
+            const dateStr = d.toLocaleDateString(undefined, {
+              year: 'numeric',
+              month: 'long',
+              day: 'numeric',
+            });
+            return (
+              <Tooltip key={`${weekIdx}-${dow}`} title={`${dateStr} — ${count}`}>
+                <Box
+                  sx={{
+                    gridColumn: colPos + 2,
+                    gridRow: dow + 1,
+                    width: 20,
+                    height: 20,
+                    borderRadius: '3px',
+                    bgcolor: cellColor(count, theme.palette.action.hover),
+                    ...(isToday && {
+                      outline: `2px solid ${theme.palette.text.secondary}`,
+                    }),
+                    ...(isMonthStart && {
+                      borderTop: `2px solid ${theme.palette.text.secondary}`,
+                    }),
+                  }}
+                />
+              </Tooltip>
+            );
+          })
+        )}
+      </Box>
+    </Box>
+  );
+}
 
 interface SettingsDialogProps {
   open: boolean;
@@ -124,7 +260,7 @@ export function SettingsDialog({ open, onClose }: SettingsDialogProps) {
                 pb: 1,
                 display: 'flex',
                 flexDirection: 'column',
-                gap: 4,
+                gap: 2,
               }}
             >
               <FormControl fullWidth>
@@ -252,7 +388,7 @@ export function SettingsDialog({ open, onClose }: SettingsDialogProps) {
                 pb: 1,
                 display: 'flex',
                 flexDirection: 'column',
-                gap: 4,
+                gap: 2,
               }}
             >
               <Box sx={{ display: 'flex', gap: 1, alignItems: 'flex-start' }}>
@@ -264,7 +400,7 @@ export function SettingsDialog({ open, onClose }: SettingsDialogProps) {
                     labelId="instrument-type-label"
                     id="instrument-type-select"
                     value={instrumentType}
-                    label={t('instrumentType')}
+                    label={t('recorderType')}
                     onChange={(e) =>
                       setInstrumentType(
                         e.target.value as keyof typeof RECORDER_TYPES
@@ -290,21 +426,6 @@ export function SettingsDialog({ open, onClose }: SettingsDialogProps) {
                 </Button>
               </Box>
 
-              <Box>
-                <Typography id="tuning-slider" gutterBottom>
-                  {t('tuningRatio', { tuning: tuning.toFixed(2) })}
-                </Typography>
-                <Slider
-                  aria-label="Tuning"
-                  value={tuning}
-                  onChange={(_, newValue) => setTuning(newValue as number)}
-                  valueLabelDisplay="auto"
-                  step={0.01}
-                  min={0.8}
-                  max={1.2}
-                />
-              </Box>
-
               <FormControlLabel
                 control={
                   <Switch
@@ -314,6 +435,21 @@ export function SettingsDialog({ open, onClose }: SettingsDialogProps) {
                 }
                 label={t('germanFingering')}
               />
+
+              <Box>
+                <Typography id="tuning-slider" gutterBottom>
+                  {t('tuningRatio', { tuning: tuning.toFixed(2) })}
+                </Typography>
+                <Slider
+                  aria-labelledby="tuning-slider"
+                  value={tuning}
+                  onChange={(_, newValue) => setTuning(newValue as number)}
+                  valueLabelDisplay="auto"
+                  step={0.01}
+                  min={0.8}
+                  max={1.2}
+                />
+              </Box>
 
               <FormControl fullWidth>
                 <InputLabel id="method-label">{t('method')}</InputLabel>
@@ -330,6 +466,7 @@ export function SettingsDialog({ open, onClose }: SettingsDialogProps) {
                     </MenuItem>
                   ))}
                 </Select>
+                <FormHelperText>{t('methodHelperText')}</FormHelperText>
               </FormControl>
             </Box>
           )}
@@ -342,7 +479,7 @@ export function SettingsDialog({ open, onClose }: SettingsDialogProps) {
                 pb: 1,
                 display: 'flex',
                 flexDirection: 'column',
-                gap: 4,
+                gap: 2,
               }}
             >
               <FormControl fullWidth>
@@ -368,15 +505,16 @@ export function SettingsDialog({ open, onClose }: SettingsDialogProps) {
               </FormControl>
 
               <FormControlLabel
+                disabled={practiceMode === 'metronome-only'}
                 control={
                   <Checkbox
                     checked={playMetronome}
                     onChange={(e) => setPlayMetronome(e.target.checked)}
-                    disabled={practiceMode === 'metronome-only'}
                   />
                 }
                 label={t('playMetronome')}
               />
+              <PracticeHeatmap />
             </Box>
           )}
         </DialogContent>

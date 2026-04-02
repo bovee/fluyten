@@ -14,6 +14,69 @@ import {
 import { PITCH_CONSTANTS, TIME_SIGNATURES } from '../constants';
 import { type RecorderType } from '../instrument';
 
+// Mapping of two-character ABC mnemonics (after \) to their Unicode equivalents.
+// See https://abcnotation.com/wiki/abc:standard:v2.1#supported_accents_ligatures
+const ABC_MNEMONICS: Record<string, string> = {
+  // Grave
+  '`A': '\u00C0', '`a': '\u00E0',
+  '`E': '\u00C8', '`e': '\u00E8',
+  '`I': '\u00CC', '`i': '\u00EC',
+  '`O': '\u00D2', '`o': '\u00F2',
+  '`U': '\u00D9', '`u': '\u00F9',
+  // Acute
+  "'A": '\u00C1', "'a": '\u00E1',
+  "'E": '\u00C9', "'e": '\u00E9',
+  "'I": '\u00CD', "'i": '\u00ED',
+  "'O": '\u00D3', "'o": '\u00F3',
+  "'U": '\u00DA', "'u": '\u00FA',
+  "'Y": '\u00DD', "'y": '\u00FD',
+  // Circumflex
+  '^A': '\u00C2', '^a': '\u00E2',
+  '^E': '\u00CA', '^e': '\u00EA',
+  '^I': '\u00CE', '^i': '\u00EE',
+  '^O': '\u00D4', '^o': '\u00F4',
+  '^U': '\u00DB', '^u': '\u00FB',
+  '^Y': '\u0176', '^y': '\u0177',
+  // Tilde
+  '~A': '\u00C3', '~a': '\u00E3',
+  '~N': '\u00D1', '~n': '\u00F1',
+  '~O': '\u00D5', '~o': '\u00F5',
+  // Umlaut/diaeresis
+  '"A': '\u00C4', '"a': '\u00E4',
+  '"E': '\u00CB', '"e': '\u00EB',
+  '"I': '\u00CF', '"i': '\u00EF',
+  '"O': '\u00D6', '"o': '\u00F6',
+  '"U': '\u00DC', '"u': '\u00FC',
+  '"Y': '\u0178', '"y': '\u00FF',
+  // Cedilla
+  'cC': '\u00C7', 'cc': '\u00E7',
+  // Ring
+  'AA': '\u00C5', 'aa': '\u00E5',
+  // Stroke
+  '/O': '\u00D8', '/o': '\u00F8',
+  // Breve
+  'uA': '\u0102', 'ua': '\u0103',
+  'uE': '\u0114', 'ue': '\u0115',
+  // Caron
+  'vS': '\u0160', 'vs': '\u0161',
+  'vZ': '\u017D', 'vz': '\u017E',
+  // Double acute
+  'HO': '\u0150', 'Ho': '\u0151',
+  'HU': '\u0170', 'Hu': '\u0171',
+  // Ligatures and special characters
+  'AE': '\u00C6', 'ae': '\u00E6',
+  'OE': '\u0152', 'oe': '\u0153',
+  'ss': '\u00DF',
+  'DH': '\u00D0', 'dh': '\u00F0',
+  'TH': '\u00DE', 'th': '\u00FE',
+};
+
+function expandMnemonics(text: string): string {
+  return text.replace(/\\([\s\S]{2})/g, (match, code: string) =>
+    ABC_MNEMONICS[code] ?? match
+  );
+}
+
 const CLEF_NAME_MAP: Record<string, Music['clef']> = {
   bass: 'bass',
   'bass+8': 'bass8va',
@@ -380,6 +443,7 @@ export function parseScore(
   // Local mutable copies so inline fields can update them mid-score.
   let curDefaultDuration = defaultDuration;
   const curKeyAdjustment: { [n: string]: number } = { ...keyAdjustment };
+  const barAccidentals: { [n: string]: number } = {};
   let noteType: 'grace' | 'grace_slash' | 'triplet' | 'chord' | null = null;
   let tupletCounter = 0;
   let startSlur: number | null = null;
@@ -481,10 +545,16 @@ export function parseScore(
           groups.note,
           noteDuration,
           noteDurationModifier,
-          curKeyAdjustment,
+          { ...curKeyAdjustment, ...barAccidentals },
           groups.accidental,
           groups.decoration
         );
+        if (groups.accidental) {
+          const n = groups.note[0].toUpperCase();
+          if (groups.accidental === '^') barAccidentals[n] = 1;
+          else if (groups.accidental === '_') barAccidentals[n] = -1;
+          else if (groups.accidental === '=') barAccidentals[n] = 0;
+        }
 
         if (noteType === 'chord' && chordAccum) {
           if (chordAccum.pitches.length === 0) {
@@ -520,6 +590,7 @@ export function parseScore(
       }
 
       case 'bar':
+        for (const k of Object.keys(barAccidentals)) delete barAccidentals[k];
         if (!isFreeTime) {
           music.bars.push({
             afterNoteNum: music.notes.length - 1,
@@ -655,9 +726,11 @@ export function parseScore(
           if (token.value === 'C') {
             next.beatsPerBar = TIME_SIGNATURES.COMMON_TIME.beatsPerBar;
             next.beatValue = TIME_SIGNATURES.COMMON_TIME.beatValue;
+            next.commonTime = true;
           } else if (token.value === 'C|') {
             next.beatsPerBar = TIME_SIGNATURES.CUT_TIME.beatsPerBar;
             next.beatValue = TIME_SIGNATURES.CUT_TIME.beatValue;
+            next.commonTime = true;
           } else {
             const parts = token.value.split('/');
             if (parts.length === 2) {
@@ -666,6 +739,7 @@ export function parseScore(
               if (!isNaN(bpb) && !isNaN(bv)) {
                 next.beatsPerBar = bpb;
                 next.beatValue = bv;
+                next.commonTime = false;
               }
             }
           }
@@ -786,17 +860,19 @@ export function parseHeaders(
   for (const line of lines) {
     if (line[1] === ':' && !line.startsWith('|:')) {
       const fieldData = line.slice(2).trim();
-      if (!music.title && line.startsWith('T:')) music.title = fieldData;
-      if (!music.composer && line.startsWith('C:')) music.composer = fieldData;
+      if (!music.title && line.startsWith('T:')) music.title = expandMnemonics(fieldData);
+      if (!music.composer && line.startsWith('C:')) music.composer = expandMnemonics(fieldData);
       if (line.startsWith('M:')) {
         if (fieldData === 'C') {
           music.signatures[0].beatsPerBar =
             TIME_SIGNATURES.COMMON_TIME.beatsPerBar;
           music.signatures[0].beatValue = TIME_SIGNATURES.COMMON_TIME.beatValue;
+          music.signatures[0].commonTime = true;
         } else if (fieldData === 'C|') {
           music.signatures[0].beatsPerBar =
             TIME_SIGNATURES.CUT_TIME.beatsPerBar;
           music.signatures[0].beatValue = TIME_SIGNATURES.CUT_TIME.beatValue;
+          music.signatures[0].commonTime = true;
         } else if (fieldData === '' || fieldData === 'none') {
           // Free time / no meter: leave beatsPerBar/beatValue at defaults,
           // bars will remain empty which triggers free time rendering.
@@ -1116,7 +1192,7 @@ type LyricToken =
 
 function parseLyricTokens(text: string): LyricToken[] {
   const tokens: LyricToken[] = [];
-  const words = text.trim().split(/\s+/);
+  const words = expandMnemonics(text.trim()).split(/\s+/);
   for (const word of words) {
     if (!word) continue;
     if (word === '_') {
@@ -1242,7 +1318,7 @@ export function fromAbc(
   }
 
   if (endLyricLines.length > 0) {
-    music.endLyrics = endLyricLines.join('\n');
+    music.endLyrics = expandMnemonics(endLyricLines.join('\n'));
   }
 
   const totalShift =

@@ -136,6 +136,10 @@
   "sortTitle": "Titel",
   "sortLength": "Länge",
   "method": "Methode",
+  "methodHelperText": "Die Auswahl einer Methode beschriftet Lieder mit der Buchnummer und Seite in dieser Methodenreihe, auf der die schwierigste Technik des Liedes zu finden ist, und ermöglicht das Sortieren nach Schwierigkeit.",
   "sortDifficulty": "Schwierigkeit",
+  "sortPracticeCount": "Anzahl der Übungen",
+  "sortAverageScore": "Durchschnittliche Punktzahl",
+  "practiceHistory": "Übungshistorie",
   "methodNone": "Keine"
 }

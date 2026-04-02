@@ -67,7 +67,7 @@ function usePitchDetection(
     idx: number;
   }>,
   setStatusMessage: (msg: string) => void,
-  onFinish: (results: ReadonlyMap<number, 'correct' | 'wrong'>) => void
+  onFinish: (results: ReadonlyMap<number, 'correct' | 'wrong'>, correctCount: number, totalCount: number) => void
 ) {
   const { t } = useTranslation();
   const [detectedPitch, setDetectedPitch] = useState<number | null>(null);
@@ -97,7 +97,7 @@ function usePitchDetection(
             setDetectedPitch(null);
             setCursor(undefined);
             setStatusMessage(t('recordingStopped'));
-            onFinish(new Map(noteResultsMapRef.current));
+            onFinish(new Map(noteResultsMapRef.current), tracking.notes.length, tracking.notes.length);
           } else {
             const nextOriginalIdx = tracking.originalIndices[tracking.idx];
             setCursor(
@@ -161,7 +161,7 @@ function useInTempoChecking(
   musicRef: React.MutableRefObject<Music>,
   tempoRef: React.MutableRefObject<number>,
   setStatusMessage: (msg: string) => void,
-  onFinish: (results: ReadonlyMap<number, 'correct' | 'wrong'>) => void
+  onFinish: (results: ReadonlyMap<number, 'correct' | 'wrong'>, correctCount: number, totalCount: number) => void
 ) {
   const { t } = useTranslation();
   const [detectedPitch, setDetectedPitch] = useState<number | null>(null);
@@ -176,6 +176,8 @@ function useInTempoChecking(
   const currentNoteIdxRef = useRef(-1);
   const correctSeenRef = useRef(false);
   const noteResultsMapRef = useRef(new Map<number, 'correct' | 'wrong'>());
+  const correctCountRef = useRef(0);
+  const totalCountRef = useRef(0);
   const timelineRef = useRef<MusicTimeline | null>(null);
   const rafRef = useRef<number | null>(null);
   const countdownTimeoutsRef = useRef<number[]>([]);
@@ -239,6 +241,8 @@ function useInTempoChecking(
     currentNoteIdxRef.current = -1;
     correctSeenRef.current = false;
     noteResultsMapRef.current = new Map();
+    correctCountRef.current = 0;
+    totalCountRef.current = 0;
     setNoteResults(new Map());
     setStatusMessage(t('recordingStarted'));
 
@@ -286,14 +290,14 @@ function useInTempoChecking(
           const lastIdx = currentNoteIdxRef.current;
           const lastNote = music.notes[lastIdx];
           if (lastIdx >= 0 && lastNote && lastNote.pitches.length > 0) {
-            noteResultsMapRef.current.set(
-              lastIdx,
-              correctSeenRef.current ? 'correct' : 'wrong'
-            );
+            const result = correctSeenRef.current ? 'correct' : 'wrong';
+            noteResultsMapRef.current.set(lastIdx, result);
             setNoteResults(new Map(noteResultsMapRef.current));
+            totalCountRef.current++;
+            if (result === 'correct') correctCountRef.current++;
           }
           stopAll();
-          onFinish(new Map(noteResultsMapRef.current));
+          onFinish(new Map(noteResultsMapRef.current), correctCountRef.current, totalCountRef.current);
           return;
         }
 
@@ -309,11 +313,11 @@ function useInTempoChecking(
           const prevIdx = currentNoteIdxRef.current;
           const prevNote = music.notes[prevIdx];
           if (prevNote && prevNote.pitches.length > 0) {
-            noteResultsMapRef.current.set(
-              prevIdx,
-              correctSeenRef.current ? 'correct' : 'wrong'
-            );
+            const result = correctSeenRef.current ? 'correct' : 'wrong';
+            noteResultsMapRef.current.set(prevIdx, result);
             setNoteResults(new Map(noteResultsMapRef.current));
+            totalCountRef.current++;
+            if (result === 'correct') correctCountRef.current++;
           }
           correctSeenRef.current = false;
         }
@@ -647,12 +651,18 @@ export function SongPage({
 
   const [practiceSummary, setPracticeSummary] = useState<{
     noteResults: ReadonlyMap<number, 'correct' | 'wrong'>;
+    correctCount: number;
+    totalCount: number;
   } | null>(null);
   const onPracticeFinish = useCallback(
-    (results: ReadonlyMap<number, 'correct' | 'wrong'>) => {
-      if (results.size > 0) setPracticeSummary({ noteResults: results });
+    (results: ReadonlyMap<number, 'correct' | 'wrong'>, correctCount: number, totalCount: number) => {
+      if (totalCount > 0) {
+        const pct = Math.round((correctCount / totalCount) * 100);
+        useStore.getState().recordPracticeSession(song.id, pct);
+        setPracticeSummary({ noteResults: results, correctCount, totalCount });
+      }
     },
-    []
+    [song.id]
   );
 
   const {
@@ -922,12 +932,8 @@ export function SongPage({
         open={practiceSummary !== null}
         onClose={() => setPracticeSummary(null)}
         message={t('practiceComplete', {
-          correct: practiceSummary
-            ? [...practiceSummary.noteResults.values()].filter(
-                (v) => v === 'correct'
-              ).length
-            : 0,
-          total: music.notes.filter((n) => n.pitches.length > 0).length,
+          correct: practiceSummary?.correctCount ?? 0,
+          total: practiceSummary?.totalCount ?? 0,
         })}
         action={
           <>

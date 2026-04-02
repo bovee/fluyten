@@ -18,6 +18,8 @@ export const SMUFL: Record<string, string> = {
   timeSig7: '\uE087',
   timeSig8: '\uE088',
   timeSig9: '\uE089',
+  timeSigCommon: '\uE08A',
+  timeSigCutCommon: '\uE08B',
   // Noteheads
   noteheadWhole: '\uE0A2',
   noteheadHalf: '\uE0A3',

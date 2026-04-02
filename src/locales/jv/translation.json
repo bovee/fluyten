@@ -136,6 +136,10 @@
   "sortTitle": "Judul",
   "sortLength": "Dawa",
   "method": "Metode",
+  "methodHelperText": "Milih metode bakal menehi label lagu nganggo nomer buku lan kaca ing seri metode kasebut ing ngendi teknik sing paling angel ing lagu kasebut ditemokake lan ngidini ngurutake miturut tingkat kesulitan.",
   "sortDifficulty": "Kesulitan",
+  "sortPracticeCount": "Cacah latihan",
+  "sortAverageScore": "Skor rata-rata",
+  "practiceHistory": "Riwayat latihan",
   "methodNone": "Ora ana"
 }

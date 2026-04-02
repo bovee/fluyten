@@ -136,6 +136,10 @@
   "sortTitle": "כותרת",
   "sortLength": "אורך",
   "method": "שיטה",
+  "methodHelperText": "בחירת שיטה תסמן שירים עם מספר הספר והעמוד בסדרת שיטה זו שבה נמצאת הטכניקה הקשה ביותר בשיר ותאפשר מיון לפי רמת קושי.",
   "sortDifficulty": "קושי",
+  "sortPracticeCount": "מספר תרגולים",
+  "sortAverageScore": "ציון ממוצע",
+  "practiceHistory": "היסטוריית תרגול",
   "methodNone": "ללא"
 }
