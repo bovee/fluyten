@@ -45,7 +45,7 @@
   "playSong": "تشغيل الأغنية",
   "metronome": "ميترونوم",
   "tempoLabel": "الإيقاع: {{tempo}} BPM",
-  "voice": "صوت",
+  "selectedVoice": "الصوت المحدد",
   "abcNotation": "تدوين ABC",
   "transcribe": "نسخ",
   "reflow": "إعادة توزيع المازورات",

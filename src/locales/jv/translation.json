@@ -45,7 +45,7 @@
   "playSong": "Mainake lagu",
   "metronome": "Metronom",
   "tempoLabel": "Tempo: {{tempo}} BPM",
-  "voice": "Swara",
+  "selectedVoice": "Swara sing dipilih",
   "abcNotation": "Notasi ABC",
   "transcribe": "Transkripsi",
   "reflow": "Atur ulang birama",

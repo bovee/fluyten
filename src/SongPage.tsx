@@ -61,7 +61,7 @@ function useIntervalRef() {
 }
 
 function usePitchDetection(
-  expandedTrackingRef: React.MutableRefObject<{
+  expandedTrackingRef: React.RefObject<{
     notes: { pitches: number[] }[];
     originalIndices: number[];
     idx: number;
@@ -158,8 +158,8 @@ function usePitchDetection(
 }
 
 function useInTempoChecking(
-  musicRef: React.MutableRefObject<Music>,
-  tempoRef: React.MutableRefObject<number>,
+  musicRef: React.RefObject<Music>,
+  tempoRef: React.RefObject<number>,
   setStatusMessage: (msg: string) => void,
   onFinish: (results: ReadonlyMap<number, 'correct' | 'wrong'>, correctCount: number, totalCount: number) => void
 ) {
@@ -181,6 +181,7 @@ function useInTempoChecking(
   const timelineRef = useRef<MusicTimeline | null>(null);
   const rafRef = useRef<number | null>(null);
   const countdownTimeoutsRef = useRef<number[]>([]);
+  const clickCtxRef = useRef<AudioContext | null>(null);
 
   /* eslint-disable react-hooks/refs */
   const freqTrackerRef = useRef<FrequencyTracker>(
@@ -207,6 +208,8 @@ function useInTempoChecking(
     setCountdown(null);
     freqInterval.clear();
     freqTrackerRef.current.stop();
+    clickCtxRef.current?.close();
+    clickCtxRef.current = null;
     timelineRef.current = null;
     if (rafRef.current !== null) {
       cancelAnimationFrame(rafRef.current);
@@ -253,6 +256,7 @@ function useInTempoChecking(
     // Schedule 3 click beeps via a short-lived AudioContext so they don't
     // interfere with the silent NotePlayer's AudioContext.
     const clickCtx = new AudioContext();
+    clickCtxRef.current = clickCtx;
     const beatSec = 60 / tempoRef.current;
     for (let i = 0; i < 3; i++) {
       const t = clickCtx.currentTime + i * beatSec + 0.02;
@@ -267,10 +271,10 @@ function useInTempoChecking(
       osc.start(t);
       osc.stop(t + 0.07);
     }
-    const closeClick = window.setTimeout(
-      () => clickCtx.close(),
-      beatMs * 3 + 500
-    );
+    const closeClick = window.setTimeout(() => {
+      clickCtx.close();
+      clickCtxRef.current = null;
+    }, beatMs * 3 + 500);
 
     setCountdown(3);
     const id2 = window.setTimeout(() => setCountdown(2), beatMs);
@@ -347,9 +351,9 @@ function useInTempoChecking(
 type PlayerEntry = { player: NotePlayer; music: Music; voiceIdx: number };
 
 function useAudioPlayback(
-  voicesRef: React.MutableRefObject<VoiceInfo[]>,
-  selectedVoiceIdxRef: React.MutableRefObject<number>,
-  tempoRef: React.MutableRefObject<number>,
+  voicesRef: React.RefObject<VoiceInfo[]>,
+  selectedVoiceIdxRef: React.RefObject<number>,
+  tempoRef: React.RefObject<number>,
   setStatusMessage: (msg: string) => void
 ) {
   const { t } = useTranslation();
@@ -522,7 +526,7 @@ function useAudioPlayback(
 }
 
 function useMetronome(
-  tempoRef: React.MutableRefObject<number>,
+  tempoRef: React.RefObject<number>,
   setStatusMessage: (msg: string) => void
 ) {
   const { t } = useTranslation();
@@ -561,7 +565,6 @@ interface SongPageProps {
   onBack: () => void;
   readOnly?: boolean;
   onAbcChange?: (abc: string) => void;
-  onTempoChange?: (tempo: number) => void;
 }
 
 export function SongPage({
@@ -569,7 +572,6 @@ export function SongPage({
   onBack,
   readOnly,
   onAbcChange,
-  onTempoChange,
 }: SongPageProps) {
   const { t } = useTranslation();
   const theme = useTheme();
@@ -592,14 +594,13 @@ export function SongPage({
   const music =
     voices[Math.min(selectedVoiceIdx, voices.length - 1)]?.music ?? new Music();
   const [statusMessage, setStatusMessage] = useState('');
-  const [tempo, setTempo] = useState(
-    song.tempo ?? music.signatures[0].tempo ?? 120
-  );
+  const tempo = useStore((s) => s.tempo);
   const scoreContainerRef = useRef<HTMLDivElement>(null);
   const [scoreWidth, setScoreWidth] = useState(800);
   const tempoRef = useRef(tempo);
   useEffect(() => {
-    tempoRef.current = tempo;
+    // Use the songs tempo, falling back to the global tempo
+    tempoRef.current = music.signatures[0]?.tempo ?? tempo;
   }, [tempo]);
 
   useLayoutEffect(() => {
@@ -639,11 +640,6 @@ export function SongPage({
     };
   }, [music]);
 
-  const handleTempoChange = (newTempo: number) => {
-    tempoRef.current = newTempo;
-    setTempo(newTempo);
-    onTempoChange?.(newTempo);
-  };
 
   const practiceMode = useStore((s) => s.practiceMode);
   const playMetronomeOnStart = useStore((s) => s.playMetronome);
@@ -748,6 +744,7 @@ export function SongPage({
           onClick={onBack}
           aria-label={t('backToSongList')}
           style={{ position: 'fixed', top: 8, left: 8 }}
+          sx={{ displayPrint: 'none' }}
         >
           <ArrowBack />
         </IconButton>
@@ -788,6 +785,7 @@ export function SongPage({
           onClick={() => setEditOpen((i) => !i)}
           aria-label={t('editMusic')}
           style={{ position: 'fixed', top: 8, right: 8 }}
+          sx={{ displayPrint: 'none' }}
         >
           <Edit />
         </IconButton>
@@ -964,8 +962,6 @@ export function SongPage({
         readOnly={readOnly}
         abcMusic={abcMusic}
         onAbcChange={setAbcMusic}
-        tempo={tempo}
-        onTempoChange={handleTempoChange}
         voices={voices}
         selectedVoiceIdx={selectedVoiceIdx}
         onVoiceChange={setSelectedVoiceIdx}

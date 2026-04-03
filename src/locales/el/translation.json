@@ -45,7 +45,7 @@
   "playSong": "Αναπαραγωγή τραγουδιού",
   "metronome": "Μετρονόμος",
   "tempoLabel": "Ρυθμός: {{tempo}} BPM",
-  "voice": "Φωνή",
+  "selectedVoice": "Επιλεγμένη φωνή",
   "abcNotation": "ABC Σημειογραφία",
   "transcribe": "Μεταγραφή",
   "reflow": "Αναδιάταξη μέτρων",

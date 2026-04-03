@@ -45,7 +45,7 @@
   "playSong": "נגן שיר",
   "metronome": "מטרונום",
   "tempoLabel": "קצב: {{tempo}} BPM",
-  "voice": "קול",
+  "selectedVoice": "קול נבחר",
   "abcNotation": "סימון ABC",
   "transcribe": "תמלל",
   "reflow": "סדר מחדש את התיבות",

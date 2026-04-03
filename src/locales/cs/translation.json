@@ -45,7 +45,7 @@
   "playSong": "Přehrát skladbu",
   "metronome": "Metronom",
   "tempoLabel": "Tempo: {{tempo}} BPM",
-  "voice": "Hlas",
+  "selectedVoice": "Vybraný hlas",
   "abcNotation": "Notace ABC",
   "transcribe": "Přepsat",
   "reflow": "Přeskládat takty",

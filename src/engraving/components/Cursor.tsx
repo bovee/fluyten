@@ -1,3 +1,4 @@
+import { useMemo } from 'react';
 import type { LayoutResult } from '../layout/types';
 import { STAFF_HEIGHT } from '../layout/types';
 
@@ -24,7 +25,7 @@ function buildNotePosMap(
 }
 
 export function Cursor({ noteIdx, layout }: CursorProps) {
-  const posMap = buildNotePosMap(layout);
+  const posMap = useMemo(() => buildNotePosMap(layout), [layout]);
 
   const floor = Math.floor(noteIdx);
   const frac = noteIdx - floor;

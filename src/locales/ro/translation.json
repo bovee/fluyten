@@ -45,7 +45,7 @@
   "playSong": "Redă cântecul",
   "metronome": "Metronom",
   "tempoLabel": "Tempo: {{tempo}} BPM",
-  "voice": "Voce",
+  "selectedVoice": "Vocea selectată",
   "abcNotation": "Notație ABC",
   "transcribe": "Transcrie",
   "reflow": "Rearanjează măsurile",

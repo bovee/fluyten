@@ -45,7 +45,7 @@
   "playSong": "పాట వినండి",
   "metronome": "మెట్రోనోమ్",
   "tempoLabel": "వేగం: {{tempo}} BPM",
-  "voice": "స్వరం",
+  "selectedVoice": "ఎంచుకున్న స్వరం",
   "abcNotation": "ABC సంజ్ఞ",
   "transcribe": "లిప్యంతరీకరణ చేయి",
   "reflow": "బార్‌లను పునర్వ్యవస్థీకరించు",

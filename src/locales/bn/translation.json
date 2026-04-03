@@ -45,7 +45,7 @@
   "playSong": "গান বাজান",
   "metronome": "মেট্রোনোম",
   "tempoLabel": "টেম্পো: {{tempo}} BPM",
-  "voice": "স্বর",
+  "selectedVoice": "নির্বাচিত কণ্ঠস্বর",
   "abcNotation": "ABC স্বরলিপি",
   "transcribe": "প্রতিলিপি",
   "reflow": "বার পুনর্বিন্যাস করুন",

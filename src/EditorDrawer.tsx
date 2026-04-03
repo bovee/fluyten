@@ -10,16 +10,11 @@ import { debounce } from './utils';
 import { useTranslation } from 'react-i18next';
 import Box from '@mui/material/Box';
 import Drawer from '@mui/material/Drawer';
-import FormControl from '@mui/material/FormControl';
 import IconButton from '@mui/material/IconButton';
-import InputLabel from '@mui/material/InputLabel';
 import Menu from '@mui/material/Menu';
 import MenuItem from '@mui/material/MenuItem';
-import Select from '@mui/material/Select';
-import Slider from '@mui/material/Slider';
 import TextField from '@mui/material/TextField';
 import Tooltip from '@mui/material/Tooltip';
-import Typography from '@mui/material/Typography';
 import Autorenew from '@mui/icons-material/Autorenew';
 import Mic from '@mui/icons-material/Mic';
 import MicOff from '@mui/icons-material/MicOff';
@@ -55,8 +50,6 @@ interface EditorDrawerProps {
   readOnly?: boolean;
   abcMusic: string;
   onAbcChange: (abc: string) => void;
-  tempo: number;
-  onTempoChange: (tempo: number) => void;
   voices: VoiceInfo[];
   selectedVoiceIdx: number;
   onVoiceChange: (idx: number) => void;
@@ -69,8 +62,6 @@ export function EditorDrawer({
   readOnly,
   abcMusic,
   onAbcChange,
-  tempo,
-  onTempoChange,
   voices,
   selectedVoiceIdx,
   onVoiceChange,
@@ -78,6 +69,7 @@ export function EditorDrawer({
   onHeightChange,
 }: EditorDrawerProps) {
   const { t } = useTranslation();
+  const tempo = useStore((s) => s.tempo);
   const drawerRef = useRef<HTMLDivElement>(null);
   const abcTextareaRef = useRef<HTMLTextAreaElement>(null);
   const [abcSelection, setAbcSelection] = useState({ start: 0, end: 0 });
@@ -116,6 +108,8 @@ export function EditorDrawer({
     null
   );
   const [transformMenuAnchor, setTransformMenuAnchor] =
+    useState<HTMLElement | null>(null);
+  const [voiceMenuAnchor, setVoiceMenuAnchor] =
     useState<HTMLElement | null>(null);
 
   useLayoutEffect(() => {
@@ -368,50 +362,7 @@ export function EditorDrawer({
       aria-label={t('editMusic')}
       PaperProps={{ ref: drawerRef }}
     >
-      <Box
-        sx={{
-          px: 3,
-          pt: 2,
-          pb: 1,
-          display: 'flex',
-          flexDirection: { xs: 'column', sm: 'row' },
-          gap: 2,
-          alignItems: { sm: 'flex-end' },
-        }}
-      >
-        <Box sx={{ flex: 1 }}>
-          <Typography id="tempo-label" variant="caption" color="text.secondary">
-            {t('tempoLabel', { tempo })}
-          </Typography>
-          <Slider
-            aria-labelledby="tempo-label"
-            size="small"
-            value={tempo}
-            onChange={(_, v) => onTempoChange(v as number)}
-            min={20}
-            max={200}
-            step={5}
-          />
-        </Box>
-        {voices.length > 1 && (
-          <FormControl size="small" sx={{ minWidth: 140, flexShrink: 0 }}>
-            <InputLabel id="voice-select-label">{t('voice')}</InputLabel>
-            <Select
-              labelId="voice-select-label"
-              value={selectedVoiceIdx}
-              label={t('voice')}
-              onChange={(e) => onVoiceChange(e.target.value as number)}
-            >
-              {voices.map((v, i) => (
-                <MenuItem key={v.id} value={i}>
-                  {v.name || v.id}
-                </MenuItem>
-              ))}
-            </Select>
-          </FormControl>
-        )}
-      </Box>
-      <Box sx={{ px: 3, pb: 2 }}>
+      <Box sx={{ px: 3, pt: 1, pb: 2 }}>
         <Box sx={{ display: 'flex', alignItems: 'flex-start', gap: 1 }}>
           <TextField
             fullWidth
@@ -437,6 +388,21 @@ export function EditorDrawer({
             }}
           />
           <Box sx={{ display: 'flex', flexDirection: 'column' }}>
+            {voices.length > 1 && (
+              <Tooltip title={t('selectedVoice')}>
+                <IconButton
+                  onMouseDown={(e) => e.preventDefault()}
+                  onClick={(e) => setVoiceMenuAnchor(e.currentTarget)}
+                  aria-label={t('selectedVoice')}
+                  sx={{ fontSize: '0.75rem', fontWeight: 'bold', position: 'relative' }}
+                >
+                  <Box component="span" sx={{ fontFamily: 'inherit', fontSize: '0.85rem', fontWeight: 700, lineHeight: 1 }}>
+                    {(voices[selectedVoiceIdx]?.name || voices[selectedVoiceIdx]?.id || '?')[0].toUpperCase()}
+                  </Box>
+                  <Box component="span" sx={{ fontSize: '0.5rem', lineHeight: 1, ml: '1px', alignSelf: 'flex-end', mb: '2px' }}>▾</Box>
+                </IconButton>
+              </Tooltip>
+            )}
             <Tooltip title={t('transcribe')}>
               <span>
                 <IconButton
@@ -492,6 +458,24 @@ export function EditorDrawer({
               onClick={() => handleTransform(transform.id)}
             >
               {t(transform.labelKey)}
+            </MenuItem>
+          ))}
+        </Menu>
+        <Menu
+          anchorEl={voiceMenuAnchor}
+          open={!!voiceMenuAnchor}
+          onClose={() => setVoiceMenuAnchor(null)}
+        >
+          {voices.map((v, i) => (
+            <MenuItem
+              key={v.id}
+              selected={i === selectedVoiceIdx}
+              onClick={() => {
+                onVoiceChange(i);
+                setVoiceMenuAnchor(null);
+              }}
+            >
+              {v.name || v.id}
             </MenuItem>
           ))}
         </Menu>

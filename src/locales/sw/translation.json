@@ -45,7 +45,7 @@
   "playSong": "Cheza wimbo",
   "metronome": "Metronome",
   "tempoLabel": "Mwendo: {{tempo}} BPM",
-  "voice": "Sauti",
+  "selectedVoice": "Sauti iliyochaguliwa",
   "abcNotation": "Mfumo wa ABC",
   "transcribe": "Andika",
   "reflow": "Panga upya baa",

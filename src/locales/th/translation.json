@@ -45,7 +45,7 @@
   "playSong": "เล่นเพลง",
   "metronome": "เมโทรนอม",
   "tempoLabel": "ความเร็ว: {{tempo}} BPM",
-  "voice": "เสียงร้อง",
+  "selectedVoice": "เสียงที่เลือก",
   "abcNotation": "สัญกรณ์ ABC",
   "transcribe": "ถอดความ",
   "reflow": "จัดเรียงห้องดนตรีใหม่",

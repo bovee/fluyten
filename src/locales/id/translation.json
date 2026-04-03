@@ -45,7 +45,7 @@
   "playSong": "Putar Lagu",
   "metronome": "Metronom",
   "tempoLabel": "Tempo: {{tempo}} BPM",
-  "voice": "Suara",
+  "selectedVoice": "Suara yang dipilih",
   "abcNotation": "Notasi ABC",
   "transcribe": "Transkripsi",
   "reflow": "Susun ulang birama",

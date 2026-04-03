@@ -1,4 +1,4 @@
-import { lazy, Suspense, useState } from 'react';
+import { lazy, Suspense, useMemo, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { createTheme, ThemeProvider } from '@mui/material/styles';
 import CssBaseline from '@mui/material/CssBaseline';
@@ -39,7 +39,7 @@ function App() {
     colorMode === 'system' ? (prefersDark ? 'dark' : 'light') : colorMode;
   const DARK_SHADOW =
     '0px 3px 10px rgba(255,255,255,0.15), 0px 1px 4px rgba(255,255,255,0.1)';
-  const theme = createTheme({
+  const theme = useMemo(() => createTheme({
     direction: isRtl ? 'rtl' : 'ltr',
     typography: {
       fontFamily: "'EB Garamond', Georgia, serif",
@@ -63,23 +63,19 @@ function App() {
         },
       },
     },
-  });
+  }), [resolvedMode, isRtl]);
 
   const onboarded = useStore((state) => state.onboarded);
   const setOnboarded = useStore((state) => state.setOnboarded);
 
   const [selected, setSelected] = useState<SelectedSong | null>(null);
   const updateSongAbc = useStore((state) => state.updateSongAbc);
-  const updateSongTempo = useStore((state) => state.updateSongTempo);
 
   if (selected) {
     const { song, readOnly } = selected;
     const onAbcChange = readOnly
       ? undefined
       : (abc: string) => updateSongAbc(song.id, abc);
-    const onTempoChange = readOnly
-      ? undefined
-      : (tempo: number) => updateSongTempo(song.id, tempo);
     return (
       <CacheProvider value={isRtl ? cacheRtl : cacheLtr}>
         <ThemeProvider theme={theme}>
@@ -90,7 +86,6 @@ function App() {
               onBack={() => setSelected(null)}
               readOnly={readOnly}
               onAbcChange={onAbcChange}
-              onTempoChange={onTempoChange}
             />
           </Suspense>
         </ThemeProvider>

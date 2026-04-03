@@ -45,7 +45,7 @@
   "playSong": "गाना बजाएं",
   "metronome": "मेट्रोनोम",
   "tempoLabel": "गति: {{tempo}} BPM",
-  "voice": "स्वर",
+  "selectedVoice": "चयनित स्वर",
   "abcNotation": "ABC संकेतन",
   "transcribe": "ट्रांसक्राइब",
   "reflow": "बार पुनः व्यवस्थित करें",

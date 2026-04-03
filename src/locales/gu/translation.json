@@ -45,7 +45,7 @@
   "playSong": "ગીત વગાડો",
   "metronome": "મેટ્રોનોમ",
   "tempoLabel": "ગતિ: {{tempo}} BPM",
-  "voice": "સ્વર",
+  "selectedVoice": "પસંદ કરેલ સ્વર",
   "abcNotation": "ABC સ્વરલિપિ",
   "transcribe": "લિપ્યંતર કરો",
   "reflow": "બારને ફરીથી ગોઠવો",

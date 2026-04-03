@@ -45,7 +45,7 @@
   "playSong": "曲を再生",
   "metronome": "メトロノーム",
   "tempoLabel": "テンポ：{{tempo}} BPM",
-  "voice": "声部",
+  "selectedVoice": "選択中のパート",
   "abcNotation": "ABC記譜",
   "transcribe": "採譜",
   "reflow": "小節を再配置",

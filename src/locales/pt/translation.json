@@ -45,7 +45,7 @@
   "playSong": "Tocar música",
   "metronome": "Metrônomo",
   "tempoLabel": "Andamento: {{tempo}} BPM",
-  "voice": "Voz",
+  "selectedVoice": "Voz selecionada",
   "abcNotation": "Notação ABC",
   "transcribe": "Transcrever",
   "reflow": "Redistribuir compassos",

@@ -45,7 +45,7 @@
   "playSong": "播放歌曲",
   "metronome": "节拍器",
   "tempoLabel": "速度：{{tempo}} BPM",
-  "voice": "声部",
+  "selectedVoice": "已选声部",
   "abcNotation": "ABC 记谱",
   "transcribe": "转录",
   "reflow": "重排小节",

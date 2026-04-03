@@ -28,3 +28,4 @@ dist-ssr
 storybook-static
 coverage
 src/test/__screenshots__
+.aider*

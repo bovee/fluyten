@@ -45,7 +45,7 @@
   "playSong": "곡 재생",
   "metronome": "메트로놈",
   "tempoLabel": "템포: {{tempo}} BPM",
-  "voice": "성부",
+  "selectedVoice": "선택된 성부",
   "abcNotation": "ABC 기보",
   "transcribe": "채보",
   "reflow": "마디 재배치",

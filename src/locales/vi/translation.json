@@ -45,7 +45,7 @@
   "playSong": "Phát bài hát",
   "metronome": "Máy đếm nhịp",
   "tempoLabel": "Nhịp độ: {{tempo}} BPM",
-  "voice": "Giọng",
+  "selectedVoice": "Giọng được chọn",
   "abcNotation": "Ký hiệu ABC",
   "transcribe": "Phiên âm",
   "reflow": "Sắp xếp lại ô nhịp",

@@ -52,6 +52,8 @@ interface SettingsState {
   setColorMode: (mode: 'system' | 'light' | 'dark') => void;
   method: string;
   setMethod: (method: string) => void;
+  tempo: number;
+  setTempo: (tempo: number) => void;
   playbackVoices: PlaybackVoices;
   setPlaybackVoices: (v: PlaybackVoices) => void;
   practiceMode: PracticeMode;
@@ -94,6 +96,8 @@ export const useStore = create<SettingsState>()(
             ...derivedFields(s.abc, method),
           })),
         })),
+      tempo: 80,
+      setTempo: (tempo) => set({ tempo }),
       playbackVoices: 'selected',
       setPlaybackVoices: (playbackVoices) => set({ playbackVoices }),
       practiceMode: 'correct-then-advance',

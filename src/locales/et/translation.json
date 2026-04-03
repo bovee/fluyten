@@ -45,7 +45,7 @@
   "playSong": "Mängi laul",
   "metronome": "Metronoom",
   "tempoLabel": "Tempo: {{tempo}} BPM",
-  "voice": "Hääl",
+  "selectedVoice": "Valitud hääl",
   "abcNotation": "ABC-notatsioon",
   "transcribe": "Transkribeeri",
   "reflow": "Järjesta taktid ümber",

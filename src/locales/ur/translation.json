@@ -45,7 +45,7 @@
   "playSong": "گانا چلائیں",
   "metronome": "میٹرونوم",
   "tempoLabel": "رفتار: {{tempo}} BPM",
-  "voice": "آواز",
+  "selectedVoice": "منتخب آواز",
   "abcNotation": "ABC نوٹیشن",
   "transcribe": "نقل",
   "reflow": "سلاخیں دوبارہ ترتیب دیں",

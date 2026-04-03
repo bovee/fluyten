@@ -20,7 +20,6 @@ const meta = {
     song: simpleSong,
     onBack: fn(),
     onAbcChange: fn(),
-    onTempoChange: fn(),
   },
 } satisfies Meta<typeof SongPage>;
 

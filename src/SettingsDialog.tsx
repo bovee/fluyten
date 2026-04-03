@@ -184,6 +184,8 @@ export function SettingsDialog({ open, onClose }: SettingsDialogProps) {
   const setColorMode = useStore((state) => state.setColorMode);
   const method = useStore((state) => state.method);
   const setMethod = useStore((state) => state.setMethod);
+  const tempo = useStore((state) => state.tempo);
+  const setTempo = useStore((state) => state.setTempo);
   const playbackVoices = useStore((state) => state.playbackVoices);
   const setPlaybackVoices = useStore((state) => state.setPlaybackVoices);
   const practiceMode = useStore((state) => state.practiceMode);
@@ -367,6 +369,21 @@ export function SettingsDialog({ open, onClose }: SettingsDialogProps) {
                   <MenuItem value="all">{t('playbackVoicesAll')}</MenuItem>
                 </Select>
               </FormControl>
+
+              <Box>
+                <Typography id="tempo-slider-label" variant="caption" color="text.secondary">
+                  {t('tempoLabel', { tempo })}
+                </Typography>
+                <Slider
+                  aria-labelledby="tempo-slider-label"
+                  size="small"
+                  value={tempo}
+                  onChange={(_, v) => setTempo(v as number)}
+                  min={20}
+                  max={200}
+                  step={5}
+                />
+              </Box>
 
               <FormControlLabel
                 control={

@@ -187,5 +187,7 @@ export class FrequencyTracker {
     }
     this.analyser = undefined;
     this.samples = undefined;
+    this.audioCtx?.close();
+    this.audioCtx = undefined;
   }
 }

@@ -45,7 +45,7 @@
   "playSong": "پخش آهنگ",
   "metronome": "مترونوم",
   "tempoLabel": "ضرب‌آهنگ: {{tempo}} BPM",
-  "voice": "صدا",
+  "selectedVoice": "صدای انتخاب‌شده",
   "abcNotation": "نت‌نویسی ABC",
   "transcribe": "رونویسی",
   "reflow": "بازآرایی میزان‌ها",

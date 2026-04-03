@@ -45,7 +45,7 @@
   "playSong": "ਗਾਣਾ ਚਲਾਓ",
   "metronome": "ਮੈਟਰੋਨੋਮ",
   "tempoLabel": "ਗਤੀ: {{tempo}} BPM",
-  "voice": "ਅਵਾਜ਼",
+  "selectedVoice": "ਚੁਣੀ ਹੋਈ ਆਵਾਜ਼",
   "abcNotation": "ABC ਸੰਕੇਤ",
   "transcribe": "ਲਿਪੀਅੰਤਰਣ ਕਰੋ",
   "reflow": "ਬਾਰਾਂ ਮੁੜ-ਵਿਵਸਥਿਤ ਕਰੋ",

@@ -45,7 +45,7 @@
   "playSong": "Воспроизвести",
   "metronome": "Метроном",
   "tempoLabel": "Темп: {{tempo}} уд/мин",
-  "voice": "Голос",
+  "selectedVoice": "Выбранный голос",
   "abcNotation": "Нотация ABC",
   "transcribe": "Транскрибировать",
   "reflow": "Перераспределить такты",

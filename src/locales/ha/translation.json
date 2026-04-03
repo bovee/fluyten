@@ -45,7 +45,7 @@
   "playSong": "Buga waƙa",
   "metronome": "Metronom",
   "tempoLabel": "Saurin: {{tempo}} BPM",
-  "voice": "Murya",
+  "selectedVoice": "Murya da aka zaɓa",
   "abcNotation": "Alamar ABC",
   "transcribe": "Rubuta",
   "reflow": "Sake tsara sanduna",

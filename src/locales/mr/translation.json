@@ -45,7 +45,7 @@
   "playSong": "गाणे वाजवा",
   "metronome": "मेट्रोनोम",
   "tempoLabel": "गती: {{tempo}} BPM",
-  "voice": "स्वर",
+  "selectedVoice": "निवडलेला स्वर",
   "abcNotation": "ABC स्वरलिपी",
   "transcribe": "लिप्यंतरण करा",
   "reflow": "बार पुन्हा मांडा",

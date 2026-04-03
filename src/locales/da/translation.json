@@ -45,7 +45,7 @@
   "playSong": "Afspil sang",
   "metronome": "Metronom",
   "tempoLabel": "Tempo: {{tempo}} BPM",
-  "voice": "Stemme",
+  "selectedVoice": "Valgt stemme",
   "abcNotation": "ABC-notation",
   "transcribe": "Transskriber",
   "reflow": "Omarranger takter",

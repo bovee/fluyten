@@ -45,7 +45,7 @@
   "playSong": "பாடலை இயக்கவும்",
   "metronome": "மெட்ரோனோம்",
   "tempoLabel": "வேகம்: {{tempo}} BPM",
-  "voice": "குரல்",
+  "selectedVoice": "தேர்ந்தெடுக்கப்பட்ட குரல்",
   "abcNotation": "ABC குறியீடு",
   "transcribe": "படியெடுக்கவும்",
   "reflow": "தடுப்புகளை மீண்டும் ஒழுங்கமைக்கவும்",
