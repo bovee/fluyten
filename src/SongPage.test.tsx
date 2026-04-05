@@ -42,7 +42,6 @@ const defaultProps = (overrides = {}) => ({
   song: simpleSong,
   onBack: vi.fn(),
   onAbcChange: vi.fn(),
-  onTempoChange: vi.fn(),
   ...overrides,
 });
 
@@ -86,12 +85,6 @@ describe('SongPage', () => {
     fireEvent.click(screen.getByRole('button', { name: /edit music/i }));
     // Drawer opens and shows ABC textarea
     expect(screen.getByRole('textbox')).toBeInTheDocument();
-  });
-
-  it('edit drawer contains tempo slider', () => {
-    render(<SongPage {...defaultProps()} />);
-    fireEvent.click(screen.getByRole('button', { name: /edit music/i }));
-    expect(screen.getByRole('slider', { name: /tempo/i })).toBeInTheDocument();
   });
 
   it('shows composer when present in abc', () => {
@@ -155,22 +148,6 @@ describe('SongPage', () => {
     // Can still change the controlled value but onAbcChange should not be called
     fireEvent.change(editor, { target: { value: 'X:1\nK:C\nC' } });
     expect(onAbcChange).not.toHaveBeenCalled();
-  });
-
-  it('calls onTempoChange when slider changes', () => {
-    const onTempoChange = vi.fn();
-    render(<SongPage {...defaultProps({ onTempoChange })} />);
-    fireEvent.click(screen.getByRole('button', { name: /edit music/i }));
-    const slider = screen.getByRole('slider', { name: /tempo/i });
-    fireEvent.change(slider, { target: { value: '100' } });
-    expect(onTempoChange).toHaveBeenCalled();
-  });
-
-  it('uses song.tempo as initial tempo when provided', () => {
-    const songWithTempo = { ...simpleSong, tempo: 80 };
-    render(<SongPage {...defaultProps({ song: songWithTempo })} />);
-    fireEvent.click(screen.getByRole('button', { name: /edit music/i }));
-    expect(screen.getByText(/80/)).toBeInTheDocument();
   });
 
   it('renders aria-live region for detected note', () => {

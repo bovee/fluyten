@@ -7,6 +7,9 @@ import { STAFF_HEIGHT, STAFF_SPACE, STEM_LENGTH } from './types';
 // present we round up instead — see pitchToStaffPosition.
 const SEMITONE_TO_STEP: number[] = [0, 0, 1, 1, 2, 3, 3, 4, 4, 5, 5, 6];
 
+// Diatonic letter names indexed by step (0–6).
+const STEP_TO_LETTER = ['C', 'D', 'E', 'F', 'G', 'A', 'B'] as const;
+
 /** Clef name as stored in Music.clef. */
 export type Clef = 'treble' | 'treble8va' | 'bass' | 'bass8va' | 'alto';
 
@@ -17,34 +20,63 @@ export type Clef = 'treble' | 'treble8va' | 'bass' | 'bass8va' | 'alto';
  * For treble clef that is B4; for bass clef D3; for alto clef C4.
  * Positive values go upward; negative go downward.
  *
- * @param pitch        MIDI pitch from music.notes[i].pitches[j]
- * @param accidental   The accidental for this pitch (determines spelling)
- * @param clef         Staff clef
- * @param displayPitchOffset  Added to pitch before computation (−12 for treble8va)
+ * @param pitch              MIDI pitch from music.notes[i].pitches[j]
+ * @param accidental         The accidental for this pitch (determines spelling)
+ * @param clef               Staff clef
+ * @param displayPitchOffset Added to pitch before computation (−12 for treble8va)
+ * @param keyAccidentalMap   Letter→±1 map for the active key signature. Used to
+ *                           derive flat/sharp spelling for chromatic pitches that
+ *                           carry no explicit accidental (key-implied accidentals).
  */
 export function pitchToStaffPosition(
   pitch: number,
   accidental: Accidental,
   clef: Clef,
-  displayPitchOffset = 0
+  displayPitchOffset = 0,
+  keyAccidentalMap?: Record<string, number>
 ): number {
   const effectivePitch = pitch + displayPitchOffset;
-  const noteNumber = effectivePitch - PITCH_CONSTANTS.OCTAVE_OFFSET; // remove offset (24)
-  const octave = Math.floor(noteNumber / 12); // octave 3 = C4–B4
-  let semitone = noteNumber % 12;
+
+  // Reverse the accidental to find the natural (diatonic) pitch, then derive
+  // octave and semitone from that. This correctly handles octave-boundary cases
+  // like ^B (B# = pitch 72, but the natural note B is in the previous octave).
+  const accidentalOffset =
+    accidental === '##'
+      ? 2
+      : accidental === '#'
+        ? 1
+        : accidental === 'bb'
+          ? -2
+          : accidental === 'b'
+            ? -1
+            : 0;
+  const naturalNumber =
+    effectivePitch - PITCH_CONSTANTS.OCTAVE_OFFSET - accidentalOffset;
+  const octave = Math.floor(naturalNumber / 12);
+  let semitone = naturalNumber % 12;
   if (semitone < 0) semitone += 12;
 
   let diatonicStep: number;
-  if (accidental === 'b') {
-    // Flat: the natural note is one semitone above the pitch
-    const naturalSemitone = (semitone + 1) % 12;
-    diatonicStep = SEMITONE_TO_STEP[naturalSemitone];
-  } else if (accidental === '#') {
-    // Sharp: the natural note is one semitone below the pitch
-    const naturalSemitone = (semitone - 1 + 12) % 12;
-    diatonicStep = SEMITONE_TO_STEP[naturalSemitone];
-  } else {
+  if (accidentalOffset !== 0) {
+    // Explicit accidental: semitone is now the natural note's semitone, always diatonic.
     diatonicStep = SEMITONE_TO_STEP[semitone];
+  } else {
+    // No explicit accidental. For chromatic pitches, check whether the active key
+    // signature implies a flat spelling (e.g. Bb in K:F). Without this, chromatic
+    // pitches default to sharp spelling (Bb → A line instead of B line).
+    const isChromatic =
+      SEMITONE_TO_STEP[semitone] === SEMITONE_TO_STEP[(semitone - 1 + 12) % 12];
+    if (isChromatic && keyAccidentalMap) {
+      const flatSemitone = (semitone + 1) % 12;
+      const flatStep = SEMITONE_TO_STEP[flatSemitone];
+      if (keyAccidentalMap[STEP_TO_LETTER[flatStep]] === -1) {
+        diatonicStep = flatStep;
+      } else {
+        diatonicStep = SEMITONE_TO_STEP[semitone];
+      }
+    } else {
+      diatonicStep = SEMITONE_TO_STEP[semitone];
+    }
   }
 
   // Diatonic steps from C4 (stepsFromC4 = 0 means C4, 7 means C5, etc.)

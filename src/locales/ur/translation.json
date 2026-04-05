@@ -60,6 +60,7 @@
   "transformHalveDuration": "مدت آدھی",
   "transformSimplifyAccidentals": "حادثات سادہ کریں",
   "transformAddAllAccidentals": "تمام حادثات شامل کریں",
+  "transformReverseNotes": "نوٹس کو الٹا کریں",
   "recorderType": "بانسری کی قسم",
   "detect": "شناخت کریں",
   "detectRecorderType": "بانسری کی قسم شناخت کریں",
@@ -81,7 +82,7 @@
   "direction": "سمت",
   "ascending": "صعودی",
   "descending": "نزولی",
-  "both": "دونوں",
+  "random": "بے ترتیب",
   "major": "میجر",
   "minor": "مائنر",
   "recordingStarted": "ریکارڈنگ شروع ہوئی",
@@ -141,5 +142,12 @@
   "sortPracticeCount": "مشق کی تعداد",
   "sortAverageScore": "اوسط اسکور",
   "practiceHistory": "مشق کی تاریخ",
-  "methodNone": "کوئی نہیں"
+  "methodNone": "کوئی نہیں",
+  "newSong": "نئی نظم",
+  "generate": "بنائیں",
+  "generateNotes": "نوٹ بنائیں",
+  "scales": "سُر سیڑھیاں",
+  "commonArpeggios": "عام آرپیجیوز",
+  "dominantSeventhArpeggios": "ڈامیننٹ سیونتھ آرپیجیوز",
+  "diminishedSeventhArpeggios": "ڈمنشڈ سیونتھ آرپیجیوز"
 }

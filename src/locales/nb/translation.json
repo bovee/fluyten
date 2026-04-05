@@ -60,6 +60,7 @@
   "transformHalveDuration": "Halver varighet",
   "transformSimplifyAccidentals": "Forenkl fortegn",
   "transformAddAllAccidentals": "Legg til alle fortegn",
+  "transformReverseNotes": "Reverser noter",
   "recorderType": "Blokkfløytetype",
   "detect": "Detekter",
   "detectRecorderType": "Detekter blokkfløytetype",
@@ -81,7 +82,7 @@
   "direction": "Retning",
   "ascending": "Stigende",
   "descending": "Synkende",
-  "both": "Begge",
+  "random": "Tilfeldig",
   "major": "dur",
   "minor": "moll",
   "recordingStarted": "Opptak startet",
@@ -141,5 +142,12 @@
   "sortPracticeCount": "Antall øvelser",
   "sortAverageScore": "Gjennomsnittlig poengsum",
   "practiceHistory": "Øvelseshistorikk",
-  "methodNone": "Ingen"
+  "methodNone": "Ingen",
+  "newSong": "Ny sang",
+  "generate": "Generer",
+  "generateNotes": "Generer noter",
+  "scales": "Skalaer",
+  "commonArpeggios": "Vanlige arpeggioer",
+  "dominantSeventhArpeggios": "Dominantseptim-arpeggioer",
+  "diminishedSeventhArpeggios": "Forminsket septim-arpeggioer"
 }

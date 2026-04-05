@@ -60,6 +60,7 @@
   "transformHalveDuration": "Diviser la durée par deux",
   "transformSimplifyAccidentals": "Simplifier les altérations",
   "transformAddAllAccidentals": "Ajouter toutes les altérations",
+  "transformReverseNotes": "Inverser les notes",
   "recorderType": "Type de flûte",
   "detect": "Détecter",
   "detectRecorderType": "Détecter le type de flûte",
@@ -81,7 +82,7 @@
   "direction": "Direction",
   "ascending": "Ascendant",
   "descending": "Descendant",
-  "both": "Les deux",
+  "random": "Aléatoire",
   "major": "Majeur",
   "minor": "Mineur",
   "recordingStarted": "Enregistrement démarré",
@@ -141,5 +142,12 @@
   "sortPracticeCount": "Fois pratiquées",
   "sortAverageScore": "Score moyen",
   "practiceHistory": "Historique de pratique",
-  "methodNone": "Aucune"
+  "methodNone": "Aucune",
+  "newSong": "Nouvelle chanson",
+  "generate": "Générer",
+  "generateNotes": "Générer des notes",
+  "scales": "Gammes",
+  "commonArpeggios": "Arpèges courants",
+  "dominantSeventhArpeggios": "Arpèges de septième de dominante",
+  "diminishedSeventhArpeggios": "Arpèges de septième diminuée"
 }

@@ -60,6 +60,7 @@
   "transformHalveDuration": "Prepolovi trajanje",
   "transformSimplifyAccidentals": "Pojednostavni predznake",
   "transformAddAllAccidentals": "Dodaj sve predznake",
+  "transformReverseNotes": "Obrni note",
   "recorderType": "Vrsta blok-flaute",
   "detect": "Otkrij",
   "detectRecorderType": "Otkrij vrstu blok-flaute",
@@ -81,7 +82,7 @@
   "direction": "Smjer",
   "ascending": "Uzlazno",
   "descending": "Silazno",
-  "both": "Oboje",
+  "random": "Nasumično",
   "major": "dur",
   "minor": "mol",
   "recordingStarted": "Snimanje započeto",
@@ -141,5 +142,12 @@
   "sortPracticeCount": "Broj vježbi",
   "sortAverageScore": "Prosječan rezultat",
   "practiceHistory": "Povijest vježbanja",
-  "methodNone": "Ništa"
+  "methodNone": "Ništa",
+  "newSong": "Nova pjesma",
+  "generate": "Generiraj",
+  "generateNotes": "Generiraj note",
+  "scales": "Ljestvice",
+  "commonArpeggios": "Uobičajeni arpeggii",
+  "dominantSeventhArpeggios": "Arpeggii dominantnog septakorda",
+  "diminishedSeventhArpeggios": "Arpeggii smanjenog septakorda"
 }

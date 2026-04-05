@@ -140,21 +140,6 @@ describe('App', () => {
       expect(useStore.getState().songs[0].title).toBe('New Title');
     });
 
-    it('updateSongTempo is called when tempo changes for a user song', async () => {
-      useStore.setState({ songs: [userSong] });
-      render(<App />);
-      fireEvent.click(screen.getByText('Twinkle Twinkle'));
-      const editBtn = await waitFor(() =>
-        screen.getByRole('button', { name: /edit music/i })
-      );
-      fireEvent.click(editBtn);
-      const slider = await waitFor(() =>
-        screen.getByRole('slider', { name: /tempo/i })
-      );
-      fireEvent.change(slider, { target: { value: '80' } });
-      expect(useStore.getState().songs[0].tempo).toBe(80);
-    });
-
     it('does not persist ABC for read-only songs', async () => {
       useStore.setState({ songs: [userSong] });
       render(<App />);

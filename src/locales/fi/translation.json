@@ -60,6 +60,7 @@
   "transformHalveDuration": "Puolita kesto",
   "transformSimplifyAccidentals": "Yksinkertaista etumerkit",
   "transformAddAllAccidentals": "Lisää kaikki etumerkit",
+  "transformReverseNotes": "Käännä nuotit",
   "recorderType": "Nokkahuilu-tyyppi",
   "detect": "Tunnista",
   "detectRecorderType": "Tunnista nokkahuilu-tyyppi",
@@ -81,7 +82,7 @@
   "direction": "Suunta",
   "ascending": "Nouseva",
   "descending": "Laskeva",
-  "both": "Molemmat",
+  "random": "Satunnainen",
   "major": "duuri",
   "minor": "molli",
   "recordingStarted": "Tallennus aloitettu",
@@ -141,5 +142,12 @@
   "sortPracticeCount": "Harjoituskerrat",
   "sortAverageScore": "Keskimääräinen pisteet",
   "practiceHistory": "Harjoitushistoria",
-  "methodNone": "Ei mitään"
+  "methodNone": "Ei mitään",
+  "newSong": "Uusi laulu",
+  "generate": "Luo",
+  "generateNotes": "Luo nuotteja",
+  "scales": "Asteikot",
+  "commonArpeggios": "Yleiset arpeggiot",
+  "dominantSeventhArpeggios": "Dominanttiseptimin arpeggiot",
+  "diminishedSeventhArpeggios": "Vähennetyn septimin arpeggiot"
 }

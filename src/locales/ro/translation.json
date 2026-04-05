@@ -60,6 +60,7 @@
   "transformHalveDuration": "Înjumătățește durata",
   "transformSimplifyAccidentals": "Simplifică alterațiile",
   "transformAddAllAccidentals": "Adaugă toate alterațiile",
+  "transformReverseNotes": "Inversează notele",
   "recorderType": "Tip de flaut dulce",
   "detect": "Detectează",
   "detectRecorderType": "Detectează tipul de flaut dulce",
@@ -81,7 +82,7 @@
   "direction": "Direcție",
   "ascending": "Ascendent",
   "descending": "Descendent",
-  "both": "Ambele",
+  "random": "Aleatoriu",
   "major": "major",
   "minor": "minor",
   "recordingStarted": "Înregistrare pornită",
@@ -141,5 +142,12 @@
   "sortPracticeCount": "De câte ori s-a practicat",
   "sortAverageScore": "Scor mediu",
   "practiceHistory": "Istoric practică",
-  "methodNone": "Niciunul"
+  "methodNone": "Niciunul",
+  "newSong": "Cântec nou",
+  "generate": "Generează",
+  "generateNotes": "Generează note",
+  "scales": "Game",
+  "commonArpeggios": "Arpegii comune",
+  "dominantSeventhArpeggios": "Arpegii de septimă dominantă",
+  "diminishedSeventhArpeggios": "Arpegii de septimă micșorată"
 }

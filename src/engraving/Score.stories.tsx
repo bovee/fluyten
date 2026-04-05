@@ -6,6 +6,7 @@ import {
   Duration,
   DurationModifier,
   type BarLine,
+  type SpanDecoration,
 } from '../music';
 import { Score } from './Score';
 
@@ -542,6 +543,94 @@ export const LongDurations: Story = {
   },
 };
 
+// --- New ornament decorations ---
+
+export const OrnamentDecorations: Story = {
+  args: {
+    music: (() => {
+      const music = new Music();
+      music.signatures[0].beatsPerBar = 4;
+      music.signatures[0].beatValue = 4;
+      music.notes = [
+        new Note(60, Duration.QUARTER, ['roll']),
+        new Note(62, Duration.QUARTER, ['turn']),
+        new Note(64, Duration.QUARTER, ['turnx']),
+        new Note(65, Duration.QUARTER, ['invertedturn']),
+        new Note(67, Duration.QUARTER, ['invertedturnx']),
+        new Note(65, Duration.QUARTER, ['snap']),
+        new Note(64, Duration.QUARTER, ['slide']),
+        new Note(62, Duration.QUARTER, ['coda', 'segno']),
+      ];
+      music.reflow();
+      return music;
+    })(),
+    width: WIDTH,
+  },
+};
+
+// --- Span decorations (crescendo, diminuendo, trill span) ---
+
+export const SpanDecorations: Story = {
+  args: {
+    music: (() => {
+      const music = new Music();
+      music.signatures[0].beatsPerBar = 4;
+      music.signatures[0].beatValue = 4;
+      music.notes = [
+        Q(60),
+        Q(62),
+        Q(64),
+        Q(65), // bar 1: crescendo
+        Q(67),
+        Q(65),
+        Q(64),
+        Q(62), // bar 2: diminuendo
+        Q(64),
+        Q(65),
+        Q(67),
+        Q(69), // bar 3: trill span
+      ];
+      music.spanDecorations = [
+        { type: 'crescendo', startNoteIndex: 0, endNoteIndex: 3 },
+        { type: 'diminuendo', startNoteIndex: 4, endNoteIndex: 7 },
+        { type: 'trill', startNoteIndex: 8, endNoteIndex: 11 },
+      ] as SpanDecoration[];
+      music.reflow();
+      return music;
+    })(),
+    width: WIDTH,
+  },
+};
+
+// --- Cross-line span decorations ---
+
+export const CrossLineSpanDecorations: Story = {
+  args: {
+    music: (() => {
+      const music = new Music();
+      music.signatures[0].beatsPerBar = 4;
+      music.signatures[0].beatValue = 4;
+      const bar = (pitches: number[]) =>
+        pitches.map((p) => new Note(p, Duration.QUARTER));
+      music.notes = [
+        ...bar([60, 62, 64, 65]),
+        ...bar([67, 65, 64, 62]),
+        ...bar([60, 62, 64, 65]),
+        ...bar([67, 65, 64, 62]),
+        ...bar([60, 62, 64, 65]),
+      ];
+      // Crescendo spans from bar 1 note 2 across to bar 3 note 1 (crosses line break)
+      music.spanDecorations = [
+        { type: 'crescendo', startNoteIndex: 2, endNoteIndex: 9 },
+        { type: 'trill', startNoteIndex: 11, endNoteIndex: 18 },
+      ] as SpanDecoration[];
+      music.reflow();
+      return music;
+    })(),
+    width: WIDTH,
+  },
+};
+
 // --- Tempo mark ---
 
 export const TempoMark: Story = {
@@ -553,6 +642,36 @@ export const TempoMark: Story = {
       music.signatures[0].tempo = 120;
       music.signatures[0].tempoText = 'Allegro';
       music.notes = [Q(60), Q(62), Q(64), Q(65)];
+      music.reflow();
+      return music;
+    })(),
+    width: WIDTH,
+  },
+};
+
+// --- Annotations ---
+
+export const Annotations: Story = {
+  args: {
+    music: (() => {
+      const music = new Music();
+      music.signatures[0].beatsPerBar = 4;
+      music.signatures[0].beatValue = 4;
+      const n1 = Q(60);
+      n1.annotations = [{ placement: 'above', text: 'p' }];
+      const n2 = Q(62);
+      n2.annotations = [{ placement: 'below', text: 'dolce' }];
+      const n3 = Q(64);
+      n3.annotations = [
+        { placement: 'left', text: '(' },
+        { placement: 'right', text: ')' },
+      ];
+      const n4 = Q(65);
+      n4.annotations = [
+        { placement: 'above', text: 'cresc.' },
+        { placement: 'above', text: 'molto' },
+      ];
+      music.notes = [n1, n2, n3, n4];
       music.reflow();
       return music;
     })(),

@@ -60,6 +60,7 @@
   "transformHalveDuration": "ਮਿਆਦ ਅੱਧੀ ਕਰੋ",
   "transformSimplifyAccidentals": "ਅਚਾਨਕ ਚਿੰਨ੍ਹ ਸਰਲ ਕਰੋ",
   "transformAddAllAccidentals": "ਸਾਰੇ ਅਚਾਨਕ ਚਿੰਨ੍ਹ ਜੋੜੋ",
+  "transformReverseNotes": "ਨੋਟਾਂ ਨੂੰ ਉਲਟਾਓ",
   "recorderType": "ਰਿਕਾਰਡਰ ਕਿਸਮ",
   "detect": "ਪਤਾ ਲਗਾਓ",
   "detectRecorderType": "ਰਿਕਾਰਡਰ ਕਿਸਮ ਦਾ ਪਤਾ ਲਗਾਓ",
@@ -81,7 +82,7 @@
   "direction": "ਦਿਸ਼ਾ",
   "ascending": "ਚੜ੍ਹਦਾ",
   "descending": "ਉਤਰਦਾ",
-  "both": "ਦੋਵੇਂ",
+  "random": "ਬੇਤਰਤੀਬ",
   "major": "ਮੇਜਰ",
   "minor": "ਮਾਈਨਰ",
   "recordingStarted": "ਰਿਕਾਰਡਿੰਗ ਸ਼ੁਰੂ ਹੋਈ",
@@ -141,5 +142,12 @@
   "sortPracticeCount": "ਅਭਿਆਸ ਗਿਣਤੀ",
   "sortAverageScore": "ਔਸਤ ਸਕੋਰ",
   "practiceHistory": "ਅਭਿਆਸ ਇਤਿਹਾਸ",
-  "methodNone": "ਕੋਈ ਨਹੀਂ"
+  "methodNone": "ਕੋਈ ਨਹੀਂ",
+  "newSong": "ਨਵਾਂ ਗੀਤ",
+  "generate": "ਬਣਾਓ",
+  "generateNotes": "ਨੋਟਸ ਬਣਾਓ",
+  "scales": "ਸੁਰ ਪੌੜੀਆਂ",
+  "commonArpeggios": "ਆਮ ਆਰਪੇਜਿਓ",
+  "dominantSeventhArpeggios": "ਡੌਮੀਨੈਂਟ ਸੈਵਨਥ ਆਰਪੇਜਿਓ",
+  "diminishedSeventhArpeggios": "ਡਿਮਿਨਿਸ਼ਡ ਸੈਵਨਥ ਆਰਪੇਜਿਓ"
 }

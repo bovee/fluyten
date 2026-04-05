@@ -44,6 +44,25 @@ const GLYPH_MAP: Partial<Record<Decoration, string>> = {
   accent: 'articAccentAbove',
   fermata: 'fermataAbove',
   trill: 'ornamentTrill',
+  lowermordent: 'ornamentMordent',
+  uppermordent: 'ornamentMordentInverted',
+  upbow: 'stringsUpBow',
+  downbow: 'stringsDownBow',
+  turn: 'ornamentTurn',
+  turnx: 'ornamentTurnSlash',
+  invertedturn: 'ornamentTurnInverted',
+  invertedturnx: 'ornamentTurnInvertedSlash',
+  coda: 'coda',
+  segno: 'segno',
+  snap: 'pluckedSnapPizzicatoAbove',
+  lhpizz: 'pluckedLeftHandPizzicato',
+  open: 'stringsHarmonic',
+};
+
+// Font size overrides (fraction of the default FONT_SIZE = 4 * STAFF_SPACE).
+const GLYPH_FONT_SIZE: Partial<Record<Decoration, number>> = {
+  coda: 2 * 10, // half of default 4*10
+  segno: 2 * 10,
 };
 
 // Horizontal offset to visually center each glyph on the notehead.
@@ -51,8 +70,21 @@ const GLYPH_X_CENTER_OFFSET: Partial<Record<Decoration, number>> = {
   accent: -5, // ~10px wide
   trill: -5, // ~10px wide
   fermata: -10, // ~20px wide
+  lowermordent: -5,
+  uppermordent: -5,
+  upbow: -4,
+  downbow: -4,
   staccato: 0,
   tenuto: -5,
+  turn: -5,
+  turnx: -5,
+  invertedturn: -5,
+  invertedturnx: -5,
+  coda: -8,
+  segno: -6,
+  snap: -5,
+  lhpizz: -5,
+  open: -5,
 };
 
 // Dynamics glyph map for individual letters
@@ -134,11 +166,47 @@ export function DecorationGroup({
           }
         }
 
+        // Irish roll: small arc above the note
+        if (dec === 'roll') {
+          const rx = x,
+            ry = aboveY;
+          return (
+            <path
+              key={i}
+              d={`M ${rx - 6} ${ry} C ${rx - 3} ${ry - 8} ${rx + 3} ${ry - 8} ${rx + 6} ${ry}`}
+              fill="none"
+              stroke="currentColor"
+              strokeWidth={1.5}
+            />
+          );
+        }
+
+        // Slide: short curved line rising into the notehead from lower-left
+        if (dec === 'slide') {
+          return (
+            <path
+              key={i}
+              d={`M ${x - 10} ${noteY + 10} Q ${x - 5} ${noteY + 4} ${x} ${noteY}`}
+              fill="none"
+              stroke="currentColor"
+              strokeWidth={1.5}
+            />
+          );
+        }
+
         // SMuFL glyph decorations (fermata, trill, accent) — at stem end / above staff
         const glyphName = GLYPH_MAP[dec];
         if (glyphName) {
           const xOffset = GLYPH_X_CENTER_OFFSET[dec] ?? 0;
-          return <Glyph key={i} name={glyphName} x={x + xOffset} y={aboveY} />;
+          return (
+            <Glyph
+              key={i}
+              name={glyphName}
+              x={x + xOffset}
+              y={aboveY}
+              fontSize={GLYPH_FONT_SIZE[dec]}
+            />
+          );
         }
 
         return null;

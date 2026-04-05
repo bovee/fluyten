@@ -77,7 +77,9 @@ function PracticeHeatmap() {
   const displayCols = isRtl ? [...columns].reverse() : columns;
 
   return (
-    <Box sx={{ display: 'flex', flexDirection: 'column', alignItems: 'center' }}>
+    <Box
+      sx={{ display: 'flex', flexDirection: 'column', alignItems: 'center' }}
+    >
       <Box sx={{ display: 'flex', alignItems: 'center', mb: 1 }}>
         <IconButton
           size="small"
@@ -139,7 +141,10 @@ function PracticeHeatmap() {
               day: 'numeric',
             });
             return (
-              <Tooltip key={`${weekIdx}-${dow}`} title={`${dateStr} — ${count}`}>
+              <Tooltip
+                key={`${weekIdx}-${dow}`}
+                title={`${dateStr} — ${count}`}
+              >
                 <Box
                   sx={{
                     gridColumn: colPos + 2,
@@ -371,7 +376,11 @@ export function SettingsDialog({ open, onClose }: SettingsDialogProps) {
               </FormControl>
 
               <Box>
-                <Typography id="tempo-slider-label" variant="caption" color="text.secondary">
+                <Typography
+                  id="tempo-slider-label"
+                  variant="caption"
+                  color="text.secondary"
+                >
                   {t('tempoLabel', { tempo })}
                 </Typography>
                 <Slider
@@ -493,7 +502,7 @@ export function SettingsDialog({ open, onClose }: SettingsDialogProps) {
               sx={{
                 px: 3,
                 pt: 3,
-                pb: 1,
+                pb: 3,
                 display: 'flex',
                 flexDirection: 'column',
                 gap: 2,

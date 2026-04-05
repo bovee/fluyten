@@ -60,6 +60,7 @@
   "transformHalveDuration": "সময়কাল অর্ধেক",
   "transformSimplifyAccidentals": "স্বরচিহ্ন সহজ করুন",
   "transformAddAllAccidentals": "সমস্ত স্বরচিহ্ন যোগ করুন",
+  "transformReverseNotes": "নোট উল্টান",
   "recorderType": "রেকর্ডারের ধরন",
   "detect": "সনাক্ত করুন",
   "detectRecorderType": "রেকর্ডারের ধরন সনাক্ত করুন",
@@ -81,7 +82,7 @@
   "direction": "দিক",
   "ascending": "আরোহী",
   "descending": "অবরোহী",
-  "both": "উভয়",
+  "random": "এলোমেলো",
   "major": "মেজর",
   "minor": "মাইনর",
   "recordingStarted": "রেকর্ডিং শুরু হয়েছে",
@@ -141,5 +142,12 @@
   "sortPracticeCount": "অনুশীলনের সংখ্যা",
   "sortAverageScore": "গড় স্কোর",
   "practiceHistory": "অনুশীলনের ইতিহাস",
-  "methodNone": "কোনোটি নয়"
+  "methodNone": "কোনোটি নয়",
+  "newSong": "নতুন গান",
+  "generate": "তৈরি করুন",
+  "generateNotes": "নোট তৈরি করুন",
+  "scales": "স্বরগ্রাম",
+  "commonArpeggios": "সাধারণ আর্পেজিও",
+  "dominantSeventhArpeggios": "ডমিনেন্ট সেভেন্থ আর্পেজিও",
+  "diminishedSeventhArpeggios": "ডিমিনিশড সেভেন্থ আর্পেজিও"
 }

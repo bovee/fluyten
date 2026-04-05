@@ -1,9 +1,10 @@
-import { Duration } from '../../music';
+import React from 'react';
+import { Duration, type Annotation, type Decoration } from '../../music';
 import {
   staffPositionToY,
   staffPositionToY as spToY,
 } from '../layout/pitchLayout';
-import { STAFF_SPACE, type NoteLayout } from '../layout/types';
+import { STAFF_HEIGHT, STAFF_SPACE, type NoteLayout } from '../layout/types';
 import { Glyph } from '../glyphs/Glyph';
 import { DecorationGroup } from './Decoration';
 import { LyricsSyllables } from './Lyrics';
@@ -76,10 +77,102 @@ function flagGlyph(
 }
 
 function accidentalGlyph(acc: string): string | null {
+  if (acc === '##') return 'accidentalDoubleSharp';
   if (acc === '#') return 'accidentalSharp';
+  if (acc === 'bb') return 'accidentalDoubleFlat';
   if (acc === 'b') return 'accidentalFlat';
   if (acc === 'n') return 'accidentalNatural';
   return null;
+}
+
+const TREMOLO_GLYPHS: Partial<Record<Decoration, string>> = {
+  tremolo1: 'tremolo1',
+  tremolo2: 'tremolo2',
+  tremolo3: 'tremolo3',
+  tremolo4: 'tremolo4',
+};
+
+const ANNOTATION_FONT_SIZE = 12;
+const ANNOTATION_LINE_HEIGHT = 14;
+// Placement offsets relative to anchor points
+const ABOVE_BASE_OFFSET = 18; // px above stemEndY (above stem tip)
+const BELOW_BASE_OFFSET = STAFF_HEIGHT + 20; // px below staffTopY
+
+function renderAnnotations(
+  annotations: Annotation[],
+  x: number,
+  noteY: number,
+  stemEndY: number,
+  staffTopY: number
+) {
+  if (annotations.length === 0) return null;
+
+  // Group by placement; within each group the first listed goes closest to the note.
+  const byPlacement = new Map<Annotation['placement'], Annotation[]>();
+  for (const ann of annotations) {
+    if (!byPlacement.has(ann.placement)) byPlacement.set(ann.placement, []);
+    byPlacement.get(ann.placement)!.push(ann);
+  }
+
+  const elements: React.JSX.Element[] = [];
+
+  for (const [placement, group] of byPlacement) {
+    group.forEach((ann, i) => {
+      let ax = x;
+      let ay: number;
+      let anchor: 'middle' | 'start' | 'end';
+
+      switch (placement) {
+        case 'above':
+          // Stack upward: first annotation closest to stem tip.
+          ay =
+            Math.min(stemEndY, noteY) -
+            ABOVE_BASE_OFFSET -
+            i * ANNOTATION_LINE_HEIGHT;
+          anchor = 'middle';
+          break;
+        case 'below':
+          ay = staffTopY + BELOW_BASE_OFFSET + i * ANNOTATION_LINE_HEIGHT;
+          anchor = 'middle';
+          break;
+        case 'left':
+          ax = x - 12;
+          ay = noteY + 4 - i * ANNOTATION_LINE_HEIGHT;
+          anchor = 'end';
+          break;
+        case 'right':
+          ax = x + 12;
+          ay = noteY + 4 - i * ANNOTATION_LINE_HEIGHT;
+          anchor = 'start';
+          break;
+        case 'auto':
+        default:
+          ay =
+            Math.min(stemEndY, noteY) -
+            ABOVE_BASE_OFFSET -
+            i * ANNOTATION_LINE_HEIGHT;
+          anchor = 'middle';
+          break;
+      }
+
+      elements.push(
+        <text
+          key={`${placement}-${i}`}
+          x={ax}
+          y={ay}
+          textAnchor={anchor}
+          fontSize={ANNOTATION_FONT_SIZE}
+          fontFamily="'EB Garamond', Georgia, serif"
+          fontStyle="italic"
+          fill="currentColor"
+        >
+          {ann.text}
+        </text>
+      );
+    });
+  }
+
+  return <g>{elements}</g>;
 }
 
 const ACCIDENTAL_X_OFFSET = 15; // px to the left of notehead center per accidental
@@ -169,7 +262,7 @@ export function NoteGroup({
             x={
               x -
               ACCIDENTAL_X_OFFSET -
-              (acc === '#' ? SHARP_EXTRA_OFFSET : 0) -
+              (acc === '#' || acc === '##' ? SHARP_EXTRA_OFFSET : 0) -
               (staffPositions.length - 1 - i) * 8
             }
             y={ay}
@@ -196,6 +289,25 @@ export function NoteGroup({
           strokeWidth={1.5}
         />
       )}
+
+      {/* Tremolo slashes — SMuFL pre-stacked beam glyph */}
+      {(() => {
+        const tremoloDec = note.decorations.find(
+          (d) => TREMOLO_GLYPHS[d] !== undefined
+        );
+        if (!tremoloDec) return null;
+        const glyphName = TREMOLO_GLYPHS[tremoloDec]!;
+        if (hasStem) {
+          // Centered on the stem
+          const stemMid = (stemStartY + stemEndY) / 2;
+          return <Glyph name={glyphName} x={stemX} y={stemMid} fill={fill} />;
+        } else {
+          // Whole note: place below the notehead
+          return (
+            <Glyph name={glyphName} x={x + 3} y={note.y + 18} fill={fill} />
+          );
+        }
+      })()}
 
       {/* Flag */}
       {hasFlag &&
@@ -232,6 +344,9 @@ export function NoteGroup({
 
       {/* Lyrics */}
       <LyricsSyllables lyrics={note.lyrics} x={x} staffTopY={staffTopY} />
+
+      {/* Annotations */}
+      {renderAnnotations(note.annotations, x, note.y, stemEndY, staffTopY)}
 
       {/* Wrong-note X mark */}
       {isWrong && (

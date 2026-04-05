@@ -60,6 +60,7 @@
   "transformHalveDuration": "Raba tsawon lokaci",
   "transformSimplifyAccidentals": "Sauƙaƙa alamomin bazuwar",
   "transformAddAllAccidentals": "Ƙara duk alamomin bazuwar",
+  "transformReverseNotes": "Juya Kalmomi",
   "recorderType": "Nau'in recorder",
   "detect": "Gano",
   "detectRecorderType": "Gano nau'in recorder",
@@ -81,7 +82,7 @@
   "direction": "Alkibla",
   "ascending": "Hawa",
   "descending": "Sauka",
-  "both": "Biyu",
+  "random": "Bazuwar",
   "major": "babba",
   "minor": "ƙarami",
   "recordingStarted": "An fara yin rikodin",
@@ -141,5 +142,12 @@
   "sortPracticeCount": "Sau da aka yi aiki",
   "sortAverageScore": "Matsakaicin maki",
   "practiceHistory": "Tarihin aiki",
-  "methodNone": "Babu"
+  "methodNone": "Babu",
+  "newSong": "Sabon waƙa",
+  "generate": "Ƙirƙira",
+  "generateNotes": "Ƙirƙiri Kalmomi",
+  "scales": "Ma'aunai",
+  "commonArpeggios": "Arpeggios na kowa",
+  "dominantSeventhArpeggios": "Arpeggios na bakwai na mulki",
+  "diminishedSeventhArpeggios": "Arpeggios na bakwai da ragi"
 }

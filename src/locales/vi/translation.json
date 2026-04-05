@@ -60,6 +60,7 @@
   "transformHalveDuration": "Giảm nửa trường độ",
   "transformSimplifyAccidentals": "Đơn giản hóa dấu hóa",
   "transformAddAllAccidentals": "Thêm tất cả dấu hóa",
+  "transformReverseNotes": "Đảo ngược nốt nhạc",
   "recorderType": "Loại sáo recorder",
   "detect": "Phát hiện",
   "detectRecorderType": "Phát hiện loại sáo recorder",
@@ -81,7 +82,7 @@
   "direction": "Hướng",
   "ascending": "Đi lên",
   "descending": "Đi xuống",
-  "both": "Cả hai",
+  "random": "Ngẫu nhiên",
   "major": "Trưởng",
   "minor": "Thứ",
   "recordingStarted": "Bắt đầu ghi âm",
@@ -141,5 +142,12 @@
   "sortPracticeCount": "Số lần luyện tập",
   "sortAverageScore": "Điểm trung bình",
   "practiceHistory": "Lịch sử luyện tập",
-  "methodNone": "Không có"
+  "methodNone": "Không có",
+  "newSong": "Bài hát mới",
+  "generate": "Tạo",
+  "generateNotes": "Tạo nốt nhạc",
+  "scales": "Âm giai",
+  "commonArpeggios": "Arpeggio thông dụng",
+  "dominantSeventhArpeggios": "Arpeggio hợp âm bảy át",
+  "diminishedSeventhArpeggios": "Arpeggio hợp âm bảy giảm"
 }

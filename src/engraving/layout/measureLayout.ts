@@ -1,4 +1,4 @@
-import { Duration, type Note } from '../../music';
+import { Duration, KEYS, FIFTHS_TO_ACCIDENTALS, type Note } from '../../music';
 import {
   GRACE_NOTE_SPACING,
   MIN_NOTE_SPACING,
@@ -45,6 +45,15 @@ export function layoutBar(
   const mainGroups = groupNotesWithGraces(bar.noteIndices, notes);
 
   if (mainGroups.length === 0) return [];
+
+  // Build a letter→±1 map for the bar's active key signature so that chromatic
+  // pitches with no explicit accidental are placed on the correct staff line.
+  const keyAccidentalMap: Record<string, number> = {};
+  for (const acc of FIFTHS_TO_ACCIDENTALS[
+    KEYS[bar.signature.keySignature] ?? 0
+  ] ?? []) {
+    keyAccidentalMap[acc[0]] = acc[1] === '#' ? 1 : -1;
+  }
 
   // Compute proportional x positions for main notes.
   const totalTicks = mainGroups.reduce(
@@ -98,7 +107,8 @@ export function layoutBar(
           pitch,
           note.accidentals[i],
           clef,
-          displayPitchOffset
+          displayPitchOffset,
+          keyAccidentalMap
         )
       );
       // Reference Y: top notehead (stem down) or bottom notehead (stem up).
@@ -124,7 +134,8 @@ export function layoutBar(
       x,
       staffTopY,
       clef,
-      displayPitchOffset
+      displayPitchOffset,
+      keyAccidentalMap
     );
 
     layouts.push({
@@ -139,6 +150,7 @@ export function layoutBar(
       durationModifier: note.durationModifier,
       accidentals: note.accidentals,
       decorations: note.decorations,
+      annotations: note.annotations,
       graceNotes: graceLayouts,
       lyrics: noteLyrics,
       isRest,
@@ -193,7 +205,8 @@ function layoutGraceNotes(
   parentX: number,
   staffTopY: number,
   clef: Clef,
-  displayPitchOffset: number
+  displayPitchOffset: number,
+  keyAccidentalMap: Record<string, number>
 ): GraceNoteLayout[] {
   if (graceIndices.length === 0) return [];
 
@@ -203,7 +216,13 @@ function layoutGraceNotes(
     const x = parentX - (graceIndices.length - k) * GRACE_NOTE_SPACING;
 
     const staffPositions = note.pitches.map((pitch, i) =>
-      pitchToStaffPosition(pitch, note.accidentals[i], clef, displayPitchOffset)
+      pitchToStaffPosition(
+        pitch,
+        note.accidentals[i],
+        clef,
+        displayPitchOffset,
+        keyAccidentalMap
+      )
     );
     const sp = staffPositions[0] ?? 0;
     const y = staffPositionToY(sp, staffTopY);

@@ -402,6 +402,22 @@ describe('transformFragment - add-all-accidentals', () => {
   });
 });
 
+describe('transformFragment - reverse-notes', () => {
+  it('reverses note order', () => {
+    const result = transformFragment('A B ^C D', FULL_ABC_C, 'reverse-notes');
+    expect(result).toBe('D ^C B A');
+  });
+
+  it('keeps decorations with their notes', () => {
+    const result = transformFragment(
+      '!trill!A B ^C D',
+      FULL_ABC_C,
+      'reverse-notes'
+    );
+    expect(result).toBe('D ^C B !trill!A');
+  });
+});
+
 describe('transformFragment - errors', () => {
   it('throws for unknown transform id', () => {
     expect(() => transformFragment('c', FULL_ABC_C, 'invalid')).toThrow(

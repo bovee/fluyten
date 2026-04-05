@@ -60,6 +60,7 @@
   "transformHalveDuration": "نصف کردن مدت",
   "transformSimplifyAccidentals": "ساده‌سازی علائم عرضی",
   "transformAddAllAccidentals": "افزودن همه علائم عرضی",
+  "transformReverseNotes": "معکوس کردن نت‌ها",
   "recorderType": "نوع فلوت",
   "detect": "تشخیص",
   "detectRecorderType": "تشخیص نوع فلوت",
@@ -81,7 +82,7 @@
   "direction": "جهت",
   "ascending": "صعودی",
   "descending": "نزولی",
-  "both": "هر دو",
+  "random": "تصادفی",
   "major": "ماژور",
   "minor": "مینور",
   "recordingStarted": "ضبط شروع شد",
@@ -141,5 +142,12 @@
   "sortPracticeCount": "تعداد تمرین‌ها",
   "sortAverageScore": "میانگین امتیاز",
   "practiceHistory": "تاریخچه تمرین",
-  "methodNone": "هیچ‌کدام"
+  "methodNone": "هیچ‌کدام",
+  "newSong": "آهنگ جدید",
+  "generate": "تولید",
+  "generateNotes": "تولید نت‌ها",
+  "scales": "گام‌ها",
+  "commonArpeggios": "آرپژهای رایج",
+  "dominantSeventhArpeggios": "آرپژهای هفتم غالب",
+  "diminishedSeventhArpeggios": "آرپژهای هفتم کاهش‌یافته"
 }

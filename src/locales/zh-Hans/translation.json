@@ -60,6 +60,7 @@
   "transformHalveDuration": "时值减半",
   "transformSimplifyAccidentals": "简化临时记号",
   "transformAddAllAccidentals": "添加所有临时记号",
+  "transformReverseNotes": "反转音符",
   "recorderType": "竖笛类型",
   "detect": "检测",
   "detectRecorderType": "检测竖笛类型",
@@ -81,7 +82,7 @@
   "direction": "方向",
   "ascending": "上行",
   "descending": "下行",
-  "both": "双向",
+  "random": "随机",
   "major": "大调",
   "minor": "小调",
   "recordingStarted": "录音已开始",
@@ -141,5 +142,12 @@
   "sortPracticeCount": "练习次数",
   "sortAverageScore": "平均分数",
   "practiceHistory": "练习记录",
-  "methodNone": "无"
+  "methodNone": "无",
+  "newSong": "新歌曲",
+  "generate": "生成",
+  "generateNotes": "生成音符",
+  "scales": "音阶",
+  "commonArpeggios": "常见琶音",
+  "dominantSeventhArpeggios": "属七和弦琶音",
+  "diminishedSeventhArpeggios": "减七和弦琶音"
 }

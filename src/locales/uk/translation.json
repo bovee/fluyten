@@ -60,6 +60,7 @@
   "transformHalveDuration": "Зменшити тривалість вдвічі",
   "transformSimplifyAccidentals": "Спростити знаки альтерації",
   "transformAddAllAccidentals": "Додати всі знаки альтерації",
+  "transformReverseNotes": "Обернути ноти",
   "recorderType": "Тип блокфлейти",
   "detect": "Визначити",
   "detectRecorderType": "Визначити тип блокфлейти",
@@ -81,7 +82,7 @@
   "direction": "Напрямок",
   "ascending": "Висхідна",
   "descending": "Низхідна",
-  "both": "Обидві",
+  "random": "Випадковий",
   "major": "мажор",
   "minor": "мінор",
   "recordingStarted": "Запис розпочато",
@@ -141,5 +142,12 @@
   "sortPracticeCount": "Кількість тренувань",
   "sortAverageScore": "Середній результат",
   "practiceHistory": "Історія тренувань",
-  "methodNone": "Немає"
+  "methodNone": "Немає",
+  "newSong": "Нова пісня",
+  "generate": "Створити",
+  "generateNotes": "Створити ноти",
+  "scales": "Гами",
+  "commonArpeggios": "Загальні арпеджіо",
+  "dominantSeventhArpeggios": "Арпеджіо домінантового септакорду",
+  "diminishedSeventhArpeggios": "Арпеджіо зменшеного септакорду"
 }

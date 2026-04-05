@@ -60,6 +60,7 @@
   "transformHalveDuration": "कालावधी अर्धा",
   "transformSimplifyAccidentals": "अकस्मात चिन्हे सोपी करा",
   "transformAddAllAccidentals": "सर्व अकस्मात चिन्हे जोडा",
+  "transformReverseNotes": "नोट्स उलट्या करा",
   "recorderType": "रेकॉर्डरचा प्रकार",
   "detect": "शोधा",
   "detectRecorderType": "रेकॉर्डरचा प्रकार शोधा",
@@ -81,7 +82,7 @@
   "direction": "दिशा",
   "ascending": "आरोही",
   "descending": "अवरोही",
-  "both": "दोन्ही",
+  "random": "यादृच्छिक",
   "major": "मेजर",
   "minor": "मायनर",
   "recordingStarted": "रेकॉर्डिंग सुरू झाली",
@@ -141,5 +142,12 @@
   "sortPracticeCount": "सराव संख्या",
   "sortAverageScore": "सरासरी गुण",
   "practiceHistory": "सराव इतिहास",
-  "methodNone": "काहीही नाही"
+  "methodNone": "काहीही नाही",
+  "newSong": "नवीन गाणे",
+  "generate": "तयार करा",
+  "generateNotes": "नोट्स तयार करा",
+  "scales": "स्वरमाला",
+  "commonArpeggios": "सामान्य आर्पेजिओ",
+  "dominantSeventhArpeggios": "डॉमिनंट सेव्हन्थ आर्पेजिओ",
+  "diminishedSeventhArpeggios": "डिमिनिश्ड सेव्हन्थ आर्पेजिओ"
 }

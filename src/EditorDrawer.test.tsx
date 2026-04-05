@@ -27,8 +27,6 @@ const defaultProps = (overrides = {}) => ({
   open: true,
   abcMusic: SIMPLE_ABC,
   onAbcChange: vi.fn(),
-  tempo: 120,
-  onTempoChange: vi.fn(),
   voices: [{ id: 'V1', name: 'Voice 1', music: new Music() }],
   selectedVoiceIdx: 0,
   onVoiceChange: vi.fn(),
@@ -79,19 +77,6 @@ describe('EditorDrawer', () => {
   it('does not show a parse error when parseError is empty', () => {
     render(<EditorDrawer {...defaultProps({ parseError: '' })} />);
     expect(screen.queryByText('Bad key signature')).not.toBeInTheDocument();
-  });
-
-  it('renders the tempo slider with the current tempo', () => {
-    render(<EditorDrawer {...defaultProps({ tempo: 90 })} />);
-    expect(screen.getByRole('slider', { name: /tempo/i })).toHaveValue('90');
-  });
-
-  it('calls onTempoChange when the tempo slider changes', () => {
-    const onTempoChange = vi.fn();
-    render(<EditorDrawer {...defaultProps({ onTempoChange })} />);
-    const slider = screen.getByRole('slider', { name: /tempo/i });
-    fireEvent.change(slider, { target: { value: '80' } });
-    expect(onTempoChange).toHaveBeenCalled();
   });
 
   describe('voice selector', () => {

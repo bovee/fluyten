@@ -30,10 +30,9 @@ import {
   HttpError,
 } from './io/fileImport';
 import { getStarterBookUrl, isStarterBookUrl } from './instrument';
-import { ScaleDialog } from './scales/ScaleDialog';
 import { SettingsDialog } from './SettingsDialog';
 import { type Song } from './music';
-import { useStore } from './store';
+import { useStore, type SortKey } from './store';
 
 interface IndexPageProps {
   onSelectSong: (song: Song, readOnly: boolean) => void;
@@ -43,7 +42,6 @@ export function IndexPage({ onSelectSong }: IndexPageProps) {
   const { t } = useTranslation();
   const theme = useTheme();
   const [settingsOpen, setSettingsOpen] = useState(false);
-  const [scaleDialogOpen, setScaleDialogOpen] = useState(false);
   const [addSongMenuAnchor, setAddSongMenuAnchor] =
     useState<HTMLElement | null>(null);
   const [editMenuAnchor, setEditMenuAnchor] = useState<HTMLElement | null>(
@@ -55,14 +53,15 @@ export function IndexPage({ onSelectSong }: IndexPageProps) {
     error: string | null;
   } | null>(null);
   const [isDragOver, setIsDragOver] = useState(false);
-  const [filterText, setFilterText] = useState('');
   const [sortMenuAnchor, setSortMenuAnchor] = useState<HTMLElement | null>(
     null
   );
-  const [sortKey, setSortKey] = useState<
-    'order' | 'title' | 'length' | 'difficulty' | 'practiceCount' | 'averageScore'
-  >('order');
-  const [sortDir, setSortDir] = useState<'asc' | 'desc'>('desc');
+  const filterText = useStore((state) => state.filterText);
+  const setFilterText = useStore((state) => state.setFilterText);
+  const sortKey = useStore((state) => state.sortKey);
+  const setSortKey = useStore((state) => state.setSortKey);
+  const sortDir = useStore((state) => state.sortDir);
+  const setSortDir = useStore((state) => state.setSortDir);
   const [selectedIds, setSelectedIds] = useState<Set<string>>(new Set());
   const longPressTimers = useRef<Map<string, ReturnType<typeof setTimeout>>>(
     new Map()
@@ -176,11 +175,12 @@ export function IndexPage({ onSelectSong }: IndexPageProps) {
   }, []);
 
   const handleAddEmptySong = () => {
+    const newSongTitle = t('newSong');
     addSongs([
       {
         id: crypto.randomUUID(),
-        title: 'New Song',
-        abc: `X:1\nT:New Song\nM:4/4\nL:1/4\nK:C\nC D E F |`,
+        title: newSongTitle,
+        abc: `X:1\nT:${newSongTitle}\nM:4/4\nL:1/4\nK:C\n`,
       },
     ]);
     setAddSongMenuAnchor(null);
@@ -252,11 +252,9 @@ export function IndexPage({ onSelectSong }: IndexPageProps) {
     setEditMenuAnchor(null);
   };
 
-  const handleSortSelect = (
-    key: 'order' | 'title' | 'length' | 'difficulty' | 'practiceCount' | 'averageScore'
-  ) => {
+  const handleSortSelect = (key: SortKey) => {
     if (key === sortKey) {
-      setSortDir((d) => (d === 'asc' ? 'desc' : 'asc'));
+      setSortDir(sortDir === 'asc' ? 'desc' : 'asc');
     } else {
       setSortKey(key);
       setSortDir(key === 'order' ? 'desc' : 'asc');
@@ -544,14 +542,6 @@ export function IndexPage({ onSelectSong }: IndexPageProps) {
         >
           {t('importAbcUrl')}
         </MenuItem>
-        <MenuItem
-          onClick={() => {
-            setAddSongMenuAnchor(null);
-            setScaleDialogOpen(true);
-          }}
-        >
-          {t('generateScale')}
-        </MenuItem>
       </Menu>
 
       <Menu
@@ -604,15 +594,6 @@ export function IndexPage({ onSelectSong }: IndexPageProps) {
       <SettingsDialog
         open={settingsOpen}
         onClose={() => setSettingsOpen(false)}
-      />
-
-      <ScaleDialog
-        open={scaleDialogOpen}
-        onClose={() => setScaleDialogOpen(false)}
-        onCreate={(song) => {
-          addSongs([song]);
-          setScaleDialogOpen(false);
-        }}
       />
 
       <Menu

@@ -36,8 +36,10 @@ export const SMUFL: Record<string, string> = {
   flag16thUp: '\uE242',
   flag16thDown: '\uE243',
   // Accidentals
+  accidentalDoubleSharp: '\uE263',
   accidentalSharp: '\uE262',
   accidentalFlat: '\uE260',
+  accidentalDoubleFlat: '\uE264',
   accidentalNatural: '\uE261',
   // Articulations
   articAccentAbove: '\uE4A0',
@@ -50,8 +52,28 @@ export const SMUFL: Record<string, string> = {
   dynamicPiano: '\uE520',
   dynamicMezzo: '\uE521',
   dynamicForte: '\uE522',
+  // Repeats / navigation
+  segno: '\uE047',
+  coda: '\uE048',
   // Ornaments
   ornamentTrill: '\uE566',
+  ornamentTurn: '\uE567',
+  ornamentTurnInverted: '\uE568',
+  ornamentTurnSlash: '\uE569',
+  ornamentTurnInvertedSlash: '\uE56A',
+  ornamentMordent: '\uE56C',
+  ornamentMordentInverted: '\uE56D',
+  // Strings (bowing / pizzicato)
+  stringsDownBow: '\uE610',
+  stringsUpBow: '\uE612',
+  pluckedSnapPizzicatoAbove: '\uE631',
+  pluckedLeftHandPizzicato: '\uE633',
+  stringsHarmonic: '\uE614',
+  // Tremolos (pre-stacked beam strokes, tremolo1 = 1 beam … tremolo4 = 4 beams)
+  tremolo1: '\uE220',
+  tremolo2: '\uE221',
+  tremolo3: '\uE222',
+  tremolo4: '\uE223',
   // Other
   augmentationDot: '\uE1E7',
 };

@@ -12,10 +12,15 @@ import {
   Tie,
   TupletBracket,
   VoltaBracket,
+  Hairpin,
+  TrillSpan,
 } from './components/CrossBarElements';
 import { TempoMark } from './components/TempoMark';
 import { Cursor } from './components/Cursor';
 import { FingeringDiagram } from '../FingeringDiagram';
+import { NoteNameDisplay } from './NoteNameDisplay';
+import { noteOctaveDots } from './noteNameUtils';
+import { useStore } from '../store';
 
 type Clef = 'treble' | 'treble8va' | 'bass' | 'alto';
 
@@ -44,6 +49,7 @@ export function Score({
   onNoteClick: onNoteClickProp,
 }: ScoreProps) {
   const theme = useTheme();
+  const instrumentType = useStore((s) => s.instrumentType);
   const layout = useMemo(() => computeLayout(music, width), [music, width]);
   const clef = music.clef as Clef;
   const sig0 = music.signatures[0];
@@ -175,29 +181,8 @@ export function Score({
           const lastBar = line.bars[line.bars.length - 1];
           const staffRight = lastBar ? lastBar.x + lastBar.width : LEFT_MARGIN;
 
-          // If the next line's first bar starts with a breath mark on its first note,
-          // render it here at the end of this line.
-          const nextLineFirstNote =
-            layout.lines[lineIdx + 1]?.bars[0]?.notes[0];
-          const hasTrailingBreath =
-            nextLineFirstNote?.decorations.includes('breath') ?? false;
-
           return (
             <g key={lineIdx}>
-              {hasTrailingBreath && (
-                <text
-                  x={staffRight}
-                  y={staffTopY - 10}
-                  fontSize={32}
-                  fontWeight="bold"
-                  fontFamily="serif"
-                  textAnchor="middle"
-                  fill="currentColor"
-                >
-                  ,
-                </text>
-              )}
-
               {lineIdx === 0 && line.bars[0] && (
                 <TempoMark
                   tempoText={tempoText}
@@ -251,6 +236,14 @@ export function Score({
               {line.tuplets.map((tuplet, i) => (
                 <TupletBracket key={i} tuplet={tuplet} />
               ))}
+
+              {line.spanDecorations.map((span, i) =>
+                span.type === 'trill' ? (
+                  <TrillSpan key={i} span={span} />
+                ) : (
+                  <Hairpin key={i} span={span} />
+                )
+              )}
             </g>
           );
         })}
@@ -286,7 +279,13 @@ export function Score({
             textAlign: 'center',
           }}
         >
-          {popoverNote?.name(useSharpSpelling)}
+          {popoverNote && (
+            <NoteNameDisplay
+              name={popoverNote.name(useSharpSpelling)}
+              dots={noteOctaveDots(popoverNote.pitches[0], instrumentType)}
+              fontSize="1rem"
+            />
+          )}
         </Typography>
         {popoverNote && <FingeringDiagram note={popoverNote} />}
       </Popover>

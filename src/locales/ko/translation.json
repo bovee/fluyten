@@ -60,6 +60,7 @@
   "transformHalveDuration": "음표 길이 절반",
   "transformSimplifyAccidentals": "임시표 단순화",
   "transformAddAllAccidentals": "모든 임시표 추가",
+  "transformReverseNotes": "음표 역순 배열",
   "recorderType": "리코더 종류",
   "detect": "감지",
   "detectRecorderType": "리코더 종류 감지",
@@ -81,7 +82,7 @@
   "direction": "방향",
   "ascending": "상행",
   "descending": "하행",
-  "both": "양방향",
+  "random": "무작위",
   "major": "장조",
   "minor": "단조",
   "recordingStarted": "녹음 시작됨",
@@ -141,5 +142,12 @@
   "sortPracticeCount": "연습 횟수",
   "sortAverageScore": "평균 점수",
   "practiceHistory": "연습 기록",
-  "methodNone": "없음"
+  "methodNone": "없음",
+  "newSong": "새 노래",
+  "generate": "생성",
+  "generateNotes": "음표 생성",
+  "scales": "음계",
+  "commonArpeggios": "일반 아르페지오",
+  "dominantSeventhArpeggios": "딸림7화음 아르페지오",
+  "diminishedSeventhArpeggios": "감7화음 아르페지오"
 }

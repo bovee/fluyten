@@ -60,6 +60,7 @@
   "transformHalveDuration": "Уменьшить длительность вдвое",
   "transformSimplifyAccidentals": "Упростить знаки альтерации",
   "transformAddAllAccidentals": "Добавить все знаки альтерации",
+  "transformReverseNotes": "Обратить ноты",
   "recorderType": "Тип блокфлейты",
   "detect": "Определить",
   "detectRecorderType": "Определить тип блокфлейты",
@@ -81,7 +82,7 @@
   "direction": "Направление",
   "ascending": "Восходящая",
   "descending": "Нисходящая",
-  "both": "Обе",
+  "random": "Случайный",
   "major": "мажор",
   "minor": "минор",
   "recordingStarted": "Запись начата",
@@ -141,5 +142,12 @@
   "sortPracticeCount": "Количество тренировок",
   "sortAverageScore": "Средний результат",
   "practiceHistory": "История тренировок",
-  "methodNone": "Нет"
+  "methodNone": "Нет",
+  "newSong": "Новая песня",
+  "generate": "Создать",
+  "generateNotes": "Создать ноты",
+  "scales": "Гаммы",
+  "commonArpeggios": "Общие арпеджио",
+  "dominantSeventhArpeggios": "Арпеджио доминантового септаккорда",
+  "diminishedSeventhArpeggios": "Арпеджио уменьшённого септаккорда"
 }

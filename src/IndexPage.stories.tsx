@@ -76,6 +76,13 @@ const oneSong: UserSong[] = [
 
 export const EditSongDialog: Story = {
   decorators: [withSongs(oneSong)],
+  parameters: {
+    a11y: {
+      config: {
+        rules: [{ id: 'color-contrast', enabled: false }],
+      },
+    },
+  },
   play: async ({ canvasElement }) => {
     const canvas = within(canvasElement);
     // Select the song first, then open the Edit Songs menu

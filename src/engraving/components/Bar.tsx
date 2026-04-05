@@ -6,11 +6,11 @@ import { GraceNoteGroup } from './GraceNoteGroup';
 import { Beam } from './Beam';
 import { BarlineStart, BarlineEnd } from './Barline';
 
-// Staff positions for key signature accidentals (treble clef)
-// Sharps: F5, C5, G5, D5, A4, E5, B4 = staff positions +5, +2, +6, +3, 0, +4, +1
-// Flats:  Bb4, Eb5, Ab4, Db5, Gb4, Cb5, Fb4 = -1, +3, -2, +2, -3, +1, -4
-const SHARP_STAFF_POSITIONS_TREBLE = [5, 2, 6, 3, 0, 4, 1];
-const FLAT_STAFF_POSITIONS_TREBLE = [-1, 3, -2, 2, -3, 1, -4];
+// Staff positions for key signature accidentals (treble clef, position 0 = middle line = B4)
+// Sharps: F5, C5, G5, D5, A4, E5, B4 = staff positions +4, +1, +5, +2, -1, +3, 0
+// Flats:  Bb4, Eb5, Ab4, Db5, Gb4, Cb5, Fb4 = 0, +3, -1, +2, -2, +1, -3
+const SHARP_STAFF_POSITIONS_TREBLE = [4, 1, 5, 2, -1, 3, 0];
+const FLAT_STAFF_POSITIONS_TREBLE = [0, 3, -1, 2, -2, 1, -3];
 // Bass clef accidentals are shifted down by 2 staff positions
 const SHARP_STAFF_POSITIONS_BASS = SHARP_STAFF_POSITIONS_TREBLE.map(
   (p) => p - 2
@@ -178,22 +178,17 @@ export function Bar({
 }: BarProps) {
   const beamed = beamedNoteSet(bar);
 
-  // Collect breath mark positions: before the note they're marked on.
-  // First note in bar, bar not first on line → just left of the opening barline.
-  // First note in bar, bar IS first on line → just left of the first note
-  //   (the previous bar is on a different line so we can't put it there).
-  // Other notes → halfway between the previous note and this one.
+  // Collect breath mark positions: after the note they're marked on.
+  // Last note in bar → over the barline at bar end.
+  // Other notes → halfway between this note and the next note.
   const breathMarks: { x: number }[] = [];
   for (let i = 0; i < bar.notes.length; i++) {
     const note = bar.notes[i];
     if (note.decorations.includes('breath')) {
-      let bx: number;
-      if (i === 0) {
-        if (bar.isFirstOnLine) continue; // rendered at end of previous line by Score
-        bx = bar.x;
-      } else {
-        bx = (bar.notes[i - 1].x + note.x) / 2;
-      }
+      const isLastInBar = i === bar.notes.length - 1;
+      const bx = isLastInBar
+        ? bar.x + bar.width
+        : (note.x + bar.notes[i + 1].x) / 2;
       breathMarks.push({ x: bx });
     }
   }
@@ -209,7 +204,7 @@ export function Bar({
         type={bar.barlineEnd}
       />
 
-      {/* Breath marks — rendered before the note they're attached to */}
+      {/* Breath marks */}
       {breathMarks.map((bm, i) => (
         <text
           key={`breath-${i}`}

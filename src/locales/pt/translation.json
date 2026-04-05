@@ -60,6 +60,7 @@
   "transformHalveDuration": "Reduzir duração à metade",
   "transformSimplifyAccidentals": "Simplificar acidentes",
   "transformAddAllAccidentals": "Adicionar todos os acidentes",
+  "transformReverseNotes": "Inverter notas",
   "recorderType": "Tipo de flauta doce",
   "detect": "Detectar",
   "detectRecorderType": "Detectar tipo de flauta doce",
@@ -81,7 +82,7 @@
   "direction": "Direção",
   "ascending": "Ascendente",
   "descending": "Descendente",
-  "both": "Ambas",
+  "random": "Aleatório",
   "major": "Maior",
   "minor": "Menor",
   "recordingStarted": "Gravação iniciada",
@@ -141,5 +142,12 @@
   "sortPracticeCount": "Vezes praticado",
   "sortAverageScore": "Pontuação média",
   "practiceHistory": "Histórico de prática",
-  "methodNone": "Nenhum"
+  "methodNone": "Nenhum",
+  "newSong": "Nova música",
+  "generate": "Gerar",
+  "generateNotes": "Gerar notas",
+  "scales": "Escalas",
+  "commonArpeggios": "Arpejos comuns",
+  "dominantSeventhArpeggios": "Arpejos de sétima dominante",
+  "diminishedSeventhArpeggios": "Arpejos de sétima diminuta"
 }

@@ -1,6 +1,7 @@
 import {
   useCallback,
   useEffect,
+  useMemo,
   useRef,
   useState,
   useLayoutEffect,
@@ -34,6 +35,8 @@ import { Score } from './engraving';
 import { useStore } from './store';
 import { type Song } from './music';
 import { NOTE_NAMES } from './constants';
+import { NoteNameDisplay } from './engraving/NoteNameDisplay';
+import { noteOctaveDots } from './engraving/noteNameUtils';
 import { EditorDrawer } from './EditorDrawer';
 
 const PLAY_SAMPLE_RATE = 1000;
@@ -67,7 +70,11 @@ function usePitchDetection(
     idx: number;
   }>,
   setStatusMessage: (msg: string) => void,
-  onFinish: (results: ReadonlyMap<number, 'correct' | 'wrong'>, correctCount: number, totalCount: number) => void
+  onFinish: (
+    results: ReadonlyMap<number, 'correct' | 'wrong'>,
+    correctCount: number,
+    totalCount: number
+  ) => void
 ) {
   const { t } = useTranslation();
   const [detectedPitch, setDetectedPitch] = useState<number | null>(null);
@@ -77,7 +84,7 @@ function usePitchDetection(
   const [cursor, setCursor] = useState<{ noteIdx: number } | undefined>();
   const noteResultsMapRef = useRef(new Map<number, 'correct' | 'wrong'>());
   const freqTrackerInterval = useIntervalRef();
-  /* eslint-disable react-hooks/refs */
+
   const freqTrackerRef = useRef<FrequencyTracker>(
     new FrequencyTracker(
       (pitch: number) => {
@@ -97,7 +104,11 @@ function usePitchDetection(
             setDetectedPitch(null);
             setCursor(undefined);
             setStatusMessage(t('recordingStopped'));
-            onFinish(new Map(noteResultsMapRef.current), tracking.notes.length, tracking.notes.length);
+            onFinish(
+              new Map(noteResultsMapRef.current),
+              tracking.notes.length,
+              tracking.notes.length
+            );
           } else {
             const nextOriginalIdx = tracking.originalIndices[tracking.idx];
             setCursor(
@@ -111,7 +122,6 @@ function usePitchDetection(
       () => setDetectedPitch(null)
     )
   );
-  /* eslint-enable react-hooks/refs */
 
   const startRecording = async () => {
     if (freqTrackerInterval.isActive) {
@@ -146,7 +156,8 @@ function usePitchDetection(
     }
   };
 
-  useEffect(() => () => freqTrackerInterval.clear(), []);
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  useEffect(() => () => freqTrackerInterval.clear(), []); // cleanup on unmount only
 
   return {
     detectedPitch,
@@ -161,7 +172,11 @@ function useInTempoChecking(
   musicRef: React.RefObject<Music>,
   tempoRef: React.RefObject<number>,
   setStatusMessage: (msg: string) => void,
-  onFinish: (results: ReadonlyMap<number, 'correct' | 'wrong'>, correctCount: number, totalCount: number) => void
+  onFinish: (
+    results: ReadonlyMap<number, 'correct' | 'wrong'>,
+    correctCount: number,
+    totalCount: number
+  ) => void
 ) {
   const { t } = useTranslation();
   const [detectedPitch, setDetectedPitch] = useState<number | null>(null);
@@ -183,7 +198,6 @@ function useInTempoChecking(
   const countdownTimeoutsRef = useRef<number[]>([]);
   const clickCtxRef = useRef<AudioContext | null>(null);
 
-  /* eslint-disable react-hooks/refs */
   const freqTrackerRef = useRef<FrequencyTracker>(
     new FrequencyTracker(
       (pitch: number) => {
@@ -200,7 +214,6 @@ function useInTempoChecking(
       () => setDetectedPitch(null)
     )
   );
-  /* eslint-enable react-hooks/refs */
 
   const stopAll = () => {
     for (const id of countdownTimeoutsRef.current) clearTimeout(id);
@@ -271,10 +284,13 @@ function useInTempoChecking(
       osc.start(t);
       osc.stop(t + 0.07);
     }
-    const closeClick = window.setTimeout(() => {
-      clickCtx.close();
-      clickCtxRef.current = null;
-    }, beatMs * 3 + 500);
+    const closeClick = window.setTimeout(
+      () => {
+        clickCtx.close();
+        clickCtxRef.current = null;
+      },
+      beatMs * 3 + 500
+    );
 
     setCountdown(3);
     const id2 = window.setTimeout(() => setCountdown(2), beatMs);
@@ -301,7 +317,11 @@ function useInTempoChecking(
             if (result === 'correct') correctCountRef.current++;
           }
           stopAll();
-          onFinish(new Map(noteResultsMapRef.current), correctCountRef.current, totalCountRef.current);
+          onFinish(
+            new Map(noteResultsMapRef.current),
+            correctCountRef.current,
+            totalCountRef.current
+          );
           return;
         }
 
@@ -336,7 +356,8 @@ function useInTempoChecking(
     countdownTimeoutsRef.current = [closeClick, id2, id1, id0];
   };
 
-  useEffect(() => () => stopAll(), []);
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  useEffect(() => () => stopAll(), []); // cleanup on unmount only
 
   return {
     detectedPitch,
@@ -515,7 +536,8 @@ function useAudioPlayback(
     doStartPlaying(startTimeOffset);
   };
 
-  useEffect(() => () => musicPlayerInterval.clear(), []);
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  useEffect(() => () => musicPlayerInterval.clear(), []); // cleanup on unmount only
 
   return {
     isPlaying: musicPlayerInterval.isActive,
@@ -551,7 +573,8 @@ function useMetronome(
     setStatusMessage(t('metronomeStarted'));
   };
 
-  useEffect(() => () => metronomeInterval.clear(), []);
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  useEffect(() => () => metronomeInterval.clear(), []); // cleanup on unmount only
 
   return {
     isMetronomeActive: metronomeInterval.isActive,
@@ -578,7 +601,14 @@ export function SongPage({
   const instrumentType = useStore((s) => s.instrumentType);
   const defaultClef = defaultClefForInstrument(instrumentType);
   const defaultMiddle = instrumentType === 'BASS' ? 'd' : undefined;
-  const [editOpen, setEditOpen] = useState(false);
+  const [editOpen, setEditOpen] = useState(() => {
+    try {
+      const v = voicesFromAbc(song.abc, defaultClef, defaultMiddle);
+      return v.every((voice) => voice.music.notes.length === 0);
+    } catch {
+      return true;
+    }
+  });
   const [drawerHeight, setDrawerHeight] = useState(0);
   const [speedDialOpen, setSpeedDialOpen] = useState(false);
   const [abcMusic, setAbcMusic] = useState(song.abc);
@@ -591,8 +621,12 @@ export function SongPage({
     }
   });
   const [selectedVoiceIdx, setSelectedVoiceIdx] = useState(0);
-  const music =
-    voices[Math.min(selectedVoiceIdx, voices.length - 1)]?.music ?? new Music();
+  const music = useMemo(
+    () =>
+      voices[Math.min(selectedVoiceIdx, voices.length - 1)]?.music ??
+      new Music(),
+    [voices, selectedVoiceIdx]
+  );
   const [statusMessage, setStatusMessage] = useState('');
   const tempo = useStore((s) => s.tempo);
   const scoreContainerRef = useRef<HTMLDivElement>(null);
@@ -601,7 +635,7 @@ export function SongPage({
   useEffect(() => {
     // Use the songs tempo, falling back to the global tempo
     tempoRef.current = music.signatures[0]?.tempo ?? tempo;
-  }, [tempo]);
+  }, [tempo, music]);
 
   useLayoutEffect(() => {
     const el = scoreContainerRef.current;
@@ -640,7 +674,6 @@ export function SongPage({
     };
   }, [music]);
 
-
   const practiceMode = useStore((s) => s.practiceMode);
   const playMetronomeOnStart = useStore((s) => s.playMetronome);
   const autoScroll = useStore((s) => s.autoScroll);
@@ -651,7 +684,11 @@ export function SongPage({
     totalCount: number;
   } | null>(null);
   const onPracticeFinish = useCallback(
-    (results: ReadonlyMap<number, 'correct' | 'wrong'>, correctCount: number, totalCount: number) => {
+    (
+      results: ReadonlyMap<number, 'correct' | 'wrong'>,
+      correctCount: number,
+      totalCount: number
+    ) => {
       if (totalCount > 0) {
         const pct = Math.round((correctCount / totalCount) * 100);
         useStore.getState().recordPracticeSession(song.id, pct);
@@ -711,12 +748,12 @@ export function SongPage({
 
   useEffect(() => {
     if (!isRecording) stopMetronome();
-  }, [isRecording]);
+  }, [isRecording, stopMetronome]);
 
   useEffect(() => {
     try {
       const newVoices = voicesFromAbc(abcMusic, defaultClef, defaultMiddle);
-      // eslint-disable-next-line react-hooks/set-state-in-effect
+
       setVoices(newVoices);
       setSelectedVoiceIdx((idx) => Math.min(idx, newVoices.length - 1));
       setCurrentParseError('');
@@ -724,10 +761,13 @@ export function SongPage({
     } catch (error) {
       setCurrentParseError((error as Error).message);
     }
-  }, [abcMusic, defaultClef, defaultMiddle]);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [abcMusic, defaultClef, defaultMiddle]); // intentionally omits onAbcChange/readOnly — adding them would cause loops
 
   const detectedNoteName =
     detectedPitch !== null ? NOTE_NAMES[detectedPitch % 12] : null;
+  const detectedNoteOctaveDots =
+    detectedPitch !== null ? noteOctaveDots(detectedPitch, instrumentType) : 0;
 
   return (
     <>
@@ -853,7 +893,11 @@ export function SongPage({
               component="span"
               sx={{ fontWeight: 'bold', fontSize: '0.9rem', lineHeight: 1 }}
             >
-              {detectedNoteName}
+              <NoteNameDisplay
+                name={detectedNoteName}
+                dots={detectedNoteOctaveDots}
+                fontSize="0.9rem"
+              />
             </Typography>
           ) : (
             <PlayArrow />

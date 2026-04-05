@@ -6,6 +6,13 @@ import { fromAbc, voicesFromAbc } from './io/abcImport';
 import { featuresFromMusic, difficultyFromFeatures } from './method';
 
 export type PlaybackVoices = 'selected' | 'others' | 'all';
+export type SortKey =
+  | 'order'
+  | 'title'
+  | 'length'
+  | 'difficulty'
+  | 'practiceCount'
+  | 'averageScore';
 export type PracticeMode =
   | 'correct-then-advance'
   | 'in-tempo'
@@ -62,6 +69,12 @@ interface SettingsState {
   setPlayMetronome: (v: boolean) => void;
   autoScroll: boolean;
   setAutoScroll: (v: boolean) => void;
+  sortKey: SortKey;
+  setSortKey: (key: SortKey) => void;
+  sortDir: 'asc' | 'desc';
+  setSortDir: (dir: 'asc' | 'desc') => void;
+  filterText: string;
+  setFilterText: (text: string) => void;
   practiceCalendar: Record<string, Record<number, number>>;
   recordPracticeSession: (songId: string, percentCorrect: number) => void;
   songs: UserSong[];
@@ -106,6 +119,12 @@ export const useStore = create<SettingsState>()(
       setPlayMetronome: (playMetronome) => set({ playMetronome }),
       autoScroll: true,
       setAutoScroll: (autoScroll) => set({ autoScroll }),
+      sortKey: 'order',
+      setSortKey: (sortKey) => set({ sortKey }),
+      sortDir: 'desc',
+      setSortDir: (sortDir) => set({ sortDir }),
+      filterText: '',
+      setFilterText: (filterText) => set({ filterText }),
       practiceCalendar: {},
       recordPracticeSession: (songId, percentCorrect) =>
         set((state) => {
@@ -124,7 +143,10 @@ export const useStore = create<SettingsState>()(
               s.id === songId
                 ? {
                     ...s,
-                    practiceHistory: [...(s.practiceHistory ?? []), percentCorrect].slice(-5),
+                    practiceHistory: [
+                      ...(s.practiceHistory ?? []),
+                      percentCorrect,
+                    ].slice(-5),
                     practiceCount: (s.practiceCount ?? 0) + 1,
                   }
                 : s

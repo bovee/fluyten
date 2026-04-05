@@ -1,29 +1,19 @@
 import { type RecorderType } from '../instrument';
-import { type UserSong } from '../store';
+import { abcNote, explicitAccidental, keyAccidentalMap } from './abcUtils';
 
 export interface ScaleOptions {
-  keys: string[];
+  key: string;
   range: 'traditional' | 'all';
-  direction: 'ascending' | 'descending' | 'both';
+  direction: 'ascending' | 'descending' | 'random';
   instrumentType?: RecorderType;
-  formatTitle?: (key: string) => string;
+  /** Key signature already in effect in the target song (e.g. "G", "Am").
+   *  When provided, notes are annotated with explicit accidentals wherever
+   *  the scale's key differs from the song's key. */
+  songKey?: string;
 }
 
 const LETTERS = ['C', 'D', 'E', 'F', 'G', 'A', 'B'] as const;
 
-// Convert a letter + MIDI octave number to an ABC note name.
-// C4 = 'C', C5 = 'c', C6 = "c'", C3 = 'C,', etc.
-function abcNote(letter: string, octave: number): string {
-  if (octave >= 5) {
-    return letter.toLowerCase() + "'".repeat(octave - 5);
-  } else if (octave === 4) {
-    return letter.toUpperCase();
-  } else {
-    return letter.toUpperCase() + ','.repeat(4 - octave);
-  }
-}
-
-// Generate `count` ascending scale-degree note names starting at a given letter and octave.
 function notesFromRange(
   startLetter: string,
   startOctave: number,
@@ -44,59 +34,48 @@ function notesFromRange(
   return notes;
 }
 
-function formatTitle(key: string): string {
-  const isMinor = key.endsWith('m');
-  let display = isMinor ? key.slice(0, -1) : key;
-  display = display.replace('#', '♯').replace('b', '♭');
-  return `${display} ${isMinor ? 'Minor' : 'Major'} Scale`;
-}
-
-function formatAbcNotes(notes: string[]): string {
+function formatAbcNotes(
+  notes: string[],
+  scaleMap: Record<string, number>,
+  songMap: Record<string, number>
+): string {
+  const annotated = notes.map((note) => {
+    const letter = note[0].toUpperCase();
+    const prefix = explicitAccidental(letter, scaleMap, songMap);
+    return prefix + note;
+  });
   const groups: string[] = [];
-  for (let i = 0; i < notes.length; i += 4) {
-    groups.push(notes.slice(i, i + 4).join(' '));
+  for (let i = 0; i < annotated.length; i += 4) {
+    groups.push(annotated.slice(i, i + 4).join(' '));
   }
   return groups.join(' | ') + ' |';
 }
 
-export function generateScaleAbc(options: ScaleOptions): UserSong[] {
+/** Generate the notes-only ABC string for a scale. */
+export function generateScaleAbc(options: ScaleOptions): string {
   const startNote =
     options.instrumentType === 'SOPRANO' || options.instrumentType === 'TENOR'
       ? 'C'
       : 'F';
   const startingOctave = options.instrumentType === 'BASS' ? 2 : 4;
   const allNotes = notesFromRange(startNote, startingOctave, 16);
-  const clef = options.instrumentType === 'BASS' ? 'bass' : '';
+  const songMap = options.songKey ? keyAccidentalMap(options.songKey) : {};
 
-  return options.keys.map((key) => {
-    let notes =
-      options.range === 'all'
-        ? allNotes
-        : notesFromRange(key[0].toUpperCase(), startingOctave, 8);
+  let notes =
+    options.range === 'all'
+      ? allNotes
+      : notesFromRange(options.key[0].toUpperCase(), startingOctave, 8);
 
-    if (options.direction === 'descending') {
-      notes = [...notes].reverse();
-    } else if (options.direction === 'both') {
-      // ascending then descending, dedup pivot
-      const desc = [...notes].reverse().slice(1);
-      notes = [...notes, ...desc];
+  if (options.direction === 'descending') {
+    notes = [...notes].reverse();
+  } else if (options.direction === 'random') {
+    notes = [...notes];
+    for (let i = notes.length - 1; i > 0; i--) {
+      const j = Math.floor(Math.random() * (i + 1));
+      [notes[i], notes[j]] = [notes[j], notes[i]];
     }
+  }
 
-    const title = (options.formatTitle ?? formatTitle)(key);
-    const keyLine = clef ? `K:${key} clef=${clef}` : `K:${key}`;
-    const abc = [
-      `X:1`,
-      `T:${title}`,
-      `M:C`,
-      `L:1/4`,
-      keyLine,
-      formatAbcNotes(notes),
-    ].join('\n');
-
-    return {
-      id: crypto.randomUUID(),
-      title,
-      abc,
-    };
-  });
+  const scaleMap = keyAccidentalMap(options.key);
+  return formatAbcNotes(notes, scaleMap, songMap);
 }

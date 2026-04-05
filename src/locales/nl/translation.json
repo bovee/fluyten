@@ -60,6 +60,7 @@
   "transformHalveDuration": "Duur halveren",
   "transformSimplifyAccidentals": "Toevalstekens vereenvoudigen",
   "transformAddAllAccidentals": "Alle toevalstekens toevoegen",
+  "transformReverseNotes": "Noten omkeren",
   "recorderType": "Type blokfluit",
   "detect": "Detecteren",
   "detectRecorderType": "Type blokfluit detecteren",
@@ -81,7 +82,7 @@
   "direction": "Richting",
   "ascending": "Stijgend",
   "descending": "Dalend",
-  "both": "Beide",
+  "random": "Willekeurig",
   "major": "Majeur",
   "minor": "Mineur",
   "recordingStarted": "Opname gestart",
@@ -141,5 +142,12 @@
   "sortPracticeCount": "Aantal keer geoefend",
   "sortAverageScore": "Gemiddelde score",
   "practiceHistory": "Oefengeschiedenis",
-  "methodNone": "Geen"
+  "methodNone": "Geen",
+  "newSong": "Nieuw lied",
+  "generate": "Genereren",
+  "generateNotes": "Noten genereren",
+  "scales": "Toonladders",
+  "commonArpeggios": "Veelgebruikte arpeggio's",
+  "dominantSeventhArpeggios": "Dominant septiemakkoord arpeggio's",
+  "diminishedSeventhArpeggios": "Verminderd septiemakkoord arpeggio's"
 }

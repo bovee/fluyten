@@ -60,6 +60,7 @@
   "transformHalveDuration": "వ్యవధి సగం",
   "transformSimplifyAccidentals": "ఆకస్మిక చిహ్నాలు సరళీకరించు",
   "transformAddAllAccidentals": "అన్ని ఆకస్మిక చిహ్నాలు జోడించు",
+  "transformReverseNotes": "నోట్లను తిరగేయండి",
   "recorderType": "రికార్డర్ రకం",
   "detect": "గుర్తించు",
   "detectRecorderType": "రికార్డర్ రకాన్ని గుర్తించు",
@@ -81,7 +82,7 @@
   "direction": "దిశ",
   "ascending": "ఆరోహణ",
   "descending": "అవరోహణ",
-  "both": "రెండూ",
+  "random": "యాదృచ్ఛికం",
   "major": "మేజర్",
   "minor": "మైనర్",
   "recordingStarted": "రికార్డింగ్ ప్రారంభమైంది",
@@ -141,5 +142,12 @@
   "sortPracticeCount": "అభ్యాస సంఖ్య",
   "sortAverageScore": "సగటు స్కోరు",
   "practiceHistory": "అభ్యాస చరిత్ర",
-  "methodNone": "ఏదీ కాదు"
+  "methodNone": "ఏదీ కాదు",
+  "newSong": "కొత్త పాట",
+  "generate": "రూపొందించు",
+  "generateNotes": "నోట్స్ రూపొందించండి",
+  "scales": "స్వరాలు",
+  "commonArpeggios": "సాధారణ ఆర్పెజియోలు",
+  "dominantSeventhArpeggios": "డామినెంట్ సెవెంత్ ఆర్పెజియోలు",
+  "diminishedSeventhArpeggios": "డిమినిషేడ్ సెవెంత్ ఆర్పెజియోలు"
 }

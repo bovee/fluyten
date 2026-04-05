@@ -39,31 +39,35 @@ function App() {
     colorMode === 'system' ? (prefersDark ? 'dark' : 'light') : colorMode;
   const DARK_SHADOW =
     '0px 3px 10px rgba(255,255,255,0.15), 0px 1px 4px rgba(255,255,255,0.1)';
-  const theme = useMemo(() => createTheme({
-    direction: isRtl ? 'rtl' : 'ltr',
-    typography: {
-      fontFamily: "'EB Garamond', Georgia, serif",
-    },
-    palette: {
-      mode: resolvedMode,
-      primary: { main: resolvedMode === 'dark' ? '#6a8a9e' : '#4a6272' },
-      ...(resolvedMode === 'dark' && {
-        text: { primary: '#d8d5d0' },
-      }),
-    },
-    ...(resolvedMode === 'dark' && {
-      shadows: Array.from({ length: 25 }, (_, i) =>
-        i === 0 ? 'none' : DARK_SHADOW
-      ) as import('@mui/material/styles').ThemeOptions['shadows'],
-    }),
-    components: {
-      MuiAccordion: {
-        defaultProps: {
-          slots: { heading: 'h2' },
+  const theme = useMemo(
+    () =>
+      createTheme({
+        direction: isRtl ? 'rtl' : 'ltr',
+        typography: {
+          fontFamily: "'EB Garamond', Georgia, serif",
         },
-      },
-    },
-  }), [resolvedMode, isRtl]);
+        palette: {
+          mode: resolvedMode,
+          primary: { main: resolvedMode === 'dark' ? '#6a8a9e' : '#4a6272' },
+          ...(resolvedMode === 'dark' && {
+            text: { primary: '#d8d5d0' },
+          }),
+        },
+        ...(resolvedMode === 'dark' && {
+          shadows: Array.from({ length: 25 }, (_, i) =>
+            i === 0 ? 'none' : DARK_SHADOW
+          ) as import('@mui/material/styles').ThemeOptions['shadows'],
+        }),
+        components: {
+          MuiAccordion: {
+            defaultProps: {
+              slots: { heading: 'h2' },
+            },
+          },
+        },
+      }),
+    [resolvedMode, isRtl]
+  );
 
   const onboarded = useStore((state) => state.onboarded);
   const setOnboarded = useStore((state) => state.setOnboarded);

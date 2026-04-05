@@ -12,7 +12,9 @@ interface GraceNoteGroupProps {
 }
 
 function accidentalGlyph(acc: string): string | null {
+  if (acc === '##') return 'accidentalDoubleSharp';
   if (acc === '#') return 'accidentalSharp';
+  if (acc === 'bb') return 'accidentalDoubleFlat';
   if (acc === 'b') return 'accidentalFlat';
   if (acc === '=') return 'accidentalNatural';
   return null;

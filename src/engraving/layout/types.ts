@@ -1,10 +1,12 @@
 import type {
   Accidental,
+  Annotation,
   BarLineType,
   Decoration,
   Duration,
   DurationModifier,
   Signature,
+  SpanDecorationType,
 } from '../../music';
 
 // ---------------------------------------------------------------------------
@@ -86,6 +88,17 @@ export interface LineLayout {
   preambleBars: PreambleBarLayout[];
   ties: TieLayout[];
   tuplets: TupletLayout[];
+  spanDecorations: SpanDecorationLayout[];
+}
+
+export interface SpanDecorationLayout {
+  type: SpanDecorationType;
+  startX: number;
+  endX: number;
+  y: number; // absolute SVG y for rendering
+  lineIndex: number;
+  isOpenEnd: boolean; // span continues off right edge (cross-line first half)
+  isOpenStart: boolean; // span continues from left edge (cross-line second half)
 }
 
 /**
@@ -140,6 +153,7 @@ export interface NoteLayout {
   durationModifier: DurationModifier;
   accidentals: Accidental[];
   decorations: Decoration[];
+  annotations: Annotation[];
   graceNotes: GraceNoteLayout[];
   lyrics: (string | undefined)[];
   isRest: boolean;

@@ -60,6 +60,7 @@
   "transformHalveDuration": "Zkrátit délku na polovinu",
   "transformSimplifyAccidentals": "Zjednodušit předznamenání",
   "transformAddAllAccidentals": "Přidat všechna předznamenání",
+  "transformReverseNotes": "Obrátit noty",
   "recorderType": "Typ zobcové flétny",
   "detect": "Rozpoznat",
   "detectRecorderType": "Rozpoznat typ zobcové flétny",
@@ -81,7 +82,7 @@
   "direction": "Směr",
   "ascending": "Vzestupně",
   "descending": "Sestupně",
-  "both": "Obojí",
+  "random": "Náhodně",
   "major": "dur",
   "minor": "moll",
   "recordingStarted": "Nahrávání zahájeno",
@@ -141,5 +142,12 @@
   "sortPracticeCount": "Počet cvičení",
   "sortAverageScore": "Průměrné skóre",
   "practiceHistory": "Historie cvičení",
-  "methodNone": "Žádná"
+  "methodNone": "Žádná",
+  "newSong": "Nová píseň",
+  "generate": "Generovat",
+  "generateNotes": "Generovat noty",
+  "scales": "Stupnice",
+  "commonArpeggios": "Běžná arpeggia",
+  "dominantSeventhArpeggios": "Arpeggia dominantního septakordu",
+  "diminishedSeventhArpeggios": "Arpeggia zmenšeného septakordu"
 }

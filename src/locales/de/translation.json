@@ -60,6 +60,7 @@
   "transformHalveDuration": "Dauer halbieren",
   "transformSimplifyAccidentals": "Vorzeichen vereinfachen",
   "transformAddAllAccidentals": "Alle Vorzeichen hinzufügen",
+  "transformReverseNotes": "Noten umkehren",
   "recorderType": "Blockflötentyp",
   "detect": "Erkennen",
   "detectRecorderType": "Blockflötentyp erkennen",
@@ -81,7 +82,7 @@
   "direction": "Richtung",
   "ascending": "Aufsteigend",
   "descending": "Absteigend",
-  "both": "Beide",
+  "random": "Zufällig",
   "major": "Dur",
   "minor": "Moll",
   "recordingStarted": "Aufnahme gestartet",
@@ -141,5 +142,12 @@
   "sortPracticeCount": "Anzahl der Übungen",
   "sortAverageScore": "Durchschnittliche Punktzahl",
   "practiceHistory": "Übungshistorie",
-  "methodNone": "Keine"
+  "methodNone": "Keine",
+  "newSong": "Neues Lied",
+  "generate": "Generieren",
+  "generateNotes": "Noten generieren",
+  "scales": "Tonleitern",
+  "commonArpeggios": "Häufige Arpeggios",
+  "dominantSeventhArpeggios": "Dominantseptakkord-Arpeggios",
+  "diminishedSeventhArpeggios": "Verminderter Septakkord-Arpeggios"
 }

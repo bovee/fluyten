@@ -213,6 +213,13 @@ export const TRANSFORMATIONS: Transformation[] = [
     },
   },
   {
+    id: 'reverse-notes',
+    labelKey: 'transformReverseNotes',
+    apply: (music) => {
+      music.notes.reverse();
+    },
+  },
+  {
     id: 'add-all-accidentals',
     labelKey: 'transformAddAllAccidentals',
     apply: (music) => {

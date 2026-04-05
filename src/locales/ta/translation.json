@@ -60,6 +60,7 @@
   "transformHalveDuration": "கால அளவை பாதியாக்கவும்",
   "transformSimplifyAccidentals": "தற்செயல் குறியீடுகளை எளிமைப்படுத்தவும்",
   "transformAddAllAccidentals": "அனைத்து தற்செயல் குறியீடுகளையும் சேர்க்கவும்",
+  "transformReverseNotes": "குறிப்புகளை மாற்று",
   "recorderType": "ரெக்கார்டர் வகை",
   "detect": "கண்டறிவும்",
   "detectRecorderType": "ரெக்கார்டர் வகையை கண்டறிவும்",
@@ -81,7 +82,7 @@
   "direction": "திசை",
   "ascending": "ஏறுதரிசை",
   "descending": "இறங்குதரிசை",
-  "both": "இரண்டும்",
+  "random": "சீரற்ற",
   "major": "மேஜர்",
   "minor": "மைனர்",
   "recordingStarted": "பதிவு தொடங்கியது",
@@ -141,5 +142,12 @@
   "sortPracticeCount": "பயிற்சி எண்ணிக்கை",
   "sortAverageScore": "சராசரி மதிப்பெண்",
   "practiceHistory": "பயிற்சி வரலாறு",
-  "methodNone": "எதுவுமில்லை"
+  "methodNone": "எதுவுமில்லை",
+  "newSong": "புதிய பாடல்",
+  "generate": "உருவாக்கு",
+  "generateNotes": "குறிப்புகளை உருவாக்கு",
+  "scales": "சுரமாலைகள்",
+  "commonArpeggios": "பொதுவான ஆர்பேஜியோக்கள்",
+  "dominantSeventhArpeggios": "ஆதிக்க ஏழாம் ஆர்பேஜியோக்கள்",
+  "diminishedSeventhArpeggios": "குறைந்த ஏழாம் ஆர்பேஜியோக்கள்"
 }

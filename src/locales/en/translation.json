@@ -60,6 +60,7 @@
   "transformHalveDuration": "Halve Duration",
   "transformSimplifyAccidentals": "Simplify Accidentals",
   "transformAddAllAccidentals": "Add All Accidentals",
+  "transformReverseNotes": "Reverse Notes",
   "recorderType": "Recorder Type",
   "detect": "Detect",
   "detectRecorderType": "Detect Recorder Type",
@@ -81,7 +82,7 @@
   "direction": "Direction",
   "ascending": "Ascending",
   "descending": "Descending",
-  "both": "Both",
+  "random": "Random",
   "major": "Major",
   "minor": "Minor",
   "recordingStarted": "Recording started",
@@ -141,5 +142,12 @@
   "sortPracticeCount": "Times Practiced",
   "sortAverageScore": "Average Score",
   "practiceHistory": "Practice History",
-  "methodNone": "None"
+  "methodNone": "None",
+  "newSong": "New Song",
+  "generate": "Generate",
+  "generateNotes": "Generate Notes",
+  "scales": "Scales",
+  "commonArpeggios": "Common Arpeggios",
+  "dominantSeventhArpeggios": "Dominant Seventh Arpeggios",
+  "diminishedSeventhArpeggios": "Diminished Seventh Arpeggios"
 }

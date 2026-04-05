@@ -60,6 +60,7 @@
   "transformHalveDuration": "Skróć czas trwania o połowę",
   "transformSimplifyAccidentals": "Uprość znaki chromatyczne",
   "transformAddAllAccidentals": "Dodaj wszystkie znaki chromatyczne",
+  "transformReverseNotes": "Odwróć nuty",
   "recorderType": "Typ fletu prostego",
   "detect": "Wykryj",
   "detectRecorderType": "Wykryj typ fletu prostego",
@@ -81,7 +82,7 @@
   "direction": "Kierunek",
   "ascending": "Rosnący",
   "descending": "Malejący",
-  "both": "Oba",
+  "random": "Losowo",
   "major": "dur",
   "minor": "moll",
   "recordingStarted": "Nagrywanie rozpoczęte",
@@ -141,5 +142,12 @@
   "sortPracticeCount": "Liczba ćwiczeń",
   "sortAverageScore": "Średni wynik",
   "practiceHistory": "Historia ćwiczeń",
-  "methodNone": "Brak"
+  "methodNone": "Brak",
+  "newSong": "Nowa piosenka",
+  "generate": "Generuj",
+  "generateNotes": "Generuj nuty",
+  "scales": "Gamy",
+  "commonArpeggios": "Popularne arpeggia",
+  "dominantSeventhArpeggios": "Arpeggia akordu dominantowego z septymą",
+  "diminishedSeventhArpeggios": "Arpeggia akordu zmniejszonego z septymą"
 }

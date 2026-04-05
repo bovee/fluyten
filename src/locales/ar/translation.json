@@ -60,6 +60,7 @@
   "transformHalveDuration": "تنصيف المدة",
   "transformSimplifyAccidentals": "تبسيط العلامات العرضية",
   "transformAddAllAccidentals": "إضافة جميع العلامات العرضية",
+  "transformReverseNotes": "عكس النوتات",
   "recorderType": "نوع المزمار",
   "detect": "اكتشاف",
   "detectRecorderType": "اكتشاف نوع المزمار",
@@ -81,7 +82,7 @@
   "direction": "الاتجاه",
   "ascending": "تصاعدي",
   "descending": "تنازلي",
-  "both": "كلاهما",
+  "random": "عشوائي",
   "major": "ماجور",
   "minor": "مينور",
   "recordingStarted": "بدأ التسجيل",
@@ -141,5 +142,12 @@
   "sortPracticeCount": "عدد مرات التدريب",
   "sortAverageScore": "متوسط الدرجة",
   "practiceHistory": "سجل التدريب",
-  "methodNone": "لا شيء"
+  "methodNone": "لا شيء",
+  "newSong": "أغنية جديدة",
+  "generate": "توليد",
+  "generateNotes": "توليد نوتات",
+  "scales": "سلالم",
+  "commonArpeggios": "أرباجيوات شائعة",
+  "dominantSeventhArpeggios": "أرباجيوات السابعة الغالبة",
+  "diminishedSeventhArpeggios": "أرباجيوات السابعة المنقوصة"
 }

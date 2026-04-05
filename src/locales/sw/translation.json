@@ -60,6 +60,7 @@
   "transformHalveDuration": "Nusu muda",
   "transformSimplifyAccidentals": "Rahisisha alama za bahati mbaya",
   "transformAddAllAccidentals": "Ongeza alama zote za bahati mbaya",
+  "transformReverseNotes": "Geuza Noti",
   "recorderType": "Aina ya filimbi",
   "detect": "Gundua",
   "detectRecorderType": "Gundua aina ya filimbi",
@@ -81,7 +82,7 @@
   "direction": "Mwelekeo",
   "ascending": "Kupanda",
   "descending": "Kushuka",
-  "both": "Zote mbili",
+  "random": "Nasibu",
   "major": "mkubwa",
   "minor": "mdogo",
   "recordingStarted": "Kurekodi kumeanza",
@@ -141,5 +142,12 @@
   "sortPracticeCount": "Idadi ya mazoezi",
   "sortAverageScore": "Wastani wa alama",
   "practiceHistory": "Historia ya mazoezi",
-  "methodNone": "Hakuna"
+  "methodNone": "Hakuna",
+  "newSong": "Wimbo Mpya",
+  "generate": "Tengeneza",
+  "generateNotes": "Tengeneza noti",
+  "scales": "Mizani",
+  "commonArpeggios": "Arpeggios za kawaida",
+  "dominantSeventhArpeggios": "Arpeggios za saba ya utawala",
+  "diminishedSeventhArpeggios": "Arpeggios za saba iliyopunguzwa"
 }

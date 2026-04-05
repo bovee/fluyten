@@ -60,6 +60,7 @@
   "transformHalveDuration": "Hanghossz felezése",
   "transformSimplifyAccidentals": "Előjelek egyszerűsítése",
   "transformAddAllAccidentals": "Összes előjel hozzáadása",
+  "transformReverseNotes": "Hangjegyek megfordítása",
   "recorderType": "Furulya típusa",
   "detect": "Felismerés",
   "detectRecorderType": "Furulya típusának felismerése",
@@ -81,7 +82,7 @@
   "direction": "Irány",
   "ascending": "Felfelé",
   "descending": "Lefelé",
-  "both": "Mindkettő",
+  "random": "Véletlenszerű",
   "major": "dúr",
   "minor": "moll",
   "recordingStarted": "Felvétel elindult",
@@ -141,5 +142,12 @@
   "sortPracticeCount": "Gyakorlások száma",
   "sortAverageScore": "Átlagos pontszám",
   "practiceHistory": "Gyakorlási előzmények",
-  "methodNone": "Nincs"
+  "methodNone": "Nincs",
+  "newSong": "Új dal",
+  "generate": "Generálás",
+  "generateNotes": "Hangjegyek generálása",
+  "scales": "Hangsorok",
+  "commonArpeggios": "Általános arpeggiók",
+  "dominantSeventhArpeggios": "Domináns szeptimakkord arpeggiók",
+  "diminishedSeventhArpeggios": "Csökkentett szeptimakkord arpeggiók"
 }

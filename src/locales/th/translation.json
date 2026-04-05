@@ -60,6 +60,7 @@
   "transformHalveDuration": "ย่อระยะเวลาครึ่งหนึ่ง",
   "transformSimplifyAccidentals": "ลดความซับซ้อนของเครื่องหมายแปร",
   "transformAddAllAccidentals": "เพิ่มเครื่องหมายแปรทั้งหมด",
+  "transformReverseNotes": "กลับลำดับโน้ต",
   "recorderType": "ประเภทรีคอร์เดอร์",
   "detect": "ตรวจจับ",
   "detectRecorderType": "ตรวจจับประเภทรีคอร์เดอร์",
@@ -81,7 +82,7 @@
   "direction": "ทิศทาง",
   "ascending": "ขึ้น",
   "descending": "ลง",
-  "both": "ทั้งสอง",
+  "random": "สุ่ม",
   "major": "เมเจอร์",
   "minor": "ไมเนอร์",
   "recordingStarted": "เริ่มบันทึกแล้ว",
@@ -141,5 +142,12 @@
   "sortPracticeCount": "จำนวนครั้งที่ฝึก",
   "sortAverageScore": "คะแนนเฉลี่ย",
   "practiceHistory": "ประวัติการฝึก",
-  "methodNone": "ไม่มี"
+  "methodNone": "ไม่มี",
+  "newSong": "เพลงใหม่",
+  "generate": "สร้าง",
+  "generateNotes": "สร้างโน้ต",
+  "scales": "บันไดเสียง",
+  "commonArpeggios": "อาร์เปจจิโอทั่วไป",
+  "dominantSeventhArpeggios": "อาร์เปจจิโอคอร์ดเซเวนท์โดมิแนนต์",
+  "diminishedSeventhArpeggios": "อาร์เปจจิโอคอร์ดเซเวนท์ดิมินิชด์"
 }

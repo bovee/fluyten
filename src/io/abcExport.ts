@@ -5,6 +5,7 @@ import {
   Duration,
   DurationModifier,
   type Decoration,
+  type SpanDecorationType,
   Music,
   Note,
   KEYS,
@@ -60,10 +61,18 @@ export function singlePitchToAbc(
   let accidentalPrefix = '';
   let letter: string;
 
-  if (accidental === '#') {
+  if (accidental === '##') {
+    const basePitchClass = (pitchClass - 2 + 12) % 12;
+    letter = PITCH_CLASS_TO_NOTE[basePitchClass] ?? 'C';
+    accidentalPrefix = '^^';
+  } else if (accidental === '#') {
     const basePitchClass = pitchClass - 1;
     letter = PITCH_CLASS_TO_NOTE[basePitchClass] ?? 'C';
     accidentalPrefix = '^';
+  } else if (accidental === 'bb') {
+    const basePitchClass = (pitchClass + 2) % 12;
+    letter = PITCH_CLASS_TO_NOTE[basePitchClass] ?? 'C';
+    accidentalPrefix = '__';
   } else if (accidental === 'b') {
     const basePitchClass = (pitchClass + 1) % 12;
     letter = PITCH_CLASS_TO_NOTE[basePitchClass] ?? 'C';
@@ -177,9 +186,28 @@ function decorationToAbc(decoration: Decoration): string {
     accent: '!accent!',
     breath: '!breath!',
     fermata: '!fermata!',
+    lowermordent: '!lowermordent!',
+    uppermordent: '!uppermordent!',
+    upbow: '!upbow!',
+    downbow: '!downbow!',
     staccato: '.',
     tenuto: '!tenuto!',
     trill: '!trill!',
+    roll: '!roll!',
+    coda: '!coda!',
+    segno: '!segno!',
+    turn: '!turn!',
+    turnx: '!turnx!',
+    invertedturn: '!invertedturn!',
+    invertedturnx: '!invertedturnx!',
+    slide: '!slide!',
+    snap: '!snap!',
+    lhpizz: '!+!',
+    open: '!open!',
+    tremolo1: '!/!',
+    tremolo2: '!//!',
+    tremolo3: '!///!',
+    tremolo4: '!////!',
     pppp: '!pppp!',
     ppp: '!ppp!',
     pp: '!pp!',
@@ -231,6 +259,27 @@ function scoreToAbc(
     }
   }
 
+  // Build span decoration start/end lookup maps
+  const SPAN_OPEN_MARKER: Record<SpanDecorationType, string> = {
+    trill: '!trill(!',
+    crescendo: '!crescendo(!',
+    diminuendo: '!diminuendo(!',
+  };
+  const SPAN_CLOSE_MARKER: Record<SpanDecorationType, string> = {
+    trill: '!trill)!',
+    crescendo: '!crescendo)!',
+    diminuendo: '!diminuendo)!',
+  };
+  const spanStartAt = new Map<number, SpanDecorationType[]>();
+  const spanEndAt = new Map<number, SpanDecorationType[]>();
+  for (const span of music.spanDecorations) {
+    if (!spanStartAt.has(span.startNoteIndex))
+      spanStartAt.set(span.startNoteIndex, []);
+    spanStartAt.get(span.startNoteIndex)!.push(span.type);
+    if (!spanEndAt.has(span.endNoteIndex)) spanEndAt.set(span.endNoteIndex, []);
+    spanEndAt.get(span.endNoteIndex)!.push(span.type);
+  }
+
   // Build curve groups: ties use `-` notation, slurs use `(...)`
   const tieAfterAt = new Set<number>();
   const slurStartAt = new Set<number>();
@@ -275,7 +324,9 @@ function scoreToAbc(
         sig.beatValue !== prev?.beatValue
       ) {
         const mStr = sig.commonTime
-          ? sig.beatValue === 2 ? 'C|' : 'C'
+          ? sig.beatValue === 2
+            ? 'C|'
+            : 'C'
           : `${sig.beatsPerBar}/${sig.beatValue}`;
         part += `[M:${mStr}]`;
       }
@@ -304,6 +355,26 @@ function scoreToAbc(
 
     // Slur open
     if (slurStartAt.has(noteIx)) part += '(';
+
+    // Span decoration end markers (e.g. !crescendo)!) before this note
+    for (const type of spanEndAt.get(noteIx) ?? [])
+      part += SPAN_CLOSE_MARKER[type];
+
+    // Span decoration start markers (e.g. !crescendo(!) before this note
+    for (const type of spanStartAt.get(noteIx) ?? [])
+      part += SPAN_OPEN_MARKER[type];
+
+    // Annotations
+    const ANNOTATION_PREFIX: Record<string, string> = {
+      above: '^',
+      below: '_',
+      left: '<',
+      right: '>',
+      auto: '@',
+    };
+    for (const ann of note.annotations) {
+      part += `"${ANNOTATION_PREFIX[ann.placement]}${ann.text}"`;
+    }
 
     // Decorations
     for (const decoration of note.decorations) {
@@ -391,7 +462,9 @@ export function toAbc(music: Music): string {
   if (music.composer) lines.push(`C:${music.composer}`);
   const sig0 = music.signatures[0];
   const mStr0 = sig0.commonTime
-    ? sig0.beatValue === 2 ? 'C|' : 'C'
+    ? sig0.beatValue === 2
+      ? 'C|'
+      : 'C'
     : `${sig0.beatsPerBar}/${sig0.beatValue}`;
   lines.push(`M:${mStr0}`);
   if (sig0.tempo !== undefined) {

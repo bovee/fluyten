@@ -60,6 +60,7 @@
   "transformHalveDuration": "अवधि आधी",
   "transformSimplifyAccidentals": "आकस्मिक चिह्न सरल करें",
   "transformAddAllAccidentals": "सभी आकस्मिक चिह्न जोड़ें",
+  "transformReverseNotes": "नोट्स पलटें",
   "recorderType": "रिकॉर्डर प्रकार",
   "detect": "पहचानें",
   "detectRecorderType": "रिकॉर्डर प्रकार पहचानें",
@@ -81,7 +82,7 @@
   "direction": "दिशा",
   "ascending": "आरोही",
   "descending": "अवरोही",
-  "both": "दोनों",
+  "random": "यादृच्छिक",
   "major": "मेजर",
   "minor": "माइनर",
   "recordingStarted": "रिकॉर्डिंग शुरू हुई",
@@ -141,5 +142,12 @@
   "sortPracticeCount": "अभ्यास की संख्या",
   "sortAverageScore": "औसत स्कोर",
   "practiceHistory": "अभ्यास इतिहास",
-  "methodNone": "कोई नहीं"
+  "methodNone": "कोई नहीं",
+  "newSong": "नया गाना",
+  "generate": "बनाएं",
+  "generateNotes": "नोट्स बनाएं",
+  "scales": "सुर सीढ़ियाँ",
+  "commonArpeggios": "सामान्य आर्पेजियो",
+  "dominantSeventhArpeggios": "डॉमिनेंट सेवेंथ आर्पेजियो",
+  "diminishedSeventhArpeggios": "डिमिनिश्ड सेवेंथ आर्पेजियो"
 }

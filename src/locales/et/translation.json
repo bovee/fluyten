@@ -60,6 +60,7 @@
   "transformHalveDuration": "Poolita kestust",
   "transformSimplifyAccidentals": "Lihtsusta juhuslikke märke",
   "transformAddAllAccidentals": "Lisa kõik juhuslikud märgid",
+  "transformReverseNotes": "Pööra noodid ümber",
   "recorderType": "Plokkflöödi tüüp",
   "detect": "Tuvasta",
   "detectRecorderType": "Tuvasta plokkflöödi tüüp",
@@ -81,7 +82,7 @@
   "direction": "Suund",
   "ascending": "Tõusev",
   "descending": "Langev",
-  "both": "Mõlemad",
+  "random": "Juhuslik",
   "major": "duur",
   "minor": "moll",
   "recordingStarted": "Salvestamine algas",
@@ -141,5 +142,12 @@
   "sortPracticeCount": "Harjutamise kordade arv",
   "sortAverageScore": "Keskmine tulemus",
   "practiceHistory": "Harjutamise ajalugu",
-  "methodNone": "Puudub"
+  "methodNone": "Puudub",
+  "newSong": "Uus laul",
+  "generate": "Loo",
+  "generateNotes": "Loo noote",
+  "scales": "Skaalad",
+  "commonArpeggios": "Tavalised arpedžod",
+  "dominantSeventhArpeggios": "Dominantseptakkordi arpedžod",
+  "diminishedSeventhArpeggios": "Vähendatud septakkordi arpedžod"
 }

@@ -60,6 +60,7 @@
   "transformHalveDuration": "I-halve ang tagal",
   "transformSimplifyAccidentals": "Pasimplehin ang mga aksidental",
   "transformAddAllAccidentals": "Idagdag ang lahat ng aksidental",
+  "transformReverseNotes": "Baligtarin ang mga Nota",
   "recorderType": "Uri ng recorder",
   "detect": "Alamin",
   "detectRecorderType": "Alamin ang uri ng recorder",
@@ -81,7 +82,7 @@
   "direction": "Direksyon",
   "ascending": "Pataas",
   "descending": "Pababa",
-  "both": "Pareho",
+  "random": "Pabigla",
   "major": "mayor",
   "minor": "menor",
   "recordingStarted": "Nagsimula ang pag-record",
@@ -141,5 +142,12 @@
   "sortPracticeCount": "Bilang ng pagsasanay",
   "sortAverageScore": "Karaniwang marka",
   "practiceHistory": "Kasaysayan ng pagsasanay",
-  "methodNone": "Wala"
+  "methodNone": "Wala",
+  "newSong": "Bagong Kanta",
+  "generate": "Lumikha",
+  "generateNotes": "Lumikha ng mga nota",
+  "scales": "Mga gamut",
+  "commonArpeggios": "Karaniwang arpeggios",
+  "dominantSeventhArpeggios": "Arpeggios ng dominanteng ikapito",
+  "diminishedSeventhArpeggios": "Arpeggios ng diminished na ikapito"
 }

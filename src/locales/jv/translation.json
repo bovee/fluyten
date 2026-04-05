@@ -60,6 +60,7 @@
   "transformHalveDuration": "Setengahake durasi",
   "transformSimplifyAccidentals": "Sederhanakake aksidental",
   "transformAddAllAccidentals": "Tambah kabeh aksidental",
+  "transformReverseNotes": "Balik Nada",
   "recorderType": "Jenis rekorder",
   "detect": "Deteksi",
   "detectRecorderType": "Deteksi jenis rekorder",
@@ -81,7 +82,7 @@
   "direction": "Arah",
   "ascending": "Munggah",
   "descending": "Mudhun",
-  "both": "Loro-lorone",
+  "random": "Acak",
   "major": "mayor",
   "minor": "minor",
   "recordingStarted": "Rekaman diwiwiti",
@@ -141,5 +142,12 @@
   "sortPracticeCount": "Cacah latihan",
   "sortAverageScore": "Skor rata-rata",
   "practiceHistory": "Riwayat latihan",
-  "methodNone": "Ora ana"
+  "methodNone": "Ora ana",
+  "newSong": "Lagu Anyar",
+  "generate": "Gawe",
+  "generateNotes": "Gawe not",
+  "scales": "Tangga nada",
+  "commonArpeggios": "Arpeggio umum",
+  "dominantSeventhArpeggios": "Arpeggio dominan ketujuh",
+  "diminishedSeventhArpeggios": "Arpeggio diminished ketujuh"
 }

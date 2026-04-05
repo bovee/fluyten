@@ -60,6 +60,7 @@
   "transformHalveDuration": "חצי משך",
   "transformSimplifyAccidentals": "פשט סימני שינוי",
   "transformAddAllAccidentals": "הוסף את כל סימני השינוי",
+  "transformReverseNotes": "הפוך תווים",
   "recorderType": "סוג חליל",
   "detect": "זהה",
   "detectRecorderType": "זהה סוג חליל",
@@ -81,7 +82,7 @@
   "direction": "כיוון",
   "ascending": "עולה",
   "descending": "יורד",
-  "both": "שניהם",
+  "random": "אקראי",
   "major": "מז'ור",
   "minor": "מינור",
   "recordingStarted": "ההקלטה התחילה",
@@ -141,5 +142,12 @@
   "sortPracticeCount": "מספר תרגולים",
   "sortAverageScore": "ציון ממוצע",
   "practiceHistory": "היסטוריית תרגול",
-  "methodNone": "ללא"
+  "methodNone": "ללא",
+  "newSong": "שיר חדש",
+  "generate": "יצור",
+  "generateNotes": "יצירת תווים",
+  "scales": "גמות",
+  "commonArpeggios": "ארפג'יוים נפוצים",
+  "dominantSeventhArpeggios": "ארפג'יוים של שביעית דומיננטית",
+  "diminishedSeventhArpeggios": "ארפג'יוים של שביעית מוקטנת"
 }

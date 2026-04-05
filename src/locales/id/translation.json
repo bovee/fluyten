@@ -60,6 +60,7 @@
   "transformHalveDuration": "Paruh durasi",
   "transformSimplifyAccidentals": "Sederhanakan Aksidental",
   "transformAddAllAccidentals": "Tambahkan Semua Aksidental",
+  "transformReverseNotes": "Balik Nada",
   "recorderType": "Jenis Suling",
   "detect": "Deteksi",
   "detectRecorderType": "Deteksi Jenis Suling",
@@ -81,7 +82,7 @@
   "direction": "Arah",
   "ascending": "Naik",
   "descending": "Turun",
-  "both": "Keduanya",
+  "random": "Acak",
   "major": "Mayor",
   "minor": "Minor",
   "recordingStarted": "Perekaman dimulai",
@@ -141,5 +142,12 @@
   "sortPracticeCount": "Jumlah latihan",
   "sortAverageScore": "Skor rata-rata",
   "practiceHistory": "Riwayat latihan",
-  "methodNone": "Tidak ada"
+  "methodNone": "Tidak ada",
+  "newSong": "Lagu Baru",
+  "generate": "Buat",
+  "generateNotes": "Buat not",
+  "scales": "Tangga nada",
+  "commonArpeggios": "Arpeggio umum",
+  "dominantSeventhArpeggios": "Arpeggio dominan septim",
+  "diminishedSeventhArpeggios": "Arpeggio diminished septim"
 }

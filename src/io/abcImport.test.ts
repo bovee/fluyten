@@ -18,13 +18,15 @@ describe('fromAbc', () => {
     });
 
     it('expands \\XX mnemonics in title and composer', () => {
-      const music = fromAbc(`T:Caf\\\'e\nC:Fran\\ccois\nM:4/4\nL:1/4\nK:C\nC`);
-      expect(music.title).toBe('Caf\u00E9');       // é
+      const music = fromAbc(`T:Caf\\'e\nC:Fran\\ccois\nM:4/4\nL:1/4\nK:C\nC`);
+      expect(music.title).toBe('Caf\u00E9'); // é
       expect(music.composer).toBe('Fran\u00E7ois'); // ç
     });
 
     it('expands \\XX mnemonics in aligned lyrics', () => {
-      const music = fromAbc(`T:T\nM:4/4\nL:1/4\nK:C\nC D E F\nw: caf\\\'e Ma\\~na`);
+      const music = fromAbc(
+        `T:T\nM:4/4\nL:1/4\nK:C\nC D E F\nw: caf\\'e Ma\\~na`
+      );
       expect(music.lyrics[0][0]).toBe('caf\u00E9'); // é
       expect(music.lyrics[0][1]).toBe('Ma\u00F1a'); // ña
     });
@@ -32,6 +34,31 @@ describe('fromAbc', () => {
     it('leaves unknown \\XX sequences unchanged', () => {
       const music = fromAbc(`T:test \\XQ end\nM:4/4\nL:1/4\nK:C\nC`);
       expect(music.title).toBe('test \\XQ end');
+    });
+
+    it('\\%% expands to a literal percent sign', () => {
+      const music = fromAbc(`T:100\\% done\nM:4/4\nL:1/4\nK:C\nC`);
+      expect(music.title).toBe('100% done');
+    });
+
+    it('\\\\\\\\ expands to a literal backslash', () => {
+      const music = fromAbc(`T:a\\\\b\nM:4/4\nL:1/4\nK:C\nC`);
+      expect(music.title).toBe('a\\b');
+    });
+
+    it('\\& expands to a literal ampersand', () => {
+      const music = fromAbc(`T:G\\&T\nM:4/4\nL:1/4\nK:C\nC`);
+      expect(music.title).toBe('G&T');
+    });
+
+    it('\\uXXXX expands to the corresponding unicode character', () => {
+      const music = fromAbc(`T:\\u00E9\nM:4/4\nL:1/4\nK:C\nC`);
+      expect(music.title).toBe('\u00E9'); // é
+    });
+
+    it('\\UXXXXXXXX expands to a unicode supplementary character', () => {
+      const music = fromAbc(`T:\\U0001F3B5\nM:4/4\nL:1/4\nK:C\nC`);
+      expect(music.title).toBe('\u{1F3B5}'); // 🎵
     });
 
     it('should parse free time (M:none)', () => {
@@ -306,6 +333,12 @@ describe('fromAbc', () => {
       expect(music.notes[2].pitches[0]).toBe(61); // C carries sharp in same bar
       expect(music.notes[3].pitches[0]).toBe(60); // barline resets → C natural
       expect(music.notes[5].pitches[0]).toBe(60); // still natural
+    });
+
+    it('accidental does not carry to a different octave', () => {
+      const music = fromAbc(`T:T\nM:4/4\nL:1/4\nK:C\n^C c`);
+      expect(music.notes[0].pitches[0]).toBe(61); // ^C sharp
+      expect(music.notes[1].pitches[0]).toBe(72); // c natural (one octave up, unaffected)
     });
 
     it('accidental does not apply retroactively', () => {
@@ -892,11 +925,42 @@ describe('lyrics — w: aligned', () => {
     expect(music.lyrics[0][2]).toBeUndefined();
   });
 
-  it('~ tilde splits a word into two syllables', () => {
-    const abc = BASE_HEADERS + 'C D\nw:hel~lo';
+  it('~ tilde joins multiple words into one syllable displayed with spaces', () => {
+    // ABC standard: ~ "appears as a space; aligns multiple words under one note"
+    const abc = BASE_HEADERS + 'C D E\nw:of~the~day two three';
     const music = fromAbc(abc);
-    expect(music.lyrics[0][0]).toBe('hel');
-    expect(music.lyrics[0][1]).toBe('lo');
+    expect(music.lyrics[0][0]).toBe('of the day'); // one note, spaces in display
+    expect(music.lyrics[0][1]).toBe('two');
+    expect(music.lyrics[0][2]).toBe('three');
+  });
+
+  it('trailing underscores in a word generate holds', () => {
+    // "time__" aligns with three notes: the syllable + 2 holds
+    const abc = BASE_HEADERS + 'C D E F\nw:time__ end';
+    const music = fromAbc(abc);
+    expect(music.lyrics[0][0]).toBe('time');
+    expect(music.lyrics[0][1]).toBeUndefined(); // hold
+    expect(music.lyrics[0][2]).toBeUndefined(); // hold
+    expect(music.lyrics[0][3]).toBe('end');
+  });
+
+  it('\\- escaped hyphen appears as literal hyphen without breaking syllable', () => {
+    const abc = BASE_HEADERS + 'C D\nw:hel\\-lo world';
+    const music = fromAbc(abc);
+    expect(music.lyrics[0][0]).toBe('hel-lo'); // one note, hyphen in display
+    expect(music.lyrics[0][1]).toBe('world');
+  });
+
+  it('rests are skipped during lyric alignment', () => {
+    // z is a rest; lyrics should skip it and align to real notes
+    const abc = BASE_HEADERS + 'C z D\nw:one two';
+    const music = fromAbc(abc);
+    const noteIndices = music.notes
+      .map((n, i) => ({ n, i }))
+      .filter(({ n }) => n.pitches.length > 0)
+      .map(({ i }) => i);
+    expect(music.lyrics[0][noteIndices[0]]).toBe('one');
+    expect(music.lyrics[0][noteIndices[1]]).toBe('two');
   });
 
   it('| bar token advances to next bar start', () => {

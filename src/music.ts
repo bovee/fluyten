@@ -164,14 +164,33 @@ export type BarLineType =
   | 'end_repeat'
   | 'begin_end_repeat'
   | 'end';
-export type Accidental = '#' | 'b' | 'n' | undefined;
+export type Accidental = '##' | '#' | 'b' | 'bb' | 'n' | undefined;
 export type Decoration =
   | 'accent'
   | 'breath'
   | 'fermata'
+  | 'lowermordent'
+  | 'uppermordent'
+  | 'upbow'
+  | 'downbow'
   | 'staccato'
   | 'tenuto'
   | 'trill'
+  | 'roll'
+  | 'coda'
+  | 'segno'
+  | 'turn'
+  | 'turnx'
+  | 'invertedturn'
+  | 'invertedturnx'
+  | 'slide'
+  | 'snap'
+  | 'lhpizz'
+  | 'open'
+  | 'tremolo1'
+  | 'tremolo2'
+  | 'tremolo3'
+  | 'tremolo4'
   | 'pppp'
   | 'ppp'
   | 'pp'
@@ -183,6 +202,19 @@ export type Decoration =
   | 'fff'
   | 'ffff';
 
+export type SpanDecorationType = 'trill' | 'crescendo' | 'diminuendo';
+export interface SpanDecoration {
+  type: SpanDecorationType;
+  startNoteIndex: number;
+  endNoteIndex: number;
+}
+
+export type AnnotationPlacement = 'above' | 'below' | 'left' | 'right' | 'auto';
+export interface Annotation {
+  placement: AnnotationPlacement;
+  text: string;
+}
+
 export class Note {
   // Empty array means rest; one element = single note; multiple = chord.
   pitches: number[];
@@ -191,6 +223,7 @@ export class Note {
   // Parallel to pitches: accidentals[i] applies to pitches[i].
   accidentals: Accidental[];
   decorations: Decoration[];
+  annotations: Annotation[];
 
   constructor(
     pitch: number | number[] | undefined = undefined,
@@ -215,6 +248,7 @@ export class Note {
       this.accidentals = this.pitches.map(() => accidental);
     }
     this.decorations = decorations;
+    this.annotations = [];
   }
 
   ticks(): number {
@@ -240,7 +274,9 @@ export class Note {
     durationModifier: DurationModifier,
     keyAdjustment: { [note: string]: number },
     accidental: string,
-    decoration: string
+    decoration: string,
+    text: string = '',
+    barAccidentals: { [note: string]: number } = {}
   ): Note {
     const upperCaseNote = note[0].toUpperCase();
     let value = NOTE_VALUES[upperCaseNote as keyof typeof NOTE_VALUES];
@@ -249,14 +285,24 @@ export class Note {
     let cleanedAccidental: Accidental = undefined;
     if (accidental === '=') {
       cleanedAccidental = 'n' as Accidental;
+    } else if (accidental === '^^' && value !== -1) {
+      value += 2;
+      cleanedAccidental = '##' as Accidental;
     } else if (accidental === '^' && value !== -1) {
       value += 1;
       cleanedAccidental = '#' as Accidental;
+    } else if (accidental === '__' && value !== -1) {
+      value -= 2;
+      cleanedAccidental = 'bb' as Accidental;
     } else if (accidental === '_' && value !== -1) {
       value -= 1;
       cleanedAccidental = 'b' as Accidental;
     } else {
-      if (upperCaseNote in keyAdjustment) value += keyAdjustment[upperCaseNote];
+      // Bar accidentals apply only to the exact same note+octave string.
+      // Key signature adjustments (uppercase letter keys) apply to all octaves.
+      if (note in barAccidentals) value += barAccidentals[note];
+      else if (upperCaseNote in keyAdjustment)
+        value += keyAdjustment[upperCaseNote];
     }
 
     let octave = 4;
@@ -279,6 +325,19 @@ export class Note {
       octave = 5;
     }
 
+    // Normalize value into 0–11, adjusting octave for accidentals that cross a
+    // boundary (e.g. _c: C=0, flat → -1 → wrap to B=11 in the octave below;
+    //              ^B: B=11, sharp → 12 → wrap to C=0 in the octave above).
+    if (value >= 12) {
+      value -= 12;
+      octave += 1;
+    } else if (value >= 0 && value < 12) {
+      // already in range, no adjustment needed
+    } else if (value < 0) {
+      value += 12;
+      octave -= 1;
+    }
+
     // handle decorations
     const decorations: Decoration[] = [];
     for (const d of decoration.matchAll(/!\S+!|\S/g)) {
@@ -291,9 +350,38 @@ export class Note {
         H: 'fermata' as Decoration,
         '!fermata!': 'fermata' as Decoration,
         '!tenuto!': 'tenuto' as Decoration,
+        M: 'lowermordent' as Decoration,
+        '!lowermordent!': 'lowermordent' as Decoration,
+        '!mordent!': 'lowermordent' as Decoration,
+        P: 'uppermordent' as Decoration,
+        '!uppermordent!': 'uppermordent' as Decoration,
+        '!pralltriller!': 'uppermordent' as Decoration,
+        u: 'upbow' as Decoration,
+        '!upbow!': 'upbow' as Decoration,
+        v: 'downbow' as Decoration,
+        '!downbow!': 'downbow' as Decoration,
         T: 'trill' as Decoration,
         '!trill!': 'trill' as Decoration,
         '.': 'staccato' as Decoration,
+        '~': 'roll' as Decoration,
+        '!roll!': 'roll' as Decoration,
+        O: 'coda' as Decoration,
+        '!coda!': 'coda' as Decoration,
+        S: 'segno' as Decoration,
+        '!segno!': 'segno' as Decoration,
+        '!turn!': 'turn' as Decoration,
+        '!turnx!': 'turnx' as Decoration,
+        '!invertedturn!': 'invertedturn' as Decoration,
+        '!invertedturnx!': 'invertedturnx' as Decoration,
+        '!slide!': 'slide' as Decoration,
+        '!snap!': 'snap' as Decoration,
+        '!+!': 'lhpizz' as Decoration,
+        '!open!': 'open' as Decoration,
+        '!/!': 'tremolo1' as Decoration,
+        '!//!': 'tremolo2' as Decoration,
+        '!///!': 'tremolo3' as Decoration,
+        '!tremolo!': 'tremolo3' as Decoration,
+        '!////!': 'tremolo4' as Decoration,
         '!pppp!': 'pppp' as Decoration,
         '!ppp!': 'ppp' as Decoration,
         '!pp!': 'pp' as Decoration,
@@ -309,10 +397,32 @@ export class Note {
       if (convertedDecoration) decorations.push(convertedDecoration);
     }
 
-    if (value === -1) {
-      return new Note(undefined, duration, decorations, [], durationModifier);
+    // Parse annotation strings: "^text", "_text", "<text", ">text", "@text"
+    const annotations: Annotation[] = [];
+    const PLACEMENT_MAP: Record<string, AnnotationPlacement> = {
+      '^': 'above',
+      _: 'below',
+      '<': 'left',
+      '>': 'right',
+      '@': 'auto',
+    };
+    for (const m of text.matchAll(/"([_<>@^])([^"]*?)"/g)) {
+      const placement = PLACEMENT_MAP[m[1]];
+      if (placement) annotations.push({ placement, text: m[2] });
+    }
+
+    if (NOTE_VALUES[upperCaseNote as keyof typeof NOTE_VALUES] === -1) {
+      const n = new Note(
+        undefined,
+        duration,
+        decorations,
+        [],
+        durationModifier
+      );
+      n.annotations = annotations;
+      return n;
     } else {
-      return new Note(
+      const n = new Note(
         octave * PITCH_CONSTANTS.SEMITONES_PER_OCTAVE +
           value +
           PITCH_CONSTANTS.OCTAVE_OFFSET,
@@ -321,6 +431,8 @@ export class Note {
         cleanedAccidental,
         durationModifier
       );
+      n.annotations = annotations;
+      return n;
     }
   }
 
@@ -344,7 +456,9 @@ export class Note {
       );
     }
     const asSharp =
-      accidental === '#' || (accidental !== 'b' && useSharpSpelling);
+      accidental === '#' ||
+      accidental === '##' ||
+      (accidental !== 'b' && accidental !== 'bb' && useSharpSpelling);
     if (asSharp) {
       return (
         { 1: 'C♯', 3: 'D♯', 6: 'F♯', 8: 'G♯', 10: 'A♯' } as Record<
@@ -465,6 +579,7 @@ export class Music {
   notes: Note[] = [];
   beams: number[][] = [];
   curves: number[][] = [];
+  spanDecorations: SpanDecoration[] = [];
   bars: BarLine[] = [];
   // Aligned lyrics from w: fields. lyrics[verse][noteIndex] = syllable or undefined.
   lyrics: (string | undefined)[][] = [];
@@ -510,6 +625,17 @@ export class Music {
         s > idx + 1 ? s - 1 : s,
         e > idx + 1 ? e - 1 : e,
       ]);
+      this.spanDecorations = this.spanDecorations.map((span) => ({
+        ...span,
+        startNoteIndex:
+          span.startNoteIndex > idx + 1
+            ? span.startNoteIndex - 1
+            : span.startNoteIndex,
+        endNoteIndex:
+          span.endNoteIndex > idx + 1
+            ? span.endNoteIndex - 1
+            : span.endNoteIndex,
+      }));
       // Shift signature indices past the removed note.
       this.signatures = this.signatures.map((sig) =>
         sig.atNoteIndex > idx + 1

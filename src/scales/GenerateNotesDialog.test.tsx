@@ -1,6 +1,6 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest';
 import { render, screen, fireEvent } from '@testing-library/react';
-import { ScaleDialog } from './ScaleDialog';
+import { GenerateNotesDialog } from './GenerateNotesDialog';
 import { axe } from 'jest-axe';
 import { useStore } from '../store';
 
@@ -8,16 +8,18 @@ beforeEach(() => {
   useStore.setState({ instrumentType: 'SOPRANO', songs: [] });
 });
 
-const renderDialog = (props?: Partial<Parameters<typeof ScaleDialog>[0]>) => {
+const renderDialog = (
+  props?: Partial<Parameters<typeof GenerateNotesDialog>[0]>
+) => {
   const defaults = {
     open: true,
     onClose: vi.fn(),
-    onCreate: vi.fn(),
+    onGenerate: vi.fn(),
   };
-  return render(<ScaleDialog {...defaults} {...props} />);
+  return render(<GenerateNotesDialog {...defaults} {...props} />);
 };
 
-describe('ScaleDialog', () => {
+describe('GenerateNotesDialog', () => {
   it('should have no accessibility violations', async () => {
     const { container } = renderDialog();
     expect(await axe(container)).toHaveNoViolations();
@@ -27,19 +29,23 @@ describe('ScaleDialog', () => {
     expect(screen.getByRole('dialog')).toBeInTheDocument();
   });
 
-  it('shows all 16 key radio buttons (9 major + 7 minor)', () => {
+  it('shows all 22 key radio buttons (11 major + 11 minor)', () => {
     renderDialog();
-    // 16 key radios + 2 range radios + 3 direction radios = 21 total
+    // 22 key radios + 2 range radios + 3 direction radios = 27 total
     const radios = screen.getAllByRole('radio');
-    expect(radios.length).toBe(21);
+    expect(radios.length).toBe(27);
   });
 
-  it('default selected key is C', () => {
+  it('default selected key is C and direction is ascending', () => {
     renderDialog();
     const radios = screen.getAllByRole('radio');
     const checked = radios.filter((r) => (r as HTMLInputElement).checked);
-    // C key + 'traditional' range + 'both' direction = 3 checked radios
+    // C key + 'traditional' range + 'ascending' direction = 3 checked radios
     expect(checked.length).toBe(3);
+    const checkedValues = checked.map((r) => (r as HTMLInputElement).value);
+    expect(checkedValues).toContain('C');
+    expect(checkedValues).toContain('traditional');
+    expect(checkedValues).toContain('ascending');
   });
 
   it('selecting a different key updates the selection', () => {
@@ -55,21 +61,21 @@ describe('ScaleDialog', () => {
     expect((unchecked as HTMLInputElement).checked).toBe(true);
   });
 
-  it('create button is always enabled since a key is always selected', () => {
+  it('generate button is always enabled since a key is always selected', () => {
     renderDialog();
-    const createBtn = screen.getByRole('button', { name: /create/i });
-    expect(createBtn).not.toBeDisabled();
+    const generateBtn = screen.getByRole('button', { name: /generate/i });
+    expect(generateBtn).not.toBeDisabled();
   });
 
-  it('clicking create calls onCreate with a single UserSong', () => {
-    const onCreate = vi.fn();
-    renderDialog({ onCreate });
-    const createBtn = screen.getByRole('button', { name: /create/i });
-    fireEvent.click(createBtn);
-    expect(onCreate).toHaveBeenCalledOnce();
-    const song = onCreate.mock.calls[0][0];
-    expect(song).toHaveProperty('title');
-    expect(song).toHaveProperty('abc');
+  it('clicking generate calls onGenerate with a notes ABC string', () => {
+    const onGenerate = vi.fn();
+    renderDialog({ onGenerate });
+    const generateBtn = screen.getByRole('button', { name: /generate/i });
+    fireEvent.click(generateBtn);
+    expect(onGenerate).toHaveBeenCalledOnce();
+    const notesAbc = onGenerate.mock.calls[0][0];
+    expect(typeof notesAbc).toBe('string');
+    expect(notesAbc.length).toBeGreaterThan(0);
   });
 
   it('cancel button calls onClose', () => {

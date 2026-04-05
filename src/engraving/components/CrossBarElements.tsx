@@ -1,4 +1,10 @@
-import type { TieLayout, TupletLayout, VoltaSegment } from '../layout/types';
+import type {
+  TieLayout,
+  TupletLayout,
+  VoltaSegment,
+  SpanDecorationLayout,
+} from '../layout/types';
+import { Glyph } from '../glyphs/Glyph';
 
 // ---------------------------------------------------------------------------
 // Tie / Slur arc
@@ -159,6 +165,100 @@ export function VoltaBracket({ volta, staffTopY }: VoltaBracketProps) {
         >
           {number}.
         </text>
+      )}
+    </g>
+  );
+}
+
+// ---------------------------------------------------------------------------
+// Hairpin (crescendo / diminuendo)
+// ---------------------------------------------------------------------------
+
+interface HairpinProps {
+  span: SpanDecorationLayout;
+}
+
+const HAIRPIN_SPREAD = 5; // half-height of open end in px
+
+export function Hairpin({ span }: HairpinProps) {
+  const { type, startX, endX, y, isOpenStart, isOpenEnd } = span;
+  const isCrescendo = type === 'crescendo';
+
+  // For a crescendo: point is at startX, open end at endX.
+  // For a diminuendo: open end is at startX, point is at endX.
+  // Cross-line open ends continue the opening shape.
+  const leftSpread = isCrescendo
+    ? isOpenStart
+      ? HAIRPIN_SPREAD
+      : 0
+    : HAIRPIN_SPREAD;
+  const rightSpread = isCrescendo
+    ? HAIRPIN_SPREAD
+    : isOpenEnd
+      ? HAIRPIN_SPREAD
+      : 0;
+
+  return (
+    <g>
+      <line
+        x1={startX}
+        y1={y - leftSpread}
+        x2={endX}
+        y2={y - rightSpread}
+        stroke="currentColor"
+        strokeWidth={1.5}
+        strokeLinecap="butt"
+      />
+      <line
+        x1={startX}
+        y1={y + leftSpread}
+        x2={endX}
+        y2={y + rightSpread}
+        stroke="currentColor"
+        strokeWidth={1.5}
+        strokeLinecap="butt"
+      />
+    </g>
+  );
+}
+
+// ---------------------------------------------------------------------------
+// Trill span (tr glyph + wavy extension line)
+// ---------------------------------------------------------------------------
+
+interface TrillSpanProps {
+  span: SpanDecorationLayout;
+}
+
+const TRILL_GLYPH_WIDTH = 14; // approximate width of the ornamentTrill glyph
+const WAVE_PERIOD = 8; // px per wave cycle
+const WAVE_AMP = 2; // amplitude of the wavy line
+
+/** Build an SVG path for a horizontal wavy line from x0 to x1 at height y. */
+function wavyLinePath(x0: number, x1: number, y: number): string {
+  if (x1 <= x0) return '';
+  const periods = Math.max(1, Math.round((x1 - x0) / WAVE_PERIOD));
+  const dx = (x1 - x0) / periods;
+  let d = `M ${x0} ${y}`;
+  for (let i = 0; i < periods; i++) {
+    const px = x0 + i * dx;
+    d += ` C ${px + dx * 0.25} ${y - WAVE_AMP} ${px + dx * 0.75} ${y + WAVE_AMP} ${px + dx} ${y}`;
+  }
+  return d;
+}
+
+export function TrillSpan({ span }: TrillSpanProps) {
+  const { startX, endX, y, isOpenStart } = span;
+
+  const glyphX = isOpenStart ? null : startX - 5;
+  const waveStartX = isOpenStart ? startX : startX + TRILL_GLYPH_WIDTH;
+  const wavePath = wavyLinePath(waveStartX, endX, y);
+
+  return (
+    <g>
+      {glyphX !== null && <Glyph name="ornamentTrill" x={glyphX} y={y} />}
+      {wavePath && (
+        <path d={wavePath} fill="none" stroke="currentColor" strokeWidth={1} />
       )}
     </g>
   );

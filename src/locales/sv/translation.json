@@ -60,6 +60,7 @@
   "transformHalveDuration": "Halvera notvärde",
   "transformSimplifyAccidentals": "Förenkla förtecken",
   "transformAddAllAccidentals": "Lägg till alla förtecken",
+  "transformReverseNotes": "Vänd på noterna",
   "recorderType": "Blockflöjtstyp",
   "detect": "Detektera",
   "detectRecorderType": "Detektera blockflöjtstyp",
@@ -81,7 +82,7 @@
   "direction": "Riktning",
   "ascending": "Stigande",
   "descending": "Fallande",
-  "both": "Båda",
+  "random": "Slumpmässig",
   "major": "dur",
   "minor": "moll",
   "recordingStarted": "Inspelning startad",
@@ -141,5 +142,12 @@
   "sortPracticeCount": "Antal övningar",
   "sortAverageScore": "Genomsnittlig poäng",
   "practiceHistory": "Övningshistorik",
-  "methodNone": "Ingen"
+  "methodNone": "Ingen",
+  "newSong": "Ny låt",
+  "generate": "Generera",
+  "generateNotes": "Generera noter",
+  "scales": "Skalor",
+  "commonArpeggios": "Vanliga arpeggion",
+  "dominantSeventhArpeggios": "Dominantseptima-arpeggion",
+  "diminishedSeventhArpeggios": "Förminskade septima-arpeggion"
 }

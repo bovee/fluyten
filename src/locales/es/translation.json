@@ -60,6 +60,7 @@
   "transformHalveDuration": "Reducir duración a la mitad",
   "transformSimplifyAccidentals": "Simplificar alteraciones",
   "transformAddAllAccidentals": "Añadir todas las alteraciones",
+  "transformReverseNotes": "Invertir notas",
   "recorderType": "Tipo de flauta",
   "detect": "Detectar",
   "detectRecorderType": "Detectar tipo de flauta",
@@ -81,7 +82,7 @@
   "direction": "Dirección",
   "ascending": "Ascendente",
   "descending": "Descendente",
-  "both": "Ambas",
+  "random": "Aleatorio",
   "major": "Mayor",
   "minor": "Menor",
   "recordingStarted": "Grabación iniciada",
@@ -141,5 +142,12 @@
   "sortPracticeCount": "Veces practicado",
   "sortAverageScore": "Puntuación media",
   "practiceHistory": "Historial de práctica",
-  "methodNone": "Ninguno"
+  "methodNone": "Ninguno",
+  "newSong": "Nueva canción",
+  "generate": "Generar",
+  "generateNotes": "Generar notas",
+  "scales": "Escalas",
+  "commonArpeggios": "Arpegios comunes",
+  "dominantSeventhArpeggios": "Arpegios de séptima dominante",
+  "diminishedSeventhArpeggios": "Arpegios de séptima disminuida"
 }

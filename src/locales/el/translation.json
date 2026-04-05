@@ -60,6 +60,7 @@
   "transformHalveDuration": "Μισή διάρκεια",
   "transformSimplifyAccidentals": "Απλοποίηση παραφωνιών",
   "transformAddAllAccidentals": "Προσθήκη όλων των παραφωνιών",
+  "transformReverseNotes": "Αντιστροφή νοτών",
   "recorderType": "Τύπος φλάουτου",
   "detect": "Εντοπισμός",
   "detectRecorderType": "Εντοπισμός τύπου φλάουτου",
@@ -81,7 +82,7 @@
   "direction": "Κατεύθυνση",
   "ascending": "Ανοδική",
   "descending": "Καθοδική",
-  "both": "Και τα δύο",
+  "random": "Τυχαία",
   "major": "Μείζονας",
   "minor": "Ελάσσονας",
   "recordingStarted": "Η εγγραφή ξεκίνησε",
@@ -141,5 +142,12 @@
   "sortPracticeCount": "Φορές εξάσκησης",
   "sortAverageScore": "Μέση βαθμολογία",
   "practiceHistory": "Ιστορικό εξάσκησης",
-  "methodNone": "Καμία"
+  "methodNone": "Καμία",
+  "newSong": "Νέο τραγούδι",
+  "generate": "Δημιουργία",
+  "generateNotes": "Δημιουργία νοτών",
+  "scales": "Κλίμακες",
+  "commonArpeggios": "Κοινά αρπίσματα",
+  "dominantSeventhArpeggios": "Αρπίσματα κυρίαρχης έβδομης",
+  "diminishedSeventhArpeggios": "Αρπίσματα ελαττωμένης έβδομης"
 }

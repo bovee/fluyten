@@ -60,6 +60,7 @@
   "transformHalveDuration": "Dimezza la durata",
   "transformSimplifyAccidentals": "Semplifica le alterazioni",
   "transformAddAllAccidentals": "Aggiungi tutte le alterazioni",
+  "transformReverseNotes": "Inverti le note",
   "recorderType": "Tipo di flauto dolce",
   "detect": "Rileva",
   "detectRecorderType": "Rileva tipo di flauto dolce",
@@ -81,7 +82,7 @@
   "direction": "Direzione",
   "ascending": "Ascendente",
   "descending": "Discendente",
-  "both": "Entrambe",
+  "random": "Casuale",
   "major": "Maggiore",
   "minor": "Minore",
   "recordingStarted": "Registrazione avviata",
@@ -141,5 +142,12 @@
   "sortPracticeCount": "Volte praticate",
   "sortAverageScore": "Punteggio medio",
   "practiceHistory": "Cronologia di pratica",
-  "methodNone": "Nessuno"
+  "methodNone": "Nessuno",
+  "newSong": "Nuova canzone",
+  "generate": "Genera",
+  "generateNotes": "Genera note",
+  "scales": "Scale",
+  "commonArpeggios": "Arpeggi comuni",
+  "dominantSeventhArpeggios": "Arpeggi di settima di dominante",
+  "diminishedSeventhArpeggios": "Arpeggi di settima diminuita"
 }

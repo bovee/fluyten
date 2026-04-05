@@ -18,6 +18,7 @@ import Tooltip from '@mui/material/Tooltip';
 import Autorenew from '@mui/icons-material/Autorenew';
 import Mic from '@mui/icons-material/Mic';
 import MicOff from '@mui/icons-material/MicOff';
+import Piano from '@mui/icons-material/Piano';
 import SwapVert from '@mui/icons-material/SwapVert';
 
 import {
@@ -29,6 +30,7 @@ import { singlePitchToAbc, durationToAbc, reflowAbc } from './io/abcExport';
 import { TRANSFORMATIONS, transformFragment } from './io/transformations';
 import { Music, Duration, DurationModifier } from './music';
 import { FrequencyTracker } from './audio/FrequencyTracker';
+import { GenerateNotesDialog } from './scales/GenerateNotesDialog';
 import { useStore } from './store';
 
 const RECORD_SAMPLE_RATE = 50;
@@ -88,13 +90,20 @@ export function EditorDrawer({
     }
   }, [abcMusic]);
 
+  // Keep a ref to onAbcChange so the debounced function (created once) always
+  // calls the latest version without needing to be recreated.
+  const onAbcChangeRef = useRef(onAbcChange);
+  useEffect(() => {
+    onAbcChangeRef.current = onAbcChange;
+  }, [onAbcChange]);
+
   const debouncedOnAbcChange = useMemo(
     () =>
       debounce((value: string) => {
         lastSentRef.current = value;
-        onAbcChange(value);
+        onAbcChangeRef.current(value);
       }, 300),
-    [onAbcChange]
+    [] // stable — reads latest callback via ref at call-time
   );
 
   const handleAbcChange = useCallback(
@@ -109,8 +118,10 @@ export function EditorDrawer({
   );
   const [transformMenuAnchor, setTransformMenuAnchor] =
     useState<HTMLElement | null>(null);
-  const [voiceMenuAnchor, setVoiceMenuAnchor] =
-    useState<HTMLElement | null>(null);
+  const [voiceMenuAnchor, setVoiceMenuAnchor] = useState<HTMLElement | null>(
+    null
+  );
+  const [scaleDialogOpen, setScaleDialogOpen] = useState(false);
 
   useLayoutEffect(() => {
     const el = drawerRef.current;
@@ -258,9 +269,9 @@ export function EditorDrawer({
   };
 
   useEffect(() => {
-    // eslint-disable-next-line react-hooks/set-state-in-effect
     if (!open && isTranscribing) stopTranscribing();
-  }, [open]);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [open]); // intentionally omits isTranscribing — only react to drawer close
 
   useEffect(() => {
     return () => {
@@ -353,6 +364,24 @@ export function EditorDrawer({
     }
   };
 
+  const handleGenerateNotes = (notesAbc: string) => {
+    setScaleDialogOpen(false);
+    const insertPos =
+      abcSelection.start >= notesStartIndex
+        ? abcSelection.start
+        : abcMusic.length;
+    const separator =
+      insertPos > 0 && abcMusic[insertPos - 1] !== '\n' ? ' ' : '';
+    const newAbc =
+      abcMusic.slice(0, insertPos) +
+      separator +
+      notesAbc +
+      abcMusic.slice(insertPos);
+    const newPos = insertPos + separator.length + notesAbc.length;
+    pendingSelectionRef.current = { start: newPos, end: newPos };
+    onAbcChange(newAbc);
+  };
+
   return (
     <Drawer
       variant="persistent"
@@ -394,12 +423,37 @@ export function EditorDrawer({
                   onMouseDown={(e) => e.preventDefault()}
                   onClick={(e) => setVoiceMenuAnchor(e.currentTarget)}
                   aria-label={t('selectedVoice')}
-                  sx={{ fontSize: '0.75rem', fontWeight: 'bold', position: 'relative' }}
+                  sx={{
+                    fontSize: '0.75rem',
+                    fontWeight: 'bold',
+                    position: 'relative',
+                  }}
                 >
-                  <Box component="span" sx={{ fontFamily: 'inherit', fontSize: '0.85rem', fontWeight: 700, lineHeight: 1 }}>
-                    {(voices[selectedVoiceIdx]?.name || voices[selectedVoiceIdx]?.id || '?')[0].toUpperCase()}
+                  <Box
+                    component="span"
+                    sx={{
+                      fontFamily: 'inherit',
+                      fontSize: '0.85rem',
+                      fontWeight: 700,
+                      lineHeight: 1,
+                    }}
+                  >
+                    {(voices[selectedVoiceIdx]?.name ||
+                      voices[selectedVoiceIdx]?.id ||
+                      '?')[0].toUpperCase()}
                   </Box>
-                  <Box component="span" sx={{ fontSize: '0.5rem', lineHeight: 1, ml: '1px', alignSelf: 'flex-end', mb: '2px' }}>▾</Box>
+                  <Box
+                    component="span"
+                    sx={{
+                      fontSize: '0.5rem',
+                      lineHeight: 1,
+                      ml: '1px',
+                      alignSelf: 'flex-end',
+                      mb: '2px',
+                    }}
+                  >
+                    ▾
+                  </Box>
                 </IconButton>
               </Tooltip>
             )}
@@ -442,6 +496,18 @@ export function EditorDrawer({
                 </IconButton>
               </span>
             </Tooltip>
+            <Tooltip title={t('generateNotes')}>
+              <span>
+                <IconButton
+                  onMouseDown={(e) => e.preventDefault()}
+                  onClick={() => setScaleDialogOpen(true)}
+                  disabled={!!readOnly || isTranscribing}
+                  aria-label={t('generateNotes')}
+                >
+                  <Piano />
+                </IconButton>
+              </span>
+            </Tooltip>
           </Box>
         </Box>
         <Menu
@@ -480,6 +546,15 @@ export function EditorDrawer({
           ))}
         </Menu>
       </Box>
+      <GenerateNotesDialog
+        open={scaleDialogOpen}
+        onClose={() => setScaleDialogOpen(false)}
+        onGenerate={handleGenerateNotes}
+        songKey={(() => {
+          const kLine = abcMusic.split('\n').find((l) => l.startsWith('K:'));
+          return kLine ? kLine.slice(2).trim().split(/\s/)[0] : 'C';
+        })()}
+      />
     </Drawer>
   );
 }

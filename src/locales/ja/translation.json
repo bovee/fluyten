@@ -60,6 +60,7 @@
   "transformHalveDuration": "音価を半分にする",
   "transformSimplifyAccidentals": "臨時記号を整理",
   "transformAddAllAccidentals": "全臨時記号を追加",
+  "transformReverseNotes": "音符を逆順にする",
   "recorderType": "リコーダーの種類",
   "detect": "検出",
   "detectRecorderType": "リコーダーの種類を検出",
@@ -81,7 +82,7 @@
   "direction": "方向",
   "ascending": "上行",
   "descending": "下行",
-  "both": "両方",
+  "random": "ランダム",
   "major": "長調",
   "minor": "短調",
   "recordingStarted": "録音を開始しました",
@@ -141,5 +142,12 @@
   "sortPracticeCount": "練習回数",
   "sortAverageScore": "平均スコア",
   "practiceHistory": "練習履歴",
-  "methodNone": "なし"
+  "methodNone": "なし",
+  "newSong": "新しい曲",
+  "generate": "生成",
+  "generateNotes": "音符を生成",
+  "scales": "音階",
+  "commonArpeggios": "基本的なアルペジオ",
+  "dominantSeventhArpeggios": "属七和音のアルペジオ",
+  "diminishedSeventhArpeggios": "減七和音のアルペジオ"
 }

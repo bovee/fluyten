@@ -3,6 +3,7 @@ import {
   type BarLineType,
   type Decoration,
   type Signature,
+  type SpanDecorationType,
   Duration,
   DurationModifier,
   KEYS,
@@ -18,62 +19,118 @@ import { type RecorderType } from '../instrument';
 // See https://abcnotation.com/wiki/abc:standard:v2.1#supported_accents_ligatures
 const ABC_MNEMONICS: Record<string, string> = {
   // Grave
-  '`A': '\u00C0', '`a': '\u00E0',
-  '`E': '\u00C8', '`e': '\u00E8',
-  '`I': '\u00CC', '`i': '\u00EC',
-  '`O': '\u00D2', '`o': '\u00F2',
-  '`U': '\u00D9', '`u': '\u00F9',
+  '`A': '\u00C0',
+  '`a': '\u00E0',
+  '`E': '\u00C8',
+  '`e': '\u00E8',
+  '`I': '\u00CC',
+  '`i': '\u00EC',
+  '`O': '\u00D2',
+  '`o': '\u00F2',
+  '`U': '\u00D9',
+  '`u': '\u00F9',
   // Acute
-  "'A": '\u00C1', "'a": '\u00E1',
-  "'E": '\u00C9', "'e": '\u00E9',
-  "'I": '\u00CD', "'i": '\u00ED',
-  "'O": '\u00D3', "'o": '\u00F3',
-  "'U": '\u00DA', "'u": '\u00FA',
-  "'Y": '\u00DD', "'y": '\u00FD',
+  "'A": '\u00C1',
+  "'a": '\u00E1',
+  "'E": '\u00C9',
+  "'e": '\u00E9',
+  "'I": '\u00CD',
+  "'i": '\u00ED',
+  "'O": '\u00D3',
+  "'o": '\u00F3',
+  "'U": '\u00DA',
+  "'u": '\u00FA',
+  "'Y": '\u00DD',
+  "'y": '\u00FD',
   // Circumflex
-  '^A': '\u00C2', '^a': '\u00E2',
-  '^E': '\u00CA', '^e': '\u00EA',
-  '^I': '\u00CE', '^i': '\u00EE',
-  '^O': '\u00D4', '^o': '\u00F4',
-  '^U': '\u00DB', '^u': '\u00FB',
-  '^Y': '\u0176', '^y': '\u0177',
+  '^A': '\u00C2',
+  '^a': '\u00E2',
+  '^E': '\u00CA',
+  '^e': '\u00EA',
+  '^I': '\u00CE',
+  '^i': '\u00EE',
+  '^O': '\u00D4',
+  '^o': '\u00F4',
+  '^U': '\u00DB',
+  '^u': '\u00FB',
+  '^Y': '\u0176',
+  '^y': '\u0177',
   // Tilde
-  '~A': '\u00C3', '~a': '\u00E3',
-  '~N': '\u00D1', '~n': '\u00F1',
-  '~O': '\u00D5', '~o': '\u00F5',
+  '~A': '\u00C3',
+  '~a': '\u00E3',
+  '~N': '\u00D1',
+  '~n': '\u00F1',
+  '~O': '\u00D5',
+  '~o': '\u00F5',
   // Umlaut/diaeresis
-  '"A': '\u00C4', '"a': '\u00E4',
-  '"E': '\u00CB', '"e': '\u00EB',
-  '"I': '\u00CF', '"i': '\u00EF',
-  '"O': '\u00D6', '"o': '\u00F6',
-  '"U': '\u00DC', '"u': '\u00FC',
-  '"Y': '\u0178', '"y': '\u00FF',
+  '"A': '\u00C4',
+  '"a': '\u00E4',
+  '"E': '\u00CB',
+  '"e': '\u00EB',
+  '"I': '\u00CF',
+  '"i': '\u00EF',
+  '"O': '\u00D6',
+  '"o': '\u00F6',
+  '"U': '\u00DC',
+  '"u': '\u00FC',
+  '"Y': '\u0178',
+  '"y': '\u00FF',
   // Cedilla
-  'cC': '\u00C7', 'cc': '\u00E7',
+  cC: '\u00C7',
+  cc: '\u00E7',
   // Ring
-  'AA': '\u00C5', 'aa': '\u00E5',
+  AA: '\u00C5',
+  aa: '\u00E5',
   // Stroke
-  '/O': '\u00D8', '/o': '\u00F8',
+  '/O': '\u00D8',
+  '/o': '\u00F8',
   // Breve
-  'uA': '\u0102', 'ua': '\u0103',
-  'uE': '\u0114', 'ue': '\u0115',
+  uA: '\u0102',
+  ua: '\u0103',
+  uE: '\u0114',
+  ue: '\u0115',
   // Caron
-  'vS': '\u0160', 'vs': '\u0161',
-  'vZ': '\u017D', 'vz': '\u017E',
+  vS: '\u0160',
+  vs: '\u0161',
+  vZ: '\u017D',
+  vz: '\u017E',
   // Double acute
-  'HO': '\u0150', 'Ho': '\u0151',
-  'HU': '\u0170', 'Hu': '\u0171',
+  HO: '\u0150',
+  Ho: '\u0151',
+  HU: '\u0170',
+  Hu: '\u0171',
   // Ligatures and special characters
-  'AE': '\u00C6', 'ae': '\u00E6',
-  'OE': '\u0152', 'oe': '\u0153',
-  'ss': '\u00DF',
-  'DH': '\u00D0', 'dh': '\u00F0',
-  'TH': '\u00DE', 'th': '\u00FE',
+  AE: '\u00C6',
+  ae: '\u00E6',
+  OE: '\u0152',
+  oe: '\u0153',
+  ss: '\u00DF',
+  DH: '\u00D0',
+  dh: '\u00F0',
+  TH: '\u00DE',
+  th: '\u00FE',
 };
 
+/** Strip an ABC comment from a line, treating \% as an escaped percent sign
+ *  that does NOT start a comment. Lines starting with %% are kept as-is. */
+function stripComment(line: string): string {
+  if (line.startsWith('%%')) return line;
+  // Match a run of (escaped-char | non-%\) up to the first bare %.
+  const m = line.match(/^((?:\\[\s\S]|[^%\\])*)%/);
+  return m ? m[1] : line;
+}
+
 function expandMnemonics(text: string): string {
-  return text.replace(/\\([\s\S]{2})/g, (match, code: string) =>
-    ABC_MNEMONICS[code] ?? match
+  return text.replace(
+    /\\(u[0-9A-Fa-f]{8}|u[0-9A-Fa-f]{4}|U[0-9A-Fa-f]{8}|U[0-9A-Fa-f]{4}|\\|%|&|[\s\S]{2})/g,
+    (match, code: string) => {
+      if (code === '\\') return '\\';
+      if (code === '%') return '%';
+      if (code === '&') return '&';
+      if (/^[uU][0-9A-Fa-f]{4,8}$/.test(code))
+        return String.fromCodePoint(parseInt(code.slice(1), 16));
+      return ABC_MNEMONICS[code] ?? match;
+    }
   );
 }
 
@@ -246,8 +303,8 @@ type ScoreToken =
 // Note sub-pattern (no ^ anchor; named groups survive the outer alternation
 // because only one branch can match at a time)
 const NOTE_PATTERN_SRC = [
-  '(?<text>(?:"[^_<>@]?.*?"\\s?)*)',
-  '(?<decoration>(?:[.~HLMOPSTuv]|![A-Za-z0-9()<>+.]+!\\s?)*)',
+  '(?<text>(?:"[^"]*"\\s?)*)',
+  '(?<decoration>(?:[.~HLMOPSTuv]|![A-Za-z0-9()<>+./]+!\\s?)*)',
   '(?<accidental>[\\^=_]{0,2})',
   "(?<note>[A-Ga-gZXzx][,']*)",
   '(?<duration>\\d*(?:\\/\\/?)?\\d*)',
@@ -449,6 +506,24 @@ export function parseScore(
   let startSlur: number | null = null;
   let chordAccum: ChordAccum | null = null;
   let pendingBrokenRhythm: 'dot' | 'halve' | null = null;
+  const openSpans = new Map<SpanDecorationType, number>();
+
+  // Maps ABC span decoration markers to their type and whether they open or close.
+  const SPAN_MARKERS: Record<
+    string,
+    { type: SpanDecorationType; open: boolean }
+  > = {
+    '!trill(!': { type: 'trill', open: true },
+    '!trill)!': { type: 'trill', open: false },
+    '!crescendo(!': { type: 'crescendo', open: true },
+    '!crescendo)!': { type: 'crescendo', open: false },
+    '!<(!': { type: 'crescendo', open: true },
+    '!<)!': { type: 'crescendo', open: false },
+    '!diminuendo(!': { type: 'diminuendo', open: true },
+    '!diminuendo)!': { type: 'diminuendo', open: false },
+    '!>(!': { type: 'diminuendo', open: true },
+    '!>)!': { type: 'diminuendo', open: false },
+  };
 
   // Beam tracking: a beam group is a run of note tokens uninterrupted by beam_break.
   // beam_join (backtick) bridges a gap without closing the group.
@@ -545,13 +620,17 @@ export function parseScore(
           groups.note,
           noteDuration,
           noteDurationModifier,
-          { ...curKeyAdjustment, ...barAccidentals },
+          curKeyAdjustment,
           groups.accidental,
-          groups.decoration
+          groups.decoration,
+          groups.text ?? '',
+          barAccidentals
         );
         if (groups.accidental) {
-          const n = groups.note[0].toUpperCase();
-          if (groups.accidental === '^') barAccidentals[n] = 1;
+          const n = groups.note;
+          if (groups.accidental === '^^') barAccidentals[n] = 2;
+          else if (groups.accidental === '^') barAccidentals[n] = 1;
+          else if (groups.accidental === '__') barAccidentals[n] = -2;
           else if (groups.accidental === '_') barAccidentals[n] = -1;
           else if (groups.accidental === '=') barAccidentals[n] = 0;
         }
@@ -571,6 +650,25 @@ export function parseScore(
             inBeam = true;
           }
           music.notes.push(note);
+          // Process span decoration markers (e.g. !crescendo(!, !trill)!)
+          for (const marker of groups.decoration.matchAll(/!\S+!/g)) {
+            const span = SPAN_MARKERS[marker[0]];
+            if (!span) continue;
+            const noteIdx = music.notes.length - 1;
+            if (span.open) {
+              openSpans.set(span.type, noteIdx);
+            } else {
+              const startIdx = openSpans.get(span.type);
+              if (startIdx !== undefined) {
+                music.spanDecorations.push({
+                  type: span.type,
+                  startNoteIndex: startIdx,
+                  endNoteIndex: noteIdx,
+                });
+                openSpans.delete(span.type);
+              }
+            }
+          }
           // If the duration was split (e.g. z8 with L:1/4), emit extra notes
           if (parsedDurs && parsedDurs.length > 1) {
             for (const [dur, mod] of parsedDurs.slice(1)) {
@@ -860,8 +958,10 @@ export function parseHeaders(
   for (const line of lines) {
     if (line[1] === ':' && !line.startsWith('|:')) {
       const fieldData = line.slice(2).trim();
-      if (!music.title && line.startsWith('T:')) music.title = expandMnemonics(fieldData);
-      if (!music.composer && line.startsWith('C:')) music.composer = expandMnemonics(fieldData);
+      if (!music.title && line.startsWith('T:'))
+        music.title = expandMnemonics(fieldData);
+      if (!music.composer && line.startsWith('C:'))
+        music.composer = expandMnemonics(fieldData);
       if (line.startsWith('M:')) {
         if (fieldData === 'C') {
           music.signatures[0].beatsPerBar =
@@ -995,9 +1095,7 @@ export function voicesFromAbc(
 ): VoiceInfo[] {
   // Strip comments (same preprocessing as fromAbc)
   const lines = text.split(/\r?\n/).map((l) => {
-    if (l.startsWith('%%')) return l;
-    const commentIdx = l.indexOf('%');
-    return commentIdx === -1 ? l : l.slice(0, commentIdx);
+    return stripComment(l);
   });
 
   // Quick check: does this ABC use voices at all?
@@ -1190,36 +1288,57 @@ type LyricToken =
   | { type: 'skip' }
   | { type: 'bar' };
 
+/** Tokenize a single whitespace-delimited lyric word into lyric tokens.
+ *  Handles: hyphens (syllable breaks), \- (literal hyphen, no break),
+ *  ~ (space in display, no break), trailing _ (holds). */
+function tokenizeLyricWord(word: string): LyricToken[] {
+  const tokens: LyricToken[] = [];
+
+  // Split on hyphens that are not preceded by a backslash.
+  const parts = word.split(/(?<!\\)-/);
+
+  for (let i = 0; i < parts.length; i++) {
+    let part = parts[i];
+    const isLast = i === parts.length - 1;
+
+    // Strip trailing underscores — each is a hold token for the next note.
+    let holdCount = 0;
+    while (part.endsWith('_')) {
+      holdCount++;
+      part = part.slice(0, -1);
+    }
+
+    // ~ → space in display; \- → literal hyphen.
+    const display = part.replace(/~/g, ' ').replace(/\\-/g, '-');
+
+    if (display) {
+      // Add a trailing hyphen connector when this part is not the final split.
+      tokens.push({ type: 'syllable', text: isLast ? display : display + '-' });
+    } else if (!isLast) {
+      // Empty part at a non-final position: double-hyphen or leading hyphen —
+      // the standard treats this as a separate hyphen syllable.
+      tokens.push({ type: 'syllable', text: '-' });
+    }
+    // Empty display AND last part: trailing hyphen already on previous syllable.
+
+    for (let h = 0; h < holdCount; h++) tokens.push({ type: 'hold' });
+  }
+
+  return tokens;
+}
+
 function parseLyricTokens(text: string): LyricToken[] {
   const tokens: LyricToken[] = [];
   const words = expandMnemonics(text.trim()).split(/\s+/);
   for (const word of words) {
     if (!word) continue;
-    if (word === '_') {
-      tokens.push({ type: 'hold' });
-    } else if (word === '*') {
+    if (word === '*') {
       tokens.push({ type: 'skip' });
     } else if (word === '|') {
       tokens.push({ type: 'bar' });
-    } else if (word.includes('-')) {
-      // Split on hyphens: "hel-lo" → [{syllable:"hel-"}, {syllable:"lo"}]
-      // Treat tilde within a hyphen-split word as a regular character
-      const parts = word.split('-');
-      for (let i = 0; i < parts.length; i++) {
-        const part = parts[i];
-        if (!part && i === parts.length - 1) continue; // trailing hyphen already on prev
-        const syllable = i < parts.length - 1 ? part + '-' : part;
-        // Split tilde within each part: "hel~lo" → two syllables
-        for (const s of syllable.split('~')) {
-          if (s) tokens.push({ type: 'syllable', text: s });
-        }
-      }
-    } else if (word.includes('~')) {
-      for (const s of word.split('~')) {
-        if (s) tokens.push({ type: 'syllable', text: s });
-      }
     } else {
-      tokens.push({ type: 'syllable', text: word });
+      // Handles _, __, time__, hel-lo, \-, of~the~day, and combinations.
+      tokens.push(...tokenizeLyricWord(word));
     }
   }
   return tokens;
@@ -1244,34 +1363,36 @@ function assignLyricsToNotes(
   let noteIdx = noteStart;
   let tokenIdx = 0;
 
-  // Advance past any leading grace notes
-  function skipGraceNotes() {
+  // Advance past grace notes and rests — the standard says syllables are not
+  // aligned on grace notes, rests, or spacers.
+  function skipNonLyricNotes() {
     while (
       noteIdx <= noteEnd &&
       (music.notes[noteIdx]?.duration === Duration.GRACE ||
-        music.notes[noteIdx]?.duration === Duration.GRACE_SLASH)
+        music.notes[noteIdx]?.duration === Duration.GRACE_SLASH ||
+        (music.notes[noteIdx]?.pitches.length ?? 1) === 0)
     ) {
       noteIdx++;
     }
   }
 
-  skipGraceNotes();
+  skipNonLyricNotes();
 
   while (tokenIdx < tokens.length && noteIdx <= noteEnd) {
     const token = tokens[tokenIdx++];
     if (token.type === 'syllable') {
       music.lyrics[verse][noteIdx] = token.text;
       noteIdx++;
-      skipGraceNotes();
+      skipNonLyricNotes();
     } else if (token.type === 'skip' || token.type === 'hold') {
       noteIdx++;
-      skipGraceNotes();
+      skipNonLyricNotes();
     } else if (token.type === 'bar') {
       // Advance noteIdx to the first note after the next bar line
       for (const bar of music.bars) {
         if (bar.afterNoteNum !== undefined && bar.afterNoteNum >= noteIdx) {
           noteIdx = bar.afterNoteNum + 1;
-          skipGraceNotes();
+          skipNonLyricNotes();
           break;
         }
       }
@@ -1285,11 +1406,7 @@ export function fromAbc(
   defaultMiddle?: string
 ): Music {
   const music = new Music();
-  const lines = text.split(/\r?\n/).map((l) => {
-    if (l.startsWith('%%')) return l; // stylesheet directives: keep as-is
-    const commentIdx = l.indexOf('%');
-    return commentIdx === -1 ? l : l.slice(0, commentIdx);
-  });
+  const lines = text.split(/\r?\n/).map(stripComment);
 
   const { sections, headerLines, endLyricLines } = buildSections(lines);
 
@@ -1343,9 +1460,7 @@ export function parseFragment(
 ): { music: Music; keySignature: string; defaultDuration: Duration } {
   const headerMusic = new Music();
   const lines = fullAbc.split(/\r?\n/).map((l) => {
-    if (l.startsWith('%%')) return l;
-    const commentIdx = l.indexOf('%');
-    return commentIdx === -1 ? l : l.slice(0, commentIdx);
+    return stripComment(l);
   });
   const { defaultDuration, keyAdjustment, pitchShift } = parseHeaders(
     lines,

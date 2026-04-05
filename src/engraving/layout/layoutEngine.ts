@@ -27,6 +27,9 @@ import {
   type TieLayout,
   type TupletLayout,
   type VoltaSegment,
+  type SpanDecorationLayout,
+  STAFF_HEIGHT,
+  STAFF_SPACE,
 } from './types';
 
 /** Entry point: convert a Music object and container width into a full LayoutResult. */
@@ -153,7 +156,7 @@ export function computeLayout(
 
     // For each beam, interpolate the slanted beam Y at every note's stem X so
     // middle stems end exactly on the beam line rather than poking through it.
-    let interpolatedNotes = unifiedNotes.slice();
+    const interpolatedNotes = unifiedNotes.slice();
     const unifiedBeams = beamsWithStemXs.map((beam) => {
       const n = beam.noteIndices.length;
       if (n < 2) return beam;
@@ -223,7 +226,17 @@ export function computeLayout(
     music,
     allBarLayouts,
     barToLine,
-    linePlans.length
+    linePlans.length,
+    lineHeight
+  );
+
+  const spanDecorationsByLine = computeSpanDecorations(
+    music,
+    allBarLayouts,
+    barToLine,
+    linePlans.length,
+    containerWidth,
+    lineHeight
   );
 
   // Voltas
@@ -245,7 +258,9 @@ export function computeLayout(
       const linePreambleWidth = sizing.preambleIfFirst - NOTE_AREA_PADDING;
       const firstBarSig = barData[firstBarIdx].signature;
       const firstBarTimeSig = firstBarSig.commonTime
-        ? firstBarSig.beatValue === 2 ? 'C|' : 'C'
+        ? firstBarSig.beatValue === 2
+          ? 'C|'
+          : 'C'
         : `${firstBarSig.beatsPerBar}/${firstBarSig.beatValue}`;
       const preamble = buildPreambleLayout(
         linePreambleWidth,
@@ -270,7 +285,9 @@ export function computeLayout(
       const barLayout = allBarLayouts[barIdx];
       const sig = barData[barIdx].signature;
       const timeSig = sig.commonTime
-        ? sig.beatValue === 2 ? 'C|' : 'C'
+        ? sig.beatValue === 2
+          ? 'C|'
+          : 'C'
         : `${sig.beatsPerBar}/${sig.beatValue}`;
       const preamble = buildPreambleLayout(
         TIME_SIG_WIDTH,
@@ -293,6 +310,7 @@ export function computeLayout(
       preambleBars,
       ties: tiesByLine[lineIndex] ?? [],
       tuplets: tupletsByLine[lineIndex] ?? [],
+      spanDecorations: spanDecorationsByLine[lineIndex] ?? [],
     };
   });
 
@@ -359,6 +377,44 @@ function resolveBarlineTypes(
   return { barlineStart, barlineEnd };
 }
 
+interface NotePosEntry {
+  x: number;
+  topY: number;
+  bottomY: number;
+  stemEndY: number;
+  stemDirection: 'up' | 'down';
+  lineIndex: number;
+  staffTopY: number;
+}
+
+/** Shared helper: builds a map from musicNoteIndex to layout position data. */
+function buildNotePosMap(
+  barLayouts: BarLayout[],
+  barToLine: Map<number, { lineIndex: number; posInLine: number }>,
+  lineHeight: number
+): Map<number, NotePosEntry> {
+  const map = new Map<number, NotePosEntry>();
+  for (const bar of barLayouts) {
+    const loc = barToLine.get(bar.barIndex)!;
+    const staffTopY = TOP_MARGIN + loc.lineIndex * lineHeight;
+    for (const note of bar.notes) {
+      const noteYs = note.staffPositions.map((sp) =>
+        staffPositionToY(sp, staffTopY)
+      );
+      map.set(note.musicNoteIndex, {
+        x: note.x,
+        topY: noteYs.length > 0 ? Math.min(...noteYs) : staffTopY,
+        bottomY: noteYs.length > 0 ? Math.max(...noteYs) : staffTopY,
+        stemEndY: note.stemEndY,
+        stemDirection: note.stemDirection,
+        lineIndex: loc.lineIndex,
+        staffTopY,
+      });
+    }
+  }
+  return map;
+}
+
 function computeTies(
   music: Music,
   barLayouts: BarLayout[],
@@ -367,43 +423,7 @@ function computeTies(
   containerWidth: number,
   lineHeight: number
 ): TieLayout[][] {
-  // noteAreaX of the first bar on each line — used as left edge for cross-line tie continuations.
-  const lineFirstNoteAreaX = new Map<number, number>();
-  for (const bar of barLayouts) {
-    const loc = barToLine.get(bar.barIndex)!;
-    if (loc.posInLine === 0)
-      lineFirstNoteAreaX.set(loc.lineIndex, bar.noteAreaX);
-  }
-
-  // Build a lookup from musicNoteIndex → { x, topY, bottomY, lineIndex }
-  // topY = Y of the highest notehead (smallest SVG y); bottomY = Y of the lowest notehead.
-  const notePosMap = new Map<
-    number,
-    {
-      x: number;
-      topY: number;
-      bottomY: number;
-      lineIndex: number;
-      stemDirection: 'up' | 'down';
-    }
-  >();
-  for (const bar of barLayouts) {
-    const loc = barToLine.get(bar.barIndex)!;
-    for (const note of bar.notes) {
-      const staffTopY = TOP_MARGIN + loc.lineIndex * lineHeight;
-      const noteYs = note.staffPositions.map((sp) =>
-        staffPositionToY(sp, staffTopY)
-      );
-      notePosMap.set(note.musicNoteIndex, {
-        x: note.x,
-        topY: Math.min(...noteYs),
-        bottomY: Math.max(...noteYs),
-        lineIndex: loc.lineIndex,
-        stemDirection: note.stemDirection,
-      });
-    }
-  }
-
+  const notePosMap = buildNotePosMap(barLayouts, barToLine, lineHeight);
   const result: TieLayout[][] = Array.from({ length: numLines }, () => []);
 
   for (const [startIdx, endIdx] of music.curves) {
@@ -468,7 +488,8 @@ function computeTuplets(
   music: Music,
   barLayouts: BarLayout[],
   barToLine: Map<number, { lineIndex: number; posInLine: number }>,
-  numLines: number
+  numLines: number,
+  lineHeight: number
 ): TupletLayout[][] {
   const result: TupletLayout[][] = Array.from({ length: numLines }, () => []);
 
@@ -480,20 +501,7 @@ function computeTuplets(
       lineFirstNoteAreaX.set(loc.lineIndex, bar.noteAreaX);
   }
 
-  const notePosMap = new Map<
-    number,
-    { x: number; stemEndY: number; lineIndex: number }
-  >();
-  for (const bar of barLayouts) {
-    const loc = barToLine.get(bar.barIndex)!;
-    for (const note of bar.notes) {
-      notePosMap.set(note.musicNoteIndex, {
-        x: note.x,
-        stemEndY: note.stemEndY,
-        lineIndex: loc.lineIndex,
-      });
-    }
-  }
+  const notePosMap = buildNotePosMap(barLayouts, barToLine, lineHeight);
 
   // Find runs of triplet notes in music.notes
   let tripletStart = -1;
@@ -557,6 +565,86 @@ function computeTuplets(
           }
         }
         tripletStart = isTriplet ? i : -1;
+      }
+    }
+  }
+
+  return result;
+}
+
+function computeSpanDecorations(
+  music: Music,
+  barLayouts: BarLayout[],
+  barToLine: Map<number, { lineIndex: number; posInLine: number }>,
+  numLines: number,
+  containerWidth: number,
+  lineHeight: number
+): SpanDecorationLayout[][] {
+  const notePosMap = buildNotePosMap(barLayouts, barToLine, lineHeight);
+  const result: SpanDecorationLayout[][] = Array.from(
+    { length: numLines },
+    () => []
+  );
+
+  for (const span of music.spanDecorations) {
+    const startPos = notePosMap.get(span.startNoteIndex);
+    const endPos = notePosMap.get(span.endNoteIndex);
+    if (!startPos || !endPos) continue;
+
+    const isHairpin = span.type === 'crescendo' || span.type === 'diminuendo';
+    // Hairpins go below the staff; trill spans go above.
+    const startY = isHairpin
+      ? startPos.staffTopY + STAFF_HEIGHT + STAFF_SPACE * 2
+      : startPos.staffTopY - STAFF_SPACE * 2;
+    const endY = isHairpin
+      ? endPos.staffTopY + STAFF_HEIGHT + STAFF_SPACE * 2
+      : endPos.staffTopY - STAFF_SPACE * 2;
+
+    if (startPos.lineIndex === endPos.lineIndex) {
+      result[startPos.lineIndex].push({
+        type: span.type,
+        startX: startPos.x,
+        endX: endPos.x,
+        y: startY,
+        lineIndex: startPos.lineIndex,
+        isOpenEnd: false,
+        isOpenStart: false,
+      });
+    } else {
+      // First segment: from start note to right edge of its line
+      result[startPos.lineIndex].push({
+        type: span.type,
+        startX: startPos.x,
+        endX: containerWidth - LEFT_MARGIN,
+        y: startY,
+        lineIndex: startPos.lineIndex,
+        isOpenEnd: true,
+        isOpenStart: false,
+      });
+      // Last segment: from left edge of end note's line to end note
+      result[endPos.lineIndex].push({
+        type: span.type,
+        startX: LEFT_MARGIN,
+        endX: endPos.x,
+        y: endY,
+        lineIndex: endPos.lineIndex,
+        isOpenEnd: false,
+        isOpenStart: true,
+      });
+      // Intermediate lines (if any): full-width continuation
+      for (let li = startPos.lineIndex + 1; li < endPos.lineIndex; li++) {
+        const lineY = isHairpin
+          ? TOP_MARGIN + li * lineHeight + STAFF_HEIGHT + STAFF_SPACE * 2
+          : TOP_MARGIN + li * lineHeight - STAFF_SPACE * 2;
+        result[li].push({
+          type: span.type,
+          startX: LEFT_MARGIN,
+          endX: containerWidth - LEFT_MARGIN,
+          y: lineY,
+          lineIndex: li,
+          isOpenEnd: true,
+          isOpenStart: true,
+        });
       }
     }
   }
