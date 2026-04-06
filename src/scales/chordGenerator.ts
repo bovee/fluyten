@@ -88,28 +88,25 @@ function chordTonesInRange(
   return result;
 }
 
-// Semitone of the lowest note for F-based instruments (C=0 … B=11).
-const INSTRUMENT_BASE_SEMITONE: Partial<Record<RecorderType, number>> = {
-  ALTO: 5,
-  SOPRANINO: 5,
-  BASS: 5,
-};
+// Default MIDI range when no specific instrument is known: tenor range
+const DEFAULT_LOW_MIDI = 60; // C4
+const DEFAULT_HIGH_MIDI = 85; // ~C#6
 
-function assignChordOctaves(
-  notes: string[],
-  startOctave: number
-): OctavedNote[] {
-  const result: OctavedNote[] = [];
-  let prevSemi = -1;
-  let octave = startOctave;
-  for (const note of notes) {
-    const { letter, acc } = parseNoteAcc(note);
-    const semi = ((LETTER_SEMITONE[letter] ?? 0) + acc + 12) % 12;
-    if (prevSemi >= 0 && semi <= prevSemi) octave++;
-    prevSemi = semi;
-    result.push({ letter, acc, octave });
-  }
-  return result;
+/** Return the written-notation MIDI range for an instrument.
+ *  Soprano is notated identically to tenor (sounds an octave higher but written the same).
+ *  Sopranino is notated identically to alto. */
+function notationMidiRange(instrumentType: RecorderType): {
+  lowMidi: number;
+  highMidi: number;
+} {
+  const notationType =
+    instrumentType === 'SOPRANO'
+      ? 'TENOR'
+      : instrumentType === 'SOPRANINO'
+        ? 'ALTO'
+        : instrumentType;
+  const { lowNote, highNote } = RECORDER_TYPES[notationType];
+  return { lowMidi: hzToMidi(lowNote), highMidi: hzToMidi(highNote) };
 }
 
 export function generateChordAbc(options: {
@@ -128,32 +125,28 @@ export function generateChordAbc(options: {
     chordMap[letter] = acc;
   }
 
-  let octaved: OctavedNote[];
-
-  if (
-    options.range === 'all' &&
-    options.instrumentType &&
-    options.instrumentType !== 'ALL'
-  ) {
-    // Enumerate all chord tones within the instrument's actual range, producing natural inversions
-    const { lowNote, highNote } = RECORDER_TYPES[options.instrumentType];
-    octaved = chordTonesInRange(
-      options.chord,
-      hzToMidi(lowNote),
-      hzToMidi(highNote)
-    );
+  let lowMidi: number;
+  let highMidi: number;
+  if (options.instrumentType && options.instrumentType !== 'ALL') {
+    ({ lowMidi, highMidi } = notationMidiRange(options.instrumentType));
   } else {
-    // Traditional: one position of the chord starting at the instrument's base register
-    const baseSemitone =
-      (options.instrumentType &&
-        INSTRUMENT_BASE_SEMITONE[options.instrumentType]) ??
-      0;
-    const defaultOctave = options.instrumentType === 'BASS' ? 2 : 4;
-    const { letter, acc } = parseNoteAcc(options.chord.notes[0]);
-    const rootSemi = ((LETTER_SEMITONE[letter] ?? 0) + acc + 12) % 12;
-    const startOctave =
-      rootSemi < baseSemitone ? defaultOctave + 1 : defaultOctave;
-    octaved = assignChordOctaves(options.chord.notes, startOctave);
+    lowMidi = DEFAULT_LOW_MIDI;
+    highMidi = DEFAULT_HIGH_MIDI;
+  }
+  let octaved: OctavedNote[];
+  if (options.range === 'traditional') {
+    // Use the same starting octave as scaleGenerator so the arpeggio begins
+    // at the same register as the scale (octave 2 for bass, 4 for everything else).
+    const startingOctave = options.instrumentType === 'BASS' ? 2 : 4;
+    const { letter: rootLetter0, acc: rootAcc } = parseNoteAcc(
+      options.chord.notes[0]
+    );
+    const startMidi =
+      (startingOctave + 1) * 12 +
+      (((LETTER_SEMITONE[rootLetter0] ?? 0) + rootAcc + 12) % 12);
+    octaved = chordTonesInRange(options.chord, startMidi, startMidi + 11);
+  } else {
+    octaved = chordTonesInRange(options.chord, lowMidi, highMidi);
   }
 
   if (options.direction === 'descending') {
@@ -166,13 +159,10 @@ export function generateChordAbc(options: {
     }
   }
 
-  return (
-    octaved
-      .map(
-        ({ letter, octave }) =>
-          explicitAccidental(letter, chordMap, songMap) +
-          abcNote(letter, octave)
-      )
-      .join(' ') + ' |'
-  );
+  return octaved
+    .map(
+      ({ letter, octave }) =>
+        explicitAccidental(letter, chordMap, songMap) + abcNote(letter, octave)
+    )
+    .join(' ');
 }

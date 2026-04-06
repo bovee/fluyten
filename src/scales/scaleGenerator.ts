@@ -44,11 +44,7 @@ function formatAbcNotes(
     const prefix = explicitAccidental(letter, scaleMap, songMap);
     return prefix + note;
   });
-  const groups: string[] = [];
-  for (let i = 0; i < annotated.length; i += 4) {
-    groups.push(annotated.slice(i, i + 4).join(' '));
-  }
-  return groups.join(' | ') + ' |';
+  return annotated.join(' ');
 }
 
 /** Generate the notes-only ABC string for a scale. */

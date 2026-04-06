@@ -91,7 +91,7 @@ const GERMAN_FINGERINGS: { [offset: number]: Hole[][] } = parseFingerings({
 
 // Fingerings for trilled notes. Use T/U/V/W characters to mark holes that
 // animate during the trill. Keys are pitch offsets identical to FINGERINGS.
-// eslint-disable-next-line react-refresh/only-export-components
+ 
 export const TRILLED_FINGERINGS: { [offset: number]: Hole[][] } =
   parseFingerings({
     5: ['CCCCCVOO'], // E

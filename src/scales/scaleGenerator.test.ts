@@ -1,17 +1,19 @@
 import { describe, it, expect } from 'vitest';
 import { generateScaleAbc } from './scaleGenerator';
+import { generateChordAbc, buildChord } from './chordGenerator';
+import { RECORDER_TYPES } from '../instrument';
 
 describe('generateScaleAbc', () => {
-  it('C major ascending for SOPRANO: 8 notes in two bar groups', () => {
+  it('C major ascending for SOPRANO: 8 notes', () => {
     const notes = generateScaleAbc({
       key: 'C',
       range: 'traditional',
       direction: 'ascending',
       instrumentType: 'SOPRANO',
     });
-    const tokens = notes.split(/[| ]+/).filter(Boolean);
+    const tokens = notes.split(/\s+/).filter(Boolean);
     expect(tokens).toHaveLength(8);
-    expect(notes.match(/\|/g)).toHaveLength(2);
+    expect(notes.match(/\|/g)).toBeNull();
   });
 
   it('F major ascending for ALTO: starts on F', () => {
@@ -138,14 +140,14 @@ describe('generateScaleAbc', () => {
     expect(notes).toContain('=F');
   });
 
-  it('bar grouping: 8 notes produce exactly 2 pipe characters', () => {
+  it('no bar lines in generated output', () => {
     const notes = generateScaleAbc({
       key: 'C',
       range: 'traditional',
       direction: 'ascending',
       instrumentType: 'SOPRANO',
     });
-    expect(notes.match(/\|/g)).toHaveLength(2);
+    expect(notes.match(/\|/g)).toBeNull();
   });
 
   it('ALTO instrument: traditional range starts on the key root', () => {
@@ -157,5 +159,63 @@ describe('generateScaleAbc', () => {
     });
     const firstNote = notes.trim().split(/\s/)[0];
     expect(firstNote).toBe('C');
+  });
+});
+
+function hzToMidi(hz: number): number {
+  return Math.round(69 + 12 * Math.log2(hz / 440));
+}
+
+function noteToMidi(abcNote: string): number {
+  // Strip accidental prefixes (^, _, =) and parse letter + octave marks
+  const stripped = abcNote.replace(/^[^a-zA-Z]+/, '');
+  const isLower = stripped[0] === stripped[0].toLowerCase();
+  const letter = stripped[0].toUpperCase();
+  const primes = (stripped.match(/'/g) ?? []).length;
+  const commas = (stripped.match(/,/g) ?? []).length;
+  const semitones: Record<string, number> = {
+    C: 0,
+    D: 2,
+    E: 4,
+    F: 5,
+    G: 7,
+    A: 9,
+    B: 11,
+  };
+  const acc = abcNote.startsWith('^') ? 1 : abcNote.startsWith('_') ? -1 : 0;
+  const octave = (isLower ? 5 : 4) + primes - commas;
+  return (octave + 1) * 12 + (semitones[letter] ?? 0) + acc;
+}
+
+describe('generateChordAbc', () => {
+  it('no bar lines in generated output', () => {
+    const chord = { name: 'C', notes: buildChord('C', [0, 4, 7]) };
+    const notes = generateChordAbc({
+      chord,
+      range: 'traditional',
+      direction: 'ascending',
+      instrumentType: 'SOPRANO',
+    });
+    expect(notes.match(/\|/g)).toBeNull();
+  });
+
+  it('traditional range: all notes within instrument range', () => {
+    const recorderTypes = ['SOPRANO', 'ALTO', 'TENOR', 'BASS'] as const;
+    // Test a high chord (B major) which would exceed range without inversion
+    const chord = { name: 'B', notes: buildChord('B', [0, 4, 7]) };
+    for (const instrumentType of recorderTypes) {
+      const notes = generateChordAbc({
+        chord,
+        range: 'traditional',
+        direction: 'ascending',
+        instrumentType,
+      });
+      const { highNote } = RECORDER_TYPES[instrumentType];
+      const highMidi = hzToMidi(highNote);
+      const tokens = notes.trim().split(/\s+/).filter(Boolean);
+      for (const token of tokens) {
+        expect(noteToMidi(token)).toBeLessThanOrEqual(highMidi);
+      }
+    }
   });
 });
