@@ -62,6 +62,8 @@
   "transformAddAllAccidentals": "सर्व अकस्मात चिन्हे जोडा",
   "transformReverseNotes": "नोट्स उलट्या करा",
   "recorderType": "रेकॉर्डरचा प्रकार",
+  "customBasePitch": "मूळ स्वर",
+  "customHighNote": "उच्च नोट",
   "detect": "शोधा",
   "detectRecorderType": "रेकॉर्डरचा प्रकार शोधा",
   "detectInstructions": "तुमच्या रेकॉर्डरचे अंगठ्याचे छिद्र आणि सर्वात वरचे बोटाचे छिद्र झाका आणि फुंकर घाला.",
@@ -120,7 +122,12 @@
     "TENOR": "टेनर",
     "ALTO": "ऑल्टो",
     "SOPRANO": "सोप्रानो",
-    "SOPRANINO": "सोप्रानिनो"
+    "SOPRANINO": "सोप्रानिनो",
+    "CONTRABASS": "कॉन्ट्राबास",
+    "GREATBASS": "ग्रेट बास",
+    "VOICEFLUTE": "व्हॉइस फ्लूट",
+    "GARKLEIN": "गार्कलाइन",
+    "OTHER": "इतर"
   },
   "beginnerSongs": [
     "हॉट क्रॉस बन्स",

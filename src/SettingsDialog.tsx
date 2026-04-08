@@ -27,8 +27,10 @@ import GraphicEq from '@mui/icons-material/GraphicEq';
 import ChevronLeft from '@mui/icons-material/ChevronLeft';
 import ChevronRight from '@mui/icons-material/ChevronRight';
 import { useTranslation } from 'react-i18next';
+import TextField from '@mui/material/TextField';
 import { useStore } from './store';
 import { RECORDER_TYPES } from './instrument';
+import { noteNameToMidi } from './audio/utils';
 import { METHODS_FOR_INSTRUMENT, METHOD_DISPLAY_NAMES } from './method';
 import { FingeringDiagram } from './FingeringDiagram';
 import { RecorderDetector } from './audio/RecorderDetector';
@@ -179,6 +181,10 @@ export function SettingsDialog({ open, onClose }: SettingsDialogProps) {
   const { t } = useTranslation();
   const instrumentType = useStore((state) => state.instrumentType);
   const setInstrumentType = useStore((state) => state.setInstrumentType);
+  const customBasePitchStr = useStore((state) => state.customBasePitchStr);
+  const setCustomBasePitch = useStore((state) => state.setCustomBasePitch);
+  const customHighNoteStr = useStore((state) => state.customHighNoteStr);
+  const setCustomHighNote = useStore((state) => state.setCustomHighNote);
   const tuning = useStore((state) => state.tuning);
   const setTuning = useStore((state) => state.setTuning);
   const isGerman = useStore((state) => state.isGerman);
@@ -425,32 +431,62 @@ export function SettingsDialog({ open, onClose }: SettingsDialogProps) {
                   <Select
                     labelId="instrument-type-label"
                     id="instrument-type-select"
-                    value={instrumentType}
+                    value={instrumentType ?? 'OTHER'}
                     label={t('recorderType')}
-                    onChange={(e) =>
+                    onChange={(e) => {
+                      const v = e.target.value as string;
                       setInstrumentType(
-                        e.target.value as keyof typeof RECORDER_TYPES
-                      )
-                    }
+                        v === 'OTHER' ? null : (v as keyof typeof RECORDER_TYPES)
+                      );
+                    }}
                   >
-                    {Object.keys(RECORDER_TYPES)
-                      .filter((key) => key !== 'ALL')
-                      .map((key) => (
-                        <MenuItem key={key} value={key}>
-                          {t(`recorderTypes.${key}`)}
-                        </MenuItem>
-                      ))}
+                    {Object.keys(RECORDER_TYPES).map((key) => (
+                      <MenuItem key={key} value={key}>
+                        {t(`recorderTypes.${key}`)}
+                      </MenuItem>
+                    ))}
+                    <MenuItem value="OTHER">{t('recorderTypes.OTHER')}</MenuItem>
                   </Select>
                 </FormControl>
                 <Button
                   variant="outlined"
                   startIcon={<GraphicEq />}
                   onClick={openDetect}
-                  sx={{ whiteSpace: 'nowrap', height: 56, px: 2 }}
+                  sx={{
+                    whiteSpace: 'nowrap',
+                    height: 56,
+                    px: 2,
+                    '& .MuiButton-startIcon': { mr: 0.5 },
+                  }}
                 >
                   {t('detect')}
                 </Button>
               </Box>
+
+              {instrumentType === null && (
+                <Box sx={{ display: 'flex', gap: 2 }}>
+                  <TextField
+                    label={t('customBasePitch')}
+                    value={customBasePitchStr}
+                    onChange={(e) => setCustomBasePitch(e.target.value)}
+                    error={noteNameToMidi(customBasePitchStr) === null}
+                    size="small"
+                    fullWidth
+                  />
+                  <TextField
+                    label={t('customHighNote')}
+                    value={customHighNoteStr}
+                    onChange={(e) => setCustomHighNote(e.target.value)}
+                    error={
+                      noteNameToMidi(customHighNoteStr) === null ||
+                      (noteNameToMidi(customHighNoteStr) ?? 0) <=
+                        (noteNameToMidi(customBasePitchStr) ?? 0)
+                    }
+                    size="small"
+                    fullWidth
+                  />
+                </Box>
+              )}
 
               <FormControlLabel
                 control={
@@ -486,7 +522,10 @@ export function SettingsDialog({ open, onClose }: SettingsDialogProps) {
                   onChange={(e) => setMethod(e.target.value)}
                 >
                   <MenuItem value="none">{t('methodNone')}</MenuItem>
-                  {METHODS_FOR_INSTRUMENT[instrumentType].map((m) => (
+                  {(instrumentType
+                    ? METHODS_FOR_INSTRUMENT[instrumentType]
+                    : []
+                  ).map((m) => (
                     <MenuItem key={m} value={m}>
                       {METHOD_DISPLAY_NAMES[m]}
                     </MenuItem>

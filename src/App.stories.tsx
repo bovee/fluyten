@@ -3,6 +3,9 @@ import type { Meta, StoryObj, Decorator } from '@storybook/react';
 import { userEvent, within, expect } from 'storybook/test';
 import App from './App';
 import { useStore } from './store';
+// Eagerly import SongPage so it is already in Vite's module cache when
+// React.lazy resolves it during story interactions.
+import './SongPage';
 import type { UserSong } from './store';
 
 const withSongs =

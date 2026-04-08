@@ -62,6 +62,8 @@
   "transformAddAllAccidentals": "Ongeza alama zote za bahati mbaya",
   "transformReverseNotes": "Geuza Noti",
   "recorderType": "Aina ya filimbi",
+  "customBasePitch": "Sauti ya Msingi",
+  "customHighNote": "Nota ya Juu",
   "detect": "Gundua",
   "detectRecorderType": "Gundua aina ya filimbi",
   "detectInstructions": "Funika shimo la kidole gumba na shimo la juu zaidi la kidole kwenye filimbi yako na upulize.",
@@ -120,7 +122,12 @@
     "TENOR": "Tenor",
     "ALTO": "Alto",
     "SOPRANO": "Soprano",
-    "SOPRANINO": "Sopranino"
+    "SOPRANINO": "Sopranino",
+    "CONTRABASS": "Kontrabesi",
+    "GREATBASS": "Besi Kubwa",
+    "VOICEFLUTE": "Voice Flute",
+    "GARKLEIN": "Garklein",
+    "OTHER": "Nyingine"
   },
   "beginnerSongs": [
     "Hot Cross Buns",

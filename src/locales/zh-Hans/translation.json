@@ -62,6 +62,8 @@
   "transformAddAllAccidentals": "添加所有临时记号",
   "transformReverseNotes": "反转音符",
   "recorderType": "竖笛类型",
+  "customBasePitch": "基本音高",
+  "customHighNote": "高音",
   "detect": "检测",
   "detectRecorderType": "检测竖笛类型",
   "detectInstructions": "盖住竖笛的拇指孔和最顶部的手指孔并吹奏。",
@@ -120,7 +122,12 @@
     "TENOR": "次中音",
     "ALTO": "中音",
     "SOPRANO": "高音",
-    "SOPRANINO": "超高音"
+    "SOPRANINO": "超高音",
+    "CONTRABASS": "倍低音",
+    "GREATBASS": "大低音",
+    "VOICEFLUTE": "声笛",
+    "GARKLEIN": "加尔克莱恩",
+    "OTHER": "其他"
   },
   "beginnerSongs": [
     "热十字面包",

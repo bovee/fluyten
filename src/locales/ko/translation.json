@@ -62,6 +62,8 @@
   "transformAddAllAccidentals": "모든 임시표 추가",
   "transformReverseNotes": "음표 역순 배열",
   "recorderType": "리코더 종류",
+  "customBasePitch": "기본 음높이",
+  "customHighNote": "고음",
   "detect": "감지",
   "detectRecorderType": "리코더 종류 감지",
   "detectInstructions": "리코더의 엄지 구멍과 맨 위 손가락 구멍을 막고 불어주세요.",
@@ -120,7 +122,12 @@
     "TENOR": "테너",
     "ALTO": "알토",
     "SOPRANO": "소프라노",
-    "SOPRANINO": "소프라니노"
+    "SOPRANINO": "소프라니노",
+    "CONTRABASS": "콘트라베이스",
+    "GREATBASS": "그레이트베이스",
+    "VOICEFLUTE": "보이스플루트",
+    "GARKLEIN": "가르클라인",
+    "OTHER": "기타"
   },
   "beginnerSongs": [
     "핫크로스번",

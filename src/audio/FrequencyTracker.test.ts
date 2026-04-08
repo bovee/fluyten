@@ -89,7 +89,6 @@ describe('FrequencyTracker', () => {
   function injectAudioContext(currentTime = 0) {
     tracker.audioCtx = { currentTime, sampleRate } as any;
     tracker.source = { connect: vi.fn(), disconnect: vi.fn() } as any;
-    tracker.freqStep = (0.5 * sampleRate) / bufferSize;
   }
 
   function makeAnalyser(pcmData: Float32Array) {
@@ -109,11 +108,9 @@ describe('FrequencyTracker', () => {
       tracker.stop();
     });
 
-    it('calculates freqStep from sampleRate and fftSize', async () => {
+    it('sets fftSize to the configured buffer size', async () => {
       await tracker.start();
-      const expected =
-        (0.5 * tracker.audioCtx!.sampleRate) / tracker.analyser!.fftSize;
-      expect(tracker.freqStep).toBeCloseTo(expected);
+      expect(tracker.analyser!.fftSize).toBe(4096);
       tracker.stop();
     });
   });
@@ -145,7 +142,7 @@ describe('FrequencyTracker', () => {
 
   describe('checkFrequency', () => {
     it('does nothing when audio context is not set up', () => {
-      tracker.checkFrequency({ instrumentType: 'TENOR', tuning });
+      tracker.checkFrequency({ basePitch: 60, pitchRange: 26, tuning });
       expect(onStartNote).not.toHaveBeenCalled();
       expect(onStopNote).not.toHaveBeenCalled();
     });
@@ -156,22 +153,26 @@ describe('FrequencyTracker', () => {
         new Float32Array(bufferSize).fill(0)
       ) as any;
 
-      tracker.checkFrequency({ instrumentType: 'TENOR', tuning });
+      tracker.checkFrequency({ basePitch: 60, pitchRange: 26, tuning });
 
       expect(onStartNote).not.toHaveBeenCalled();
     });
 
     it('calls onStopNote when a tracked note goes quiet', () => {
-      injectAudioContext(2.5);
-      tracker.analyser = makeAnalyser(
-        new Float32Array(bufferSize).fill(0)
-      ) as any;
-      tracker.currentNote = 69; // A4
-      tracker.currentNoteStart = 1.0;
+      // Establish a note by playing A4, then silence it.
+      injectAudioContext(0);
+      const bufA4 = makeSineBuffer(440, sampleRate, bufferSize);
+      tracker.analyser = makeAnalyser(bufA4) as any;
+      tracker.checkFrequency({ basePitch: 60, pitchRange: 26, tuning });
+      expect(onStartNote).toHaveBeenCalledTimes(1);
 
-      tracker.checkFrequency({ instrumentType: 'TENOR', tuning });
+      (tracker.audioCtx as any).currentTime = 1.5;
+      tracker.analyser = makeAnalyser(new Float32Array(bufferSize)) as any;
+      tracker.checkFrequency({ basePitch: 60, pitchRange: 26, tuning });
 
-      expect(onStopNote).toHaveBeenCalledWith(69, 1.5);
+      expect(onStopNote).toHaveBeenCalledTimes(1);
+      expect(onStopNote.mock.calls[0][0]).toBe(69);
+      expect(onStopNote.mock.calls[0][1]).toBeCloseTo(1.5);
     });
 
     it('detects A4 (440 Hz) as MIDI 69 for tenor', () => {
@@ -179,7 +180,7 @@ describe('FrequencyTracker', () => {
       const buf = makeSineBuffer(440, sampleRate, bufferSize);
       tracker.analyser = makeAnalyser(buf) as any;
 
-      tracker.checkFrequency({ instrumentType: 'TENOR', tuning });
+      tracker.checkFrequency({ basePitch: 60, pitchRange: 26, tuning });
 
       expect(onStartNote).toHaveBeenCalledTimes(1);
       const pitch: number = onStartNote.mock.calls[0][0];
@@ -193,7 +194,7 @@ describe('FrequencyTracker', () => {
       const buf = makeSawtoothBuffer(293.66, sampleRate, bufferSize);
       tracker.analyser = makeAnalyser(buf) as any;
 
-      tracker.checkFrequency({ instrumentType: 'TENOR', tuning });
+      tracker.checkFrequency({ basePitch: 60, pitchRange: 26, tuning });
 
       expect(onStartNote).toHaveBeenCalledTimes(1);
       const pitch: number = onStartNote.mock.calls[0][0];
@@ -206,7 +207,7 @@ describe('FrequencyTracker', () => {
       const buf = makeSineBuffer(523.25, sampleRate, bufferSize);
       tracker.analyser = makeAnalyser(buf) as any;
 
-      tracker.checkFrequency({ instrumentType: 'SOPRANO', tuning });
+      tracker.checkFrequency({ basePitch: 72, pitchRange: 26, tuning });
 
       expect(onStartNote).toHaveBeenCalledTimes(1);
       const pitch: number = onStartNote.mock.calls[0][0];
@@ -220,7 +221,7 @@ describe('FrequencyTracker', () => {
       const buf = makeSineBuffer(261.63, sampleRate, bufferSize);
       tracker.analyser = makeAnalyser(buf) as any;
 
-      tracker.checkFrequency({ instrumentType: 'TENOR', tuning });
+      tracker.checkFrequency({ basePitch: 60, pitchRange: 26, tuning });
 
       expect(onStartNote).toHaveBeenCalledTimes(1);
       const pitch: number = onStartNote.mock.calls[0][0];
@@ -232,14 +233,14 @@ describe('FrequencyTracker', () => {
       injectAudioContext(0);
       const bufA = makeSineBuffer(440, sampleRate, bufferSize);
       tracker.analyser = makeAnalyser(bufA) as any;
-      tracker.checkFrequency({ instrumentType: 'TENOR', tuning });
+      tracker.checkFrequency({ basePitch: 60, pitchRange: 26, tuning });
       expect(onStartNote).toHaveBeenCalledTimes(1);
 
       // Now play D4 (~293.66 Hz)
       (tracker.audioCtx as any).currentTime = 1.0;
       const bufD = makeSineBuffer(293.66, sampleRate, bufferSize);
       tracker.analyser = makeAnalyser(bufD) as any;
-      tracker.checkFrequency({ instrumentType: 'TENOR', tuning });
+      tracker.checkFrequency({ basePitch: 60, pitchRange: 26, tuning });
 
       expect(onStopNote).toHaveBeenCalledTimes(1);
       expect(onStartNote).toHaveBeenCalledTimes(2);

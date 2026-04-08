@@ -27,8 +27,9 @@ import {
   defaultClefForInstrument,
   type VoiceInfo,
 } from './io/abcImport';
+import { resolveInstrumentConfig, RECORDER_TYPES } from './instrument';
 import { Music, expandRepeats, findNearestExpandedIndex } from './music';
-import { FrequencyTracker } from './audio/FrequencyTracker';
+import { SingleFrequencyTracker } from './audio/SingleFrequencyTracker';
 import { NotePlayer } from './audio/NotePlayer';
 import { MusicTimeline } from './audio/MusicTimeline';
 import { Score } from './engraving';
@@ -40,7 +41,7 @@ import { noteOctaveDots } from './engraving/noteNameUtils';
 import { EditorDrawer } from './EditorDrawer';
 
 const PLAY_SAMPLE_RATE = 1000;
-const RECORD_SAMPLE_RATE = 50;
+const RECORD_SAMPLE_RATE = 20;
 
 /** Tracks a repeating window.setInterval ID in both state (for reactive UI) and a ref (for stale-closure-safe cleanup). */
 function useIntervalRef() {
@@ -78,55 +79,23 @@ function usePitchDetection(
 ) {
   const { t } = useTranslation();
   const [detectedPitch, setDetectedPitch] = useState<number | null>(null);
+  const [isRecording, setIsRecording] = useState(false);
   const [noteResults, setNoteResults] = useState<
     ReadonlyMap<number, 'correct' | 'wrong'>
   >(new Map());
   const [cursor, setCursor] = useState<{ noteIdx: number } | undefined>();
   const noteResultsMapRef = useRef(new Map<number, 'correct' | 'wrong'>());
-  const freqTrackerInterval = useIntervalRef();
+  // True while the target note is currently sounding, so we count each note
+  // onset only once even if the player holds the note across multiple polls.
+  const wasActiveRef = useRef(false);
 
-  const freqTrackerRef = useRef<FrequencyTracker>(
-    new FrequencyTracker(
-      (pitch: number) => {
-        setDetectedPitch(pitch);
-        const tracking = expandedTrackingRef.current;
-        const expandedNote = tracking.notes[tracking.idx];
-        if (expandedNote && expandedNote.pitches[0] === pitch) {
-          const originalIdx = tracking.originalIndices[tracking.idx];
-          if (originalIdx !== undefined) {
-            noteResultsMapRef.current.set(originalIdx, 'correct');
-            setNoteResults(new Map(noteResultsMapRef.current));
-          }
-          tracking.idx++;
-          if (tracking.idx >= tracking.notes.length) {
-            freqTrackerInterval.clear();
-            freqTrackerRef.current.stop();
-            setDetectedPitch(null);
-            setCursor(undefined);
-            setStatusMessage(t('recordingStopped'));
-            onFinish(
-              new Map(noteResultsMapRef.current),
-              tracking.notes.length,
-              tracking.notes.length
-            );
-          } else {
-            const nextOriginalIdx = tracking.originalIndices[tracking.idx];
-            setCursor(
-              nextOriginalIdx !== undefined
-                ? { noteIdx: nextOriginalIdx }
-                : undefined
-            );
-          }
-        }
-      },
-      () => setDetectedPitch(null)
-    )
-  );
+  const freqTrackerRef = useRef<SingleFrequencyTracker | null>(null);
 
   const startRecording = async () => {
-    if (freqTrackerInterval.isActive) {
-      freqTrackerInterval.clear();
+    if (isRecording) {
       freqTrackerRef.current?.stop();
+      freqTrackerRef.current = null;
+      setIsRecording(false);
       setDetectedPitch(null);
       setCursor(undefined);
       setStatusMessage(t('recordingStopped'));
@@ -141,27 +110,95 @@ function usePitchDetection(
       firstOriginalIdx !== undefined ? { noteIdx: firstOriginalIdx } : undefined
     );
 
-    const { instrumentType, tuning } = useStore.getState();
+    const { tuning, instrumentType, customBasePitchStr, customHighNoteStr } =
+      useStore.getState();
+    const config =
+      resolveInstrumentConfig(
+        instrumentType,
+        customBasePitchStr,
+        customHighNoteStr
+      ) ?? RECORDER_TYPES.SOPRANO;
+
+    // Point the tracker at the first non-rest note.
+    const tracking = expandedTrackingRef.current;
+    while (
+      tracking.idx < tracking.notes.length &&
+      tracking.notes[tracking.idx].pitches.length === 0
+    )
+      tracking.idx++;
+    const firstNote = tracking.notes[tracking.idx];
+
+    const tracker = new SingleFrequencyTracker((active, pitch) => {
+      setDetectedPitch(pitch);
+      if (active) {
+        if (!wasActiveRef.current) {
+          // Note onset: advance the cursor.
+          wasActiveRef.current = true;
+          const tracking = expandedTrackingRef.current;
+          const originalIdx = tracking.originalIndices[tracking.idx];
+          if (originalIdx !== undefined) {
+            noteResultsMapRef.current.set(originalIdx, 'correct');
+            setNoteResults(new Map(noteResultsMapRef.current));
+          }
+          tracking.idx++;
+          // Skip over rests to reach the next pitched note.
+          while (
+            tracking.idx < tracking.notes.length &&
+            tracking.notes[tracking.idx].pitches.length === 0
+          )
+            tracking.idx++;
+          if (tracking.idx >= tracking.notes.length) {
+            tracker.stop();
+            freqTrackerRef.current = null;
+            setIsRecording(false);
+            setDetectedPitch(null);
+            setCursor(undefined);
+            setStatusMessage(t('recordingStopped'));
+            onFinish(
+              new Map(noteResultsMapRef.current),
+              tracking.notes.length,
+              tracking.notes.length
+            );
+          } else {
+            tracker.setTarget(tracking.notes[tracking.idx].pitches[0], tuning);
+            const nextOriginalIdx = tracking.originalIndices[tracking.idx];
+            setCursor(
+              nextOriginalIdx !== undefined
+                ? { noteIdx: nextOriginalIdx }
+                : undefined
+            );
+          }
+        }
+      } else {
+        wasActiveRef.current = false;
+      }
+    }, RECORD_SAMPLE_RATE);
+
+    if (firstNote) tracker.setTarget(firstNote.pitches[0], tuning);
 
     try {
-      await freqTrackerRef.current.start();
-      const id = window.setInterval(() => {
-        freqTrackerRef.current?.checkFrequency({ instrumentType, tuning });
-      }, RECORD_SAMPLE_RATE);
-      freqTrackerInterval.set(id);
+      await tracker.start(config.basePitch, config.pitchRange, tuning);
+      wasActiveRef.current = false;
+      freqTrackerRef.current = tracker;
+      setIsRecording(true);
       setStatusMessage(t('recordingStarted'));
     } catch (error) {
+      tracker.stop();
       console.error('Failed to start recording:', error);
       alert(`Failed to start recording: ${(error as Error).message}`);
     }
   };
 
-  // eslint-disable-next-line react-hooks/exhaustive-deps
-  useEffect(() => () => freqTrackerInterval.clear(), []); // cleanup on unmount only
+  useEffect(
+    () => () => {
+      freqTrackerRef.current?.stop();
+    },
+    [] // cleanup on unmount only
+  );
 
   return {
     detectedPitch,
-    isRecording: freqTrackerInterval.isActive,
+    isRecording,
     startRecording,
     noteResults,
     cursor,
@@ -180,12 +217,12 @@ function useInTempoChecking(
 ) {
   const { t } = useTranslation();
   const [detectedPitch, setDetectedPitch] = useState<number | null>(null);
+  const [isRecording, setIsRecording] = useState(false);
   const [noteResults, setNoteResults] = useState<
     ReadonlyMap<number, 'correct' | 'wrong'>
   >(new Map());
   const [cursor, setCursor] = useState<{ noteIdx: number } | undefined>();
   const [countdown, setCountdown] = useState<number | null>(null);
-  const freqInterval = useIntervalRef();
   // Track the current note index (original) being evaluated, and whether the
   // correct pitch was detected at any point during that note's time window.
   const currentNoteIdxRef = useRef(-1);
@@ -198,29 +235,15 @@ function useInTempoChecking(
   const countdownTimeoutsRef = useRef<number[]>([]);
   const clickCtxRef = useRef<AudioContext | null>(null);
 
-  const freqTrackerRef = useRef<FrequencyTracker>(
-    new FrequencyTracker(
-      (pitch: number) => {
-        setDetectedPitch(pitch);
-        // Check if this pitch matches the current expected note.
-        const noteIdx = currentNoteIdxRef.current;
-        if (noteIdx >= 0) {
-          const note = musicRef.current.notes[noteIdx];
-          if (note && note.pitches[0] === pitch) {
-            correctSeenRef.current = true;
-          }
-        }
-      },
-      () => setDetectedPitch(null)
-    )
-  );
+  const freqTrackerRef = useRef<SingleFrequencyTracker | null>(null);
 
   const stopAll = () => {
     for (const id of countdownTimeoutsRef.current) clearTimeout(id);
     countdownTimeoutsRef.current = [];
     setCountdown(null);
-    freqInterval.clear();
-    freqTrackerRef.current.stop();
+    setIsRecording(false);
+    freqTrackerRef.current?.stop();
+    freqTrackerRef.current = null;
     clickCtxRef.current?.close();
     clickCtxRef.current = null;
     timelineRef.current = null;
@@ -232,27 +255,38 @@ function useInTempoChecking(
   };
 
   const startRecording = async () => {
-    if (freqInterval.isActive) {
+    if (isRecording) {
       stopAll();
       setStatusMessage(t('recordingStopped'));
       return;
     }
 
-    const { instrumentType, tuning } = useStore.getState();
+    const { tuning, instrumentType, customBasePitchStr, customHighNoteStr } =
+      useStore.getState();
+    const config =
+      resolveInstrumentConfig(
+        instrumentType,
+        customBasePitchStr,
+        customHighNoteStr
+      ) ?? RECORDER_TYPES.SOPRANO;
     const music = musicRef.current;
 
+    const tracker = new SingleFrequencyTracker((active, pitch) => {
+      setDetectedPitch(pitch);
+      if (active) correctSeenRef.current = true;
+    }, RECORD_SAMPLE_RATE);
+
     try {
-      await freqTrackerRef.current.start();
+      await tracker.start(config.basePitch, config.pitchRange, tuning);
     } catch (error) {
+      tracker.stop();
       console.error('Failed to start recording:', error);
       alert(`Failed to start recording: ${(error as Error).message}`);
       return;
     }
 
-    const freqId = window.setInterval(() => {
-      freqTrackerRef.current.checkFrequency({ instrumentType, tuning });
-    }, RECORD_SAMPLE_RATE);
-    freqInterval.set(freqId);
+    freqTrackerRef.current = tracker;
+    setIsRecording(true);
 
     currentNoteIdxRef.current = -1;
     correctSeenRef.current = false;
@@ -329,21 +363,26 @@ function useInTempoChecking(
         const noteIdx = tl.getNoteIdxAtTime(now);
         const floorIdx = Math.floor(noteIdx);
 
-        // When the note index advances, evaluate the note that just finished.
-        if (
-          floorIdx !== currentNoteIdxRef.current &&
-          currentNoteIdxRef.current >= 0
-        ) {
-          const prevIdx = currentNoteIdxRef.current;
-          const prevNote = music.notes[prevIdx];
-          if (prevNote && prevNote.pitches.length > 0) {
-            const result = correctSeenRef.current ? 'correct' : 'wrong';
-            noteResultsMapRef.current.set(prevIdx, result);
-            setNoteResults(new Map(noteResultsMapRef.current));
-            totalCountRef.current++;
-            if (result === 'correct') correctCountRef.current++;
+        // When the note index advances, evaluate the note that just finished
+        // and point the tracker at the new expected note.
+        if (floorIdx !== currentNoteIdxRef.current) {
+          if (currentNoteIdxRef.current >= 0) {
+            const prevIdx = currentNoteIdxRef.current;
+            const prevNote = music.notes[prevIdx];
+            if (prevNote && prevNote.pitches.length > 0) {
+              const result = correctSeenRef.current ? 'correct' : 'wrong';
+              noteResultsMapRef.current.set(prevIdx, result);
+              setNoteResults(new Map(noteResultsMapRef.current));
+              totalCountRef.current++;
+              if (result === 'correct') correctCountRef.current++;
+            }
+            correctSeenRef.current = false;
           }
-          correctSeenRef.current = false;
+          const newNote = music.notes[floorIdx];
+          freqTrackerRef.current?.setTarget(
+            newNote && newNote.pitches.length > 0 ? newNote.pitches[0] : 0,
+            tuning
+          );
         }
         currentNoteIdxRef.current = floorIdx;
 
@@ -356,12 +395,11 @@ function useInTempoChecking(
     countdownTimeoutsRef.current = [closeClick, id2, id1, id0];
   };
 
-  // eslint-disable-next-line react-hooks/exhaustive-deps
   useEffect(() => () => stopAll(), []); // cleanup on unmount only
 
   return {
     detectedPitch,
-    isRecording: freqInterval.isActive,
+    isRecording,
     startRecording,
     noteResults,
     cursor,
@@ -599,8 +637,18 @@ export function SongPage({
   const { t } = useTranslation();
   const theme = useTheme();
   const instrumentType = useStore((s) => s.instrumentType);
-  const defaultClef = defaultClefForInstrument(instrumentType);
-  const defaultMiddle = instrumentType === 'BASS' ? 'd' : undefined;
+  const customBasePitchStr = useStore((s) => s.customBasePitchStr);
+  const customHighNoteStr = useStore((s) => s.customHighNoteStr);
+  const instrumentConfig =
+    resolveInstrumentConfig(
+      instrumentType,
+      customBasePitchStr,
+      customHighNoteStr
+    ) ?? RECORDER_TYPES.SOPRANO;
+  const defaultClef = defaultClefForInstrument(instrumentConfig.basePitch);
+  let defaultMiddle = undefined;
+  if (defaultClef === 'bass8va') defaultMiddle = 'd';
+  if (defaultClef === 'bass') defaultMiddle = 'D';
   const [editOpen, setEditOpen] = useState(() => {
     try {
       const v = voicesFromAbc(song.abc, defaultClef, defaultMiddle);
@@ -667,11 +715,29 @@ export function SongPage({
   });
   useEffect(() => {
     const expanded = expandRepeats(music);
-    expandedTrackingRef.current = {
-      notes: expanded.notes,
-      originalIndices: expanded.originalIndices,
-      idx: 0,
+    // Collapse tie chains: a note is a tie continuation if the previous
+    // expanded note has the same pitches and a curve connects them.
+    const isTieContinuation = (i: number): boolean => {
+      if (i === 0) return false;
+      const prev = expanded.notes[i - 1];
+      const curr = expanded.notes[i];
+      if (
+        prev.pitches.length === 0 ||
+        prev.pitches.length !== curr.pitches.length ||
+        !prev.pitches.every((p, j) => p === curr.pitches[j])
+      )
+        return false;
+      return expanded.curves.some(([s, e]) => s === i - 1 && e === i);
     };
+    const notes: { pitches: number[] }[] = [];
+    const originalIndices: number[] = [];
+    for (let i = 0; i < expanded.notes.length; i++) {
+      if (!isTieContinuation(i)) {
+        notes.push(expanded.notes[i]);
+        originalIndices.push(expanded.originalIndices[i]);
+      }
+    }
+    expandedTrackingRef.current = { notes, originalIndices, idx: 0 };
   }, [music]);
 
   const practiceMode = useStore((s) => s.practiceMode);
@@ -767,7 +833,9 @@ export function SongPage({
   const detectedNoteName =
     detectedPitch !== null ? NOTE_NAMES[detectedPitch % 12] : null;
   const detectedNoteOctaveDots =
-    detectedPitch !== null ? noteOctaveDots(detectedPitch, instrumentType) : 0;
+    detectedPitch !== null
+      ? noteOctaveDots(detectedPitch, instrumentConfig.basePitch)
+      : 0;
 
   return (
     <>
@@ -891,12 +959,19 @@ export function SongPage({
           detectedNoteName ? (
             <Typography
               component="span"
-              sx={{ fontWeight: 'bold', fontSize: '0.9rem', lineHeight: 1 }}
+              sx={{
+                fontWeight: 'bold',
+                fontSize: '1.2rem',
+                lineHeight: 1,
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'center',
+              }}
             >
               <NoteNameDisplay
                 name={detectedNoteName}
                 dots={detectedNoteOctaveDots}
-                fontSize="0.9rem"
+                fontSize="1.2rem"
               />
             </Typography>
           ) : (

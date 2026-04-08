@@ -243,14 +243,14 @@ export function computeBarBeams(
   barNoteLayouts: NoteLayout[],
   _barNoteIndices: number[],
   musicBeams: number[][]
-): import('./types').BeamLayout[] {
+): BeamLayout[] {
   // Build a map from musicNoteIndex → position in barNoteLayouts
   const musicIdxToLayoutIdx = new Map<number, number>();
   for (const [layoutIdx, nl] of barNoteLayouts.entries()) {
     musicIdxToLayoutIdx.set(nl.musicNoteIndex, layoutIdx);
   }
 
-  const beamLayouts: import('./types').BeamLayout[] = [];
+  const beamLayouts: BeamLayout[] = [];
 
   for (const [beamStart, beamEnd] of musicBeams) {
     const startLayoutIdx = musicIdxToLayoutIdx.get(beamStart);

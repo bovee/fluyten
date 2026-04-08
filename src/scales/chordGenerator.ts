@@ -59,10 +59,6 @@ const LETTER_SEMITONE: Record<string, number> = {
 
 type OctavedNote = { letter: string; acc: number; octave: number };
 
-function hzToMidi(hz: number): number {
-  return Math.round(69 + 12 * Math.log2(hz / 440));
-}
-
 /** Enumerate every chord tone that falls within [lowMidi, highMidi], ascending.
  *  Naturally produces inversions — starts on whichever chord tone is lowest in range. */
 function chordTonesInRange(
@@ -105,8 +101,8 @@ function notationMidiRange(instrumentType: RecorderType): {
       : instrumentType === 'SOPRANINO'
         ? 'ALTO'
         : instrumentType;
-  const { lowNote, highNote } = RECORDER_TYPES[notationType];
-  return { lowMidi: hzToMidi(lowNote), highMidi: hzToMidi(highNote) };
+  const { basePitch, pitchRange } = RECORDER_TYPES[notationType];
+  return { lowMidi: basePitch, highMidi: basePitch + pitchRange };
 }
 
 export function generateChordAbc(options: {
@@ -127,7 +123,7 @@ export function generateChordAbc(options: {
 
   let lowMidi: number;
   let highMidi: number;
-  if (options.instrumentType && options.instrumentType !== 'ALL') {
+  if (options.instrumentType) {
     ({ lowMidi, highMidi } = notationMidiRange(options.instrumentType));
   } else {
     lowMidi = DEFAULT_LOW_MIDI;

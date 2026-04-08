@@ -10,6 +10,9 @@ import { render, screen, fireEvent, waitFor } from '@testing-library/react';
 import App from './App';
 import { axe } from 'jest-axe';
 import { useStore } from './store';
+// Warm Vitest's module cache so React.lazy's dynamic import('./SongPage')
+// resolves immediately rather than racing against waitFor's timeout.
+import './SongPage';
 
 vi.mock('./audio/FrequencyTracker', () => ({
   FrequencyTracker: class {

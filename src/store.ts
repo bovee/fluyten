@@ -47,8 +47,12 @@ function derivedFields(
 interface SettingsState {
   onboarded: boolean;
   setOnboarded: () => void;
-  instrumentType: RecorderType;
-  setInstrumentType: (type: RecorderType) => void;
+  instrumentType: RecorderType | null;
+  setInstrumentType: (type: RecorderType | null) => void;
+  customBasePitchStr: string;
+  setCustomBasePitch: (str: string) => void;
+  customHighNoteStr: string;
+  setCustomHighNote: (str: string) => void;
   tuning: number;
   setTuning: (tuning: number) => void;
   isGerman: boolean;
@@ -92,6 +96,10 @@ export const useStore = create<SettingsState>()(
       instrumentType: 'SOPRANO',
       setInstrumentType: (instrumentType) =>
         set({ instrumentType, method: 'none' }),
+      customBasePitchStr: 'C4',
+      setCustomBasePitch: (customBasePitchStr) => set({ customBasePitchStr }),
+      customHighNoteStr: 'D6',
+      setCustomHighNote: (customHighNoteStr) => set({ customHighNoteStr }),
       tuning: 1.0,
       setTuning: (tuning) => set({ tuning }),
       isGerman: false,

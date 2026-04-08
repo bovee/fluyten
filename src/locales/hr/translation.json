@@ -62,6 +62,8 @@
   "transformAddAllAccidentals": "Dodaj sve predznake",
   "transformReverseNotes": "Obrni note",
   "recorderType": "Vrsta blok-flaute",
+  "customBasePitch": "Osnovna visina tona",
+  "customHighNote": "Visoka nota",
   "detect": "Otkrij",
   "detectRecorderType": "Otkrij vrstu blok-flaute",
   "detectInstructions": "Pokrijte rupicu za palac i najvišu rupicu za prst na vašoj blok-flauti i puhajte.",
@@ -120,7 +122,12 @@
     "TENOR": "Tenor",
     "ALTO": "Alt",
     "SOPRANO": "Sopran",
-    "SOPRANINO": "Sopranino"
+    "SOPRANINO": "Sopranino",
+    "CONTRABASS": "Kontrabas",
+    "GREATBASS": "Veliki bas",
+    "VOICEFLUTE": "Voice Flute",
+    "GARKLEIN": "Garklein",
+    "OTHER": "Ostalo"
   },
   "beginnerSongs": [
     "Hot Cross Buns",

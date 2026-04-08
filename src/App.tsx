@@ -1,6 +1,10 @@
 import { lazy, Suspense, useMemo, useState } from 'react';
 import { useTranslation } from 'react-i18next';
-import { createTheme, ThemeProvider } from '@mui/material/styles';
+import {
+  createTheme,
+  ThemeProvider,
+  type ThemeOptions,
+} from '@mui/material/styles';
 import CssBaseline from '@mui/material/CssBaseline';
 import useMediaQuery from '@mui/material/useMediaQuery';
 import { CacheProvider } from '@emotion/react';
@@ -11,12 +15,11 @@ import { type Song } from './music';
 import { IndexPage } from './IndexPage';
 import { OnboardingDialog } from './OnboardingDialog';
 import { useStore } from './store';
+import { RTL_LANGUAGES } from './i18n';
 
 const SongPage = lazy(() =>
   import('./SongPage').then((m) => ({ default: m.SongPage }))
 );
-
-import { RTL_LANGUAGES } from './i18n';
 import './App.css';
 
 const cacheLtr = createCache({ key: 'css' });
@@ -56,7 +59,7 @@ function App() {
         ...(resolvedMode === 'dark' && {
           shadows: Array.from({ length: 25 }, (_, i) =>
             i === 0 ? 'none' : DARK_SHADOW
-          ) as import('@mui/material/styles').ThemeOptions['shadows'],
+          ) as ThemeOptions['shadows'],
         }),
         components: {
           MuiAccordion: {

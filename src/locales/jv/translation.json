@@ -62,6 +62,8 @@
   "transformAddAllAccidentals": "Tambah kabeh aksidental",
   "transformReverseNotes": "Balik Nada",
   "recorderType": "Jenis rekorder",
+  "customBasePitch": "Nada Dhasar",
+  "customHighNote": "Nada Dhuwur",
   "detect": "Deteksi",
   "detectRecorderType": "Deteksi jenis rekorder",
   "detectInstructions": "Tutup bolongan jempol lan bolongan driji paling dhuwur ing rekorder sampeyan banjur niup.",
@@ -120,7 +122,12 @@
     "TENOR": "Tenor",
     "ALTO": "Alto",
     "SOPRANO": "Sopran",
-    "SOPRANINO": "Sopranino"
+    "SOPRANINO": "Sopranino",
+    "CONTRABASS": "Kontrabas",
+    "GREATBASS": "Bass Ageng",
+    "VOICEFLUTE": "Voice Flute",
+    "GARKLEIN": "Garklein",
+    "OTHER": "Liyane"
   },
   "beginnerSongs": [
     "Hot Cross Buns",

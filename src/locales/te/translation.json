@@ -62,6 +62,8 @@
   "transformAddAllAccidentals": "అన్ని ఆకస్మిక చిహ్నాలు జోడించు",
   "transformReverseNotes": "నోట్లను తిరగేయండి",
   "recorderType": "రికార్డర్ రకం",
+  "customBasePitch": "ప్రాథమిక స్వరం",
+  "customHighNote": "ఉన్నత స్వరం",
   "detect": "గుర్తించు",
   "detectRecorderType": "రికార్డర్ రకాన్ని గుర్తించు",
   "detectInstructions": "మీ రికార్డర్ బొటనవేలు రంధ్రం మరియు అత్యున్నత వేలు రంధ్రాన్ని మూసి ఊదండి.",
@@ -120,7 +122,12 @@
     "TENOR": "టెనర్",
     "ALTO": "ఆల్టో",
     "SOPRANO": "సోప్రానో",
-    "SOPRANINO": "సోప్రానినో"
+    "SOPRANINO": "సోప్రానినో",
+    "CONTRABASS": "కాంట్రాబాస్",
+    "GREATBASS": "గ్రేట్ బాస్",
+    "VOICEFLUTE": "వాయిస్ ఫ్లూట్",
+    "GARKLEIN": "గార్క్లైన్",
+    "OTHER": "ఇతర"
   },
   "beginnerSongs": [
     "హాట్ క్రాస్ బన్స్",

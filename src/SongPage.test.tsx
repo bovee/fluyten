@@ -21,6 +21,17 @@ vi.mock('./audio/FrequencyTracker', () => ({
   },
 }));
 
+vi.mock('./audio/SingleFrequencyTracker', () => ({
+  SingleFrequencyTracker: class {
+    targetPitch = 0;
+    constructor(_onCheck: unknown, _pollMs: unknown) {}
+    start = vi.fn().mockResolvedValue(undefined);
+    stop = vi.fn();
+    setTarget = vi.fn();
+    check = vi.fn().mockReturnValue(null);
+  },
+}));
+
 vi.mock('./audio/NotePlayer', () => ({
   NotePlayer: class {
     audioCtx = null;

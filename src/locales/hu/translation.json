@@ -62,6 +62,8 @@
   "transformAddAllAccidentals": "Összes előjel hozzáadása",
   "transformReverseNotes": "Hangjegyek megfordítása",
   "recorderType": "Furulya típusa",
+  "customBasePitch": "Alaphang",
+  "customHighNote": "Magas hang",
   "detect": "Felismerés",
   "detectRecorderType": "Furulya típusának felismerése",
   "detectInstructions": "Fogja be a hüvelykujj-nyílást és a legfelső ujjlyukat, majd fújjon.",
@@ -120,7 +122,12 @@
     "TENOR": "Tenor",
     "ALTO": "Alt",
     "SOPRANO": "Szoprán",
-    "SOPRANINO": "Sopranino"
+    "SOPRANINO": "Sopranino",
+    "CONTRABASS": "Kontrabasszus",
+    "GREATBASS": "Nagybasszus",
+    "VOICEFLUTE": "Voice Flute",
+    "GARKLEIN": "Garklein",
+    "OTHER": "Egyéb"
   },
   "beginnerSongs": [
     "Hot Cross Buns",

@@ -1,3 +1,4 @@
+import type { Music, Note } from '../music';
 import {
   type Accidental,
   type BarLine,
@@ -6,8 +7,6 @@ import {
   DurationModifier,
   type Decoration,
   type SpanDecorationType,
-  Music,
-  Note,
   KEYS,
   FIFTHS_TO_ACCIDENTALS,
 } from '../music';

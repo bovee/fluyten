@@ -62,6 +62,8 @@
   "transformAddAllAccidentals": "Añadir todas las alteraciones",
   "transformReverseNotes": "Invertir notas",
   "recorderType": "Tipo de flauta",
+  "customBasePitch": "Nota Base",
+  "customHighNote": "Nota Alta",
   "detect": "Detectar",
   "detectRecorderType": "Detectar tipo de flauta",
   "detectInstructions": "Tapa el agujero del pulgar y el agujero superior de tu flauta y sopla.",
@@ -120,7 +122,12 @@
     "TENOR": "Tenor",
     "ALTO": "Alto",
     "SOPRANO": "Soprano",
-    "SOPRANINO": "Sopranino"
+    "SOPRANINO": "Sopranino",
+    "CONTRABASS": "Contrabajo",
+    "GREATBASS": "Gran bajo",
+    "VOICEFLUTE": "Voice Flute",
+    "GARKLEIN": "Garklein",
+    "OTHER": "Otro"
   },
   "beginnerSongs": [
     "Panecillos de Pascua",

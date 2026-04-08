@@ -62,6 +62,8 @@
   "transformAddAllAccidentals": "เพิ่มเครื่องหมายแปรทั้งหมด",
   "transformReverseNotes": "กลับลำดับโน้ต",
   "recorderType": "ประเภทรีคอร์เดอร์",
+  "customBasePitch": "เสียงพื้นฐาน",
+  "customHighNote": "โน้ตสูง",
   "detect": "ตรวจจับ",
   "detectRecorderType": "ตรวจจับประเภทรีคอร์เดอร์",
   "detectInstructions": "ปิดรูนิ้วโป้งและรูนิ้วสูงสุดของรีคอร์เดอร์แล้วเป่า",
@@ -120,7 +122,12 @@
     "TENOR": "เทเนอร์",
     "ALTO": "อัลโต",
     "SOPRANO": "โซปราโน",
-    "SOPRANINO": "โซปรานิโน"
+    "SOPRANINO": "โซปรานิโน",
+    "CONTRABASS": "คอนทราเบส",
+    "GREATBASS": "เกรทเบส",
+    "VOICEFLUTE": "วอยซ์ฟลุต",
+    "GARKLEIN": "การ์คลาย",
+    "OTHER": "อื่นๆ"
   },
   "beginnerSongs": [
     "ฮอตครอสบันส์",

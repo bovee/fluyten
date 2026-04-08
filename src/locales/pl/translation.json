@@ -62,6 +62,8 @@
   "transformAddAllAccidentals": "Dodaj wszystkie znaki chromatyczne",
   "transformReverseNotes": "Odwróć nuty",
   "recorderType": "Typ fletu prostego",
+  "customBasePitch": "Dźwięk podstawowy",
+  "customHighNote": "Wysoka nuta",
   "detect": "Wykryj",
   "detectRecorderType": "Wykryj typ fletu prostego",
   "detectInstructions": "Zakryj otwór kciuka i najwyższy otwór palcowy fletu i dmuchnij.",
@@ -120,7 +122,12 @@
     "TENOR": "Tenor",
     "ALTO": "Alt",
     "SOPRANO": "Sopran",
-    "SOPRANINO": "Sopranino"
+    "SOPRANINO": "Sopranino",
+    "CONTRABASS": "Kontrabas",
+    "GREATBASS": "Wielki bas",
+    "VOICEFLUTE": "Voice Flute",
+    "GARKLEIN": "Garklein",
+    "OTHER": "Inne"
   },
   "beginnerSongs": [
     "Hot Cross Buns",

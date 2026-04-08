@@ -62,6 +62,8 @@
   "transformAddAllAccidentals": "Προσθήκη όλων των παραφωνιών",
   "transformReverseNotes": "Αντιστροφή νοτών",
   "recorderType": "Τύπος φλάουτου",
+  "customBasePitch": "Βασική Νότα",
+  "customHighNote": "Ψηλή Νότα",
   "detect": "Εντοπισμός",
   "detectRecorderType": "Εντοπισμός τύπου φλάουτου",
   "detectInstructions": "Σκεπάστε την τρύπα αντίχειρα και την ψηλότερη τρύπα δακτύλου του φλάουτου σας και φυσήξτε.",
@@ -120,7 +122,12 @@
     "TENOR": "Τενόρο",
     "ALTO": "Άλτο",
     "SOPRANO": "Σοπράνο",
-    "SOPRANINO": "Σοπρανίνο"
+    "SOPRANINO": "Σοπρανίνο",
+    "CONTRABASS": "Κοντραμπάσο",
+    "GREATBASS": "Μέγα Μπάσο",
+    "VOICEFLUTE": "Voice Flute",
+    "GARKLEIN": "Garklein",
+    "OTHER": "Άλλο"
   },
   "beginnerSongs": [
     "Σταυρόψωμα",

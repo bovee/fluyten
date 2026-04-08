@@ -13,7 +13,6 @@ import {
   signatureAt,
 } from '../music';
 import { PITCH_CONSTANTS, TIME_SIGNATURES } from '../constants';
-import { type RecorderType } from '../instrument';
 
 // Mapping of two-character ABC mnemonics (after \) to their Unicode equivalents.
 // See https://abcnotation.com/wiki/abc:standard:v2.1#supported_accents_ligatures
@@ -146,13 +145,11 @@ function parseClefName(name: string): Music['clef'] {
   return CLEF_NAME_MAP[name.toLowerCase()] ?? 'treble';
 }
 
-export function defaultClefForInstrument(
-  instrumentType: RecorderType
-): Music['clef'] {
-  if (instrumentType === 'SOPRANO' || instrumentType === 'SOPRANINO')
-    return 'treble8va';
-  if (instrumentType === 'BASS') return 'bass8va';
-  return 'treble';
+export function defaultClefForInstrument(basePitch: number): Music['clef'] {
+  if (basePitch >= 72) return 'treble8va';
+  if (basePitch >= 60) return 'treble';
+  if (basePitch >= 48) return 'bass8va';
+  return 'bass';
 }
 
 // https://abcnotation.com/wiki/abc:standard:v2.1

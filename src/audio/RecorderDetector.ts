@@ -1,20 +1,14 @@
 import { FrequencyTracker, freqToMidiPitch } from './FrequencyTracker';
-import { type RecorderType } from '../instrument';
+import { DETECTION_LOW_HZ, DETECTION_HIGH_HZ, midiToHz } from './utils';
+import { type RecorderType, RECORDER_TYPES } from '../instrument';
 
 /** Computes tuning ratio from a raw detected frequency and its MIDI pitch, clamped to [0.8, 1.2]. */
 export function computeTuning(
   frequency: number,
   instrument: RecorderType
 ): number {
-  const expectedPitch = {
-    ALL: 0,
-    SOPRANINO: 88,
-    SOPRANO: 83,
-    ALTO: 76,
-    TENOR: 71,
-    BASS: 64,
-  }[instrument];
-  const idealFreq = 440 * Math.pow(2, (expectedPitch - 69) / 12);
+  const expectedPitch = RECORDER_TYPES[instrument].basePitch + 11;
+  const idealFreq = midiToHz(expectedPitch);
   const newTuning = Math.round((frequency / idealFreq) * 1000) / 1000;
   return Math.min(1.2, Math.max(0.8, newTuning));
 }
@@ -23,6 +17,10 @@ const SAMPLE_RATE = 100;
 const MIN_SAMPLES = 7;
 
 const PITCH_TO_RECORDER: Record<number, RecorderType> = {
+  96: 'GARKLEIN',
+  95: 'GARKLEIN',
+  94: 'GARKLEIN',
+  93: 'GARKLEIN',
   89: 'SOPRANINO',
   88: 'SOPRANINO',
   87: 'SOPRANINO',
@@ -35,6 +33,7 @@ const PITCH_TO_RECORDER: Record<number, RecorderType> = {
   76: 'ALTO',
   75: 'ALTO',
   74: 'ALTO',
+  73: 'VOICEFLUTE',
   72: 'TENOR',
   71: 'TENOR',
   70: 'TENOR',
@@ -43,16 +42,14 @@ const PITCH_TO_RECORDER: Record<number, RecorderType> = {
   64: 'BASS',
   63: 'BASS',
   62: 'BASS',
-};
-
-// Frequency of the F/B on the fourth finger
-const STEP2_FREQS: Record<RecorderType, number> = {
-  ALL: 0,
-  SOPRANINO: 1046.3,
-  SOPRANO: 698.2,
-  ALTO: 522.6,
-  TENOR: 348.6,
-  BASS: 260.8,
+  60: 'GREATBASS',
+  59: 'GREATBASS',
+  58: 'GREATBASS',
+  57: 'GREATBASS',
+  53: 'CONTRABASS',
+  52: 'CONTRABASS',
+  51: 'CONTRABASS',
+  50: 'CONTRABASS',
 };
 
 export interface DetectorCallbacks {
@@ -97,7 +94,10 @@ export class RecorderDetector {
   private runStep1(): void {
     const samples: { instrumentType: string; tuning: number }[] = [];
     this.intervalId = window.setInterval(() => {
-      const result = this.tracker?.checkRawFrequency('ALL');
+      const result = this.tracker?.checkRawFrequency(
+        DETECTION_LOW_HZ,
+        DETECTION_HIGH_HZ
+      );
       if (!result?.frequency || result.volume == null) return;
       const { frequency, volume } = result as {
         frequency: number;
@@ -133,10 +133,14 @@ export class RecorderDetector {
 
   private runStep2(recorder: RecorderType): void {
     this.callbacks.onStep2Started(recorder);
-    const knownFreq = STEP2_FREQS[recorder];
+    // Fourth-finger note: A#/Bb for F-recorders, F for C-recorders
+    const knownFreq = midiToHz(RECORDER_TYPES[recorder].basePitch + 5);
     const freqSamples: number[] = [];
     this.intervalId = window.setInterval(() => {
-      const result = this.tracker?.checkRawFrequency('ALL');
+      const result = this.tracker?.checkRawFrequency(
+        DETECTION_LOW_HZ,
+        DETECTION_HIGH_HZ
+      );
       if (!result?.frequency || result.volume == null) return;
       const { frequency, volume } = result as {
         frequency: number;

@@ -62,6 +62,8 @@
   "transformAddAllAccidentals": "તમામ આકસ્મિક ચિહ્નો ઉમેરો",
   "transformReverseNotes": "નોટ્સ ઉલ્ટા કરો",
   "recorderType": "રેકોર્ડરનો પ્રકાર",
+  "customBasePitch": "મૂળ સ્વર",
+  "customHighNote": "ઊંચો સ્વર",
   "detect": "શોધો",
   "detectRecorderType": "રેકોર્ડરનો પ્રકાર શોધો",
   "detectInstructions": "તમારા રેકોર્ડરના અંગૂઠાના છિદ્ર અને સૌથી ઉપરના આંગળીના છિદ્રને ઢાંકો અને ફૂંક મારો.",
@@ -120,7 +122,12 @@
     "TENOR": "ટેનર",
     "ALTO": "અલ્ટો",
     "SOPRANO": "સોપ્રાનો",
-    "SOPRANINO": "સોપ્રાનિનો"
+    "SOPRANINO": "સોપ્રાનિનો",
+    "CONTRABASS": "કોન્ટ્રાબાસ",
+    "GREATBASS": "ગ્રેટ બાસ",
+    "VOICEFLUTE": "વૉઇસ ફ્લૂટ",
+    "GARKLEIN": "ગાર્કલાઇન",
+    "OTHER": "અન્ય"
   },
   "beginnerSongs": [
     "હૉટ ક્રૉસ બન્સ",

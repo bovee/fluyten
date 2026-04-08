@@ -91,7 +91,8 @@ export function GenerateNotesDialog({
   songKey,
 }: GenerateNotesDialogProps) {
   const { t } = useTranslation();
-  const instrumentType = useStore((state) => state.instrumentType);
+  const instrumentTypeRaw = useStore((state) => state.instrumentType);
+  const instrumentType = instrumentTypeRaw ?? undefined;
   const [tab, setTab] = useState(0);
   const [range, setRange] = useState<'traditional' | 'all'>('traditional');
   const [direction, setDirection] = useState<

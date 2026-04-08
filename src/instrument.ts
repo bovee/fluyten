@@ -1,50 +1,51 @@
+import { noteNameToMidi } from './audio/utils';
+
 export type RecorderType = keyof typeof RECORDER_TYPES;
 
+const RECORDER_PITCH_RANGE = 26;
+
 export const RECORDER_TYPES = {
-  ALL: {
-    lowNote: 174.6141,
-    highNote: 3135.963,
-    starterBook: 'beginner-songs-c.abc',
-    basePitch: 0,
-  },
-  BASS: {
-    lowNote: 174.6141, // F3
-    highNote: 783.9909, // G5
-    starterBook: 'beginner-songs-f.abc',
-    basePitch: 52,
-  },
-  TENOR: {
-    lowNote: 261.6256, // C4
-    highNote: 1108.731, // D6
-    starterBook: 'beginner-songs-c.abc',
-    basePitch: 59,
-  },
-  ALTO: {
-    lowNote: 349.2282, // F4
-    highNote: 1567.982, // G6
-    starterBook: 'beginner-songs-f.abc',
-    basePitch: 64,
-  },
-  SOPRANO: {
-    lowNote: 523.2511, // C5
-    highNote: 2217.461, // D7
-    starterBook: 'beginner-songs-c.abc',
-    basePitch: 71,
-  },
-  SOPRANINO: {
-    lowNote: 698.4565, // F5
-    highNote: 3135.963, // G7
-    starterBook: 'beginner-songs-f.abc',
-    basePitch: 76,
-  },
+  CONTRABASS: { basePitch: 41, pitchRange: RECORDER_PITCH_RANGE },
+  GREATBASS: { basePitch: 48, pitchRange: RECORDER_PITCH_RANGE },
+  BASS: { basePitch: 53, pitchRange: RECORDER_PITCH_RANGE },
+  TENOR: { basePitch: 60, pitchRange: RECORDER_PITCH_RANGE },
+  VOICEFLUTE: { basePitch: 62, pitchRange: RECORDER_PITCH_RANGE },
+  ALTO: { basePitch: 65, pitchRange: RECORDER_PITCH_RANGE },
+  SOPRANO: { basePitch: 72, pitchRange: RECORDER_PITCH_RANGE },
+  SOPRANINO: { basePitch: 77, pitchRange: RECORDER_PITCH_RANGE },
+  GARKLEIN: { basePitch: 84, pitchRange: RECORDER_PITCH_RANGE },
 };
 
-export function getStarterBookUrl(instrumentType: RecorderType): string {
-  return `${window.location.origin}${import.meta.env.BASE_URL}${RECORDER_TYPES[instrumentType].starterBook}`;
+/**
+ * Returns the effective {basePitch, pitchRange} for an instrument.
+ * When instrumentType is null ("Other"), parses the custom note-name strings.
+ * Returns null if the custom strings are invalid or the range is non-positive.
+ */
+export function resolveInstrumentConfig(
+  instrumentType: RecorderType | null,
+  customBasePitchStr: string,
+  customHighNoteStr: string
+): { basePitch: number; pitchRange: number } | null {
+  if (instrumentType !== null) return RECORDER_TYPES[instrumentType];
+  const basePitch = noteNameToMidi(customBasePitchStr);
+  const highNote = noteNameToMidi(customHighNoteStr);
+  if (basePitch === null || highNote === null || highNote <= basePitch)
+    return null;
+  return { basePitch, pitchRange: highNote - basePitch };
+}
+
+export function getStarterBookUrl(instrumentType: RecorderType | null): string {
+  if (instrumentType === null) return '';
+  let basePitch = '';
+  if (RECORDER_TYPES[instrumentType].basePitch % 12 === 0) basePitch = 'c';
+  if (RECORDER_TYPES[instrumentType].basePitch % 12 === 5) basePitch = 'f';
+  if (!basePitch) return '';
+  return `${window.location.origin}${import.meta.env.BASE_URL}beginner-songs-${basePitch}.abc`;
 }
 
 export function isStarterBookUrl(url: string): boolean {
-  return Object.values(RECORDER_TYPES).some((rt) =>
-    url.endsWith(rt.starterBook)
+  return (
+    url.endsWith('/beginner-songs-c.abc') ||
+    url.endsWith('/beginner-songs-f.abc')
   );
 }

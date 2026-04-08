@@ -62,6 +62,8 @@
   "transformAddAllAccidentals": "Add All Accidentals",
   "transformReverseNotes": "Reverse Notes",
   "recorderType": "Recorder Type",
+  "customBasePitch": "Base Pitch",
+  "customHighNote": "High Note",
   "detect": "Detect",
   "detectRecorderType": "Detect Recorder Type",
   "detectInstructions": "Cover the thumb and topmost finger hole on your recorder and blow.",
@@ -120,7 +122,12 @@
     "TENOR": "Tenor",
     "ALTO": "Alto",
     "SOPRANO": "Soprano",
-    "SOPRANINO": "Sopranino"
+    "SOPRANINO": "Sopranino",
+    "CONTRABASS": "Contrabass",
+    "GREATBASS": "Great Bass",
+    "VOICEFLUTE": "Voice Flute",
+    "GARKLEIN": "Garklein",
+    "OTHER": "Other"
   },
   "beginnerSongs": [
     "Hot Cross Buns",

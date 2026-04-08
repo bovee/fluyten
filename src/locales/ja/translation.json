@@ -62,6 +62,8 @@
   "transformAddAllAccidentals": "全臨時記号を追加",
   "transformReverseNotes": "音符を逆順にする",
   "recorderType": "リコーダーの種類",
+  "customBasePitch": "基音",
+  "customHighNote": "高音",
   "detect": "検出",
   "detectRecorderType": "リコーダーの種類を検出",
   "detectInstructions": "リコーダーの親指穴と最上部の指穴を塞いで吹いてください。",
@@ -120,7 +122,12 @@
     "TENOR": "テナー",
     "ALTO": "アルト",
     "SOPRANO": "ソプラノ",
-    "SOPRANINO": "ソプラニーノ"
+    "SOPRANINO": "ソプラニーノ",
+    "CONTRABASS": "コントラバス",
+    "GREATBASS": "グレートバス",
+    "VOICEFLUTE": "ヴォイスフルート",
+    "GARKLEIN": "ガークライン",
+    "OTHER": "その他"
   },
   "beginnerSongs": [
     "ホットクロスバンズ",

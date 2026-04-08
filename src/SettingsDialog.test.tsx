@@ -91,16 +91,13 @@ describe('SettingsDialog', () => {
     expect(screen.getByRole('button', { name: /detect/i })).toBeInTheDocument();
   });
 
-  it('instrument type select excludes ALL and shows 5 recorder types', () => {
+  it('instrument type select shows all recorder types plus Other', () => {
     renderDialog();
     clickTab(/instrument/i);
     const select = screen.getByLabelText(/recorder type/i);
     fireEvent.mouseDown(select);
     const options = screen.getAllByRole('option');
-    expect(options.length).toBe(5);
-    expect(options.map((o) => o.getAttribute('data-value'))).not.toContain(
-      'ALL'
-    );
+    expect(options.length).toBe(10); // 9 recorder types + Other
   });
 
   it('changing instrument type updates store', () => {

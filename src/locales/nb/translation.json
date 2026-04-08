@@ -62,6 +62,8 @@
   "transformAddAllAccidentals": "Legg til alle fortegn",
   "transformReverseNotes": "Reverser noter",
   "recorderType": "Blokkfløytetype",
+  "customBasePitch": "Grunntone",
+  "customHighNote": "Høy tone",
   "detect": "Detekter",
   "detectRecorderType": "Detekter blokkfløytetype",
   "detectInstructions": "Dekk tommelfingerhullet og det øverste fingerhullet på blokkfløyten din og blås.",
@@ -120,7 +122,12 @@
     "TENOR": "Tenor",
     "ALTO": "Alt",
     "SOPRANO": "Sopran",
-    "SOPRANINO": "Sopranino"
+    "SOPRANINO": "Sopranino",
+    "CONTRABASS": "Kontrabass",
+    "GREATBASS": "Storbass",
+    "VOICEFLUTE": "Voice Flute",
+    "GARKLEIN": "Garklein",
+    "OTHER": "Annet"
   },
   "beginnerSongs": [
     "Hot Cross Buns",

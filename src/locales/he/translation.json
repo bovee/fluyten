@@ -62,6 +62,8 @@
   "transformAddAllAccidentals": "הוסף את כל סימני השינוי",
   "transformReverseNotes": "הפוך תווים",
   "recorderType": "סוג חליל",
+  "customBasePitch": "צליל בסיס",
+  "customHighNote": "תו גבוה",
   "detect": "זהה",
   "detectRecorderType": "זהה סוג חליל",
   "detectInstructions": "כסה את חור האגודל ואת חור האצבע הגבוה ביותר בחליל שלך ותנפח.",
@@ -120,7 +122,12 @@
     "TENOR": "טנור",
     "ALTO": "אלט",
     "SOPRANO": "סופרן",
-    "SOPRANINO": "סופרנינו"
+    "SOPRANINO": "סופרנינו",
+    "CONTRABASS": "קונטרבס",
+    "GREATBASS": "בס גדול",
+    "VOICEFLUTE": "חליל קול",
+    "GARKLEIN": "גארקלאין",
+    "OTHER": "אחר"
   },
   "beginnerSongs": [
     "לחמניות עם צלב",

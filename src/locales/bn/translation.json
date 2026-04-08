@@ -62,6 +62,8 @@
   "transformAddAllAccidentals": "সমস্ত স্বরচিহ্ন যোগ করুন",
   "transformReverseNotes": "নোট উল্টান",
   "recorderType": "রেকর্ডারের ধরন",
+  "customBasePitch": "মূল স্বর",
+  "customHighNote": "উচ্চ নোট",
   "detect": "সনাক্ত করুন",
   "detectRecorderType": "রেকর্ডারের ধরন সনাক্ত করুন",
   "detectInstructions": "আপনার রেকর্ডারের বুড়ো আঙুলের ছিদ্র ও সর্বোচ্চ আঙুলের ছিদ্র ঢেকে রাখুন এবং ফুঁ দিন।",
@@ -120,7 +122,12 @@
     "TENOR": "টেনর",
     "ALTO": "আলটো",
     "SOPRANO": "সোপ্রানো",
-    "SOPRANINO": "সোপ্রানিনো"
+    "SOPRANINO": "সোপ্রানিনো",
+    "CONTRABASS": "কন্ট্রাবাস",
+    "GREATBASS": "গ্রেট বাস",
+    "VOICEFLUTE": "ভয়েস ফ্লুট",
+    "GARKLEIN": "গার্কলাইন",
+    "OTHER": "অন্যান্য"
   },
   "beginnerSongs": [
     "হট ক্রস বানস",

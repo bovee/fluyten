@@ -62,6 +62,8 @@
   "transformAddAllAccidentals": "افزودن همه علائم عرضی",
   "transformReverseNotes": "معکوس کردن نت‌ها",
   "recorderType": "نوع فلوت",
+  "customBasePitch": "نت پایه",
+  "customHighNote": "نت بالا",
   "detect": "تشخیص",
   "detectRecorderType": "تشخیص نوع فلوت",
   "detectInstructions": "سوراخ شست و بالاترین سوراخ انگشت فلوت خود را بپوشانید و بدمید.",
@@ -120,7 +122,12 @@
     "TENOR": "تنور",
     "ALTO": "آلتو",
     "SOPRANO": "سوپرانو",
-    "SOPRANINO": "سوپرانینو"
+    "SOPRANINO": "سوپرانینو",
+    "CONTRABASS": "کنترباس",
+    "GREATBASS": "باس بزرگ",
+    "VOICEFLUTE": "فلوت صدا",
+    "GARKLEIN": "گارکلاین",
+    "OTHER": "دیگر"
   },
   "beginnerSongs": [
     "Hot Cross Buns",

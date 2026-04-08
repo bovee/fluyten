@@ -21,6 +21,8 @@ vi.mock('./FrequencyTracker', () => ({
   },
   freqToMidiPitch: (freq: number) =>
     Math.round(12 * Math.log2(freq / 440) + 69),
+  DETECTION_LOW_HZ: 440 * Math.pow(2, (36 - 69) / 12),
+  DETECTION_HIGH_HZ: 440 * Math.pow(2, (96 - 69) / 12),
 }));
 
 // SOPRANO expected pitch is MIDI 83 (B5); idealFreq = 440 * 2^((83-69)/12) ≈ 987.77 Hz

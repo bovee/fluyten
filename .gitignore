@@ -24,6 +24,7 @@ dist-ssr
 *.sw?
 
 # Test files
+.vitest-attachments/
 *storybook.log
 storybook-static
 coverage

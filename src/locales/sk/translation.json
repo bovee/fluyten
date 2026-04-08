@@ -62,6 +62,8 @@
   "transformAddAllAccidentals": "Pridať všetky predznamenania",
   "transformReverseNotes": "Obrátiť noty",
   "recorderType": "Typ zobcovej flauty",
+  "customBasePitch": "Základná výška",
+  "customHighNote": "Vysoká nota",
   "detect": "Zistiť",
   "detectRecorderType": "Zistiť typ zobcovej flauty",
   "detectInstructions": "Zakryte otvor pre palec a najvyšší otvor pre prst na vašej zobcovej flaute a fúknite.",
@@ -120,7 +122,12 @@
     "TENOR": "Tenor",
     "ALTO": "Alt",
     "SOPRANO": "Soprán",
-    "SOPRANINO": "Sopranino"
+    "SOPRANINO": "Sopranino",
+    "CONTRABASS": "Kontrabas",
+    "GREATBASS": "Veľký bas",
+    "VOICEFLUTE": "Voice Flute",
+    "GARKLEIN": "Garklein",
+    "OTHER": "Ostatné"
   },
   "beginnerSongs": [
     "Hot Cross Buns",

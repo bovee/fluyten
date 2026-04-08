@@ -21,6 +21,7 @@ import { FingeringDiagram } from '../FingeringDiagram';
 import { NoteNameDisplay } from './NoteNameDisplay';
 import { noteOctaveDots } from './noteNameUtils';
 import { useStore } from '../store';
+import { resolveInstrumentConfig, RECORDER_TYPES } from '../instrument';
 
 type Clef = 'treble' | 'treble8va' | 'bass' | 'alto';
 
@@ -50,6 +51,14 @@ export function Score({
 }: ScoreProps) {
   const theme = useTheme();
   const instrumentType = useStore((s) => s.instrumentType);
+  const customBasePitchStr = useStore((s) => s.customBasePitchStr);
+  const customHighNoteStr = useStore((s) => s.customHighNoteStr);
+  const instrumentConfig =
+    resolveInstrumentConfig(
+      instrumentType,
+      customBasePitchStr,
+      customHighNoteStr
+    ) ?? RECORDER_TYPES.SOPRANO;
   const layout = useMemo(() => computeLayout(music, width), [music, width]);
   const clef = music.clef as Clef;
   const sig0 = music.signatures[0];
@@ -67,29 +76,54 @@ export function Score({
   const noteFills = useMemo(() => {
     const map = new Map<number, string>();
     if (noteResults) {
-      for (const [idx, result] of noteResults) {
-        map.set(
-          idx,
-          result === 'correct' ? NOTE_COLORS.correct : NOTE_COLORS.wrong
+      const isTieCurve = (s: number, e: number) => {
+        if (e !== s + 1) return false;
+        const a = music.notes[s];
+        const b = music.notes[e];
+        return (
+          !!a &&
+          !!b &&
+          a.pitches.length > 0 &&
+          a.pitches.length === b.pitches.length &&
+          a.pitches.every((p, i) => p === b.pitches[i])
         );
+      };
+      for (const [idx, result] of noteResults) {
+        const color =
+          result === 'correct' ? NOTE_COLORS.correct : NOTE_COLORS.wrong;
+        map.set(idx, color);
+        // Propagate color forward through any tie chain.
+        let cur = idx;
+        while (true) {
+          const next = music.curves.find(
+            ([s, e]) => s === cur && isTieCurve(s, e)
+          )?.[1];
+          if (next === undefined || map.has(next)) break;
+          map.set(next, color);
+          cur = next;
+        }
       }
     }
     if (cursor !== undefined && cursor.noteIdx >= 0) {
       map.set(Math.floor(cursor.noteIdx), theme.palette.primary.main);
     }
     return map;
-  }, [noteResults, cursor, theme.palette.primary.main]);
+  }, [
+    noteResults,
+    cursor,
+    theme.palette.primary.main,
+    music.notes,
+    music.curves,
+  ]);
 
-  // Wrong-note set for X marks
+  // Wrong-note set for X marks (includes tie continuations via noteFills)
   const wrongNotes = useMemo(() => {
     const set = new Set<number>();
-    if (noteResults) {
-      for (const [idx, result] of noteResults) {
-        if (result === 'wrong') set.add(idx);
-      }
+    for (const [idx, color] of noteFills) {
+      if (color === NOTE_COLORS.wrong) set.add(idx);
     }
     return set;
-  }, [noteResults]);
+  }, [noteFills]);
 
   // Popover state: screen coordinates set at click time
   const [popoverPos, setPopoverPos] = useState<{
@@ -282,7 +316,10 @@ export function Score({
           {popoverNote && (
             <NoteNameDisplay
               name={popoverNote.name(useSharpSpelling)}
-              dots={noteOctaveDots(popoverNote.pitches[0], instrumentType)}
+              dots={noteOctaveDots(
+                popoverNote.pitches[0],
+                instrumentConfig.basePitch
+              )}
               fontSize="1rem"
             />
           )}

@@ -62,6 +62,8 @@
   "transformAddAllAccidentals": "Alle toevalstekens toevoegen",
   "transformReverseNotes": "Noten omkeren",
   "recorderType": "Type blokfluit",
+  "customBasePitch": "Basisnoot",
+  "customHighNote": "Hoge noot",
   "detect": "Detecteren",
   "detectRecorderType": "Type blokfluit detecteren",
   "detectInstructions": "Dek het duimgat en het bovenste vingergat van je blokfluit af en blaas.",
@@ -120,7 +122,12 @@
     "TENOR": "Tenor",
     "ALTO": "Alt",
     "SOPRANO": "Sopraan",
-    "SOPRANINO": "Sopranino"
+    "SOPRANINO": "Sopranino",
+    "CONTRABASS": "Contrabas",
+    "GREATBASS": "Grote bas",
+    "VOICEFLUTE": "Voice Flute",
+    "GARKLEIN": "Garklein",
+    "OTHER": "Overig"
   },
   "beginnerSongs": [
     "Hot Cross Buns",

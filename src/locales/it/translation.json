@@ -62,6 +62,8 @@
   "transformAddAllAccidentals": "Aggiungi tutte le alterazioni",
   "transformReverseNotes": "Inverti le note",
   "recorderType": "Tipo di flauto dolce",
+  "customBasePitch": "Nota di base",
+  "customHighNote": "Nota alta",
   "detect": "Rileva",
   "detectRecorderType": "Rileva tipo di flauto dolce",
   "detectInstructions": "Copri il foro del pollice e il foro superiore del tuo flauto dolce e soffia.",
@@ -120,7 +122,12 @@
     "TENOR": "Tenore",
     "ALTO": "Alto",
     "SOPRANO": "Soprano",
-    "SOPRANINO": "Sopranino"
+    "SOPRANINO": "Sopranino",
+    "CONTRABASS": "Contrabbasso",
+    "GREATBASS": "Grande basso",
+    "VOICEFLUTE": "Voice Flute",
+    "GARKLEIN": "Garklein",
+    "OTHER": "Altro"
   },
   "beginnerSongs": [
     "Hot Cross Buns",

@@ -62,6 +62,8 @@
   "transformAddAllAccidentals": "Thêm tất cả dấu hóa",
   "transformReverseNotes": "Đảo ngược nốt nhạc",
   "recorderType": "Loại sáo recorder",
+  "customBasePitch": "Âm cơ bản",
+  "customHighNote": "Nốt cao",
   "detect": "Phát hiện",
   "detectRecorderType": "Phát hiện loại sáo recorder",
   "detectInstructions": "Bịt lỗ ngón cái và lỗ ngón tay trên cùng của sáo rồi thổi.",
@@ -120,7 +122,12 @@
     "TENOR": "Tenor",
     "ALTO": "Alto",
     "SOPRANO": "Soprano",
-    "SOPRANINO": "Sopranino"
+    "SOPRANINO": "Sopranino",
+    "CONTRABASS": "Contrabass",
+    "GREATBASS": "Bass trầm lớn",
+    "VOICEFLUTE": "Sáo giọng",
+    "GARKLEIN": "Garklein",
+    "OTHER": "Khác"
   },
   "beginnerSongs": [
     "Hot Cross Buns",

@@ -62,6 +62,8 @@
   "transformAddAllAccidentals": "新增所有臨時記號",
   "transformReverseNotes": "反轉音符",
   "recorderType": "直笛類型",
+  "customBasePitch": "基本音高",
+  "customHighNote": "高音",
   "detect": "偵測",
   "detectRecorderType": "偵測直笛類型",
   "detectInstructions": "蓋住直笛的拇指孔和最頂部的手指孔並吹奏。",
@@ -120,7 +122,12 @@
     "TENOR": "次中音",
     "ALTO": "中音",
     "SOPRANO": "高音",
-    "SOPRANINO": "超高音"
+    "SOPRANINO": "超高音",
+    "CONTRABASS": "倍低音",
+    "GREATBASS": "大低音",
+    "VOICEFLUTE": "聲笛",
+    "GARKLEIN": "加爾克萊恩",
+    "OTHER": "其他"
   },
   "beginnerSongs": [
     "熱十字麵包",

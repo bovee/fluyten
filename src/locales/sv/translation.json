@@ -62,6 +62,8 @@
   "transformAddAllAccidentals": "Lägg till alla förtecken",
   "transformReverseNotes": "Vänd på noterna",
   "recorderType": "Blockflöjtstyp",
+  "customBasePitch": "Grundton",
+  "customHighNote": "Hög ton",
   "detect": "Detektera",
   "detectRecorderType": "Detektera blockflöjtstyp",
   "detectInstructions": "Täck tumhålet och det översta fingerhålet på din blockflöjt och blåsa.",
@@ -120,7 +122,12 @@
     "TENOR": "Tenor",
     "ALTO": "Alt",
     "SOPRANO": "Sopran",
-    "SOPRANINO": "Sopranino"
+    "SOPRANINO": "Sopranino",
+    "CONTRABASS": "Kontrabas",
+    "GREATBASS": "Storbas",
+    "VOICEFLUTE": "Voice Flute",
+    "GARKLEIN": "Garklein",
+    "OTHER": "Övrigt"
   },
   "beginnerSongs": [
     "Hot Cross Buns",

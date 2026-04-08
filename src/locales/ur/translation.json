@@ -62,6 +62,8 @@
   "transformAddAllAccidentals": "تمام حادثات شامل کریں",
   "transformReverseNotes": "نوٹس کو الٹا کریں",
   "recorderType": "بانسری کی قسم",
+  "customBasePitch": "بنیادی سُر",
+  "customHighNote": "اونچا سُر",
   "detect": "شناخت کریں",
   "detectRecorderType": "بانسری کی قسم شناخت کریں",
   "detectInstructions": "اپنی بانسری کا انگوٹھے کا سوراخ اور سب سے اوپر کا انگلی کا سوراخ بند کریں اور پھونکیں۔",
@@ -120,7 +122,12 @@
     "TENOR": "ٹینر",
     "ALTO": "آلٹو",
     "SOPRANO": "سوپرانو",
-    "SOPRANINO": "سوپرانینو"
+    "SOPRANINO": "سوپرانینو",
+    "CONTRABASS": "کانٹراباس",
+    "GREATBASS": "عظیم باس",
+    "VOICEFLUTE": "وائس فلوٹ",
+    "GARKLEIN": "گارکلاین",
+    "OTHER": "دیگر"
   },
   "beginnerSongs": [
     "ہاٹ کراس بنز",

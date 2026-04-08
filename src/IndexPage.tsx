@@ -270,6 +270,14 @@ export function IndexPage({ onSelectSong }: IndexPageProps) {
 
   return (
     <>
+      {/* Preload Bravura music font so it's ready when navigating to SongPage */}
+      <span
+        style={{
+          fontFamily: 'Bravura',
+          position: 'absolute',
+          visibility: 'hidden',
+        }}
+      />
       {/* Page background */}
       <div
         style={{

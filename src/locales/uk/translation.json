@@ -62,6 +62,8 @@
   "transformAddAllAccidentals": "Додати всі знаки альтерації",
   "transformReverseNotes": "Обернути ноти",
   "recorderType": "Тип блокфлейти",
+  "customBasePitch": "Основний тон",
+  "customHighNote": "Висока нота",
   "detect": "Визначити",
   "detectRecorderType": "Визначити тип блокфлейти",
   "detectInstructions": "Закрийте отвір для великого пальця та верхній отвір блокфлейти і подуйте.",
@@ -120,7 +122,12 @@
     "TENOR": "Тенор",
     "ALTO": "Альт",
     "SOPRANO": "Сопрано",
-    "SOPRANINO": "Сопранино"
+    "SOPRANINO": "Сопранино",
+    "CONTRABASS": "Контрабас",
+    "GREATBASS": "Великий бас",
+    "VOICEFLUTE": "Voice Flute",
+    "GARKLEIN": "Гарклайн",
+    "OTHER": "Інше"
   },
   "beginnerSongs": [
     "Гарячі булочки",

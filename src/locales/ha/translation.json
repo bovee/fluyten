@@ -62,6 +62,8 @@
   "transformAddAllAccidentals": "Ƙara duk alamomin bazuwar",
   "transformReverseNotes": "Juya Kalmomi",
   "recorderType": "Nau'in recorder",
+  "customBasePitch": "Sautin Asali",
+  "customHighNote": "Sautin Sama",
   "detect": "Gano",
   "detectRecorderType": "Gano nau'in recorder",
   "detectInstructions": "Rufe ramukan babban yatsa da babban ramukan yatsan recorder ka sa ka busa.",
@@ -120,7 +122,12 @@
     "TENOR": "Tenor",
     "ALTO": "Alto",
     "SOPRANO": "Soprano",
-    "SOPRANINO": "Sopranino"
+    "SOPRANINO": "Sopranino",
+    "CONTRABASS": "Contrabass",
+    "GREATBASS": "Babban Bass",
+    "VOICEFLUTE": "Voice Flute",
+    "GARKLEIN": "Garklein",
+    "OTHER": "Sauran"
   },
   "beginnerSongs": [
     "Hot Cross Buns",

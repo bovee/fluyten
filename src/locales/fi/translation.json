@@ -62,6 +62,8 @@
   "transformAddAllAccidentals": "Lisää kaikki etumerkit",
   "transformReverseNotes": "Käännä nuotit",
   "recorderType": "Nokkahuilu-tyyppi",
+  "customBasePitch": "Perussävel",
+  "customHighNote": "Korkea nuotti",
   "detect": "Tunnista",
   "detectRecorderType": "Tunnista nokkahuilu-tyyppi",
   "detectInstructions": "Peitä nokkahuilu-reikäsi peukalon reikä ja ylin sormi-reikä ja puhalla.",
@@ -120,7 +122,12 @@
     "TENOR": "Tenori",
     "ALTO": "Altto",
     "SOPRANO": "Sopraano",
-    "SOPRANINO": "Sopraanino"
+    "SOPRANINO": "Sopraanino",
+    "CONTRABASS": "Kontrabassonokkahilu",
+    "GREATBASS": "Suuribassonokkahilu",
+    "VOICEFLUTE": "Voice Flute",
+    "GARKLEIN": "Garklein",
+    "OTHER": "Muu"
   },
   "beginnerSongs": [
     "Hot Cross Buns",

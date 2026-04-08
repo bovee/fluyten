@@ -62,6 +62,8 @@
   "transformAddAllAccidentals": "Ajouter toutes les altérations",
   "transformReverseNotes": "Inverser les notes",
   "recorderType": "Type de flûte",
+  "customBasePitch": "Note de base",
+  "customHighNote": "Note haute",
   "detect": "Détecter",
   "detectRecorderType": "Détecter le type de flûte",
   "detectInstructions": "Couvrez le trou du pouce et le trou supérieur de votre flûte à bec et soufflez.",
@@ -120,7 +122,12 @@
     "TENOR": "Ténor",
     "ALTO": "Alto",
     "SOPRANO": "Soprano",
-    "SOPRANINO": "Sopranino"
+    "SOPRANINO": "Sopranino",
+    "CONTRABASS": "Contrebasse",
+    "GREATBASS": "Grand basse",
+    "VOICEFLUTE": "Flûte de voix",
+    "GARKLEIN": "Garklein",
+    "OTHER": "Autre"
   },
   "beginnerSongs": [
     "Hot Cross Buns",

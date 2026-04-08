@@ -62,6 +62,8 @@
   "transformAddAllAccidentals": "Tambahkan Semua Aksidental",
   "transformReverseNotes": "Balik Nada",
   "recorderType": "Jenis Suling",
+  "customBasePitch": "Nada Dasar",
+  "customHighNote": "Nada Tinggi",
   "detect": "Deteksi",
   "detectRecorderType": "Deteksi Jenis Suling",
   "detectInstructions": "Tutup lubang jempol dan lubang jari teratas pada suling Anda, lalu tiup.",
@@ -120,7 +122,12 @@
     "TENOR": "Tenor",
     "ALTO": "Alto",
     "SOPRANO": "Sopran",
-    "SOPRANINO": "Sopranino"
+    "SOPRANINO": "Sopranino",
+    "CONTRABASS": "Kontrabas",
+    "GREATBASS": "Bass Besar",
+    "VOICEFLUTE": "Voice Flute",
+    "GARKLEIN": "Garklein",
+    "OTHER": "Lainnya"
   },
   "beginnerSongs": [
     "Hot Cross Buns",

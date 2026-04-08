@@ -62,6 +62,8 @@
   "transformAddAllAccidentals": "Adicionar todos os acidentes",
   "transformReverseNotes": "Inverter notas",
   "recorderType": "Tipo de flauta doce",
+  "customBasePitch": "Nota base",
+  "customHighNote": "Nota alta",
   "detect": "Detectar",
   "detectRecorderType": "Detectar tipo de flauta doce",
   "detectInstructions": "Tape o furo do polegar e o furo superior da sua flauta doce e sopre.",
@@ -120,7 +122,12 @@
     "TENOR": "Tenor",
     "ALTO": "Alto",
     "SOPRANO": "Soprano",
-    "SOPRANINO": "Sopranino"
+    "SOPRANINO": "Sopranino",
+    "CONTRABASS": "Contrabaixo",
+    "GREATBASS": "Baixo grande",
+    "VOICEFLUTE": "Voice Flute",
+    "GARKLEIN": "Garklein",
+    "OTHER": "Outro"
   },
   "beginnerSongs": [
     "Hot Cross Buns",

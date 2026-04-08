@@ -1,4 +1,5 @@
-import { Music, Note, type Decoration, expandRepeats } from '../music';
+import type { Music, Note } from '../music';
+import { type Decoration, expandRepeats } from '../music';
 import { MusicTimeline } from './MusicTimeline';
 
 const METRONOME_LENGTH = 0.03;

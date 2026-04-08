@@ -8,7 +8,7 @@ import reactRefresh from 'eslint-plugin-react-refresh'
 import tseslint from 'typescript-eslint'
 import { defineConfig, globalIgnores } from 'eslint/config'
 
-export default defineConfig([globalIgnores(['dist']), {
+export default defineConfig([globalIgnores(['dist', 'coverage']), {
   files: ['**/*.{ts,tsx}'],
   extends: [
     js.configs.recommended,
@@ -22,5 +22,7 @@ export default defineConfig([globalIgnores(['dist']), {
   },
   rules: {
     '@typescript-eslint/no-unused-vars': ['error', { argsIgnorePattern: '^_' }],
+    '@typescript-eslint/consistent-type-imports': 'error',
+    'no-console': ['warn', { allow: ['warn', 'error'] }],
   },
 }, ...storybook.configs["flat/recommended"]])

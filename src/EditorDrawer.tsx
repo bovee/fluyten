@@ -26,6 +26,7 @@ import {
   defaultClefForInstrument,
   type VoiceInfo,
 } from './io/abcImport';
+import { resolveInstrumentConfig, RECORDER_TYPES } from './instrument';
 import { singlePitchToAbc, durationToAbc, reflowAbc } from './io/abcExport';
 import { TRANSFORMATIONS, transformFragment } from './io/transformations';
 import { Music, Duration, DurationModifier } from './music';
@@ -185,8 +186,15 @@ export function EditorDrawer({
 
   const startTranscribing = async () => {
     const lines = abcMusic.split('\n');
-    const { instrumentType, tuning } = useStore.getState();
-    const defaultClef = defaultClefForInstrument(instrumentType);
+    const { instrumentType, tuning, customBasePitchStr, customHighNoteStr } =
+      useStore.getState();
+    const config =
+      resolveInstrumentConfig(
+        instrumentType,
+        customBasePitchStr,
+        customHighNoteStr
+      ) ?? RECORDER_TYPES.SOPRANO;
+    const defaultClef = defaultClefForInstrument(config.basePitch);
     const tempMusic = new Music();
     const { keyAdjustment, defaultDuration } = parseHeaders(
       lines,
@@ -258,7 +266,7 @@ export function EditorDrawer({
       await tracker.start();
       setIsTranscribing(true);
       const id = window.setInterval(() => {
-        tracker.checkFrequency({ instrumentType, tuning });
+        tracker.checkFrequency({ ...config, tuning });
       }, RECORD_SAMPLE_RATE);
       transcribeIntervalRef.current = id;
     } catch (error) {

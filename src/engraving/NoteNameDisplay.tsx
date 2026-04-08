@@ -15,7 +15,7 @@ export function NoteNameDisplay({
   return (
     <span
       style={{
-        display: 'inline-flex',
+        display: 'flex',
         flexDirection: 'column',
         alignItems: 'center',
         lineHeight: 1,

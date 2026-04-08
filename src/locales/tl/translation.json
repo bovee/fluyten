@@ -62,6 +62,8 @@
   "transformAddAllAccidentals": "Idagdag ang lahat ng aksidental",
   "transformReverseNotes": "Baligtarin ang mga Nota",
   "recorderType": "Uri ng recorder",
+  "customBasePitch": "Batayang Tono",
+  "customHighNote": "Mataas na Nota",
   "detect": "Alamin",
   "detectRecorderType": "Alamin ang uri ng recorder",
   "detectInstructions": "Takpan ang butas ng hinlalaki at ang pinakamataas na butas ng daliri sa iyong recorder at huminga.",
@@ -120,7 +122,12 @@
     "TENOR": "Tenor",
     "ALTO": "Alto",
     "SOPRANO": "Soprano",
-    "SOPRANINO": "Sopranino"
+    "SOPRANINO": "Sopranino",
+    "CONTRABASS": "Contrabass",
+    "GREATBASS": "Malaking Bass",
+    "VOICEFLUTE": "Voice Flute",
+    "GARKLEIN": "Garklein",
+    "OTHER": "Iba pa"
   },
   "beginnerSongs": [
     "Hot Cross Buns",

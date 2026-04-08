@@ -62,6 +62,8 @@
   "transformAddAllAccidentals": "إضافة جميع العلامات العرضية",
   "transformReverseNotes": "عكس النوتات",
   "recorderType": "نوع المزمار",
+  "customBasePitch": "درجة الأساس",
+  "customHighNote": "النغمة العليا",
   "detect": "اكتشاف",
   "detectRecorderType": "اكتشاف نوع المزمار",
   "detectInstructions": "غطِّ ثقب الإبهام والثقبة العلوية في مزمارك وانفخ.",
@@ -120,7 +122,12 @@
     "TENOR": "تينور",
     "ALTO": "ألتو",
     "SOPRANO": "سوبرانو",
-    "SOPRANINO": "سوبرانينو"
+    "SOPRANINO": "سوبرانينو",
+    "CONTRABASS": "كونترباص",
+    "GREATBASS": "باص كبير",
+    "VOICEFLUTE": "فلوت الصوت",
+    "GARKLEIN": "جاركلاين",
+    "OTHER": "أخرى"
   },
   "beginnerSongs": [
     "خبز اللفافة الساخن",

@@ -62,6 +62,8 @@
   "transformAddAllAccidentals": "Lisa kõik juhuslikud märgid",
   "transformReverseNotes": "Pööra noodid ümber",
   "recorderType": "Plokkflöödi tüüp",
+  "customBasePitch": "Põhitoon",
+  "customHighNote": "Kõrge noot",
   "detect": "Tuvasta",
   "detectRecorderType": "Tuvasta plokkflöödi tüüp",
   "detectInstructions": "Kata pöidlaava ja kõrgeim sõrmeava kinni ning puhuge.",
@@ -120,7 +122,12 @@
     "TENOR": "Tenor",
     "ALTO": "Alt",
     "SOPRANO": "Sopran",
-    "SOPRANINO": "Sopranino"
+    "SOPRANINO": "Sopranino",
+    "CONTRABASS": "Kontrabass",
+    "GREATBASS": "Suurebass",
+    "VOICEFLUTE": "Voice Flute",
+    "GARKLEIN": "Garklein",
+    "OTHER": "Muu"
   },
   "beginnerSongs": [
     "Hot Cross Buns",

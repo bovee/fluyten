@@ -91,7 +91,7 @@ const GERMAN_FINGERINGS: { [offset: number]: Hole[][] } = parseFingerings({
 
 // Fingerings for trilled notes. Use T/U/V/W characters to mark holes that
 // animate during the trill. Keys are pitch offsets identical to FINGERINGS.
- 
+
 export const TRILLED_FINGERINGS: { [offset: number]: Hole[][] } =
   parseFingerings({
     5: ['CCCCCVOO'], // E
@@ -138,7 +138,7 @@ export function lookupFingerings(
   trill = false
 ): Hole[][] | undefined {
   const offset =
-    pitch - (RECORDER_TYPES[instrumentType as RecorderType]?.basePitch ?? 0);
+    pitch - RECORDER_TYPES[instrumentType as RecorderType].basePitch + 1;
   if (trill) return TRILLED_FINGERINGS[offset] || FINGERINGS[offset];
   if (german && offset in GERMAN_FINGERINGS) {
     return GERMAN_FINGERINGS[offset];
@@ -161,7 +161,8 @@ export function FingeringDiagram({
   if (!note) return EMPTY_DIAGRAM;
   const { instrumentType: storeType, isGerman: storeGerman } =
     useStore.getState();
-  const instrumentType = forceGermanSoprano ? 'SOPRANO' : storeType;
+  if (!forceGermanSoprano && storeType === null) return EMPTY_DIAGRAM;
+  const instrumentType = forceGermanSoprano ? 'SOPRANO' : storeType!;
   const isGerman = forceGermanSoprano ? true : storeGerman;
   const hasTrill = note.decorations.includes('trill');
   const fingerings = lookupFingerings(

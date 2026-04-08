@@ -62,6 +62,8 @@
   "transformAddAllAccidentals": "Alle Vorzeichen hinzufügen",
   "transformReverseNotes": "Noten umkehren",
   "recorderType": "Blockflötentyp",
+  "customBasePitch": "Grundton",
+  "customHighNote": "Hohe Note",
   "detect": "Erkennen",
   "detectRecorderType": "Blockflötentyp erkennen",
   "detectInstructions": "Schließen Sie das Daumenloch und das oberste Griffloch Ihrer Blockflöte und blasen Sie.",
@@ -120,7 +122,12 @@
     "TENOR": "Tenor",
     "ALTO": "Alt",
     "SOPRANO": "Sopran",
-    "SOPRANINO": "Sopranino"
+    "SOPRANINO": "Sopranino",
+    "CONTRABASS": "Kontrabass",
+    "GREATBASS": "Großbass",
+    "VOICEFLUTE": "Voiceflöte",
+    "GARKLEIN": "Garklein",
+    "OTHER": "Sonstige"
   },
   "beginnerSongs": [
     "Hot Cross Buns",

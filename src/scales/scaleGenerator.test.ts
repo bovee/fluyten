@@ -162,10 +162,6 @@ describe('generateScaleAbc', () => {
   });
 });
 
-function hzToMidi(hz: number): number {
-  return Math.round(69 + 12 * Math.log2(hz / 440));
-}
-
 function noteToMidi(abcNote: string): number {
   // Strip accidental prefixes (^, _, =) and parse letter + octave marks
   const stripped = abcNote.replace(/^[^a-zA-Z]+/, '');
@@ -210,8 +206,8 @@ describe('generateChordAbc', () => {
         direction: 'ascending',
         instrumentType,
       });
-      const { highNote } = RECORDER_TYPES[instrumentType];
-      const highMidi = hzToMidi(highNote);
+      const { basePitch, pitchRange } = RECORDER_TYPES[instrumentType];
+      const highMidi = basePitch + pitchRange;
       const tokens = notes.trim().split(/\s+/).filter(Boolean);
       for (const token of tokens) {
         expect(noteToMidi(token)).toBeLessThanOrEqual(highMidi);

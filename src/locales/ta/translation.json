@@ -62,6 +62,8 @@
   "transformAddAllAccidentals": "அனைத்து தற்செயல் குறியீடுகளையும் சேர்க்கவும்",
   "transformReverseNotes": "குறிப்புகளை மாற்று",
   "recorderType": "ரெக்கார்டர் வகை",
+  "customBasePitch": "அடிப்படை சுரம்",
+  "customHighNote": "உயர் சுரம்",
   "detect": "கண்டறிவும்",
   "detectRecorderType": "ரெக்கார்டர் வகையை கண்டறிவும்",
   "detectInstructions": "உங்கள் ரெக்கார்டரின் கட்டை விரல் துளை மற்றும் மிக மேலே உள்ள விரல் துளையை மூடி ஊதவும்.",
@@ -120,7 +122,12 @@
     "TENOR": "டெனர்",
     "ALTO": "ஆல்டோ",
     "SOPRANO": "சோப்ரானோ",
-    "SOPRANINO": "சோப்ரானினோ"
+    "SOPRANINO": "சோப்ரானினோ",
+    "CONTRABASS": "கான்ட்ராபேஸ்",
+    "GREATBASS": "கிரேட் பேஸ்",
+    "VOICEFLUTE": "வாய்ஸ் ஃப்ளூட்",
+    "GARKLEIN": "கார்க்லைன்",
+    "OTHER": "மற்றவை"
   },
   "beginnerSongs": [
     "ஹாட் கிராஸ் பன்ஸ்",

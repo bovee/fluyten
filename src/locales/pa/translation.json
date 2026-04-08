@@ -62,6 +62,8 @@
   "transformAddAllAccidentals": "ਸਾਰੇ ਅਚਾਨਕ ਚਿੰਨ੍ਹ ਜੋੜੋ",
   "transformReverseNotes": "ਨੋਟਾਂ ਨੂੰ ਉਲਟਾਓ",
   "recorderType": "ਰਿਕਾਰਡਰ ਕਿਸਮ",
+  "customBasePitch": "ਮੂਲ ਸੁਰ",
+  "customHighNote": "ਉੱਚਾ ਸੁਰ",
   "detect": "ਪਤਾ ਲਗਾਓ",
   "detectRecorderType": "ਰਿਕਾਰਡਰ ਕਿਸਮ ਦਾ ਪਤਾ ਲਗਾਓ",
   "detectInstructions": "ਆਪਣੇ ਰਿਕਾਰਡਰ ਦੇ ਅੰਗੂਠੇ ਦੇ ਛੇਕ ਅਤੇ ਸਭ ਤੋਂ ਉੱਪਰਲੇ ਉਂਗਲੀ ਦੇ ਛੇਕ ਨੂੰ ਢੱਕੋ ਅਤੇ ਫੂਕ ਮਾਰੋ।",
@@ -120,7 +122,12 @@
     "TENOR": "ਟੈਨਰ",
     "ALTO": "ਅਲਟੋ",
     "SOPRANO": "ਸੋਪ੍ਰਾਨੋ",
-    "SOPRANINO": "ਸੋਪ੍ਰਾਨਿਨੋ"
+    "SOPRANINO": "ਸੋਪ੍ਰਾਨਿਨੋ",
+    "CONTRABASS": "ਕੋਂਟਰਾਬਾਸ",
+    "GREATBASS": "ਗ੍ਰੇਟ ਬਾਸ",
+    "VOICEFLUTE": "ਵੌਇਸ ਫਲੂਟ",
+    "GARKLEIN": "ਗਾਰਕਲਾਇਨ",
+    "OTHER": "ਹੋਰ"
   },
   "beginnerSongs": [
     "ਹੌਟ ਕਰਾਸ ਬਨਜ਼",

@@ -62,6 +62,8 @@
   "transformAddAllAccidentals": "Adaugă toate alterațiile",
   "transformReverseNotes": "Inversează notele",
   "recorderType": "Tip de flaut dulce",
+  "customBasePitch": "Notă de bază",
+  "customHighNote": "Notă înaltă",
   "detect": "Detectează",
   "detectRecorderType": "Detectează tipul de flaut dulce",
   "detectInstructions": "Acoperiți orificiul pentru deget mare și cel mai de sus orificiu al flautului și suflați.",
@@ -120,7 +122,12 @@
     "TENOR": "Tenor",
     "ALTO": "Alto",
     "SOPRANO": "Sopran",
-    "SOPRANINO": "Sopranino"
+    "SOPRANINO": "Sopranino",
+    "CONTRABASS": "Contrabas",
+    "GREATBASS": "Bas mare",
+    "VOICEFLUTE": "Voice Flute",
+    "GARKLEIN": "Garklein",
+    "OTHER": "Altul"
   },
   "beginnerSongs": [
     "Hot Cross Buns",
