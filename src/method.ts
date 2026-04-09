@@ -286,12 +286,12 @@ export function featuresFromMusic(music: Music): SongFeatures {
 export const METHODS_FOR_INSTRUMENT: Record<RecorderType, string[]> = {
   CONTRABASS: [],
   GREATBASS: [],
-  BASS: ['sweetPipesF'],
+  BASS: [],
   TENOR: ['orrC', 'sweetPipesC', 'zeitlinC'],
   VOICEFLUTE: [],
   ALTO: ['sweetPipesF'],
   SOPRANO: ['orrC', 'sweetPipesC', 'zeitlinC'],
-  SOPRANINO: [],
+  SOPRANINO: ['sweetPipesF'],
   GARKLEIN: [],
 };
 

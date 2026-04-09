@@ -1,47 +1,19 @@
 # Fluyten
 
-A free, open-source web app for learning and practicing recorder music.
+A free, open-source web app for learning and practicing recorder music in 44 languages.
+Fluyten:
+ - Import sheet music in ABC, MIDI, and MusicXML formats
+ - Supports simple editing operations and scale/arpeggio generation
+ - Displays songs with a wide variety of supported decorations and musical notations
+ - Will show fingerings for all pitches of recorder (Bass, Alto, Soprano, etc) with German system option.
+ - Plays music, with accompaniment if available.
+ - Can provide simple real-time feedback on your playing, with metronome.
 
-**[Try it now at bovee.github.io/fluyten](https://bovee.github.io/fluyten/)**
+**[Try it here](https://bovee.github.io/fluyten/)**
 
-## What it does
+## License
 
-Fluyten shows you sheet music, listens to you play through your microphone, and highlights each note green as you play it correctly. It also plays back pieces so you can hear how they should sound.
-
-## Features
-
-**Practice with real-time feedback**
-- Listens via your microphone and tracks which notes you play correctly
-- Highlights notes green as you progress through a piece
-- Adjustable tempo for playing at your own speed
-- Built-in metronome
-
-**Sheet music rendering**
-- Renders standard music notation from [ABC notation](https://abcnotation.com/wiki/abc:standard:v2.1)
-- Supports key signatures, time signatures, accidentals, decorations, lyrics, repeat bars, and multi-voice parts
-- Tap any note to see its fingering diagram
-
-**Recorder support**
-- Soprano, sopranino, alto, tenor, and bass recorders
-- Baroque and German fingering diagrams
-- Auto-detect wizard that identifies your recorder type and fingering system from mic input
-- Adjustable tuning ratio for instruments not at A=440 Hz
-
-**Song management**
-- Organize songs into books (collections)
-- Built-in beginner song library
-- Import songs from ABC files, MusicXML files, or URLs
-- Drag and drop files directly into the app
-- Export books as ABC files
-- Inline ABC notation editor with live preview
-
-**Music tools**
-- Scale generator (any key, major/minor, ascending/descending/both, one octave or full instrument range)
-- Note transformations: transpose by octave, fifth, or semitone; double or halve durations; simplify or add accidentals
-
-**Multilingual**
-- Available in 14 languages: English, Arabic, Bengali, Chinese (Simplified), French, German, Hindi, Indonesian, Japanese, Korean, Portuguese, Russian, Spanish, and Urdu
-- Full right-to-left support for Arabic and Urdu
+[MIT licensed](./LICENSE).
 
 ## Running locally
 
@@ -52,21 +24,28 @@ npm install
 npm run dev
 ```
 
-Open `https://localhost:5173`. The dev server uses a self-signed certificate (HTTPS is required for microphone access), so accept the browser's security warning.
+Open `https://localhost:5173`. The dev server uses a self-signed certificate (HTTPS is required for microphone access) so you will hhave to accept the browser's security warning.
 
 ## Contributing
 
-Contributions are welcome! Please open an issue or pull request on [GitHub](https://github.com/bovee/fluyten).
+Fluyten is worked on on a best-effort basis, but if you have an issue or feature request [please open it here](https://github.com/bovee/fluyten/issues/new).
+
+Contributions are welcome! Please open a pull request on [GitHub](https://github.com/bovee/fluyten).
 
 Before submitting:
-1. `npm run build` and `npm test` should both pass
-2. `npm run lint` should report no issues
-3. Add tests for new functionality where practical
+1. `npm run build` and `npm test` should both pass.
+2. `npm run format` should be used to conform to style.
+3. `npm run lint` should report no issues.
+5. Add tests for new functionality where practical. Visual tests may need to be updated with `npm run test:visual_update`.
 
-## License
+## Extensions to the ABC format
 
-MIT -- see [LICENSE](./LICENSE).
+Fluyten generally follows [the 2.1 spec for the ABC format](https://abcnotation.com/wiki/abc:standard:v2.1) with a few extensions:
+ - `!...!` notation is case-insensitive (`!d.c.!` is handled alongside `!D.C.!`)
+ - `!/!`, `!//!`, `!///!` or `!tremolo!`, `!////!` can be used for tremolos.
+ - `!d.c.alfine!`, `!d.c.alcoda!`, `!alcoda!`, `!d.s.alfine!` and `!d.s.alcoda!` are supported for complex repetition patterns.
+ - Several parts of the ABC spec are not supported: instructions (3.1.17), symbol lines (4.15), redefinable symbols (4.16), typesettings (6.1), macros (9), stylesheet directives (11), HTML special symbols (part of 14.1), etc
 
 ### Third-party assets
 
-The [Bravura](https://www.steinberg.net/developers/) music font by Steinberg Media Technologies GmbH is included under the [SIL Open Font License 1.1](./public/OFL.txt).
+The [Bravura](https://www.steinberg.net/developers/) music font by Steinberg Media Technologies GmbH is included under the [SIL Open Font License 1.1](./public/OFL.txt) for use in music engraving.
