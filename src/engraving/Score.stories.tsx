@@ -4,7 +4,6 @@ import {
   Music,
   Note,
   Duration,
-  DurationModifier,
   type BarLine,
   type SpanDecoration,
 } from '../music';
@@ -176,7 +175,7 @@ export const DottedNotes: Story = {
       music.signatures[0].beatsPerBar = 4;
       music.signatures[0].beatValue = 4;
       music.notes = [
-        new Note(60, Duration.HALF, [], undefined, DurationModifier.DOTTED),
+        new Note(60, Duration.HALF, [], undefined, 1),
         new Note(62, Duration.QUARTER),
       ];
       music.reflow();
@@ -241,7 +240,9 @@ export const Triplets: Story = {
       music.signatures[0].beatsPerBar = 4;
       music.signatures[0].beatValue = 4;
       const T = (p: number) =>
-        new Note(p, Duration.QUARTER, [], undefined, DurationModifier.TRIPLET);
+        Object.assign(new Note(p, Duration.QUARTER), {
+          tuplet: { actual: 3, written: 2, groupSize: 3 },
+        }) as Note;
       music.notes = [T(60), T(62), T(64), T(65), T(64), T(62)];
       music.bars = [
         { afterNoteNum: undefined, type: 'standard' },
@@ -286,7 +287,9 @@ export const CrossLineTriplets: Story = {
       music.signatures[0].beatsPerBar = 2;
       music.signatures[0].beatValue = 4;
       const T = (p: number) =>
-        new Note(p, Duration.QUARTER, [], undefined, DurationModifier.TRIPLET);
+        Object.assign(new Note(p, Duration.QUARTER), {
+          tuplet: { actual: 3, written: 2, groupSize: 3 },
+        }) as Note;
       const Qn = (p: number) => new Note(p, Duration.QUARTER);
       music.notes = [
         Qn(60),

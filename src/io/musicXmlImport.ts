@@ -1,6 +1,6 @@
 import { unzipSync } from 'fflate';
-import type { Accidental, BarLineType, Decoration } from '../music';
-import { Duration, DurationModifier, Music, Note } from '../music';
+import type { Accidental, BarLineType, Decoration, Signature } from '../music';
+import { Duration, Music, Note } from '../music';
 
 // Semitone offset for each diatonic step
 const STEP_SEMITONES: Record<string, number> = {
@@ -197,13 +197,26 @@ export function fromMusicXml(xmlText: string): Music {
     (c) => c.tagName === 'measure'
   );
 
-  // Tie tracking: midiPitch → note index at which the tie started
   // Tie chain tracking: midiPitch → note index where the current chain began.
   // A chain of consecutive same-pitch ties is collapsed into a single curve
   // [chainStart, chainEnd] to avoid nested parentheses in the ABC output.
   const openTieChains = new Map<number, number>();
   // Slur tracking: slur number → note index at which the slur started
   const openSlurs = new Map<number, number>();
+  // Span decoration (crescendo/diminuendo) tracking: wedge number → {type, startNoteIndex}
+  const openWedges = new Map<
+    number,
+    { type: 'crescendo' | 'diminuendo'; startNoteIndex: number }
+  >();
+
+  /** Return the signature entry at atNoteIndex, creating one if needed. */
+  function sigAt(atNoteIndex: number): Signature {
+    const last = music.signatures[music.signatures.length - 1];
+    if (last.atNoteIndex === atNoteIndex) return last;
+    const newSig: Signature = { ...last, atNoteIndex };
+    music.signatures.push(newSig);
+    return newSig;
+  }
 
   for (const measure of measures) {
     const noteCountBeforeMeasure = music.notes.length;
@@ -251,200 +264,258 @@ export function fromMusicXml(xmlText: string): Music {
       }
     }
 
-    // Attributes (key, time, clef, divisions) — may appear in any measure
+    // Attributes (key, time, clef) — may appear in any measure; changes after
+    // the first measure create a new Signature entry at the current note index.
     const attributes =
       Array.from(measure.children).find((c) => c.tagName === 'attributes') ??
       null;
     if (attributes) {
-      // <divisions> defines the rhythmic grid but we rely on symbolic <type> for durations,
-      // so we intentionally skip parsing it.
+      // <divisions> defines the rhythmic grid but we rely on symbolic <type> for
+      // durations, so we intentionally skip parsing it.
 
-      const keyEl =
-        Array.from(attributes.children).find((c) => c.tagName === 'key') ??
-        null;
-      if (keyEl) {
-        const fifths = parseInt(childText(keyEl, 'fifths') || '0', 10);
-        const mode = childText(keyEl, 'mode').toLowerCase() || 'major';
-        const keyMap =
-          mode === 'minor' ? FIFTHS_TO_MINOR_KEY : FIFTHS_TO_MAJOR_KEY;
-        music.signatures[0].keySignature = keyMap[fifths] ?? 'C';
-      }
+      const keyEl = children(attributes, 'key')[0] ?? null;
+      const timeEl = children(attributes, 'time')[0] ?? null;
 
-      const timeEl =
-        Array.from(attributes.children).find((c) => c.tagName === 'time') ??
-        null;
-      if (timeEl) {
-        const symbol = timeEl.getAttribute('symbol');
-        if (symbol === 'common') {
-          music.signatures[0].beatsPerBar = 4;
-          music.signatures[0].beatValue = 4;
-        } else if (symbol === 'cut') {
-          music.signatures[0].beatsPerBar = 2;
-          music.signatures[0].beatValue = 2;
-        } else {
-          music.signatures[0].beatsPerBar = parseInt(
-            childText(timeEl, 'beats') || '4',
-            10
-          );
-          music.signatures[0].beatValue = parseInt(
-            childText(timeEl, 'beat-type') || '4',
-            10
-          );
+      if (keyEl || timeEl) {
+        const sig = sigAt(noteCountBeforeMeasure);
+        if (keyEl) {
+          const fifths = parseInt(childText(keyEl, 'fifths') || '0', 10);
+          const mode = childText(keyEl, 'mode').toLowerCase() || 'major';
+          const keyMap =
+            mode === 'minor' ? FIFTHS_TO_MINOR_KEY : FIFTHS_TO_MAJOR_KEY;
+          sig.keySignature = keyMap[fifths] ?? 'C';
+        }
+        if (timeEl) {
+          const symbol = timeEl.getAttribute('symbol');
+          if (symbol === 'common') {
+            sig.beatsPerBar = 4;
+            sig.beatValue = 4;
+            sig.commonTime = true;
+          } else if (symbol === 'cut') {
+            sig.beatsPerBar = 2;
+            sig.beatValue = 2;
+            sig.commonTime = true;
+          } else {
+            sig.beatsPerBar = parseInt(childText(timeEl, 'beats') || '4', 10);
+            sig.beatValue = parseInt(childText(timeEl, 'beat-type') || '4', 10);
+            sig.commonTime = undefined;
+          }
         }
       }
 
-      const clefEl =
-        Array.from(attributes.children).find((c) => c.tagName === 'clef') ??
-        null;
+      const clefEl = children(attributes, 'clef')[0] ?? null;
       if (clefEl) {
         const sign = childText(clefEl, 'sign').toUpperCase();
-        if (sign === 'G') music.clef = 'treble';
-        else if (sign === 'F') music.clef = 'bass';
+        const octaveChange = parseInt(
+          childText(clefEl, 'clef-octave-change') || '0',
+          10
+        );
+        if (sign === 'G')
+          music.clef = octaveChange === 1 ? 'treble8va' : 'treble';
+        else if (sign === 'F')
+          music.clef = octaveChange === 1 ? 'bass8va' : 'bass';
         else if (sign === 'C') music.clef = 'alto';
       }
     }
 
-    // Notes
-    const noteEls = Array.from(measure.children).filter(
-      (c) => c.tagName === 'note'
-    );
-    for (const noteEl of noteEls) {
-      // Only process voice 1
-      const voiceText = childText(noteEl, 'voice');
-      if (voiceText && parseInt(voiceText, 10) > 1) continue;
-
-      const isChord = noteEl.querySelector('chord') !== null;
-      const isGrace = noteEl.querySelector('grace') !== null;
-      const isRest = noteEl.querySelector('rest') !== null;
-
-      // Duration
-      const typeText = childText(noteEl, 'type') || 'quarter';
-      const dotCount = noteEl.querySelectorAll('dot').length;
-      const timeModEl = noteEl.querySelector('time-modification');
-
-      let duration: Duration;
-      let durationModifier: DurationModifier = DurationModifier.NONE;
-
-      if (isGrace) {
-        const slash = noteEl.querySelector('grace')?.getAttribute('slash');
-        duration = slash === 'yes' ? Duration.GRACE_SLASH : Duration.GRACE;
-      } else {
-        duration = TYPE_TO_DURATION[typeText] ?? Duration.QUARTER;
-        if (dotCount > 0) {
-          durationModifier = DurationModifier.DOTTED;
-        } else if (timeModEl) {
-          const actual = parseInt(
-            timeModEl.querySelector('actual-notes')?.textContent || '3',
-            10
+    // Notes and directions — iterate children in document order so that
+    // directions between notes (tempo changes, wedges) are processed at the
+    // correct note-index boundary.
+    for (const child of Array.from(measure.children)) {
+      if (child.tagName === 'direction') {
+        // Tempo from <sound tempo="...">
+        const soundEl = child.querySelector('sound');
+        if (soundEl?.hasAttribute('tempo')) {
+          const bpm = Math.round(
+            parseFloat(soundEl.getAttribute('tempo') ?? '0')
           );
-          const normal = parseInt(
-            timeModEl.querySelector('normal-notes')?.textContent || '2',
-            10
-          );
-          if (actual === 3 && normal === 2)
-            durationModifier = DurationModifier.TRIPLET;
-        }
-      }
-
-      if (isRest) {
-        const rest = new Note(undefined, duration, [], [], durationModifier);
-        music.notes.push(rest);
-        continue;
-      }
-
-      // Pitch
-      const pitchEl = noteEl.querySelector('pitch');
-      const step = pitchEl ? childText(pitchEl, 'step') || 'C' : 'C';
-      const alter =
-        parseFloat(pitchEl ? childText(pitchEl, 'alter') || '0' : '0') || 0;
-      const octave = parseInt(
-        pitchEl ? childText(pitchEl, 'octave') || '4' : '4',
-        10
-      );
-      const midiPitch = stepOctaveToMidi(step, alter, octave);
-
-      // Accidental
-      const accidentalText =
-        noteEl.querySelector('accidental')?.textContent?.trim() ?? '';
-      let accidental: Accidental = ACCIDENTAL_MAP[accidentalText];
-      if (accidental === undefined && alter !== 0) {
-        accidental = alter > 0 ? '#' : 'b';
-      }
-
-      if (isChord && music.notes.length > 0) {
-        // Add pitch to the previous note (chord voicing)
-        const lastNote = music.notes[music.notes.length - 1];
-        lastNote.pitches.push(midiPitch);
-        lastNote.accidentals.push(accidental);
-        continue;
-      }
-
-      const decorations = parseDecorations(noteEl);
-      const note = new Note(
-        midiPitch,
-        duration,
-        decorations,
-        accidental,
-        durationModifier
-      );
-      music.notes.push(note);
-
-      const noteIndex = music.notes.length - 1;
-
-      // Lyrics
-      for (const lyricEl of noteEl.querySelectorAll('lyric')) {
-        const verseNum =
-          parseInt(lyricEl.getAttribute('number') ?? '1', 10) - 1;
-        const text = lyricEl.querySelector('text')?.textContent?.trim() ?? '';
-        const syllabic =
-          lyricEl.querySelector('syllabic')?.textContent?.trim() ?? 'single';
-        if (text) {
-          while (music.lyrics.length <= verseNum) music.lyrics.push([]);
-          const syllable =
-            syllabic === 'begin' || syllabic === 'middle'
-              ? text + '-'
-              : text + ' ';
-          music.lyrics[verseNum][noteIndex] = syllable;
-        }
-      }
-
-      // Ties — chained ties (stop + start on the same note) extend an open chain
-      // rather than closing and reopening it, so the whole chain becomes one curve.
-      let hasTieStop = false;
-      let hasTieStart = false;
-      for (const tieEl of noteEl.querySelectorAll('tie')) {
-        const t = tieEl.getAttribute('type');
-        if (t === 'stop') hasTieStop = true;
-        if (t === 'start') hasTieStart = true;
-      }
-      if (hasTieStop) {
-        const chainStart = openTieChains.get(midiPitch);
-        if (chainStart !== undefined) {
-          if (hasTieStart) {
-            // Middle of chain: keep the chain open (chainStart stays)
-          } else {
-            // End of chain: close it
-            music.curves.push([chainStart, noteIndex]);
-            openTieChains.delete(midiPitch);
+          if (bpm > 0) {
+            const sig = sigAt(music.notes.length);
+            sig.tempo = bpm;
+            // Tempo text label (e.g. "Allegro") from a sibling <words> element
+            const words = child.querySelector('direction-type words');
+            const label = words?.textContent?.trim();
+            if (label) sig.tempoText = label;
           }
         }
-      }
-      if (hasTieStart && !hasTieStop) {
-        // Start of a new chain
-        openTieChains.set(midiPitch, noteIndex);
-      }
 
-      // Slurs
-      for (const slurEl of noteEl.querySelectorAll('notations slur')) {
-        const slurType = slurEl.getAttribute('type');
-        const slurNumber = parseInt(slurEl.getAttribute('number') || '1', 10);
-        if (slurType === 'start') {
-          openSlurs.set(slurNumber, noteIndex);
-        } else if (slurType === 'stop') {
-          const startIdx = openSlurs.get(slurNumber);
-          if (startIdx !== undefined) {
-            music.curves.push([startIdx, noteIndex]);
-            openSlurs.delete(slurNumber);
+        // Span decorations (crescendo / diminuendo) from <wedge>
+        const wedgeEl = child.querySelector('direction-type wedge');
+        if (wedgeEl) {
+          const wedgeType = wedgeEl.getAttribute('type');
+          const wedgeNum = parseInt(wedgeEl.getAttribute('number') || '1', 10);
+          if (wedgeType === 'crescendo' || wedgeType === 'diminuendo') {
+            openWedges.set(wedgeNum, {
+              type: wedgeType,
+              startNoteIndex: music.notes.length,
+            });
+          } else if (wedgeType === 'stop') {
+            const open = openWedges.get(wedgeNum);
+            if (open !== undefined) {
+              music.spanDecorations.push({
+                type: open.type,
+                startNoteIndex: open.startNoteIndex,
+                endNoteIndex: music.notes.length - 1,
+              });
+              openWedges.delete(wedgeNum);
+            }
+          }
+        }
+      } else if (child.tagName === 'note') {
+        const noteEl = child;
+
+        // Only process voice 1
+        const voiceText = childText(noteEl, 'voice');
+        if (voiceText && parseInt(voiceText, 10) > 1) continue;
+
+        const isChord = noteEl.querySelector('chord') !== null;
+        const isGrace = noteEl.querySelector('grace') !== null;
+        const isRest = noteEl.querySelector('rest') !== null;
+
+        // Duration
+        const typeText = childText(noteEl, 'type') || 'quarter';
+        const dotCount = noteEl.querySelectorAll('dot').length;
+        const timeModEl = noteEl.querySelector('time-modification');
+
+        let duration: Duration;
+        let dots = 0;
+        let tupletActual: number | null = null;
+        let tupletNormal: number | null = null;
+
+        if (isGrace) {
+          const slash = noteEl.querySelector('grace')?.getAttribute('slash');
+          duration = slash === 'yes' ? Duration.GRACE_SLASH : Duration.GRACE;
+        } else {
+          duration = TYPE_TO_DURATION[typeText] ?? Duration.QUARTER;
+          if (dotCount > 0) {
+            dots = dotCount;
+          } else if (timeModEl) {
+            tupletActual = parseInt(
+              timeModEl.querySelector('actual-notes')?.textContent || '3',
+              10
+            );
+            tupletNormal = parseInt(
+              timeModEl.querySelector('normal-notes')?.textContent || '2',
+              10
+            );
+          }
+        }
+
+        if (isRest) {
+          const restNote = new Note(undefined, duration, [], [], dots);
+          if (tupletActual !== null && tupletNormal !== null) {
+            restNote.tuplet = {
+              actual: tupletActual,
+              written: tupletNormal,
+              groupSize: tupletActual,
+            };
+          }
+          music.notes.push(restNote);
+          continue;
+        }
+
+        // Pitch
+        const pitchEl = noteEl.querySelector('pitch');
+        const step = pitchEl ? childText(pitchEl, 'step') || 'C' : 'C';
+        const alter =
+          parseFloat(pitchEl ? childText(pitchEl, 'alter') || '0' : '0') || 0;
+        const octave = parseInt(
+          pitchEl ? childText(pitchEl, 'octave') || '4' : '4',
+          10
+        );
+        const midiPitch = stepOctaveToMidi(step, alter, octave);
+
+        // Accidental
+        const accidentalText =
+          noteEl.querySelector('accidental')?.textContent?.trim() ?? '';
+        let accidental: Accidental = ACCIDENTAL_MAP[accidentalText];
+        if (accidental === undefined && alter !== 0) {
+          accidental = alter > 0 ? '#' : 'b';
+        }
+
+        if (isChord && music.notes.length > 0) {
+          // Add pitch to the previous note (chord voicing)
+          const lastNote = music.notes[music.notes.length - 1];
+          lastNote.pitches.push(midiPitch);
+          lastNote.accidentals.push(accidental);
+          continue;
+        }
+
+        const decorations = parseDecorations(noteEl);
+        const note = new Note(
+          midiPitch,
+          duration,
+          decorations,
+          accidental,
+          dots
+        );
+        if (tupletActual !== null && tupletNormal !== null) {
+          note.tuplet = {
+            actual: tupletActual,
+            written: tupletNormal,
+            groupSize: tupletActual,
+          };
+        }
+        music.notes.push(note);
+
+        const noteIndex = music.notes.length - 1;
+
+        // Lyrics
+        for (const lyricEl of noteEl.querySelectorAll('lyric')) {
+          const verseNum =
+            parseInt(lyricEl.getAttribute('number') ?? '1', 10) - 1;
+          const text = lyricEl.querySelector('text')?.textContent?.trim() ?? '';
+          const syllabic =
+            lyricEl.querySelector('syllabic')?.textContent?.trim() ?? 'single';
+          if (text) {
+            while (music.lyrics.length <= verseNum) music.lyrics.push([]);
+            const syllable =
+              syllabic === 'begin' || syllabic === 'middle'
+                ? text + '-'
+                : text + ' ';
+            music.lyrics[verseNum][noteIndex] = syllable;
+          }
+        }
+
+        // Ties — chained ties (stop + start on the same note) extend an open
+        // chain rather than closing and reopening it, so the whole chain
+        // becomes one curve.
+        let hasTieStop = false;
+        let hasTieStart = false;
+        for (const tieEl of noteEl.querySelectorAll('tie')) {
+          const t = tieEl.getAttribute('type');
+          if (t === 'stop') hasTieStop = true;
+          if (t === 'start') hasTieStart = true;
+        }
+        if (hasTieStop) {
+          const chainStart = openTieChains.get(midiPitch);
+          if (chainStart !== undefined) {
+            if (hasTieStart) {
+              // Middle of chain: keep the chain open (chainStart stays)
+            } else {
+              // End of chain: close it
+              music.curves.push([chainStart, noteIndex]);
+              openTieChains.delete(midiPitch);
+            }
+          }
+        }
+        if (hasTieStart && !hasTieStop) {
+          // Start of a new chain
+          openTieChains.set(midiPitch, noteIndex);
+        }
+
+        // Slurs
+        for (const slurEl of noteEl.querySelectorAll('notations slur')) {
+          const slurType = slurEl.getAttribute('type');
+          const slurNumber = parseInt(slurEl.getAttribute('number') || '1', 10);
+          if (slurType === 'start') {
+            openSlurs.set(slurNumber, noteIndex);
+          } else if (slurType === 'stop') {
+            const startIdx = openSlurs.get(slurNumber);
+            if (startIdx !== undefined) {
+              music.curves.push([startIdx, noteIndex]);
+              openSlurs.delete(slurNumber);
+            }
           }
         }
       }
@@ -467,6 +538,17 @@ export function fromMusicXml(xmlText: string): Music {
       music.bars.push({
         afterNoteNum: music.notes.length - 1,
         type: rightBarType ?? 'standard',
+      });
+    }
+  }
+
+  // Close any wedges that were never explicitly stopped
+  for (const open of openWedges.values()) {
+    if (music.notes.length > 0) {
+      music.spanDecorations.push({
+        type: open.type,
+        startNoteIndex: open.startNoteIndex,
+        endNoteIndex: music.notes.length - 1,
       });
     }
   }

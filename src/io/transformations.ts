@@ -1,10 +1,4 @@
-import {
-  type Music,
-  Duration,
-  DurationModifier,
-  KEYS,
-  FIFTHS_TO_ACCIDENTALS,
-} from '../music';
+import { type Music, Duration, KEYS, FIFTHS_TO_ACCIDENTALS } from '../music';
 import { parseFragment } from './abcImport';
 import { notesToAbc } from './abcExport';
 
@@ -17,29 +11,28 @@ const DURATION_SIXTEENTHS: Partial<Record<Duration, number>> = {
   [Duration.SIXTEENTH]: 1,
 };
 
-const SIXTEENTHS_TO_DURATION = new Map<number, [Duration, DurationModifier]>([
-  [1, [Duration.SIXTEENTH, DurationModifier.NONE]],
-  [2, [Duration.EIGHTH, DurationModifier.NONE]],
-  [3, [Duration.EIGHTH, DurationModifier.DOTTED]],
-  [4, [Duration.QUARTER, DurationModifier.NONE]],
-  [6, [Duration.QUARTER, DurationModifier.DOTTED]],
-  [8, [Duration.HALF, DurationModifier.NONE]],
-  [12, [Duration.HALF, DurationModifier.DOTTED]],
-  [16, [Duration.WHOLE, DurationModifier.NONE]],
-  [24, [Duration.WHOLE, DurationModifier.DOTTED]],
+const SIXTEENTHS_TO_DURATION = new Map<number, [Duration, number]>([
+  [1, [Duration.SIXTEENTH, 0]],
+  [2, [Duration.EIGHTH, 0]],
+  [3, [Duration.EIGHTH, 1]],
+  [4, [Duration.QUARTER, 0]],
+  [6, [Duration.QUARTER, 1]],
+  [8, [Duration.HALF, 0]],
+  [12, [Duration.HALF, 1]],
+  [16, [Duration.WHOLE, 0]],
+  [24, [Duration.WHOLE, 1]],
 ]);
 
 function scaleDuration(
   duration: Duration,
-  modifier: DurationModifier,
+  dots: number,
   factor: 2 | 0.5
-): [Duration, DurationModifier] {
+): [Duration, number] {
   const base = DURATION_SIXTEENTHS[duration];
-  if (base === undefined) return [duration, modifier]; // grace notes — leave unchanged
-  const sixteenths =
-    modifier === DurationModifier.DOTTED ? (base * 3) / 2 : base;
+  if (base === undefined) return [duration, dots]; // grace notes — leave unchanged
+  const sixteenths = dots === 1 ? (base * 3) / 2 : base;
   const scaled = sixteenths * factor;
-  return SIXTEENTHS_TO_DURATION.get(scaled) ?? [duration, modifier];
+  return SIXTEENTHS_TO_DURATION.get(scaled) ?? [duration, dots];
 }
 
 // --- Accidental normalization helpers ---
@@ -166,11 +159,7 @@ export const TRANSFORMATIONS: Transformation[] = [
     labelKey: 'transformDoubleDuration',
     apply: (music) => {
       for (const note of music.notes) {
-        [note.duration, note.durationModifier] = scaleDuration(
-          note.duration,
-          note.durationModifier,
-          2
-        );
+        [note.duration, note.dots] = scaleDuration(note.duration, note.dots, 2);
       }
     },
   },
@@ -179,9 +168,9 @@ export const TRANSFORMATIONS: Transformation[] = [
     labelKey: 'transformHalveDuration',
     apply: (music) => {
       for (const note of music.notes) {
-        [note.duration, note.durationModifier] = scaleDuration(
+        [note.duration, note.dots] = scaleDuration(
           note.duration,
-          note.durationModifier,
+          note.dots,
           0.5
         );
       }

@@ -193,7 +193,7 @@ export function NoteGroup({
     stemStartY,
     stemEndY,
     duration,
-    durationModifier,
+    dots,
     accidentals,
     isRest,
   } = note;
@@ -203,7 +203,7 @@ export function NoteGroup({
     hasStem &&
     !isBeamed &&
     (duration === Duration.EIGHTH || duration === Duration.SIXTEENTH);
-  const isDotted = durationModifier === 'd';
+  const isDotted = dots > 0;
   const stemX = stemDirection === 'up' ? x + 5 : x - 5;
 
   if (isRest) {

@@ -3,13 +3,25 @@ import {
   type Accidental,
   type BarLine,
   type BarLineType,
-  Duration,
-  DurationModifier,
   type Decoration,
   type SpanDecorationType,
+  Duration,
   KEYS,
   FIFTHS_TO_ACCIDENTALS,
+  signatureAt,
 } from '../music';
+
+function defaultTupletWrittenExport(
+  actual: number,
+  isCompound: boolean
+): number {
+  if (actual === 2) return 3;
+  if (actual === 3) return 2;
+  if (actual === 4) return 3;
+  if (actual === 6) return 2;
+  if (actual === 8) return 3;
+  return isCompound ? 3 : 2;
+}
 
 const DURATION_TO_L: Partial<Record<Duration, string>> = {
   [Duration.WHOLE]: '1/1',
@@ -153,7 +165,7 @@ function gcd(a: number, b: number): number {
 
 export function durationToAbc(
   duration: Duration,
-  modifier: DurationModifier,
+  dots: number,
   defaultDuration: Duration
 ): string {
   const defaultSixteenths = NOTE_SIXTEENTHS[defaultDuration];
@@ -161,15 +173,11 @@ export function durationToAbc(
   if (defaultSixteenths === undefined || noteSixteenths === undefined)
     return '';
 
-  // dotted = multiply by 3/2
-  const num =
-    modifier === DurationModifier.DOTTED
-      ? noteSixteenths * 3
-      : noteSixteenths * 2;
-  const den =
-    modifier === DurationModifier.DOTTED
-      ? defaultSixteenths * 2
-      : defaultSixteenths * 2;
+  // Multiply note sixteenths by 2^dots / (2^dots - 1) * 2 to get the numerator.
+  // Simplest: use sixteenths directly. 1 dot: multiply by 3/2; 2 dots: by 7/4.
+  const dotMult = dots === 1 ? [3, 2] : dots === 2 ? [7, 4] : [1, 1];
+  const num = noteSixteenths * dotMult[0] * 2;
+  const den = defaultSixteenths * dotMult[1] * 2;
   const g = gcd(num, den);
   const rNum = num / g;
   const rDen = den / g;
@@ -195,6 +203,14 @@ function decorationToAbc(decoration: Decoration): string {
     roll: '!roll!',
     coda: '!coda!',
     segno: '!segno!',
+    fine: '!fine!',
+    alcoda: '!alcoda!',
+    'd.c.': '!D.C.!',
+    'd.c.alfine': '!D.C.alfine!',
+    'd.c.alcoda': '!D.C.alcoda!',
+    'd.s.': '!D.S.!',
+    'd.s.alfine': '!D.S.alfine!',
+    'd.s.alcoda': '!D.S.alcoda!',
     turn: '!turn!',
     turnx: '!turnx!',
     invertedturn: '!invertedturn!',
@@ -375,6 +391,31 @@ function scoreToAbc(
       part += `"${ANNOTATION_PREFIX[ann.placement]}${ann.text}"`;
     }
 
+    // Tuplet prefix before first note of each group
+    if (note.tuplet) {
+      const prevNote = music.notes[noteIx - 1];
+      const isFirstInGroup =
+        !prevNote?.tuplet ||
+        prevNote.tuplet.actual !== note.tuplet.actual ||
+        prevNote.tuplet.written !== note.tuplet.written ||
+        prevNote.tuplet.groupSize !== note.tuplet.groupSize;
+      if (isFirstInGroup) {
+        const { actual, written, groupSize } = note.tuplet;
+        const sig = signatureAt(music, noteIx);
+        const isCompound = sig.beatsPerBar % 3 === 0 && sig.beatsPerBar >= 6;
+        const defaultWritten = defaultTupletWrittenExport(actual, isCompound);
+        if (written === defaultWritten && groupSize === actual) {
+          part += `(${actual}`;
+        } else if (written === defaultWritten) {
+          part += `(${actual}::${groupSize}`;
+        } else if (groupSize === actual) {
+          part += `(${actual}:${written}`;
+        } else {
+          part += `(${actual}:${written}:${groupSize}`;
+        }
+      }
+    }
+
     // Decorations
     for (const decoration of note.decorations) {
       part += decorationToAbc(decoration);
@@ -384,11 +425,7 @@ function scoreToAbc(
     part += noteToAbcPitch(note, curKeyAdjustment);
 
     // Duration
-    part += durationToAbc(
-      note.duration,
-      note.durationModifier,
-      curDefaultDuration
-    );
+    part += durationToAbc(note.duration, note.dots, curDefaultDuration);
 
     // Slur close (before tie, per ABC convention: `a)-`)
     if (slurEndAt.has(noteIx)) part += ')';

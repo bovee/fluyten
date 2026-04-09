@@ -5,15 +5,15 @@ export type RecorderType = keyof typeof RECORDER_TYPES;
 const RECORDER_PITCH_RANGE = 26;
 
 export const RECORDER_TYPES = {
-  CONTRABASS: { basePitch: 41, pitchRange: RECORDER_PITCH_RANGE },
-  GREATBASS: { basePitch: 48, pitchRange: RECORDER_PITCH_RANGE },
-  BASS: { basePitch: 53, pitchRange: RECORDER_PITCH_RANGE },
-  TENOR: { basePitch: 60, pitchRange: RECORDER_PITCH_RANGE },
-  VOICEFLUTE: { basePitch: 62, pitchRange: RECORDER_PITCH_RANGE },
-  ALTO: { basePitch: 65, pitchRange: RECORDER_PITCH_RANGE },
-  SOPRANO: { basePitch: 72, pitchRange: RECORDER_PITCH_RANGE },
-  SOPRANINO: { basePitch: 77, pitchRange: RECORDER_PITCH_RANGE },
   GARKLEIN: { basePitch: 84, pitchRange: RECORDER_PITCH_RANGE },
+  SOPRANINO: { basePitch: 77, pitchRange: RECORDER_PITCH_RANGE },
+  SOPRANO: { basePitch: 72, pitchRange: RECORDER_PITCH_RANGE },
+  ALTO: { basePitch: 65, pitchRange: RECORDER_PITCH_RANGE },
+  VOICEFLUTE: { basePitch: 62, pitchRange: RECORDER_PITCH_RANGE },
+  TENOR: { basePitch: 60, pitchRange: RECORDER_PITCH_RANGE },
+  BASS: { basePitch: 53, pitchRange: RECORDER_PITCH_RANGE },
+  GREATBASS: { basePitch: 48, pitchRange: RECORDER_PITCH_RANGE },
+  CONTRABASS: { basePitch: 41, pitchRange: RECORDER_PITCH_RANGE },
 };
 
 /**

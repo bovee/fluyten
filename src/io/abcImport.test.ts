@@ -1,6 +1,6 @@
 import { describe, it, expect } from 'vitest';
 import { fromAbc, splitTunes, voicesFromAbc } from './abcImport';
-import { Duration, DurationModifier, Music, Note } from '../music';
+import { Duration, Music, Note } from '../music';
 import { toAbc } from './abcExport';
 
 describe('fromAbc', () => {
@@ -220,60 +220,39 @@ describe('fromAbc', () => {
       expect(music.signatures[0].beatValue).toBe(2);
     });
 
-    it('should parse 3/4 time', () => {
-      const abc = `T:Test\nM:3/4\nL:1/4\nK:C\nC`;
-      const music = fromAbc(abc);
-      expect(music.signatures[0].beatsPerBar).toBe(3);
-      expect(music.signatures[0].beatValue).toBe(4);
+    it.each([
+      ['3/4', 3, 4],
+      ['6/8', 6, 8],
+    ] as const)('should parse %s time', (timeSig, beatsPerBar, beatValue) => {
+      const music = fromAbc(`T:Test\nM:${timeSig}\nL:1/8\nK:C\nC`);
+      expect(music.signatures[0].beatsPerBar).toBe(beatsPerBar);
+      expect(music.signatures[0].beatValue).toBe(beatValue);
     });
 
-    it('should parse 6/8 time', () => {
-      const abc = `T:Test\nM:6/8\nL:1/8\nK:C\nC`;
-      const music = fromAbc(abc);
-      expect(music.signatures[0].beatsPerBar).toBe(6);
-      expect(music.signatures[0].beatValue).toBe(8);
-    });
+    it.each([
+      ['1/4', Duration.QUARTER],
+      ['1/8', Duration.EIGHTH],
+      ['1', Duration.WHOLE],
+    ] as const)(
+      'should parse default note length %s',
+      (noteLength, expected) => {
+        const music = fromAbc(`T:Test\nM:4/4\nL:${noteLength}\nK:C\nC`);
+        expect(music.notes[0].duration).toBe(expected);
+      }
+    );
 
-    it('should parse default note length 1/4', () => {
-      const abc = `T:Test\nM:4/4\nL:1/4\nK:C\nC`;
-      const music = fromAbc(abc);
-      expect(music.notes[0].duration).toBe(Duration.QUARTER);
-    });
-
-    it('should parse default note length 1/8', () => {
-      const abc = `T:Test\nM:4/4\nL:1/8\nK:C\nC`;
-      const music = fromAbc(abc);
-      expect(music.notes[0].duration).toBe(Duration.EIGHTH);
-    });
-
-    it('should parse default note length 1', () => {
-      const abc = `T:Test\nM:4/4\nL:1\nK:C\nC`;
-      const music = fromAbc(abc);
-      expect(music.notes[0].duration).toBe(Duration.WHOLE);
-    });
-
-    it('should parse key signature C', () => {
-      const abc = `T:Test\nM:4/4\nL:1/4\nK:C\nF`;
-      const music = fromAbc(abc);
-      expect(music.signatures[0].keySignature).toBe('C');
-      expect(music.notes[0].pitches[0]).toBe(65); // F natural
-    });
-
-    it('should parse key signature G', () => {
-      const abc = `T:Test\nM:4/4\nL:1/4\nK:G\nF f`;
-      const music = fromAbc(abc);
-      expect(music.signatures[0].keySignature).toBe('G');
-      expect(music.notes[0].pitches[0]).toBe(66); // F# in G major
-      expect(music.notes[1].pitches[0]).toBe(78); // F# in G major
-    });
-
-    it('should parse key signature F', () => {
-      const abc = `T:Test\nM:4/4\nL:1/4\nK:F\nB b`;
-      const music = fromAbc(abc);
-      expect(music.signatures[0].keySignature).toBe('F');
-      expect(music.notes[0].pitches[0]).toBe(70); // Bb in F major
-      expect(music.notes[1].pitches[0]).toBe(82); // Bb in F major
-    });
+    it.each([
+      ['C', 'F', 65], // F natural in C major
+      ['G', 'F', 66], // F# in G major
+      ['F', 'B', 70], // Bb in F major
+    ] as const)(
+      'should parse key signature %s',
+      (key, noteAbc, expectedPitch) => {
+        const music = fromAbc(`T:Test\nM:4/4\nL:1/4\nK:${key}\n${noteAbc}`);
+        expect(music.signatures[0].keySignature).toBe(key);
+        expect(music.notes[0].pitches[0]).toBe(expectedPitch);
+      }
+    );
 
     it('should throw error for invalid key', () => {
       const abc = `T:Test\nM:4/4\nL:1/4\nK:Z\nC`;
@@ -316,7 +295,7 @@ describe('fromAbc', () => {
       const abc = `T:Test\nM:4/4\nL:1/4\nK:C\nC3/2`;
       const music = fromAbc(abc);
       expect(music.notes[0].duration).toBe(Duration.QUARTER);
-      expect(music.notes[0].durationModifier).toBe(DurationModifier.DOTTED);
+      expect(music.notes[0].dots).toBe(1);
     });
 
     it('should parse accidentals', () => {
@@ -373,47 +352,18 @@ describe('fromAbc', () => {
   });
 
   describe('bar lines', () => {
-    it('should parse standard bar lines', () => {
-      const abc = `T:Test\nM:4/4\nL:1/4\nK:C\nC D | E F`;
-      const music = fromAbc(abc);
-      expect(music.bars.length).toBeGreaterThan(0);
-      const standardBars = music.bars.filter((b) => b.type === 'standard');
-      expect(standardBars.length).toBeGreaterThanOrEqual(1);
-    });
-
-    it('should parse double bar lines', () => {
-      const abc = `T:Test\nM:4/4\nL:1/4\nK:C\nC D || E F`;
-      const music = fromAbc(abc);
-      const doubleBars = music.bars.filter((b) => b.type === 'double');
-      expect(doubleBars.length).toBe(1);
-    });
-
-    it('should parse repeat begin', () => {
-      const abc = `T:Test\nM:4/4\nL:1/4\nK:C\nC D |: E F`;
-      const music = fromAbc(abc);
-      const repeatBars = music.bars.filter((b) => b.type === 'begin_repeat');
-      expect(repeatBars.length).toBe(1);
-    });
-
-    it('should parse repeat end', () => {
-      const abc = `T:Test\nM:4/4\nL:1/4\nK:C\nC D :| E F`;
-      const music = fromAbc(abc);
-      const repeatBars = music.bars.filter((b) => b.type === 'end_repeat');
-      expect(repeatBars.length).toBe(1);
-    });
-
-    it('should parse end bar', () => {
-      const abc = `T:Test\nM:4/4\nL:1/4\nK:C\nC D E F |]`;
-      const music = fromAbc(abc);
-      const endBars = music.bars.filter((b) => b.type === 'end');
-      expect(endBars.length).toBe(1);
-    });
-
-    it('should parse :: as begin_end_repeat', () => {
-      const abc = `T:Test\nM:4/4\nL:1/4\nK:C\n|: C D E F :: G A B c :|`;
-      const music = fromAbc(abc);
-      const berBars = music.bars.filter((b) => b.type === 'begin_end_repeat');
-      expect(berBars.length).toBe(1);
+    it.each([
+      ['C D | E F', 'standard'],
+      ['C D || E F', 'double'],
+      ['C D |: E F', 'begin_repeat'],
+      ['C D :| E F', 'end_repeat'],
+      ['C D E F |]', 'end'],
+      ['|: C D E F :: G A B c :|', 'begin_end_repeat'],
+    ] as const)('should parse %s bar line', (score, barType) => {
+      const music = fromAbc(`T:Test\nM:4/4\nL:1/4\nK:C\n${score}`);
+      expect(
+        music.bars.filter((b) => b.type === barType).length
+      ).toBeGreaterThanOrEqual(1);
     });
 
     describe('volta brackets', () => {
@@ -527,9 +477,9 @@ describe('fromAbc', () => {
       const music = fromAbc(abc);
       expect(music.notes).toHaveLength(2);
       expect(music.notes[0].duration).toBe(Duration.QUARTER);
-      expect(music.notes[0].durationModifier).toBe(DurationModifier.DOTTED);
+      expect(music.notes[0].dots).toBe(1);
       expect(music.notes[1].duration).toBe(Duration.EIGHTH);
-      expect(music.notes[1].durationModifier).toBe(DurationModifier.NONE);
+      expect(music.notes[1].dots).toBe(0);
     });
 
     it('A2<B2 equals A B3 (halved + dotted)', () => {
@@ -539,9 +489,9 @@ describe('fromAbc', () => {
       const music = fromAbc(abc);
       expect(music.notes).toHaveLength(2);
       expect(music.notes[0].duration).toBe(Duration.EIGHTH);
-      expect(music.notes[0].durationModifier).toBe(DurationModifier.NONE);
+      expect(music.notes[0].dots).toBe(0);
       expect(music.notes[1].duration).toBe(Duration.QUARTER);
-      expect(music.notes[1].durationModifier).toBe(DurationModifier.DOTTED);
+      expect(music.notes[1].dots).toBe(1);
     });
 
     it('multiple broken rhythms in a row', () => {
@@ -550,9 +500,9 @@ describe('fromAbc', () => {
       const abc = `T:Test\nM:4/4\nL:1/4\nK:C\nc>d e>f`;
       const music = fromAbc(abc);
       expect(music.notes).toHaveLength(4);
-      expect(music.notes[0].durationModifier).toBe(DurationModifier.DOTTED);
+      expect(music.notes[0].dots).toBe(1);
       expect(music.notes[1].duration).toBe(Duration.EIGHTH);
-      expect(music.notes[2].durationModifier).toBe(DurationModifier.DOTTED);
+      expect(music.notes[2].dots).toBe(1);
       expect(music.notes[3].duration).toBe(Duration.EIGHTH);
     });
   });
@@ -580,22 +530,113 @@ describe('fromAbc', () => {
     });
   });
 
-  describe('triplets', () => {
-    it('should parse a triplet group and mark exactly those three notes', () => {
-      // (3abc means abc are a triplet; d is a regular note after
+  describe('tuplets', () => {
+    it('should parse a triplet group with correct fields', () => {
       const abc = `T:Test\nM:4/4\nL:1/8\nK:C\n(3abc d |]`;
       const music = fromAbc(abc);
-      expect(music.notes[0].durationModifier).toBe(DurationModifier.TRIPLET);
-      expect(music.notes[1].durationModifier).toBe(DurationModifier.TRIPLET);
-      expect(music.notes[2].durationModifier).toBe(DurationModifier.TRIPLET);
-      expect(music.notes[3].durationModifier).toBe(DurationModifier.NONE);
+      expect(music.notes[0].tuplet).toEqual({
+        actual: 3,
+        written: 2,
+        groupSize: 3,
+      });
+      expect(music.notes[1].tuplet).toEqual({
+        actual: 3,
+        written: 2,
+        groupSize: 3,
+      });
+      expect(music.notes[2].tuplet).toEqual({
+        actual: 3,
+        written: 2,
+        groupSize: 3,
+      });
+      expect(music.notes[3].tuplet).toBeUndefined();
     });
 
     it('should parse two separate triplet groups', () => {
       const abc = `T:Test\nM:4/4\nL:1/8\nK:C\n(3abc (3def |]`;
       const music = fromAbc(abc);
       for (let i = 0; i < 6; i++) {
-        expect(music.notes[i].durationModifier).toBe(DurationModifier.TRIPLET);
+        expect(music.notes[i].tuplet).toBeDefined();
+        expect(music.notes[i].tuplet?.actual).toBe(3);
+      }
+    });
+
+    it('should parse duplet (2) with written=3', () => {
+      const abc = `T:Test\nM:4/4\nL:1/8\nK:C\n(2ab |]`;
+      const music = fromAbc(abc);
+      expect(music.notes).toHaveLength(2);
+      expect(music.notes[0].tuplet).toEqual({
+        actual: 2,
+        written: 3,
+        groupSize: 2,
+      });
+      expect(music.notes[1].tuplet).toEqual({
+        actual: 2,
+        written: 3,
+        groupSize: 2,
+      });
+    });
+
+    it('should parse quadruplet (4) with written=3', () => {
+      const abc = `T:Test\nM:4/4\nL:1/8\nK:C\n(4abcd |]`;
+      const music = fromAbc(abc);
+      expect(music.notes).toHaveLength(4);
+      for (const note of music.notes) {
+        expect(note.tuplet).toEqual({ actual: 4, written: 3, groupSize: 4 });
+      }
+    });
+
+    it('should parse quintuplet (5) with written=2 in simple time (4/4)', () => {
+      const abc = `T:Test\nM:4/4\nL:1/8\nK:C\n(5abcde |]`;
+      const music = fromAbc(abc);
+      expect(music.notes).toHaveLength(5);
+      expect(music.notes[0].tuplet).toEqual({
+        actual: 5,
+        written: 2,
+        groupSize: 5,
+      });
+    });
+
+    it('should parse quintuplet (5) with written=3 in compound time (6/8)', () => {
+      const abc = `T:Test\nM:6/8\nL:1/8\nK:C\n(5abcde |]`;
+      const music = fromAbc(abc);
+      expect(music.notes).toHaveLength(5);
+      expect(music.notes[0].tuplet).toEqual({
+        actual: 5,
+        written: 3,
+        groupSize: 5,
+      });
+    });
+
+    it('should parse full (p:q:r) syntax', () => {
+      // (3:2:4 — triplet ratio, but group of 4 notes
+      const abc = `T:Test\nM:4/4\nL:1/8\nK:C\n(3:2:4 G2A2Bc |]`;
+      const music = fromAbc(abc);
+      expect(music.notes).toHaveLength(4);
+      for (const note of music.notes) {
+        expect(note.tuplet).toEqual({ actual: 3, written: 2, groupSize: 4 });
+      }
+    });
+
+    it('should parse (p::r) syntax (omitted q uses default)', () => {
+      // (3::2 — triplet ratio, group of 2
+      const abc = `T:Test\nM:4/4\nL:1/8\nK:C\n(3::2 GA |]`;
+      const music = fromAbc(abc);
+      expect(music.notes).toHaveLength(2);
+      expect(music.notes[0].tuplet).toEqual({
+        actual: 3,
+        written: 2,
+        groupSize: 2,
+      });
+    });
+
+    it('should handle whitespace between tuplet specifier and notes', () => {
+      const abc = `T:Test\nM:4/4\nL:1/8\nK:C\n(3 a b c |]`;
+      const music = fromAbc(abc);
+      expect(music.notes).toHaveLength(3);
+      for (const note of music.notes) {
+        expect(note.tuplet).toBeDefined();
+        expect(note.tuplet?.actual).toBe(3);
       }
     });
   });
@@ -690,7 +731,7 @@ describe('fromAbc', () => {
       const music = fromAbc(`M:3/4\nL:1/8\nK:C\nZ`);
       expect(music.notes).toHaveLength(1);
       expect(music.notes[0].duration).toBe(Duration.HALF);
-      expect(music.notes[0].durationModifier).toBe(DurationModifier.DOTTED);
+      expect(music.notes[0].dots).toBe(1);
     });
 
     it('Z2 in 3/4 produces 2 dotted-half rests with a bar line', () => {
@@ -837,6 +878,18 @@ describe('fromAbc', () => {
         voicesDefault[0].music.notes.map((n) => n.pitches)
       );
     });
+
+    it('splits three voices correctly', () => {
+      const abc = `T:Test\nM:4/4\nL:1/4\nV:1\nV:2\nV:3\nK:C\nV:1\nC D |\nV:2\nE F |\nV:3\nG A |`;
+      const voices = voicesFromAbc(abc);
+      expect(voices).toHaveLength(3);
+      expect(voices[0].music.notes).toHaveLength(2);
+      expect(voices[1].music.notes).toHaveLength(2);
+      expect(voices[2].music.notes).toHaveLength(2);
+      expect(voices[0].music.notes[0].pitches).toEqual([60]); // C
+      expect(voices[1].music.notes[0].pitches).toEqual([64]); // E
+      expect(voices[2].music.notes[0].pitches).toEqual([67]); // G
+    });
   });
 
   describe('round-trip tests', () => {
@@ -848,21 +901,59 @@ describe('fromAbc', () => {
       music.signatures[0].keySignature = 'C';
       music.signatures[0].beatsPerBar = 4;
       music.signatures[0].beatValue = 4;
-      music.notes.push(
-        new Note(69, Duration.SIXTEENTH, [], undefined, DurationModifier.DOTTED)
-      );
-      music.notes.push(
-        new Note(69, Duration.EIGHTH, [], undefined, DurationModifier.NONE)
-      );
+      music.notes.push(new Note(69, Duration.SIXTEENTH, [], undefined, 1));
+      music.notes.push(new Note(69, Duration.EIGHTH, [], undefined, 0));
       music.bars.push({ afterNoteNum: 1, type: 'standard' });
 
       const abc = toAbc(music);
       const reimported = fromAbc(abc);
 
       expect(reimported.notes[0].duration).toBe(Duration.SIXTEENTH);
-      expect(reimported.notes[0].durationModifier).toBe(
-        DurationModifier.DOTTED
-      );
+      expect(reimported.notes[0].dots).toBe(1);
+    });
+  });
+
+  describe('DC/DS navigation decorations', () => {
+    it('parses !d.c.! decoration onto a note', () => {
+      const abc = `T:Test\nM:4/4\nL:1/4\nK:C\nC D !d.c.!E F |]`;
+      const music = fromAbc(abc);
+      expect(music.notes[2].decorations).toContain('d.c.');
+    });
+
+    it('parses !d.c.alfine! decoration', () => {
+      const abc = `T:Test\nM:4/4\nL:1/4\nK:C\nC !d.c.alfine!D |]`;
+      const music = fromAbc(abc);
+      expect(music.notes[1].decorations).toContain('d.c.alfine');
+    });
+
+    it('parses !d.c.alcoda! decoration', () => {
+      const abc = `T:Test\nM:4/4\nL:1/4\nK:C\nC !d.c.alcoda!D |]`;
+      const music = fromAbc(abc);
+      expect(music.notes[1].decorations).toContain('d.c.alcoda');
+    });
+
+    it('parses !d.s.! decoration', () => {
+      const abc = `T:Test\nM:4/4\nL:1/4\nK:C\nC !d.s.!D |]`;
+      const music = fromAbc(abc);
+      expect(music.notes[1].decorations).toContain('d.s.');
+    });
+
+    it('parses !fine! decoration', () => {
+      const abc = `T:Test\nM:4/4\nL:1/4\nK:C\nC !fine!D |]`;
+      const music = fromAbc(abc);
+      expect(music.notes[1].decorations).toContain('fine');
+    });
+
+    it('parses !alcoda! decoration', () => {
+      const abc = `T:Test\nM:4/4\nL:1/4\nK:C\n!alcoda!C D |]`;
+      const music = fromAbc(abc);
+      expect(music.notes[0].decorations).toContain('alcoda');
+    });
+
+    it('parses decorations case-insensitively', () => {
+      const abc = `T:Test\nM:4/4\nL:1/4\nK:C\nC !D.C.!D |]`;
+      const music = fromAbc(abc);
+      expect(music.notes[1].decorations).toContain('d.c.');
     });
   });
 

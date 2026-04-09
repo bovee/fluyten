@@ -29,23 +29,23 @@ import {
 import { resolveInstrumentConfig, RECORDER_TYPES } from './instrument';
 import { singlePitchToAbc, durationToAbc, reflowAbc } from './io/abcExport';
 import { TRANSFORMATIONS, transformFragment } from './io/transformations';
-import { Music, Duration, DurationModifier } from './music';
+import { Music, Duration } from './music';
 import { FrequencyTracker } from './audio/FrequencyTracker';
 import { GenerateNotesDialog } from './scales/GenerateNotesDialog';
 import { useStore } from './store';
 
 const RECORD_SAMPLE_RATE = 50;
 
-const TRANSCRIBE_DURATION_CANDIDATES: [number, Duration, DurationModifier][] = [
-  [1, Duration.SIXTEENTH, DurationModifier.NONE],
-  [2, Duration.EIGHTH, DurationModifier.NONE],
-  [3, Duration.EIGHTH, DurationModifier.DOTTED],
-  [4, Duration.QUARTER, DurationModifier.NONE],
-  [6, Duration.QUARTER, DurationModifier.DOTTED],
-  [8, Duration.HALF, DurationModifier.NONE],
-  [12, Duration.HALF, DurationModifier.DOTTED],
-  [16, Duration.WHOLE, DurationModifier.NONE],
-  [24, Duration.WHOLE, DurationModifier.DOTTED],
+const TRANSCRIBE_DURATION_CANDIDATES: [number, Duration, number][] = [
+  [1, Duration.SIXTEENTH, 0],
+  [2, Duration.EIGHTH, 0],
+  [3, Duration.EIGHTH, 1],
+  [4, Duration.QUARTER, 0],
+  [6, Duration.QUARTER, 1],
+  [8, Duration.HALF, 0],
+  [12, Duration.HALF, 1],
+  [16, Duration.WHOLE, 0],
+  [24, Duration.WHOLE, 1],
 ];
 
 interface EditorDrawerProps {
@@ -220,10 +220,7 @@ export function EditorDrawer({
         if (!ctx) return;
 
         const sixteenths = durationSecs * (tempoRef.current / 60) * 4;
-        let bestCandidate: [Duration, DurationModifier] = [
-          Duration.QUARTER,
-          DurationModifier.NONE,
-        ];
+        let bestCandidate: [Duration, number] = [Duration.QUARTER, 0];
         let bestDist = Infinity;
         for (const [
           candidateSixteenths,

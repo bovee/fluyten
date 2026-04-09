@@ -4,7 +4,6 @@ import type {
   BarLineType,
   Decoration,
   Duration,
-  DurationModifier,
   Signature,
   SpanDecorationType,
 } from '../../music';
@@ -150,7 +149,7 @@ export interface NoteLayout {
   stemStartY: number; // Y at the notehead end of the stem
   stemEndY: number; // Y at the flag/beam end of the stem
   duration: Duration;
-  durationModifier: DurationModifier;
+  dots: number;
   accidentals: Accidental[];
   decorations: Decoration[];
   annotations: Annotation[];
@@ -195,7 +194,8 @@ export interface TupletLayout {
   startX: number;
   endX: number;
   y: number; // Y of the bracket line
-  num: number; // e.g. 3 for triplet
+  num: number; // actual (p) — always shown
+  written?: number; // shown only for non-standard ratios (e.g. "3:4")
   lineIndex: number;
 }
 

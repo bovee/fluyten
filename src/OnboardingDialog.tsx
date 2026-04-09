@@ -218,7 +218,9 @@ export function OnboardingDialog({ open, onComplete }: OnboardingDialogProps) {
                     onChange={(e) => {
                       const v = e.target.value as string;
                       setInstrumentType(
-                        v === 'OTHER' ? null : (v as keyof typeof RECORDER_TYPES)
+                        v === 'OTHER'
+                          ? null
+                          : (v as keyof typeof RECORDER_TYPES)
                       );
                     }}
                   >
@@ -227,7 +229,9 @@ export function OnboardingDialog({ open, onComplete }: OnboardingDialogProps) {
                         {t(`recorderTypes.${key}`)}
                       </MenuItem>
                     ))}
-                    <MenuItem value="OTHER">{t('recorderTypes.OTHER')}</MenuItem>
+                    <MenuItem value="OTHER">
+                      {t('recorderTypes.OTHER')}
+                    </MenuItem>
                   </Select>
                 </FormControl>
                 <Button

@@ -1,6 +1,6 @@
 import { describe, it, expect } from 'vitest';
 import { fromMidi } from './midiImport';
-import { Duration, DurationModifier } from '../music';
+import { Duration } from '../music';
 
 // ---- MIDI binary builder helpers --------------------------------------------
 
@@ -101,6 +101,20 @@ function trackName(delta: number, name: string): number[] {
   return [...varLen(delta), 0xff, 0x03, ...varLen(bytes.length), ...bytes];
 }
 
+/** Set Tempo meta event: delta, FF 51 03, tt tt tt (µs per quarter). */
+function setTempo(delta: number, bpm: number): number[] {
+  const micros = Math.round(60_000_000 / bpm);
+  return [
+    ...varLen(delta),
+    0xff,
+    0x51,
+    0x03,
+    (micros >> 16) & 0xff,
+    (micros >> 8) & 0xff,
+    micros & 0xff,
+  ];
+}
+
 // ---- Tests ------------------------------------------------------------------
 
 describe('fromMidi', () => {
@@ -181,7 +195,7 @@ describe('fromMidi', () => {
     const [music] = fromMidi(buildMidi(tpq, track));
 
     expect(music.notes[0].duration).toBe(Duration.QUARTER);
-    expect(music.notes[0].durationModifier).toBe(DurationModifier.DOTTED);
+    expect(music.notes[0].dots).toBe(1);
   });
 
   it('reads time signature meta event', () => {
@@ -235,6 +249,40 @@ describe('fromMidi', () => {
     const [music] = fromMidi(buildMidi(tpq, track));
 
     expect(music.title).toBe('My Song');
+  });
+
+  it('reads set tempo meta event', () => {
+    const tpq = 480;
+    const track = [
+      ...setTempo(0, 120),
+      ...noteOn(0, 60),
+      ...noteOff(tpq, 60),
+      ...endOfTrack(0),
+    ];
+    const [music] = fromMidi(buildMidi(tpq, track));
+    expect(music.signatures[0].tempo).toBe(120);
+  });
+
+  it('uses first tempo event when multiple are present', () => {
+    const tpq = 480;
+    const track = [
+      ...setTempo(0, 100),
+      ...noteOn(0, 60),
+      ...noteOff(tpq, 60),
+      ...setTempo(0, 140),
+      ...noteOn(0, 62),
+      ...noteOff(tpq, 62),
+      ...endOfTrack(0),
+    ];
+    const [music] = fromMidi(buildMidi(tpq, track));
+    expect(music.signatures[0].tempo).toBe(100);
+  });
+
+  it('leaves tempo undefined when no tempo event is present', () => {
+    const tpq = 480;
+    const track = [...noteOn(0, 60), ...noteOff(tpq, 60), ...endOfTrack(0)];
+    const [music] = fromMidi(buildMidi(tpq, track));
+    expect(music.signatures[0].tempo).toBeUndefined();
   });
 
   it('skips drum channel (channel 9)', () => {
@@ -396,5 +444,118 @@ describe('fromMidi', () => {
     expect(voices[1].title).toBe('Test');
     expect(voices[0].signatures[0].keySignature).toBe('G');
     expect(voices[1].signatures[0].keySignature).toBe('G');
+  });
+
+  it('throws on MIDI format 2', () => {
+    const header = [
+      0x4d,
+      0x54,
+      0x68,
+      0x64, // MThd
+      ...u32(6),
+      ...u16(2), // format 2
+      ...u16(1), // 1 track
+      ...u16(480),
+    ];
+    const track = [0x4d, 0x54, 0x72, 0x6b, ...u32(4), ...endOfTrack(0)];
+    const buf = new Uint8Array([...header, ...track]).buffer;
+    expect(() => fromMidi(buf)).toThrow('format 2');
+  });
+
+  it('throws when ticksPerQuarter is 0', () => {
+    const header = [
+      0x4d,
+      0x54,
+      0x68,
+      0x64, // MThd
+      ...u32(6),
+      ...u16(0), // format 0
+      ...u16(1), // 1 track
+      ...u16(0), // ticksPerQuarter = 0
+    ];
+    const track = [0x4d, 0x54, 0x72, 0x6b, ...u32(4), ...endOfTrack(0)];
+    const buf = new Uint8Array([...header, ...track]).buffer;
+    expect(() => fromMidi(buf)).toThrow('ticksPerQuarter');
+  });
+
+  it('skips malformed tracks and continues parsing valid ones', () => {
+    const tpq = 480;
+    // Build a track with a truncated/malformed header (too few bytes), then a valid one
+    const badTrack = [0x4d, 0x54, 0x72, 0x6b, 0x00, 0x00, 0x01, 0x00]; // claims 256 bytes but has none
+    const goodTrack = [
+      0x4d,
+      0x54,
+      0x72,
+      0x6b,
+      ...u32(
+        noteOn(0, 60).length + noteOff(tpq, 60).length + endOfTrack(0).length
+      ),
+      ...noteOn(0, 60),
+      ...noteOff(tpq, 60),
+      ...endOfTrack(0),
+    ];
+    const header = [
+      0x4d,
+      0x54,
+      0x68,
+      0x64,
+      ...u32(6),
+      ...u16(1), // format 1
+      ...u16(2), // 2 tracks
+      ...u16(tpq),
+    ];
+    const buf = new Uint8Array([...header, ...badTrack, ...goodTrack]).buffer;
+    // Should not throw; may return empty or partial result
+    expect(() => fromMidi(buf)).not.toThrow();
+  });
+
+  it('handles running status (note-on without re-sending status byte)', () => {
+    const tpq = 480;
+    // Running status: send status byte once, then subsequent messages omit it
+    const track = [
+      // First note-on with explicit status
+      ...varLen(0),
+      0x90,
+      60,
+      80, // note-on C4
+      // Note-off via velocity-0 using running status (no 0x90 prefix)
+      ...varLen(tpq),
+      60,
+      0, // running status: note-on ch0, vel=0 → note-off
+      ...endOfTrack(0),
+    ];
+    const [music] = fromMidi(buildMidi(tpq, track));
+    expect(music.notes).toHaveLength(1);
+    expect(music.notes[0].pitches).toEqual([60]);
+    expect(music.notes[0].duration).toBe(Duration.QUARTER);
+  });
+
+  it('handles system common 0xF2 (Song Position Pointer, 2 data bytes) without crashing', () => {
+    const tpq = 480;
+    const track = [
+      ...varLen(0),
+      0xf2,
+      0x00,
+      0x00, // Song Position Pointer (2 data bytes)
+      ...noteOn(0, 60),
+      ...noteOff(tpq, 60),
+      ...endOfTrack(0),
+    ];
+    const [music] = fromMidi(buildMidi(tpq, track));
+    expect(music.notes).toHaveLength(1);
+  });
+
+  it('handles system common 0xF3 (Song Select, 1 data byte) without crashing', () => {
+    const tpq = 480;
+    const track = [
+      ...varLen(0),
+      0xf3,
+      0x01, // Song Select (1 data byte)
+      ...noteOn(0, 60),
+      ...noteOff(tpq, 60),
+      ...endOfTrack(0),
+    ];
+    const [music] = fromMidi(buildMidi(tpq, track));
+    expect(music.notes).toHaveLength(1);
   });
 });

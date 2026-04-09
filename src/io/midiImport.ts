@@ -1,4 +1,4 @@
-import { Duration, DurationModifier, Music, Note } from '../music';
+import { Duration, Music, Note } from '../music';
 import { DURATION_TICKS } from '../constants';
 
 // Key signature: sharps/flats count → key name
@@ -37,21 +37,17 @@ const FIFTHS_TO_MINOR_KEY: Record<number, string> = {
   6: 'D#m',
 };
 
-// Quantization targets: [internalTicks, Duration, DurationModifier], largest first
-const QUANT_TABLE: [number, Duration, DurationModifier][] = [
-  [DURATION_TICKS.WHOLE, Duration.WHOLE, DurationModifier.NONE],
-  [DURATION_TICKS.HALF_DOTTED, Duration.HALF, DurationModifier.DOTTED],
-  [DURATION_TICKS.HALF, Duration.HALF, DurationModifier.NONE],
-  [DURATION_TICKS.QUARTER_DOTTED, Duration.QUARTER, DurationModifier.DOTTED],
-  [DURATION_TICKS.QUARTER, Duration.QUARTER, DurationModifier.NONE],
-  [DURATION_TICKS.EIGHTH_DOTTED, Duration.EIGHTH, DurationModifier.DOTTED],
-  [DURATION_TICKS.EIGHTH, Duration.EIGHTH, DurationModifier.NONE],
-  [
-    DURATION_TICKS.SIXTEENTH_DOTTED,
-    Duration.SIXTEENTH,
-    DurationModifier.DOTTED,
-  ],
-  [DURATION_TICKS.SIXTEENTH, Duration.SIXTEENTH, DurationModifier.NONE],
+// Quantization targets: [internalTicks, Duration, dots], largest first
+const QUANT_TABLE: [number, Duration, number][] = [
+  [DURATION_TICKS.WHOLE, Duration.WHOLE, 0],
+  [DURATION_TICKS.HALF_DOTTED, Duration.HALF, 1],
+  [DURATION_TICKS.HALF, Duration.HALF, 0],
+  [DURATION_TICKS.QUARTER_DOTTED, Duration.QUARTER, 1],
+  [DURATION_TICKS.QUARTER, Duration.QUARTER, 0],
+  [DURATION_TICKS.EIGHTH_DOTTED, Duration.EIGHTH, 1],
+  [DURATION_TICKS.EIGHTH, Duration.EIGHTH, 0],
+  [DURATION_TICKS.SIXTEENTH_DOTTED, Duration.SIXTEENTH, 1],
+  [DURATION_TICKS.SIXTEENTH, Duration.SIXTEENTH, 0],
 ];
 
 // ---- Binary parsing helpers -------------------------------------------------
@@ -248,7 +244,7 @@ function pairNotes(events: RawNoteEvent[]): MidiNote[] {
 }
 
 /** Find the closest standard duration for a given internal tick count. */
-function quantizeDuration(internalTicks: number): [Duration, DurationModifier] {
+function quantizeDuration(internalTicks: number): [Duration, number] {
   let best = QUANT_TABLE[QUANT_TABLE.length - 1];
   let bestDiff = Infinity;
   for (const entry of QUANT_TABLE) {
@@ -344,6 +340,7 @@ interface ParsedMidi {
   beatsPerBar: number;
   beatValue: number;
   keySignature: string;
+  tempo: number | undefined;
   channels: number[];
   channelNotes: Map<number, MidiNote[]>;
   ticksPerQuarter: number;
@@ -380,10 +377,22 @@ function parseMidiBuffer(buffer: ArrayBuffer): ParsedMidi {
   let beatsPerBar = 4;
   let beatValue = 4;
   let keySignature = 'C';
+  let tempo: number | undefined;
 
   for (const meta of allMetaEvents) {
     if (meta.type === 0x03 && !title) {
       title = new TextDecoder().decode(meta.data);
+    } else if (
+      meta.type === 0x51 &&
+      meta.data.length >= 3 &&
+      tempo === undefined
+    ) {
+      // Set Tempo: 3-byte big-endian microseconds per quarter note
+      const microsPerQuarter =
+        (meta.data[0] << 16) | (meta.data[1] << 8) | meta.data[2];
+      if (microsPerQuarter > 0) {
+        tempo = Math.round(60_000_000 / microsPerQuarter);
+      }
     } else if (meta.type === 0x58 && meta.data.length >= 2) {
       beatsPerBar = meta.data[0];
       beatValue = 1 << meta.data[1];
@@ -412,6 +421,7 @@ function parseMidiBuffer(buffer: ArrayBuffer): ParsedMidi {
     beatsPerBar,
     beatValue,
     keySignature,
+    tempo,
     channels,
     channelNotes,
     ticksPerQuarter: header.ticksPerQuarter,
@@ -430,6 +440,7 @@ export function fromMidi(buffer: ArrayBuffer): Music[] {
     beatsPerBar,
     beatValue,
     keySignature,
+    tempo,
     channels,
     channelNotes,
     ticksPerQuarter,
@@ -441,6 +452,7 @@ export function fromMidi(buffer: ArrayBuffer): Music[] {
     m.signatures[0].beatsPerBar = beatsPerBar;
     m.signatures[0].beatValue = beatValue;
     m.signatures[0].keySignature = keySignature;
+    if (tempo !== undefined) m.signatures[0].tempo = tempo;
     return m;
   }
 

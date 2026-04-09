@@ -48,8 +48,11 @@ interface TupletBracketProps {
 const BRACKET_HEIGHT = 6;
 
 export function TupletBracket({ tuplet }: TupletBracketProps) {
-  const { startX, endX, y, num } = tuplet;
+  const { startX, endX, y, num, written } = tuplet;
   const midX = (startX + endX) / 2;
+  const label = written !== undefined ? `${num}:${written}` : String(num);
+  // Wider gap when showing p:q
+  const halfGap = written !== undefined ? 14 : 8;
 
   return (
     <g>
@@ -62,17 +65,17 @@ export function TupletBracket({ tuplet }: TupletBracketProps) {
         stroke="currentColor"
         strokeWidth={1}
       />
-      {/* Horizontal line, broken in the middle for the number */}
+      {/* Horizontal line, broken in the middle for the label */}
       <line
         x1={startX}
         y1={y - BRACKET_HEIGHT}
-        x2={midX - 8}
+        x2={midX - halfGap}
         y2={y - BRACKET_HEIGHT}
         stroke="currentColor"
         strokeWidth={1}
       />
       <line
-        x1={midX + 8}
+        x1={midX + halfGap}
         y1={y - BRACKET_HEIGHT}
         x2={endX}
         y2={y - BRACKET_HEIGHT}
@@ -88,7 +91,7 @@ export function TupletBracket({ tuplet }: TupletBracketProps) {
         stroke="currentColor"
         strokeWidth={1}
       />
-      {/* Number */}
+      {/* Number (or p:q label) */}
       <text
         x={midX}
         y={y - BRACKET_HEIGHT + 4}
@@ -97,7 +100,7 @@ export function TupletBracket({ tuplet }: TupletBracketProps) {
         fontFamily="serif"
         fill="currentColor"
       >
-        {num}
+        {label}
       </text>
     </g>
   );

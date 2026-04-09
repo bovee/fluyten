@@ -26,6 +26,18 @@ const DYNAMICS: Partial<Record<Decoration, string>> = {
   ffff: 'ffff',
 };
 
+// Navigation text rendered in italic above the staff (Fine, D.C., D.S., etc.)
+const TEXT_ABOVE: Partial<Record<Decoration, string>> = {
+  fine: 'Fine',
+  alcoda: 'al Coda',
+  'd.c.': 'D.C.',
+  'd.c.alfine': 'D.C. al Fine',
+  'd.c.alcoda': 'D.C. al Coda',
+  'd.s.': 'D.S.',
+  'd.s.alfine': 'D.S. al Fine',
+  'd.s.alcoda': 'D.S. al Coda',
+};
+
 // Articulations placed adjacent to the notehead, opposite the stem.
 // Uses Above/Below glyph variants depending on stem direction.
 const NOTEHEAD_ARTICULATIONS = new Set<Decoration>(['staccato', 'tenuto']);
@@ -191,6 +203,24 @@ export function DecorationGroup({
               stroke="currentColor"
               strokeWidth={1.5}
             />
+          );
+        }
+
+        // Navigation text (Fine, D.C., D.S. etc.) — italic above the staff
+        const navText = TEXT_ABOVE[dec];
+        if (navText !== undefined) {
+          return (
+            <text
+              key={i}
+              x={x}
+              y={aboveY - 4}
+              textAnchor="middle"
+              fontStyle="italic"
+              fontSize={10}
+              fill="currentColor"
+            >
+              {navText}
+            </text>
           );
         }
 

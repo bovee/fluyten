@@ -11,13 +11,15 @@ export const Duration = {
 } as const;
 export type Duration = (typeof Duration)[keyof typeof Duration];
 
-export const DurationModifier = {
-  NONE: '',
-  DOTTED: 'd',
-  TRIPLET: 't',
-} as const;
-export type DurationModifier =
-  (typeof DurationModifier)[keyof typeof DurationModifier];
+/** Tuplet grouping metadata stored on each note of a tuplet. */
+export interface Tuplet {
+  /** The number displayed above the bracket (how many notes are played). */
+  actual: number;
+  /** "In the time of" this many written notes — determines duration ratio. */
+  written: number;
+  /** Total notes in this tuplet group (for rendering group boundaries). */
+  groupSize: number;
+}
 
 /** Maps a key signature name to its position on the circle of fifths
  *  (positive = sharps, negative = flats). */
@@ -179,6 +181,14 @@ export type Decoration =
   | 'roll'
   | 'coda'
   | 'segno'
+  | 'fine'
+  | 'alcoda'
+  | 'd.c.'
+  | 'd.c.alfine'
+  | 'd.c.alcoda'
+  | 'd.s.'
+  | 'd.s.alfine'
+  | 'd.s.alcoda'
   | 'turn'
   | 'turnx'
   | 'invertedturn'
@@ -219,7 +229,10 @@ export class Note {
   // Empty array means rest; one element = single note; multiple = chord.
   pitches: number[];
   duration: Duration;
-  durationModifier: DurationModifier;
+  /** Number of augmentation dots (0 = none, 1 = dotted, 2 = double-dotted). */
+  dots: number;
+  /** Tuplet grouping, if this note belongs to a tuplet. */
+  tuplet: Tuplet | undefined;
   // Parallel to pitches: accidentals[i] applies to pitches[i].
   accidentals: Accidental[];
   decorations: Decoration[];
@@ -230,7 +243,7 @@ export class Note {
     duration: Duration = Duration.QUARTER,
     decorations: Decoration[] = [],
     accidental: Accidental | Accidental[] = undefined,
-    durationModifier: DurationModifier = DurationModifier.NONE
+    dots: number = 0
   ) {
     if (pitch === undefined) {
       this.pitches = [];
@@ -240,7 +253,8 @@ export class Note {
       this.pitches = [pitch];
     }
     this.duration = duration;
-    this.durationModifier = durationModifier;
+    this.dots = dots;
+    this.tuplet = undefined;
     // TODO: should we have a "invisible" rest? (like x in abc notation)
     if (Array.isArray(accidental)) {
       this.accidentals = accidental;
@@ -262,16 +276,16 @@ export class Note {
       [Duration.GRACE_SLASH]: 0,
     };
     const t = base[this.duration];
-    if (this.durationModifier === DurationModifier.DOTTED) return t * 1.5;
-    if (this.durationModifier === DurationModifier.TRIPLET)
-      return Math.round((t * 2) / 3);
+    if (this.dots > 0) return t * (2 - 1 / 2 ** this.dots);
+    if (this.tuplet)
+      return Math.round((t * this.tuplet.written) / this.tuplet.actual);
     return t;
   }
 
   static fromAbc(
     note: string,
     duration: Duration,
-    durationModifier: DurationModifier,
+    dots: number,
     keyAdjustment: { [note: string]: number },
     accidental: string,
     decoration: string,
@@ -341,6 +355,8 @@ export class Note {
     // handle decorations
     const decorations: Decoration[] = [];
     for (const d of decoration.matchAll(/!\S+!|\S/g)) {
+      // Normalize !...! tokens to lowercase for case-insensitive matching.
+      const key = d[0].startsWith('!') ? d[0].toLowerCase() : d[0];
       const convertedDecoration = {
         L: 'accent' as Decoration,
         '>': 'accent' as Decoration,
@@ -392,7 +408,15 @@ export class Note {
         '!ff!': 'ff' as Decoration,
         '!fff!': 'fff' as Decoration,
         '!ffff!': 'ffff' as Decoration,
-      }[d[0]];
+        '!fine!': 'fine' as Decoration,
+        '!alcoda!': 'alcoda' as Decoration,
+        '!d.c.!': 'd.c.' as Decoration,
+        '!d.c.alfine!': 'd.c.alfine' as Decoration,
+        '!d.c.alcoda!': 'd.c.alcoda' as Decoration,
+        '!d.s.!': 'd.s.' as Decoration,
+        '!d.s.alfine!': 'd.s.alfine' as Decoration,
+        '!d.s.alcoda!': 'd.s.alcoda' as Decoration,
+      }[key];
 
       if (convertedDecoration) decorations.push(convertedDecoration);
     }
@@ -412,13 +436,7 @@ export class Note {
     }
 
     if (NOTE_VALUES[upperCaseNote as keyof typeof NOTE_VALUES] === -1) {
-      const n = new Note(
-        undefined,
-        duration,
-        decorations,
-        [],
-        durationModifier
-      );
+      const n = new Note(undefined, duration, decorations, [], dots);
       n.annotations = annotations;
       return n;
     } else {
@@ -429,7 +447,7 @@ export class Note {
         duration,
         decorations,
         cleanedAccidental,
-        durationModifier
+        dots
       );
       n.annotations = annotations;
       return n;
@@ -523,35 +541,29 @@ export function signatureAt(music: Music, noteIndex: number): Signature {
   return result;
 }
 
-const TICKS_ORDERED: [number, Duration, DurationModifier][] = [
-  [DURATION_TICKS.WHOLE, Duration.WHOLE, DurationModifier.NONE],
-  [DURATION_TICKS.HALF_DOTTED, Duration.HALF, DurationModifier.DOTTED],
-  [DURATION_TICKS.HALF, Duration.HALF, DurationModifier.NONE],
-  [DURATION_TICKS.QUARTER_DOTTED, Duration.QUARTER, DurationModifier.DOTTED],
-  [DURATION_TICKS.QUARTER, Duration.QUARTER, DurationModifier.NONE],
-  [DURATION_TICKS.EIGHTH_DOTTED, Duration.EIGHTH, DurationModifier.DOTTED],
-  [DURATION_TICKS.EIGHTH, Duration.EIGHTH, DurationModifier.NONE],
-  [
-    DURATION_TICKS.SIXTEENTH_DOTTED,
-    Duration.SIXTEENTH,
-    DurationModifier.DOTTED,
-  ],
-  [DURATION_TICKS.SIXTEENTH, Duration.SIXTEENTH, DurationModifier.NONE],
+const TICKS_ORDERED: [number, Duration, number][] = [
+  [DURATION_TICKS.WHOLE, Duration.WHOLE, 0],
+  [DURATION_TICKS.HALF_DOTTED, Duration.HALF, 1],
+  [DURATION_TICKS.HALF, Duration.HALF, 0],
+  [DURATION_TICKS.QUARTER_DOTTED, Duration.QUARTER, 1],
+  [DURATION_TICKS.QUARTER, Duration.QUARTER, 0],
+  [DURATION_TICKS.EIGHTH_DOTTED, Duration.EIGHTH, 1],
+  [DURATION_TICKS.EIGHTH, Duration.EIGHTH, 0],
+  [DURATION_TICKS.SIXTEENTH_DOTTED, Duration.SIXTEENTH, 1],
+  [DURATION_TICKS.SIXTEENTH, Duration.SIXTEENTH, 0],
 ];
 
 /** Maps a tick count to [Duration, DurationModifier] if it names a standard notated value, else null. */
-export function ticksToDuration(
-  ticks: number
-): [Duration, DurationModifier] | null {
+export function ticksToDuration(ticks: number): [Duration, number] | null {
   for (const [t, d, m] of TICKS_ORDERED) {
     if (t === ticks) return [d, m];
   }
   return null;
 }
 
-/** Greedily decompose a tick count into the fewest standard [Duration, DurationModifier] pairs. */
-function splitTicks(ticks: number): [Duration, DurationModifier][] {
-  const result: [Duration, DurationModifier][] = [];
+/** Greedily decompose a tick count into the fewest standard [Duration, dots] pairs. */
+function splitTicks(ticks: number): [Duration, number][] {
+  const result: [Duration, number][] = [];
   let rem = ticks;
   while (rem >= DURATION_TICKS.SIXTEENTH) {
     let placed = false;
@@ -762,14 +774,6 @@ export function expandRepeats(music: Music): {
   curves: number[][];
   originalIndices: number[];
 } {
-  if (music.bars.length === 0) {
-    return {
-      notes: [...music.notes],
-      curves: [...music.curves],
-      originalIndices: music.notes.map((_, i) => i),
-    };
-  }
-
   const resultNotes: Note[] = [];
   const resultCurves: number[][] = [];
   const resultOriginalIndices: number[] = [];
@@ -912,6 +916,127 @@ export function expandRepeats(music: Music): {
 
   // Notes after the last bar line
   addSegment(prevEndIdx + 1, music.notes.length - 1);
+
+  // DC/DS navigation: if there's a Da Capo or Dal Segno instruction, append
+  // the return-pass notes. Repeats are skipped (volta-1 sections are skipped,
+  // volta-2 sections are played) on the return pass.
+  const DC_DS_DECORATIONS = new Set<Decoration>([
+    'd.c.',
+    'd.c.alfine',
+    'd.c.alcoda',
+    'd.s.',
+    'd.s.alfine',
+    'd.s.alcoda',
+  ]);
+
+  // Find the first DC/DS instruction in the original notes.
+  let dcDsDec: Decoration | null = null;
+  for (const note of music.notes) {
+    for (const d of note.decorations) {
+      if (DC_DS_DECORATIONS.has(d)) {
+        dcDsDec = d;
+        break;
+      }
+    }
+    if (dcDsDec) break;
+  }
+
+  if (dcDsDec !== null) {
+    // Find landmark note indices in the original score.
+    const findFirst = (...decs: Decoration[]): number => {
+      const decSet = new Set(decs);
+      return music.notes.findIndex((n) =>
+        n.decorations.some((d) => decSet.has(d))
+      );
+    };
+    const findLast = (...decs: Decoration[]): number => {
+      const decSet = new Set(decs);
+      let idx = -1;
+      for (let k = 0; k < music.notes.length; k++) {
+        if (music.notes[k].decorations.some((d) => decSet.has(d))) idx = k;
+      }
+      return idx;
+    };
+
+    // Pre-compute volta-1 note ranges to skip on the no-repeat pass.
+    // A volta-1 section runs from (volta1Bar.afterNoteNum + 1) to
+    // (the matching end_repeat bar's afterNoteNum), inclusive.
+    const volta1Ranges: [number, number][] = [];
+    {
+      let inVolta1Range = false;
+      let volta1Start = 0;
+      for (const bar of music.bars) {
+        if (bar.afterNoteNum === undefined || bar.afterNoteNum < 0) continue;
+        if (bar.volta === 1) {
+          inVolta1Range = true;
+          volta1Start = bar.afterNoteNum + 1;
+        } else if (inVolta1Range && bar.type === 'end_repeat') {
+          volta1Ranges.push([volta1Start, bar.afterNoteNum]);
+          inVolta1Range = false;
+        }
+      }
+    }
+
+    const isInVolta1 = (noteIdx: number): boolean =>
+      volta1Ranges.some(([s, e]) => noteIdx >= s && noteIdx <= e);
+
+    // Emit notes from startOrig..endOrig without any repeats, skipping volta-1.
+    const addSegmentNoRepeat = (startOrig: number, endOrig: number): void => {
+      const clampedEnd = Math.min(endOrig, music.notes.length - 1);
+      if (startOrig > clampedEnd) return;
+      // Iterate through the range, emitting contiguous runs outside volta-1.
+      let runStart = -1;
+      const flush = (runEnd: number) => {
+        if (runStart === -1) return;
+        addSegment(runStart, runEnd);
+        runStart = -1;
+      };
+      for (let k = startOrig; k <= clampedEnd; k++) {
+        if (isInVolta1(k)) {
+          flush(k - 1);
+        } else {
+          if (runStart === -1) runStart = k;
+        }
+      }
+      flush(clampedEnd);
+    };
+
+    const isDc = dcDsDec.startsWith('d.c.');
+    const isAlFine = dcDsDec.endsWith('alfine');
+    const isAlCoda = dcDsDec.endsWith('alcoda');
+
+    const jumpStart = isDc ? 0 : findFirst('segno');
+    let jumpEnd: number;
+    let codaJump = false;
+
+    if (isAlFine) {
+      jumpEnd = findFirst('fine');
+    } else if (isAlCoda) {
+      // Stop at the first !alcoda! marker, or failing that, the first !coda!.
+      const alcoda = findFirst('alcoda');
+      const firstCoda = findFirst('coda');
+      // Use whichever appears first (both are valid stop points).
+      if (alcoda !== -1 && (firstCoda === -1 || alcoda < firstCoda)) {
+        jumpEnd = alcoda;
+      } else {
+        jumpEnd = firstCoda;
+      }
+      codaJump = true;
+    } else {
+      jumpEnd = music.notes.length - 1;
+    }
+
+    if (jumpStart !== -1 && jumpEnd !== -1) {
+      addSegmentNoRepeat(jumpStart, jumpEnd);
+      if (codaJump) {
+        // Jump to the last !coda! marker and play to end.
+        const lastCoda = findLast('coda');
+        if (lastCoda !== -1) {
+          addSegmentNoRepeat(lastCoda, music.notes.length - 1);
+        }
+      }
+    }
+  }
 
   // addSegment only includes curves where both endpoints fall within the same
   // segment call.  Ties that cross a standard bar line land in adjacent

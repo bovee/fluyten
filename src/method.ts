@@ -1,6 +1,6 @@
 import { NOTE_NAMES, PITCH_CONSTANTS } from './constants';
 import { type RecorderType } from './instrument';
-import { Duration, DurationModifier, type Music } from './music';
+import { Duration, type Music } from './music';
 
 export const Technique = {
   Slur: 'slur',
@@ -210,10 +210,10 @@ export function featuresFromMusic(music: Music): SongFeatures {
       note.duration === Duration.GRACE_SLASH
     ) {
       features.add(Technique.GraceNote);
-    } else if (note.durationModifier === DurationModifier.TRIPLET) {
+    } else if (note.tuplet) {
       features.add(Technique.Triplet);
     } else {
-      const dotted = note.durationModifier === DurationModifier.DOTTED;
+      const dotted = note.dots > 0;
       if (isRest) {
         if (note.duration === Duration.WHOLE) features.add(Technique.WholeRest);
         else if (note.duration === Duration.HALF)

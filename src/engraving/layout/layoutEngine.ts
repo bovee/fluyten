@@ -1,5 +1,5 @@
 import {
-  DurationModifier,
+  type Tuplet,
   FIFTHS_TO_ACCIDENTALS,
   KEYS,
   type Music,
@@ -503,68 +503,90 @@ function computeTuplets(
 
   const notePosMap = buildNotePosMap(barLayouts, barToLine, lineHeight);
 
-  // Find runs of triplet notes in music.notes
-  let tripletStart = -1;
+  // Find runs of tuplet notes in music.notes. A group ends when the note count
+  // reaches groupSize, a non-tuplet note appears, or the group crosses a staff line.
+  let tupletStart = -1;
+  let currentTuplet: Tuplet | undefined;
   for (let i = 0; i <= music.notes.length; i++) {
-    const isTriplet =
-      i < music.notes.length &&
-      music.notes[i].durationModifier === DurationModifier.TRIPLET;
+    const note = i < music.notes.length ? music.notes[i] : undefined;
+    const noteTuplet = note?.tuplet;
+    const isTuplet = noteTuplet !== undefined;
 
-    if (isTriplet && tripletStart === -1) {
-      tripletStart = i;
+    // Detect group boundary: new tuplet with different params, or non-tuplet note
+    const groupChanged =
+      isTuplet &&
+      currentTuplet &&
+      (noteTuplet.actual !== currentTuplet.actual ||
+        noteTuplet.written !== currentTuplet.written ||
+        noteTuplet.groupSize !== currentTuplet.groupSize);
+
+    const groupSize = i - tupletStart;
+    const expectedGroupSize = currentTuplet?.groupSize ?? 0;
+
+    if (isTuplet && tupletStart === -1) {
+      tupletStart = i;
+      currentTuplet = noteTuplet;
     }
 
-    if (tripletStart !== -1) {
-      const groupSize = i - tripletStart;
-      const posA = notePosMap.get(tripletStart);
+    if (tupletStart !== -1) {
+      const posA = notePosMap.get(tupletStart);
       const posB = notePosMap.get(i - 1);
       const crossedLine =
-        isTriplet &&
+        isTuplet &&
+        !groupChanged &&
         groupSize > 0 &&
         posA &&
         posB &&
         posA.lineIndex !== posB.lineIndex;
 
-      if (!isTriplet || crossedLine || groupSize === 3) {
-        if (groupSize > 0 && posA && posB) {
-          // Average stem-end Y to place the bracket above/below notes
+      if (
+        !isTuplet ||
+        groupChanged ||
+        crossedLine ||
+        groupSize === expectedGroupSize
+      ) {
+        if (groupSize > 0 && posA && posB && currentTuplet) {
           const avgStemY = (posA.stemEndY + posB.stemEndY) / 2;
           const bracketY = avgStemY - 8;
-
-          // Extend bracket from note start to note end (±half notehead width)
           const NOTEHEAD_HALF = 5;
+          const num = currentTuplet.actual;
+          // Layout engine doesn't have time-sig context, so we always show just p.
+          const writtenLabel = undefined as number | undefined;
 
           if (posA.lineIndex === posB.lineIndex) {
             result[posA.lineIndex].push({
               startX: posA.x - NOTEHEAD_HALF,
               endX: posB.x + NOTEHEAD_HALF,
               y: bracketY,
-              num: 3,
+              num,
+              written: writtenLabel,
               lineIndex: posA.lineIndex,
             });
           } else {
-            // Two partial brackets
-            if (posA) {
-              result[posA.lineIndex].push({
-                startX: posA.x - NOTEHEAD_HALF,
-                endX: posA.x + 60,
-                y: posA.stemEndY - 8,
-                num: 3,
-                lineIndex: posA.lineIndex,
-              });
-            }
-            if (posB) {
-              result[posB.lineIndex].push({
-                startX: lineFirstNoteAreaX.get(posB.lineIndex) ?? posB.x - 60,
-                endX: posB.x + NOTEHEAD_HALF,
-                y: posB.stemEndY - 8,
-                num: 3,
-                lineIndex: posB.lineIndex,
-              });
-            }
+            result[posA.lineIndex].push({
+              startX: posA.x - NOTEHEAD_HALF,
+              endX: posA.x + 60,
+              y: posA.stemEndY - 8,
+              num,
+              written: writtenLabel,
+              lineIndex: posA.lineIndex,
+            });
+            result[posB.lineIndex].push({
+              startX: lineFirstNoteAreaX.get(posB.lineIndex) ?? posB.x - 60,
+              endX: posB.x + NOTEHEAD_HALF,
+              y: posB.stemEndY - 8,
+              num,
+              written: writtenLabel,
+              lineIndex: posB.lineIndex,
+            });
           }
         }
-        tripletStart = isTriplet ? i : -1;
+        tupletStart = isTuplet && !groupChanged ? i : isTuplet ? i : -1;
+        currentTuplet = isTuplet ? noteTuplet : undefined;
+        if (groupChanged && isTuplet) {
+          tupletStart = i;
+          currentTuplet = noteTuplet;
+        }
       }
     }
   }

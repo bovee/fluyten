@@ -4,8 +4,8 @@ import {
   type Decoration,
   type Signature,
   type SpanDecorationType,
+  type Tuplet,
   Duration,
-  DurationModifier,
   KEYS,
   FIFTHS_TO_ACCIDENTALS,
   Music,
@@ -204,41 +204,41 @@ const DURATION_SIXTEENTHS: Record<Duration, number> = {
   [Duration.GRACE_SLASH]: 0,
 };
 
-// Maps thirty-second count → [Duration, DurationModifier]
-const SIXTEENTHS_TO_DURATION = new Map<number, [Duration, DurationModifier]>([
-  [2, [Duration.SIXTEENTH, DurationModifier.NONE]],
-  [3, [Duration.SIXTEENTH, DurationModifier.DOTTED]],
-  [4, [Duration.EIGHTH, DurationModifier.NONE]],
-  [6, [Duration.EIGHTH, DurationModifier.DOTTED]],
-  [8, [Duration.QUARTER, DurationModifier.NONE]],
-  [12, [Duration.QUARTER, DurationModifier.DOTTED]],
-  [16, [Duration.HALF, DurationModifier.NONE]],
-  [24, [Duration.HALF, DurationModifier.DOTTED]],
-  [32, [Duration.WHOLE, DurationModifier.NONE]],
-  [48, [Duration.WHOLE, DurationModifier.DOTTED]],
+// Maps thirty-second count → [Duration, dots]
+const SIXTEENTHS_TO_DURATION = new Map<number, [Duration, number]>([
+  [2, [Duration.SIXTEENTH, 0]],
+  [3, [Duration.SIXTEENTH, 1]],
+  [4, [Duration.EIGHTH, 0]],
+  [6, [Duration.EIGHTH, 1]],
+  [8, [Duration.QUARTER, 0]],
+  [12, [Duration.QUARTER, 1]],
+  [16, [Duration.HALF, 0]],
+  [24, [Duration.HALF, 1]],
+  [32, [Duration.WHOLE, 0]],
+  [48, [Duration.WHOLE, 1]],
 ]);
 
 /** Split a duration (in sixteenth-note units) into the fewest standard
- *  [Duration, DurationModifier] pairs, largest first. Used to expand
- *  durations that exceed a dotted whole note (e.g. z8 with L:1/4). */
-function splitSixteenths(sixteenths: number): [Duration, DurationModifier][] {
+ *  [Duration, dots] pairs, largest first. Used to expand durations that
+ *  exceed a dotted whole note (e.g. z8 with L:1/4). */
+function splitSixteenths(sixteenths: number): [Duration, number][] {
   const direct = SIXTEENTHS_TO_DURATION.get(sixteenths);
   if (direct) return [direct];
   // Prefer non-dotted durations first so that e.g. 64 sixteenths → whole+whole
   // rather than dotted-whole+half, which aligns better with bar boundaries.
-  const ORDERED: [number, Duration, DurationModifier][] = [
-    [32, Duration.WHOLE, DurationModifier.NONE],
-    [48, Duration.WHOLE, DurationModifier.DOTTED],
-    [16, Duration.HALF, DurationModifier.NONE],
-    [24, Duration.HALF, DurationModifier.DOTTED],
-    [8, Duration.QUARTER, DurationModifier.NONE],
-    [12, Duration.QUARTER, DurationModifier.DOTTED],
-    [4, Duration.EIGHTH, DurationModifier.NONE],
-    [6, Duration.EIGHTH, DurationModifier.DOTTED],
-    [2, Duration.SIXTEENTH, DurationModifier.NONE],
-    [3, Duration.SIXTEENTH, DurationModifier.DOTTED],
+  const ORDERED: [number, Duration, number][] = [
+    [32, Duration.WHOLE, 0],
+    [48, Duration.WHOLE, 1],
+    [16, Duration.HALF, 0],
+    [24, Duration.HALF, 1],
+    [8, Duration.QUARTER, 0],
+    [12, Duration.QUARTER, 1],
+    [4, Duration.EIGHTH, 0],
+    [6, Duration.EIGHTH, 1],
+    [2, Duration.SIXTEENTH, 0],
+    [3, Duration.SIXTEENTH, 1],
   ];
-  const result: [Duration, DurationModifier][] = [];
+  const result: [Duration, number][] = [];
   let rem = sixteenths;
   while (rem >= 2) {
     let placed = false;
@@ -289,7 +289,7 @@ type ScoreToken =
   | { type: 'grace_open' | 'grace_open_slash' | 'grace_close' }
   | { type: 'chord_open' }
   | { type: 'chord_close'; duration: string }
-  | { type: 'tuplet3' }
+  | { type: 'tuplet'; actual: number; written: number; groupSize: number }
   | { type: 'slur_open' | 'slur_close' }
   | { type: 'tie' }
   | { type: 'beam_break' }
@@ -334,8 +334,8 @@ const TOKEN_RE = new RegExp(
     // chord brackets
     '\\[',
     '\\](?<chordDur>\\d*(?:\\/\\/?)?\\d*)',
-    // tuplets — "(3" before "(" so the digit isn't lost
-    '\\(3',
+    // tuplets — "(p:q:r", "(p:q", "(p:" or plain "(p" — before "(" so digit isn't lost
+    '\\(\\d(?::\\d*(?::\\d+)?)?',
     // slurs / ties / broken rhythm
     '\\(',
     '\\)',
@@ -404,8 +404,23 @@ export function tokenize(score: string): ScoreToken[] {
       tokens.push({ type: 'chord_open' });
     } else if (raw[0] === ']') {
       tokens.push({ type: 'chord_close', duration: g.chordDur ?? '' });
-    } else if (raw === '(3') {
-      tokens.push({ type: 'tuplet3' });
+    } else if (/^\(\d/.test(raw)) {
+      // Tuplet: (p), (p:q), (p:q:r), (p::r) — isCompound determined later in parseScore
+      // Store raw string; isCompound context not available here, so defer resolution.
+      const parts = raw.slice(1).split(':');
+      const actual = parseInt(parts[0], 10);
+      // q and r are resolved in parseScore where time signature is known.
+      // Store -1 as sentinel for "use default".
+      const writtenRaw =
+        parts.length > 1 && parts[1] !== '' ? parseInt(parts[1], 10) : -1;
+      const groupSizeRaw =
+        parts.length > 2 && parts[2] !== '' ? parseInt(parts[2], 10) : -1;
+      tokens.push({
+        type: 'tuplet',
+        actual,
+        written: writtenRaw,
+        groupSize: groupSizeRaw,
+      });
     } else if (raw === '(') {
       tokens.push({ type: 'slur_open' });
     } else if (raw === ')') {
@@ -430,11 +445,11 @@ export function tokenize(score: string): ScoreToken[] {
 // `>` dots the left note and halves the right; `<` is the reverse.
 function applyBrokenRhythm(
   duration: Duration,
-  modifier: DurationModifier,
+  dots: number,
   dir: 'dot' | 'halve'
-): [Duration, DurationModifier] {
+): [Duration, number] {
   let sixteenths = DURATION_SIXTEENTHS[duration];
-  if (modifier === DurationModifier.DOTTED) sixteenths = (sixteenths * 3) / 2;
+  if (dots === 1) sixteenths = (sixteenths * 3) / 2;
   sixteenths = dir === 'dot' ? (sixteenths * 3) / 2 : sixteenths / 2;
   const result = SIXTEENTHS_TO_DURATION.get(sixteenths);
   if (!result)
@@ -447,14 +462,14 @@ function applyBrokenRhythm(
 // ---- Duration parser --------------------------------------------------------
 
 /** Parse an ABC duration string (e.g. "", "2", "/2", "//", "3/2") into one or
- *  more [Duration, DurationModifier] pairs relative to `defaultDuration`.
+ *  more [Duration, dots] pairs relative to `defaultDuration`.
  *  Returns null if the string is empty (caller should use defaultDuration).
  *  Returns multiple pairs when the total duration exceeds a dotted whole note
  *  (e.g. z8 with L:1/4 → two whole-note pairs). */
 function parseAbcDuration(
   abcDuration: string,
   defaultDuration: Duration
-): [Duration, DurationModifier][] | null {
+): [Duration, number][] | null {
   if (!abcDuration) return null;
   let sixteenths: number;
   if (abcDuration === '//') {
@@ -479,11 +494,23 @@ function parseAbcDuration(
 
 // ---- Score parser -----------------------------------------------------------
 
+/** Default "written" count (q) for a tuplet of `actual` notes (p).
+ *  Per ABC standard: 2→3, 3→2, 4→3, 6→2, 8→3; 5/7/9 depend on compound time. */
+function defaultTupletWritten(actual: number, isCompound: boolean): number {
+  if (actual === 2) return 3;
+  if (actual === 3) return 2;
+  if (actual === 4) return 3;
+  if (actual === 6) return 2;
+  if (actual === 8) return 3;
+  // 5, 7, 9: compound time → 3, simple time → 2
+  return isCompound ? 3 : 2;
+}
+
 interface ChordAccum {
   pitches: number[];
   accidentals: Accidental[];
   duration: Duration;
-  durationModifier: DurationModifier;
+  dots: number;
   decorations: Decoration[];
 }
 
@@ -498,8 +525,9 @@ export function parseScore(
   let curDefaultDuration = defaultDuration;
   const curKeyAdjustment: { [n: string]: number } = { ...keyAdjustment };
   const barAccidentals: { [n: string]: number } = {};
-  let noteType: 'grace' | 'grace_slash' | 'triplet' | 'chord' | null = null;
+  let noteType: 'grace' | 'grace_slash' | 'tuplet' | 'chord' | null = null;
   let tupletCounter = 0;
+  let pendingTuplet: Tuplet | null = null;
   let startSlur: number | null = null;
   let chordAccum: ChordAccum | null = null;
   let pendingBrokenRhythm: 'dot' | 'halve' | null = null;
@@ -579,12 +607,12 @@ export function parseScore(
         }
 
         let noteDuration: Duration;
-        let noteDurationModifier: DurationModifier = DurationModifier.NONE;
+        let noteDots = 0;
 
         const parsedDur = parseAbcDuration(abcDuration, curDefaultDuration);
         const parsedDurs = parsedDur ?? null;
         if (parsedDurs && parsedDurs.length > 0) {
-          [noteDuration, noteDurationModifier] = parsedDurs[0];
+          [noteDuration, noteDots] = parsedDurs[0];
         } else if (noteType === 'grace') {
           noteDuration = Duration.GRACE;
         } else if (noteType === 'grace_slash') {
@@ -593,20 +621,15 @@ export function parseScore(
           noteDuration = curDefaultDuration;
         }
 
-        if (noteType === 'triplet') {
-          noteDurationModifier = DurationModifier.TRIPLET;
-          if (--tupletCounter === 0) noteType = null;
-        }
-
         if (pendingBrokenRhythm !== null) {
           if (
             noteDuration !== Duration.GRACE &&
             noteDuration !== Duration.GRACE_SLASH &&
-            noteDurationModifier !== DurationModifier.TRIPLET
+            noteType !== 'tuplet'
           ) {
-            [noteDuration, noteDurationModifier] = applyBrokenRhythm(
+            [noteDuration, noteDots] = applyBrokenRhythm(
               noteDuration,
-              noteDurationModifier,
+              noteDots,
               pendingBrokenRhythm
             );
           }
@@ -616,13 +639,21 @@ export function parseScore(
         const note = Note.fromAbc(
           groups.note,
           noteDuration,
-          noteDurationModifier,
+          noteDots,
           curKeyAdjustment,
           groups.accidental,
           groups.decoration,
           groups.text ?? '',
           barAccidentals
         );
+
+        if (noteType === 'tuplet' && pendingTuplet) {
+          note.tuplet = { ...pendingTuplet };
+          if (--tupletCounter === 0) {
+            noteType = null;
+            pendingTuplet = null;
+          }
+        }
         if (groups.accidental) {
           const n = groups.note;
           if (groups.accidental === '^^') barAccidentals[n] = 2;
@@ -636,7 +667,7 @@ export function parseScore(
           if (chordAccum.pitches.length === 0) {
             // First note in chord: its duration and decorations apply to the whole chord.
             chordAccum.duration = note.duration;
-            chordAccum.durationModifier = note.durationModifier;
+            chordAccum.dots = note.dots;
             chordAccum.decorations = note.decorations;
           }
           chordAccum.pitches.push(...note.pitches);
@@ -668,14 +699,14 @@ export function parseScore(
           }
           // If the duration was split (e.g. z8 with L:1/4), emit extra notes
           if (parsedDurs && parsedDurs.length > 1) {
-            for (const [dur, mod] of parsedDurs.slice(1)) {
+            for (const [dur, d] of parsedDurs.slice(1)) {
               music.notes.push(
                 new Note(
                   note.pitches,
                   dur,
                   note.decorations,
                   note.accidentals,
-                  mod
+                  d
                 )
               );
             }
@@ -727,7 +758,7 @@ export function parseScore(
           pitches: [],
           accidentals: [],
           duration: curDefaultDuration,
-          durationModifier: DurationModifier.NONE,
+          dots: 0,
           decorations: [],
         };
         break;
@@ -740,42 +771,60 @@ export function parseScore(
             curDefaultDuration
           );
           if (trailingDur && trailingDur.length > 0) {
-            [chordAccum.duration, chordAccum.durationModifier] = trailingDur[0];
+            [chordAccum.duration, chordAccum.dots] = trailingDur[0];
           }
           const chordNote = new Note(
             chordAccum.pitches,
             chordAccum.duration,
             chordAccum.decorations,
             chordAccum.accidentals,
-            chordAccum.durationModifier
+            chordAccum.dots
           );
+          if (noteType === 'tuplet' && pendingTuplet) {
+            chordNote.tuplet = { ...pendingTuplet };
+            if (--tupletCounter === 0) {
+              noteType = null;
+              pendingTuplet = null;
+            }
+          }
           if (!inBeam) {
             beamStart = music.notes.length;
             inBeam = true;
           }
           music.notes.push(chordNote);
           if (trailingDur && trailingDur.length > 1) {
-            for (const [dur, mod] of trailingDur.slice(1)) {
+            for (const [dur, d] of trailingDur.slice(1)) {
               music.notes.push(
                 new Note(
                   chordAccum.pitches,
                   dur,
                   chordAccum.decorations,
                   chordAccum.accidentals,
-                  mod
+                  d
                 )
               );
             }
           }
           chordAccum = null;
         }
-        noteType = null;
+        if (noteType !== 'tuplet') noteType = null;
         break;
 
-      case 'tuplet3':
-        noteType = 'triplet';
-        tupletCounter = 3;
+      case 'tuplet': {
+        // Resolve sentinel values (-1) using time signature context.
+        const sig = signatureAt(music, music.notes.length);
+        const isCompound = sig.beatsPerBar % 3 === 0 && sig.beatsPerBar >= 6;
+        const written =
+          token.written !== -1
+            ? token.written
+            : defaultTupletWritten(token.actual, isCompound);
+        const groupSize =
+          token.groupSize !== -1 ? token.groupSize : token.actual;
+        noteType = 'tuplet';
+        pendingTuplet = { actual: token.actual, written, groupSize };
+        tupletCounter = groupSize;
         break;
+      }
 
       case 'slur_open':
         if (startSlur !== null)
@@ -804,9 +853,9 @@ export function parseScore(
           token.dir === '>'
             ? (['dot', 'halve'] as const)
             : (['halve', 'dot'] as const);
-        [lastNote.duration, lastNote.durationModifier] = applyBrokenRhythm(
+        [lastNote.duration, lastNote.dots] = applyBrokenRhythm(
           lastNote.duration,
-          lastNote.durationModifier,
+          lastNote.dots,
           lastDir
         );
         pendingBrokenRhythm = nextDir;

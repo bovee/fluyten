@@ -147,7 +147,7 @@ export function layoutBar(
       stemStartY,
       stemEndY,
       duration: note.duration,
-      durationModifier: note.durationModifier,
+      dots: note.dots,
       accidentals: note.accidentals,
       decorations: note.decorations,
       annotations: note.annotations,

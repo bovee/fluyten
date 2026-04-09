@@ -1,6 +1,7 @@
 import { describe, it, expect } from 'vitest';
-import { fromMusicXml } from './musicXmlImport';
-import { Duration, DurationModifier, expandRepeats } from '../music';
+import { fromMusicXml, extractMxl } from './musicXmlImport';
+import { Duration, expandRepeats } from '../music';
+import { zipSync } from 'fflate';
 
 // ---------------------------------------------------------------------------
 // XML helpers
@@ -287,12 +288,12 @@ describe('fromMusicXml', () => {
 
   describe('note durations', () => {
     it.each([
-      ['whole', Duration.WHOLE, DurationModifier.NONE],
-      ['half', Duration.HALF, DurationModifier.NONE],
-      ['quarter', Duration.QUARTER, DurationModifier.NONE],
-      ['eighth', Duration.EIGHTH, DurationModifier.NONE],
-      ['16th', Duration.SIXTEENTH, DurationModifier.NONE],
-    ])('parses %s note', (type, expectedDur, expectedMod) => {
+      ['whole', Duration.WHOLE],
+      ['half', Duration.HALF],
+      ['quarter', Duration.QUARTER],
+      ['eighth', Duration.EIGHTH],
+      ['16th', Duration.SIXTEENTH],
+    ])('parses %s note', (type, expectedDur) => {
       const dur =
         { whole: 16, half: 8, quarter: 4, eighth: 2, '16th': 1 }[type] ?? 4;
       const xml = makeScore(
@@ -304,7 +305,7 @@ describe('fromMusicXml', () => {
       );
       const music = fromMusicXml(xml);
       expect(music.notes[0].duration).toBe(expectedDur);
-      expect(music.notes[0].durationModifier).toBe(expectedMod);
+      expect(music.notes[0].dots).toBe(0);
     });
 
     it('parses dotted quarter', () => {
@@ -318,7 +319,7 @@ describe('fromMusicXml', () => {
       );
       const music = fromMusicXml(xml);
       expect(music.notes[0].duration).toBe(Duration.QUARTER);
-      expect(music.notes[0].durationModifier).toBe(DurationModifier.DOTTED);
+      expect(music.notes[0].dots).toBe(1);
     });
 
     it('parses triplet eighth', () => {
@@ -342,9 +343,9 @@ describe('fromMusicXml', () => {
       `)
       );
       const music = fromMusicXml(xml);
-      expect(music.notes[0].durationModifier).toBe(DurationModifier.TRIPLET);
-      expect(music.notes[1].durationModifier).toBe(DurationModifier.TRIPLET);
-      expect(music.notes[2].durationModifier).toBe(DurationModifier.TRIPLET);
+      expect(music.notes[0].tuplet).toBeDefined();
+      expect(music.notes[1].tuplet).toBeDefined();
+      expect(music.notes[2].tuplet).toBeDefined();
     });
 
     it('parses grace note', () => {
@@ -869,5 +870,279 @@ describe('fromMusicXml', () => {
       const music = fromMusicXml(xml);
       expect(music.notes).toHaveLength(0);
     });
+  });
+
+  describe('tempo', () => {
+    it('parses tempo from <sound tempo="...">', () => {
+      const xml = makeScore(`<measure number="1">
+        ${defaultAttrs()}
+        <direction>
+          <direction-type><words>Allegro</words></direction-type>
+          <sound tempo="132"/>
+        </direction>
+        ${note('C', 4, 'whole')}
+      </measure>`);
+      const music = fromMusicXml(xml);
+      expect(music.signatures[0].tempo).toBe(132);
+      expect(music.signatures[0].tempoText).toBe('Allegro');
+    });
+
+    it('parses tempo without text label', () => {
+      const xml = makeScore(`<measure number="1">
+        ${defaultAttrs()}
+        <direction><sound tempo="90"/></direction>
+        ${note('C', 4, 'whole')}
+      </measure>`);
+      const music = fromMusicXml(xml);
+      expect(music.signatures[0].tempo).toBe(90);
+      expect(music.signatures[0].tempoText).toBeUndefined();
+    });
+
+    it('creates a new signature for a mid-piece tempo change', () => {
+      const xml = makeScore(
+        measure(note('C', 4, 'whole')) +
+          `<measure number="2">
+          ${defaultAttrs()}
+          <direction><sound tempo="60"/></direction>
+          ${note('D', 4, 'whole')}
+        </measure>`
+      );
+      const music = fromMusicXml(xml);
+      expect(music.signatures).toHaveLength(2);
+      expect(music.signatures[1].tempo).toBe(60);
+      expect(music.signatures[1].atNoteIndex).toBe(1);
+    });
+  });
+
+  describe('mid-piece signature changes', () => {
+    it('creates a new key signature entry for a mid-piece key change', () => {
+      const xml = makeScore(
+        measure(note('C', 4, 'whole')) +
+          `<measure number="2">
+          <attributes>
+            <divisions>4</divisions>
+            <key><fifths>1</fifths></key>
+            <time><beats>4</beats><beat-type>4</beat-type></time>
+            <clef><sign>G</sign><line>2</line></clef>
+          </attributes>
+          ${note('G', 4, 'whole')}
+        </measure>`
+      );
+      const music = fromMusicXml(xml);
+      expect(music.signatures).toHaveLength(2);
+      expect(music.signatures[0].keySignature).toBe('C');
+      expect(music.signatures[1].keySignature).toBe('G');
+      expect(music.signatures[1].atNoteIndex).toBe(1);
+    });
+
+    it('creates a new time signature entry for a mid-piece meter change', () => {
+      const xml = makeScore(
+        measure(
+          note('C', 4, 'quarter') +
+            note('D', 4, 'quarter') +
+            note('E', 4, 'quarter') +
+            note('F', 4, 'quarter')
+        ) +
+          `<measure number="2">
+          <attributes>
+            <divisions>4</divisions>
+            <key><fifths>0</fifths></key>
+            <time><beats>3</beats><beat-type>4</beat-type></time>
+            <clef><sign>G</sign><line>2</line></clef>
+          </attributes>
+          ${note('G', 4, 'quarter')}${note('A', 4, 'quarter')}${note('B', 4, 'quarter')}
+        </measure>`
+      );
+      const music = fromMusicXml(xml);
+      expect(music.signatures).toHaveLength(2);
+      expect(music.signatures[0].beatsPerBar).toBe(4);
+      expect(music.signatures[1].beatsPerBar).toBe(3);
+      expect(music.signatures[1].atNoteIndex).toBe(4);
+    });
+
+    it('sets commonTime flag for common time mid-piece change', () => {
+      const xml = makeScore(
+        measure(note('C', 4, 'whole')) +
+          `<measure number="2">
+          <attributes>
+            <divisions>4</divisions>
+            <key><fifths>0</fifths></key>
+            <time symbol="common"><beats>4</beats><beat-type>4</beat-type></time>
+            <clef><sign>G</sign><line>2</line></clef>
+          </attributes>
+          ${note('D', 4, 'whole')}
+        </measure>`
+      );
+      const music = fromMusicXml(xml);
+      expect(music.signatures[1].commonTime).toBe(true);
+    });
+  });
+
+  describe('clef octave transposition', () => {
+    it('parses treble+8 clef (clef-octave-change=1)', () => {
+      const xml = makeScore(`<measure number="1">
+        <attributes>
+          <divisions>4</divisions>
+          <key><fifths>0</fifths></key>
+          <time><beats>4</beats><beat-type>4</beat-type></time>
+          <clef><sign>G</sign><line>2</line><clef-octave-change>1</clef-octave-change></clef>
+        </attributes>
+        ${note('C', 4, 'whole')}
+      </measure>`);
+      expect(fromMusicXml(xml).clef).toBe('treble8va');
+    });
+
+    it('parses bass+8 clef (clef-octave-change=1 on F clef)', () => {
+      const xml = makeScore(`<measure number="1">
+        <attributes>
+          <divisions>4</divisions>
+          <key><fifths>0</fifths></key>
+          <time><beats>4</beats><beat-type>4</beat-type></time>
+          <clef><sign>F</sign><line>4</line><clef-octave-change>1</clef-octave-change></clef>
+        </attributes>
+        ${note('C', 3, 'whole')}
+      </measure>`);
+      expect(fromMusicXml(xml).clef).toBe('bass8va');
+    });
+  });
+
+  describe('span decorations', () => {
+    it('parses a crescendo wedge', () => {
+      const xml = makeScore(`<measure number="1">
+        ${defaultAttrs()}
+        <direction>
+          <direction-type><wedge type="crescendo" number="1"/></direction-type>
+        </direction>
+        ${note('C', 4, 'quarter')}
+        ${note('D', 4, 'quarter')}
+        <direction>
+          <direction-type><wedge type="stop" number="1"/></direction-type>
+        </direction>
+        ${note('E', 4, 'half')}
+      </measure>`);
+      const music = fromMusicXml(xml);
+      expect(music.spanDecorations).toHaveLength(1);
+      expect(music.spanDecorations[0].type).toBe('crescendo');
+      expect(music.spanDecorations[0].startNoteIndex).toBe(0);
+      expect(music.spanDecorations[0].endNoteIndex).toBe(1);
+    });
+
+    it('parses a diminuendo wedge', () => {
+      const xml = makeScore(`<measure number="1">
+        ${defaultAttrs()}
+        <direction>
+          <direction-type><wedge type="diminuendo" number="1"/></direction-type>
+        </direction>
+        ${note('E', 4, 'quarter')}
+        ${note('D', 4, 'quarter')}
+        <direction>
+          <direction-type><wedge type="stop" number="1"/></direction-type>
+        </direction>
+        ${note('C', 4, 'half')}
+      </measure>`);
+      const music = fromMusicXml(xml);
+      expect(music.spanDecorations[0].type).toBe('diminuendo');
+    });
+
+    it('closes unclosed wedge at end of piece', () => {
+      const xml = makeScore(`<measure number="1">
+        ${defaultAttrs()}
+        <direction>
+          <direction-type><wedge type="crescendo" number="1"/></direction-type>
+        </direction>
+        ${note('C', 4, 'quarter')}
+        ${note('D', 4, 'quarter')}
+      </measure>`);
+      const music = fromMusicXml(xml);
+      expect(music.spanDecorations).toHaveLength(1);
+      expect(music.spanDecorations[0].endNoteIndex).toBe(1);
+    });
+  });
+
+  describe('beam continue without prior begin', () => {
+    it('handles a beam:continue at the start of a measure without crashing', () => {
+      // A 'continue' beam without a prior 'begin' should set beamStartIdx and not crash
+      const xml = `<?xml version="1.0"?>
+        <score-partwise version="3.1">
+          <part-list><score-part id="P1"><part-name>Music</part-name></score-part></part-list>
+          <part id="P1">
+            <measure number="1">
+              <attributes>
+                <divisions>4</divisions>
+                <key><fifths>0</fifths></key>
+                <time><beats>4</beats><beat-type>4</beat-type></time>
+                <clef><sign>G</sign></clef>
+              </attributes>
+              <note>
+                <pitch><step>C</step><octave>4</octave></pitch>
+                <duration>2</duration>
+                <type>eighth</type>
+                <beam number="1">continue</beam>
+              </note>
+              <note>
+                <pitch><step>D</step><octave>4</octave></pitch>
+                <duration>2</duration>
+                <type>eighth</type>
+                <beam number="1">end</beam>
+              </note>
+            </measure>
+          </part>
+        </score-partwise>`;
+      const music = fromMusicXml(xml);
+      expect(music.notes).toHaveLength(2);
+      // The beam should have been recorded (continue treated as begin, end closes it)
+      expect(music.beams).toHaveLength(1);
+      expect(music.beams[0]).toEqual([0, 1]);
+    });
+  });
+});
+
+describe('extractMxl', () => {
+  function makeContainer(rootfilePath: string): Uint8Array {
+    return new TextEncoder().encode(
+      `<?xml version="1.0"?><container><rootfiles><rootfile full-path="${rootfilePath}"/></rootfiles></container>`
+    );
+  }
+
+  function makeSimpleMusicXml(): Uint8Array {
+    return new TextEncoder().encode(
+      `<?xml version="1.0"?><score-partwise version="3.1"><part-list></part-list></score-partwise>`
+    );
+  }
+
+  it('extracts XML from a valid .mxl buffer', () => {
+    const musicXml = makeSimpleMusicXml();
+    const buf = zipSync({
+      'META-INF/container.xml': makeContainer('score.xml'),
+      'score.xml': musicXml,
+    }).buffer as ArrayBuffer;
+    const xml = extractMxl(buf);
+    expect(xml).toContain('score-partwise');
+  });
+
+  it('throws when META-INF/container.xml is missing', () => {
+    const buf = zipSync({
+      'score.xml': makeSimpleMusicXml(),
+    }).buffer as ArrayBuffer;
+    expect(() => extractMxl(buf)).toThrow('container.xml');
+  });
+
+  it('throws when container.xml has no rootfile element', () => {
+    const emptyContainer = new TextEncoder().encode(
+      `<?xml version="1.0"?><container><rootfiles></rootfiles></container>`
+    );
+    const buf = zipSync({
+      'META-INF/container.xml': emptyContainer,
+      'score.xml': makeSimpleMusicXml(),
+    }).buffer as ArrayBuffer;
+    expect(() => extractMxl(buf)).toThrow('rootfile');
+  });
+
+  it('throws when the rootfile path is not found in the zip', () => {
+    const buf = zipSync({
+      'META-INF/container.xml': makeContainer('missing.xml'),
+      'score.xml': makeSimpleMusicXml(),
+    }).buffer as ArrayBuffer;
+    expect(() => extractMxl(buf)).toThrow('missing.xml');
   });
 });

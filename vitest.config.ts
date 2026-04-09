@@ -17,7 +17,7 @@ export default defineConfig({
     coverage: {
       provider: 'v8',
       reporter: ['text', 'json', 'html'],
-      exclude: ['node_modules/', 'src/test/', '**/*.test.ts', '**/*.test.tsx', 'vite.config.ts', 'vitest.config.ts']
+      exclude: ['node_modules/', 'src/locales/', 'src/test/', '**/*.test.ts', '**/*.test.tsx', 'vite.config.ts', 'vitest.config.ts']
     },
     projects: [{
       extends: true,

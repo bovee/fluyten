@@ -2,6 +2,7 @@
 import type { Meta, StoryObj } from '@storybook/react';
 import { FingeringDiagram } from './FingeringDiagram';
 import { Note, Duration } from './music';
+import { useStore } from './store';
 
 const meta = {
   title: 'Components/FingeringDiagram',
@@ -9,37 +10,47 @@ const meta = {
   parameters: {
     layout: 'centered',
   },
+  decorators: [
+    (Story) => {
+      useStore.setState({ instrumentType: 'SOPRANO', isGerman: false });
+      return <Story />;
+    },
+  ],
 } satisfies Meta<typeof FingeringDiagram>;
 
 export default meta;
 type Story = StoryObj<typeof meta>;
 
-// SOPRANO base pitch is 59, so offset = pitch - 59
-// offset 1 = pitch 60 (C4) → all holes closed
+// SOPRANO basePitch = 72, so pitch = 71 + offset
 
 export const AllClosed: Story = {
   args: {
-    note: new Note(60, Duration.QUARTER), // offset 1 → all closed
+    note: new Note(72, Duration.QUARTER), // offset 1 → all holes closed (C5)
   },
 };
 
 export const PartiallyOpen: Story = {
   args: {
-    note: new Note(63, Duration.QUARTER), // offset 4 → mixed open/closed/half
+    note: new Note(75, Duration.QUARTER), // offset 4 → mixed open/closed/half (Eb5)
   },
 };
 
 export const GermanFingering: Story = {
   args: {
-    note: new Note(65, Duration.QUARTER), // offset 6 → has German fingering variant
+    note: new Note(77, Duration.QUARTER), // offset 6 → has German fingering variant (F5)
     forceGermanSoprano: true,
   },
 };
 
 export const AlternateFingerings: Story = {
   args: {
-    // offset 11 has two fingering alternatives
-    note: new Note(70, Duration.QUARTER),
+    note: new Note(82, Duration.QUARTER), // offset 11 → two fingering alternatives (Bb5)
+  },
+};
+
+export const Trill: Story = {
+  args: {
+    note: new Note(82, Duration.QUARTER, ['trill']), // offset 11 → has trill fingering
   },
 };
 
