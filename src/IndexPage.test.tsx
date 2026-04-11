@@ -15,6 +15,7 @@ vi.mock('./audio/RecorderDetector', () => ({
 
 const defaultProps = () => ({
   onSelectSong: vi.fn(),
+  onSelectSet: vi.fn(),
 });
 
 const songId = 'song-1';
@@ -37,6 +38,7 @@ describe('IndexPage', () => {
     const { container } = render(<IndexPage {...defaultProps()} />);
     expect(await axe(container)).toHaveNoViolations();
   });
+
   it('renders the app title and settings button', () => {
     render(<IndexPage {...defaultProps()} />);
     expect(screen.getByRole('heading')).toBeInTheDocument();
@@ -45,20 +47,11 @@ describe('IndexPage', () => {
     ).toBeInTheDocument();
   });
 
-  it('renders Add Song and Edit Songs buttons', () => {
+  it('renders the Edit Songs button', () => {
     render(<IndexPage {...defaultProps()} />);
-    expect(
-      screen.getByRole('button', { name: /add song/i })
-    ).toBeInTheDocument();
     expect(
       screen.getByRole('button', { name: /edit songs/i })
     ).toBeInTheDocument();
-  });
-
-  it('Edit Songs button is disabled when no songs are selected', () => {
-    useStore.setState({ songs: [userSong] });
-    render(<IndexPage {...defaultProps()} />);
-    expect(screen.getByRole('button', { name: /edit songs/i })).toBeDisabled();
   });
 
   describe('with songs', () => {
@@ -73,7 +66,7 @@ describe('IndexPage', () => {
 
     it('calls onSelectSong when a song row is clicked', () => {
       const onSelectSong = vi.fn();
-      render(<IndexPage onSelectSong={onSelectSong} />);
+      render(<IndexPage onSelectSong={onSelectSong} onSelectSet={vi.fn()} />);
       fireEvent.click(screen.getByText('Greensleeves'));
       expect(onSelectSong).toHaveBeenCalledWith(
         expect.objectContaining({ id: songId, title: 'Greensleeves' }),
@@ -81,24 +74,30 @@ describe('IndexPage', () => {
       );
     });
 
-    it('selecting a song enables the Edit Songs button', () => {
+    it('opens Edit Songs menu when Edit Songs button is clicked', () => {
       render(<IndexPage {...defaultProps()} />);
-      fireEvent.click(screen.getByRole('button', { name: /select song/i }));
-      expect(
-        screen.getByRole('button', { name: /edit songs/i })
-      ).not.toBeDisabled();
-    });
-
-    it('opens Edit Songs menu when Edit Songs button is clicked after selecting', () => {
-      render(<IndexPage {...defaultProps()} />);
-      fireEvent.click(screen.getByRole('button', { name: /select song/i }));
       fireEvent.click(screen.getByRole('button', { name: /edit songs/i }));
       expect(screen.getByRole('menu')).toBeInTheDocument();
     });
 
+    it('enters select mode via Edit Songs → Select Songs', () => {
+      render(<IndexPage {...defaultProps()} />);
+      fireEvent.click(screen.getByRole('button', { name: /edit songs/i }));
+      fireEvent.click(screen.getByRole('menuitem', { name: /select songs/i }));
+      // In select mode each song row shows a "Select Song" toggle button
+      expect(
+        screen.getByRole('button', { name: /select song/i })
+      ).toBeInTheDocument();
+    });
+
     it('opens delete confirm dialog from Edit Songs menu', () => {
       render(<IndexPage {...defaultProps()} />);
+      // Enter select mode
+      fireEvent.click(screen.getByRole('button', { name: /edit songs/i }));
+      fireEvent.click(screen.getByRole('menuitem', { name: /select songs/i }));
+      // Select the song
       fireEvent.click(screen.getByRole('button', { name: /select song/i }));
+      // Open the menu again and choose Delete Songs
       fireEvent.click(screen.getByRole('button', { name: /edit songs/i }));
       fireEvent.click(screen.getByRole('menuitem', { name: /delete songs/i }));
       expect(screen.getByRole('dialog')).toBeInTheDocument();
@@ -107,6 +106,8 @@ describe('IndexPage', () => {
 
     it('deletes selected songs after confirmation', () => {
       render(<IndexPage {...defaultProps()} />);
+      fireEvent.click(screen.getByRole('button', { name: /edit songs/i }));
+      fireEvent.click(screen.getByRole('menuitem', { name: /select songs/i }));
       fireEvent.click(screen.getByRole('button', { name: /select song/i }));
       fireEvent.click(screen.getByRole('button', { name: /edit songs/i }));
       fireEvent.click(screen.getByRole('menuitem', { name: /delete songs/i }));
@@ -119,6 +120,8 @@ describe('IndexPage', () => {
 
     it('cancels delete without deleting', () => {
       render(<IndexPage {...defaultProps()} />);
+      fireEvent.click(screen.getByRole('button', { name: /edit songs/i }));
+      fireEvent.click(screen.getByRole('menuitem', { name: /select songs/i }));
       fireEvent.click(screen.getByRole('button', { name: /select song/i }));
       fireEvent.click(screen.getByRole('button', { name: /edit songs/i }));
       fireEvent.click(screen.getByRole('menuitem', { name: /delete songs/i }));
@@ -126,7 +129,7 @@ describe('IndexPage', () => {
       expect(useStore.getState().songs).toHaveLength(1);
     });
 
-    it('triggers export download when Export Songs is clicked', () => {
+    it('triggers export download from the song info dialog', () => {
       const createObjectURL = vi.fn(() => 'blob:test');
       const revokeObjectURL = vi.fn();
       const click = vi.fn();
@@ -146,24 +149,27 @@ describe('IndexPage', () => {
       });
 
       render(<IndexPage {...defaultProps()} />);
-      fireEvent.click(screen.getByRole('button', { name: /select song/i }));
-      fireEvent.click(screen.getByRole('button', { name: /edit songs/i }));
-      fireEvent.click(screen.getByRole('menuitem', { name: /export songs/i }));
+      // Open song info dialog
+      fireEvent.click(screen.getByRole('button', { name: /song info/i }));
+      const dialog = screen.getByRole('dialog');
+      fireEvent.click(
+        within(dialog).getByRole('button', { name: /export song/i })
+      );
       expect(createObjectURL).toHaveBeenCalled();
       expect(click).toHaveBeenCalled();
     });
   });
 
-  describe('Add Song menu', () => {
-    it('opens menu when + button is clicked', () => {
+  describe('Edit Songs menu', () => {
+    it('opens menu when Edit Songs button is clicked', () => {
       render(<IndexPage {...defaultProps()} />);
-      fireEvent.click(screen.getByRole('button', { name: /add song/i }));
+      fireEvent.click(screen.getByRole('button', { name: /edit songs/i }));
       expect(screen.getByRole('menu')).toBeInTheDocument();
     });
 
     it('adds an empty song when Add Empty Song is clicked', () => {
       render(<IndexPage {...defaultProps()} />);
-      fireEvent.click(screen.getByRole('button', { name: /add song/i }));
+      fireEvent.click(screen.getByRole('button', { name: /edit songs/i }));
       fireEvent.click(
         screen.getByRole('menuitem', { name: /add empty song/i })
       );

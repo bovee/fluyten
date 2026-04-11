@@ -84,7 +84,7 @@ describe('App', () => {
     it('shows IndexPage when no song is selected', () => {
       render(<App />);
       expect(
-        screen.getByRole('button', { name: /add song/i })
+        screen.getByRole('button', { name: /edit songs/i })
       ).toBeInTheDocument();
     });
 
@@ -108,7 +108,7 @@ describe('App', () => {
       );
       fireEvent.click(backBtn);
       expect(
-        screen.getByRole('button', { name: /add song/i })
+        screen.getByRole('button', { name: /edit songs/i })
       ).toBeInTheDocument();
     });
   });

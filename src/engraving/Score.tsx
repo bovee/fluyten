@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useRef, useState } from 'react';
+import { memo, useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { useTheme } from '@mui/material/styles';
 import Popover from '@mui/material/Popover';
 import Typography from '@mui/material/Typography';
@@ -41,7 +41,7 @@ const NOTE_COLORS = {
   wrong: '#ef4444',
 } as const;
 
-export function Score({
+export const Score = memo(function Score({
   music,
   width,
   noteResults,
@@ -72,7 +72,8 @@ export function Score({
     return accs.length === 0 || accs[0].includes('#');
   }, [sig0]);
 
-  // Per-note fill color map
+  // Per-note fill color map (note results only — cursor is handled separately
+  // via cursorNoteIdx so Bar can be memoized and skips re-renders each rAF tick)
   const noteFills = useMemo(() => {
     const map = new Map<number, string>();
     if (noteResults) {
@@ -104,17 +105,8 @@ export function Score({
         }
       }
     }
-    if (cursor !== undefined && cursor.noteIdx >= 0) {
-      map.set(Math.floor(cursor.noteIdx), theme.palette.primary.main);
-    }
     return map;
-  }, [
-    noteResults,
-    cursor,
-    theme.palette.primary.main,
-    music.notes,
-    music.curves,
-  ]);
+  }, [noteResults, music.notes, music.curves]);
 
   // Wrong-note set for X marks (includes tie continuations via noteFills)
   const wrongNotes = useMemo(() => {
@@ -124,6 +116,26 @@ export function Score({
     }
     return set;
   }, [noteFills]);
+
+  // Lookup: musicNoteIndex → barIndex (changes only when layout changes, i.e. when music/width change)
+  const noteToBar = useMemo(() => {
+    const map = new Map<number, number>();
+    for (const line of layout.lines) {
+      for (const bar of line.bars) {
+        for (const note of bar.notes) {
+          map.set(note.musicNoteIndex, bar.barIndex);
+        }
+      }
+    }
+    return map;
+  }, [layout]);
+
+  const cursorNoteIdx =
+    cursor !== undefined && cursor.noteIdx >= 0
+      ? Math.floor(cursor.noteIdx)
+      : undefined;
+  const cursorBarIndex =
+    cursorNoteIdx !== undefined ? noteToBar.get(cursorNoteIdx) : undefined;
 
   // Popover state: screen coordinates set at click time
   const [popoverPos, setPopoverPos] = useState<{
@@ -176,25 +188,28 @@ export function Score({
     });
   }, [autoScroll, cursor, layout, svgEl]);
 
-  const handleNoteClick = (noteIdx: number, x: number, y: number) => {
-    const note = music.notes[noteIdx];
-    if (!note) return;
-    if (onNoteClickProp) {
-      onNoteClickProp(noteIdx);
-      return;
-    }
-    // Convert SVG user-space coords to screen coords
-    if (svgEl) {
-      const rect = svgEl.getBoundingClientRect();
-      const scaleX = rect.width / layout.width;
-      const scaleY = rect.height / layout.height;
-      setPopoverPos({
-        left: rect.left + x * scaleX,
-        top: rect.top + y * scaleY,
-      });
-    }
-    setPopoverNote(note);
-  };
+  const handleNoteClick = useCallback(
+    (noteIdx: number, x: number, y: number) => {
+      const note = music.notes[noteIdx];
+      if (!note) return;
+      if (onNoteClickProp) {
+        onNoteClickProp(noteIdx);
+        return;
+      }
+      // Convert SVG user-space coords to screen coords
+      if (svgEl) {
+        const rect = svgEl.getBoundingClientRect();
+        const scaleX = rect.width / layout.width;
+        const scaleY = rect.height / layout.height;
+        setPopoverPos({
+          left: rect.left + x * scaleX,
+          top: rect.top + y * scaleY,
+        });
+      }
+      setPopoverNote(note);
+    },
+    [music.notes, onNoteClickProp, svgEl, layout]
+  );
 
   return (
     <>
@@ -246,9 +261,12 @@ export function Score({
                   key={bar.barIndex}
                   bar={bar}
                   staffTopY={staffTopY}
-                  clef={clef}
                   noteFills={noteFills}
                   wrongNotes={wrongNotes}
+                  cursorNoteIdx={
+                    bar.barIndex === cursorBarIndex ? cursorNoteIdx : undefined
+                  }
+                  cursorColor={theme.palette.primary.main}
                   onNoteClick={handleNoteClick}
                 />
               ))}
@@ -328,4 +346,4 @@ export function Score({
       </Popover>
     </>
   );
-}
+});

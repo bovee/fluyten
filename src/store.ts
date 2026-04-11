@@ -18,9 +18,16 @@ export type PracticeMode =
   | 'in-tempo'
   | 'metronome-only';
 
+export interface UserSet {
+  id: string;
+  title: string;
+  songIds: string[];
+}
+
 export interface UserSong {
   id: string;
   title: string;
+  composer?: string;
   abc: string;
   tempo?: number;
   beats?: number;
@@ -32,16 +39,17 @@ export interface UserSong {
 function derivedFields(
   abc: string,
   method: string
-): Pick<UserSong, 'title' | 'beats' | 'difficulty'> {
+): Pick<UserSong, 'title' | 'composer' | 'beats' | 'difficulty'> {
   const music = fromAbc(abc);
   const title = music.title ?? '';
+  const composer = music.composer;
   const barCount = music.bars.filter((b) => b.type !== 'begin').length;
   const beats = barCount * music.signatures[0].beatsPerBar;
   const voices = voicesFromAbc(abc);
   const firstVoice = voices.length > 0 ? voices[0].music : music;
   const features = featuresFromMusic(firstVoice);
   const difficulty = difficultyFromFeatures(features, method);
-  return { title, beats, difficulty };
+  return { title, composer, beats, difficulty };
 }
 
 interface SettingsState {
@@ -86,6 +94,12 @@ interface SettingsState {
   removeSong: (songId: string) => void;
   updateSongAbc: (songId: string, abc: string) => void;
   updateSongTempo: (songId: string, tempo: number) => void;
+  sets: UserSet[];
+  createSet: (title: string, songIds: string[]) => void;
+  deleteSet: (setId: string) => void;
+  renameSet: (setId: string, title: string) => void;
+  reorderSet: (setId: string, songIds: string[]) => void;
+  addSongsToSet: (setId: string, songIds: string[]) => void;
 }
 
 export const useStore = create<SettingsState>()(
@@ -175,7 +189,13 @@ export const useStore = create<SettingsState>()(
           ],
         })),
       removeSong: (songId) =>
-        set((state) => ({ songs: state.songs.filter((s) => s.id !== songId) })),
+        set((state) => ({
+          songs: state.songs.filter((s) => s.id !== songId),
+          sets: state.sets.map((set) => ({
+            ...set,
+            songIds: set.songIds.filter((id) => id !== songId),
+          })),
+        })),
       updateSongAbc: (songId, abc) =>
         set((state) => ({
           songs: state.songs.map((s) =>
@@ -190,10 +210,33 @@ export const useStore = create<SettingsState>()(
             s.id === songId ? { ...s, tempo } : s
           ),
         })),
+      sets: [],
+      createSet: (title, songIds) =>
+        set((state) => ({
+          sets: [...state.sets, { id: crypto.randomUUID(), title, songIds }],
+        })),
+      deleteSet: (setId) =>
+        set((state) => ({ sets: state.sets.filter((s) => s.id !== setId) })),
+      renameSet: (setId, title) =>
+        set((state) => ({
+          sets: state.sets.map((s) => (s.id === setId ? { ...s, title } : s)),
+        })),
+      reorderSet: (setId, songIds) =>
+        set((state) => ({
+          sets: state.sets.map((s) => (s.id === setId ? { ...s, songIds } : s)),
+        })),
+      addSongsToSet: (setId, songIds) =>
+        set((state) => ({
+          sets: state.sets.map((s) =>
+            s.id === setId
+              ? { ...s, songIds: [...new Set([...s.songIds, ...songIds])] }
+              : s
+          ),
+        })),
     }),
     {
       name: 'fluyten-settings',
-      version: 2,
+      version: 3,
       migrate: (persistedState: unknown, version: number) => {
         const state = persistedState as Record<string, unknown>;
         if (version === 0 && Array.isArray(state.userBooks)) {
@@ -207,6 +250,12 @@ export const useStore = create<SettingsState>()(
           (state.songs as UserSong[]).forEach((s) => {
             s.practiceHistory = [];
             s.practiceCount = 0;
+          });
+        }
+        if (version < 3) {
+          state.sets = [];
+          (state.songs as UserSong[]).forEach((s) => {
+            s.composer = fromAbc(s.abc).composer;
           });
         }
         return state;

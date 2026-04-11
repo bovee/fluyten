@@ -15,6 +15,7 @@ import Menu from '@mui/material/Menu';
 import MenuItem from '@mui/material/MenuItem';
 import TextField from '@mui/material/TextField';
 import Tooltip from '@mui/material/Tooltip';
+import ArrowDropDown from '@mui/icons-material/ArrowDropDown';
 import Autorenew from '@mui/icons-material/Autorenew';
 import Mic from '@mui/icons-material/Mic';
 import MicOff from '@mui/icons-material/MicOff';
@@ -497,7 +498,10 @@ export function EditorDrawer({
                   disabled={!transformEnabled}
                   aria-label={t('transformNotes')}
                 >
-                  <SwapVert />
+                  <Box sx={{ display: 'flex', alignItems: 'center' }}>
+                    <SwapVert />
+                    <ArrowDropDown fontSize="small" sx={{ ml: '-4px' }} />
+                  </Box>
                 </IconButton>
               </span>
             </Tooltip>

@@ -1,6 +1,7 @@
 import type { Preview } from '@storybook/react-vite';
 import '../src/index.css';
-import { ThemeProvider, createTheme, CssBaseline } from '@mui/material';
+import { ThemeProvider, CssBaseline, createTheme } from '@mui/material';
+import { createAppTheme } from '../src/theme';
 import React, { useEffect } from 'react';
 import { setupAudioMocks } from '../src/test/audioMocks';
 import i18n, { RTL_LANGUAGES } from '../src/i18n';
@@ -8,19 +9,14 @@ import { useStore } from '../src/store';
 
 setupAudioMocks();
 
-const theme = createTheme({
-  palette: {
-    mode: 'light',
-  },
+// Extend the app theme with a Storybook-specific MuiModal override so that
+// portals (dialogs, menus) render inside the story canvas rather than body.
+const theme = createTheme(createAppTheme('light'), {
   components: {
     MuiModal: {
       defaultProps: {
-        container: () => document.getElementById('storybook-root') ?? document.body,
-      },
-    },
-    MuiAccordion: {
-      defaultProps: {
-        slots: { heading: 'h2' },
+        container: () =>
+          document.getElementById('storybook-root') ?? document.body,
       },
     },
   },

@@ -879,6 +879,29 @@ describe('fromAbc', () => {
       );
     });
 
+    it('assigns w: lyrics to the correct voice', () => {
+      const abc = [
+        'T:Test',
+        'M:4/4',
+        'L:1/4',
+        'V:1',
+        'V:2',
+        'K:C',
+        'V:1',
+        'C D E F |',
+        'w: do re mi fa',
+        'V:2',
+        'G, A, B, C, |',
+        'w: sol la si do',
+      ].join('\n');
+      const voices = voicesFromAbc(abc);
+      expect(voices).toHaveLength(2);
+      expect(voices[0].music.lyrics[0][0]).toBe('do');
+      expect(voices[0].music.lyrics[0][1]).toBe('re');
+      expect(voices[1].music.lyrics[0][0]).toBe('sol');
+      expect(voices[1].music.lyrics[0][1]).toBe('la');
+    });
+
     it('splits three voices correctly', () => {
       const abc = `T:Test\nM:4/4\nL:1/4\nV:1\nV:2\nV:3\nK:C\nV:1\nC D |\nV:2\nE F |\nV:3\nG A |`;
       const voices = voicesFromAbc(abc);
@@ -1064,6 +1087,32 @@ describe('lyrics — w: aligned', () => {
     expect(music.lyrics[0][2]).toBeUndefined();
     expect(music.lyrics[0][3]).toBeUndefined();
     expect(music.lyrics[0][4]).toBe('five');
+  });
+
+  it('| is ignored when syllables already filled the bar', () => {
+    // 4 notes per bar; syllables fill bar 1 completely, then | should be ignored
+    const abc =
+      BASE_HEADERS +
+      'C D E F | G A B c\nw:one two three four | five six seven eight';
+    const music = fromAbc(abc);
+    expect(music.lyrics[0][0]).toBe('one');
+    expect(music.lyrics[0][1]).toBe('two');
+    expect(music.lyrics[0][2]).toBe('three');
+    expect(music.lyrics[0][3]).toBe('four');
+    // | was ignored; five continues from note 4
+    expect(music.lyrics[0][4]).toBe('five');
+    expect(music.lyrics[0][7]).toBe('eight');
+  });
+
+  it('|| |: :| :: are all treated as bar tokens', () => {
+    const variants = ['||', '|:', ':|', '::'];
+    for (const bar of variants) {
+      const abc = BASE_HEADERS + `C D E F | G A B c\nw:one ${bar} five`;
+      const music = fromAbc(abc);
+      expect(music.lyrics[0][0]).toBe('one');
+      expect(music.lyrics[0][1]).toBeUndefined();
+      expect(music.lyrics[0][4]).toBe('five');
+    }
   });
 
   it('excess syllables beyond note count are ignored', () => {

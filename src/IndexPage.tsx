@@ -1,13 +1,18 @@
 import { useCallback, useEffect, useRef, useState } from 'react';
 import { useTranslation } from 'react-i18next';
-import Add from '@mui/icons-material/Add';
 import ArrowDownward from '@mui/icons-material/ArrowDownward';
+import ArrowDropDown from '@mui/icons-material/ArrowDropDown';
 import ArrowUpward from '@mui/icons-material/ArrowUpward';
 import CheckCircle from '@mui/icons-material/CheckCircle';
 import EditNote from '@mui/icons-material/EditNote';
+import InfoOutlined from '@mui/icons-material/InfoOutlined';
 import RadioButtonUnchecked from '@mui/icons-material/RadioButtonUnchecked';
-import Settings from '@mui/icons-material/Settings';
+import QueueMusic from '@mui/icons-material/QueueMusic';
 import Sort from '@mui/icons-material/Sort';
+import Table from '@mui/material/Table';
+import TableBody from '@mui/material/TableBody';
+import TableCell from '@mui/material/TableCell';
+import TableRow from '@mui/material/TableRow';
 import Box from '@mui/material/Box';
 import Button from '@mui/material/Button';
 import Dialog from '@mui/material/Dialog';
@@ -18,32 +23,30 @@ import IconButton from '@mui/material/IconButton';
 import ListItem from '@mui/material/ListItem';
 import ListItemButton from '@mui/material/ListItemButton';
 import ListItemText from '@mui/material/ListItemText';
+import Divider from '@mui/material/Divider';
 import Menu from '@mui/material/Menu';
 import MenuItem from '@mui/material/MenuItem';
 import TextField from '@mui/material/TextField';
 import Tooltip from '@mui/material/Tooltip';
 
-import { useTheme } from '@mui/material/styles';
+import { PageBackground } from './PageBackground';
+import { PageHeader } from './PageHeader';
 import {
   parseSongsFromFile,
   parseSongsFromUrl,
   HttpError,
 } from './io/fileImport';
 import { getStarterBookUrl, isStarterBookUrl } from './instrument';
-import { SettingsDialog } from './SettingsDialog';
 import { type Song } from './music';
-import { useStore, type SortKey } from './store';
+import { useStore, type SortKey, type UserSet } from './store';
 
 interface IndexPageProps {
   onSelectSong: (song: Song, readOnly: boolean) => void;
+  onSelectSet: (set: UserSet) => void;
 }
 
-export function IndexPage({ onSelectSong }: IndexPageProps) {
+export function IndexPage({ onSelectSong, onSelectSet }: IndexPageProps) {
   const { t } = useTranslation();
-  const theme = useTheme();
-  const [settingsOpen, setSettingsOpen] = useState(false);
-  const [addSongMenuAnchor, setAddSongMenuAnchor] =
-    useState<HTMLElement | null>(null);
   const [editMenuAnchor, setEditMenuAnchor] = useState<HTMLElement | null>(
     null
   );
@@ -63,22 +66,45 @@ export function IndexPage({ onSelectSong }: IndexPageProps) {
   const sortDir = useStore((state) => state.sortDir);
   const setSortDir = useStore((state) => state.setSortDir);
   const [selectedIds, setSelectedIds] = useState<Set<string>>(new Set());
+  const [isSelectMode, setIsSelectMode] = useState(false);
+  const [infoSong, setInfoSong] = useState<(typeof songs)[0] | null>(null);
+  const [infoSongDeleteConfirm, setInfoSongDeleteConfirm] = useState(false);
+  const [createSetDialogOpen, setCreateSetDialogOpen] = useState(false);
+  const [newSetTitle, setNewSetTitle] = useState('');
+  const [addToSetOpen, setAddToSetOpen] = useState(false);
   const longPressTimers = useRef<Map<string, ReturnType<typeof setTimeout>>>(
     new Map()
   );
   const suppressNextClick = useRef<Set<string>>(new Set());
   const importFileRef = useRef<HTMLInputElement>(null);
 
-  const isSelecting = selectedIds.size > 0;
+  const exitSelectMode = () => {
+    setIsSelectMode(false);
+    setSelectedIds(new Set());
+  };
 
   const songs = useStore((state) => state.songs);
   const method = useStore((state) => state.method);
   if (method === 'none' && sortKey === 'difficulty') setSortKey('order');
+  const addSongs = useStore((state) => state.addSongs);
+  const removeSong = useStore((state) => state.removeSong);
+  const sets = useStore((state) => state.sets);
+  const createSet = useStore((state) => state.createSet);
+  const addSongsToSet = useStore((state) => state.addSongsToSet);
+
+  const filteredSets = filterText
+    ? sets.filter((s) =>
+        s.title.toLowerCase().includes(filterText.toLowerCase())
+      )
+    : [...sets];
 
   const filteredSongs = (() => {
+    const lowerFilter = filterText.toLowerCase();
     const base = filterText
-      ? songs.filter((s) =>
-          s.title.toLowerCase().includes(filterText.toLowerCase())
+      ? songs.filter(
+          (s) =>
+            s.title.toLowerCase().includes(lowerFilter) ||
+            (s.composer ?? '').toLowerCase().includes(lowerFilter)
         )
       : [...songs];
     if (sortKey === 'title') {
@@ -104,8 +130,6 @@ export function IndexPage({ onSelectSong }: IndexPageProps) {
     if (sortKey !== 'order' && sortDir === 'desc') base.reverse();
     return base;
   })();
-  const addSongs = useStore((state) => state.addSongs);
-  const removeSong = useStore((state) => state.removeSong);
 
   useEffect(() => {
     const onDragOver = (e: DragEvent) => {
@@ -141,6 +165,7 @@ export function IndexPage({ onSelectSong }: IndexPageProps) {
     const timer = setTimeout(() => {
       longPressTimers.current.delete(songId);
       suppressNextClick.current.add(songId);
+      setIsSelectMode(true);
       setSelectedIds((prev) => new Set([...prev, songId]));
     }, 500);
     longPressTimers.current.set(songId, timer);
@@ -170,6 +195,7 @@ export function IndexPage({ onSelectSong }: IndexPageProps) {
       const next = new Set(prev);
       if (next.has(songId)) next.delete(songId);
       else next.add(songId);
+      if (next.size === 0) setIsSelectMode(false);
       return next;
     });
   }, []);
@@ -183,7 +209,6 @@ export function IndexPage({ onSelectSong }: IndexPageProps) {
         abc: `X:1\nT:${newSongTitle}\nM:4/4\nL:1/4\nK:C\n`,
       },
     ]);
-    setAddSongMenuAnchor(null);
   };
 
   const handleImportFile = async (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -237,21 +262,6 @@ export function IndexPage({ onSelectSong }: IndexPageProps) {
     }
   };
 
-  const handleExportSongs = () => {
-    const selected = songs.filter((s) => selectedIds.has(s.id));
-    const content = selected
-      .map((s, i) => s.abc.replace(/^X:\s*\d+/m, `X:${i + 1}`))
-      .join('\n\n');
-    const blob = new Blob([content], { type: 'text/plain' });
-    const url = URL.createObjectURL(blob);
-    const a = document.createElement('a');
-    a.href = url;
-    a.download = 'songs.abc';
-    a.click();
-    URL.revokeObjectURL(url);
-    setEditMenuAnchor(null);
-  };
-
   const handleSortSelect = (key: SortKey) => {
     if (key === sortKey) {
       setSortDir(sortDir === 'asc' ? 'desc' : 'asc');
@@ -264,7 +274,7 @@ export function IndexPage({ onSelectSong }: IndexPageProps) {
 
   const handleDeleteSongs = () => {
     selectedIds.forEach((id) => removeSong(id));
-    setSelectedIds(new Set());
+    exitSelectMode();
     setDeleteConfirmOpen(false);
   };
 
@@ -278,35 +288,7 @@ export function IndexPage({ onSelectSong }: IndexPageProps) {
           visibility: 'hidden',
         }}
       />
-      {/* Page background */}
-      <div
-        style={{
-          position: 'fixed',
-          inset: 0,
-          backgroundColor: theme.palette.background.default,
-          zIndex: -2,
-        }}
-      />
-      {/* Decorative treble clef watermark */}
-      <div
-        aria-hidden="true"
-        style={{
-          position: 'fixed',
-          right: '4vw',
-          top: '50%',
-          transform: 'translateY(-50%)',
-          fontSize: '80vh',
-          lineHeight: 1,
-          color: theme.palette.text.primary,
-          opacity: 0.05,
-          zIndex: -1,
-          pointerEvents: 'none',
-          userSelect: 'none',
-          fontFamily: 'Georgia, "Times New Roman", serif',
-        }}
-      >
-        𝄞
-      </div>
+      <PageBackground />
 
       {/* Drag-over overlay */}
       {isDragOver && (
@@ -322,27 +304,21 @@ export function IndexPage({ onSelectSong }: IndexPageProps) {
         />
       )}
 
-      <Tooltip title={t('editSongs')}>
-        <span style={{ position: 'fixed', top: 8, right: 48 }}>
-          <IconButton
-            onClick={(e) => setEditMenuAnchor(e.currentTarget)}
-            aria-label={t('editSongs')}
-            disabled={!isSelecting}
-          >
-            <EditNote />
-          </IconButton>
-        </span>
-      </Tooltip>
-      <Tooltip title={t('settingsButton')}>
-        <IconButton
-          onClick={() => setSettingsOpen(true)}
-          aria-label={t('settingsButton')}
-          style={{ position: 'fixed', top: 8, right: 8 }}
-        >
-          <Settings />
-        </IconButton>
-      </Tooltip>
-      <h1 style={{ color: theme.palette.text.primary }}>{t('appTitle')}</h1>
+      <PageHeader
+        rightAction={
+          <Tooltip title={t('editSongs')}>
+            <IconButton
+              onClick={(e) => setEditMenuAnchor(e.currentTarget)}
+              aria-label={t('editSongs')}
+            >
+              <Box sx={{ display: 'flex', alignItems: 'center' }}>
+                <EditNote />
+                <ArrowDropDown fontSize="small" sx={{ ml: '-4px' }} />
+              </Box>
+            </IconButton>
+          </Tooltip>
+        }
+      />
 
       {songs.length > 0 && (
         <Box
@@ -388,27 +364,34 @@ export function IndexPage({ onSelectSong }: IndexPageProps) {
             'repeat(auto-fill, minmax(min(280px, 100%), 1fr))',
         }}
       >
-        <ListItem role="listitem" disablePadding>
-          <ListItemButton
-            onClick={(e) => setAddSongMenuAnchor(e.currentTarget)}
-            aria-label={t('addSong')}
-            sx={{ minWidth: 0, color: 'text.secondary', pl: '10px' }}
-          >
-            <Add
-              fontSize="small"
-              sx={{ mr: '21px', flexShrink: 0, alignSelf: 'center' }}
-            />
-            <ListItemText
-              primary={t('addSong')}
-              sx={{
-                '& .MuiListItemText-primary': {
-                  position: 'relative',
-                  top: '2px',
-                },
-              }}
-            />
-          </ListItemButton>
-        </ListItem>
+        {filteredSets.map((songSet) => (
+          <ListItem key={songSet.id} role="listitem" disablePadding>
+            <ListItemButton
+              onClick={() => onSelectSet(songSet)}
+              sx={{ minWidth: 0, pl: '10px' }}
+            >
+              <QueueMusic
+                fontSize="small"
+                sx={{
+                  mr: '21px',
+                  flexShrink: 0,
+                  alignSelf: 'center',
+                  color: 'text.secondary',
+                }}
+              />
+              <ListItemText
+                primary={songSet.title}
+                secondary={t('setOf', { count: songSet.songIds.length })}
+                sx={{
+                  '& .MuiListItemText-primary': {
+                    position: 'relative',
+                    top: '2px',
+                  },
+                }}
+              />
+            </ListItemButton>
+          </ListItem>
+        ))}
         {filteredSongs.map((song) => {
           const selected = selectedIds.has(song.id);
           return (
@@ -416,35 +399,90 @@ export function IndexPage({ onSelectSong }: IndexPageProps) {
               key={song.id}
               role="listitem"
               disablePadding
-              sx={selected ? { backgroundColor: 'action.selected' } : undefined}
+              sx={{
+                display: 'flex',
+                alignItems: 'stretch',
+                ...(isSelectMode && selected
+                  ? { backgroundColor: 'action.selected' }
+                  : {}),
+              }}
             >
-              <Tooltip title={selected ? t('deselectSong') : t('selectSong')}>
-                <IconButton
-                  size="small"
-                  aria-label={selected ? t('deselectSong') : t('selectSong')}
-                  onClick={() => handleCircleClick(song.id)}
-                  sx={{
-                    ml: 0.5,
-                    color: selected ? 'primary.main' : 'text.disabled',
-                    flexShrink: 0,
-                  }}
-                >
-                  {selected ? (
-                    <CheckCircle fontSize="small" />
-                  ) : (
-                    <RadioButtonUnchecked fontSize="small" />
-                  )}
-                </IconButton>
-              </Tooltip>
+              {isSelectMode ? (
+                <Tooltip title={selected ? t('deselectSong') : t('selectSong')}>
+                  <IconButton
+                    size="small"
+                    aria-label={selected ? t('deselectSong') : t('selectSong')}
+                    onClick={() => handleCircleClick(song.id)}
+                    sx={{
+                      ml: '6px',
+                      mr: '2px',
+                      color: selected ? 'primary.main' : 'text.disabled',
+                      flexShrink: 0,
+                      alignSelf: 'center',
+                    }}
+                  >
+                    {selected ? (
+                      <CheckCircle fontSize="small" />
+                    ) : (
+                      <RadioButtonUnchecked fontSize="small" />
+                    )}
+                  </IconButton>
+                </Tooltip>
+              ) : (
+                <Tooltip title={t('songInfo')}>
+                  <IconButton
+                    size="small"
+                    aria-label={t('songInfo')}
+                    onClick={() => setInfoSong(song)}
+                    sx={{
+                      ml: '6px',
+                      mr: '2px',
+                      color: 'text.disabled',
+                      flexShrink: 0,
+                      alignSelf: 'center',
+                    }}
+                  >
+                    <InfoOutlined fontSize="small" />
+                  </IconButton>
+                </Tooltip>
+              )}
               <ListItemButton
                 onClick={() => handleRowClick(song)}
                 onPointerDown={() => handleLongPressStart(song.id)}
                 onPointerUp={() => handleLongPressCancel(song.id)}
                 onPointerLeave={() => handleLongPressCancel(song.id)}
                 onPointerCancel={() => handleLongPressCancel(song.id)}
-                sx={{ minWidth: 0 }}
+                sx={{ flex: 1, minWidth: 0, pl: '2px' }}
               >
-                <ListItemText primary={song.title} />
+                <Box
+                  sx={{
+                    display: 'flex',
+                    alignItems: 'center',
+                    flex: 1,
+                    minWidth: 0,
+                    overflow: 'hidden',
+                  }}
+                >
+                  <ListItemText
+                    primary={song.title}
+                    secondary={song.composer}
+                    sx={{
+                      flex: '1 1 0',
+                      minWidth: 0,
+                      overflow: 'hidden',
+                      '& .MuiListItemText-primary': {
+                        overflow: 'hidden',
+                        textOverflow: 'ellipsis',
+                        whiteSpace: 'nowrap',
+                      },
+                      '& .MuiListItemText-secondary': {
+                        overflow: 'hidden',
+                        textOverflow: 'ellipsis',
+                        whiteSpace: 'nowrap',
+                      },
+                    }}
+                  />
+                </Box>
                 {sortKey === 'length' && song.beats != null && (
                   <Box
                     component="span"
@@ -526,33 +564,6 @@ export function IndexPage({ onSelectSong }: IndexPageProps) {
       </div>
 
       <Menu
-        anchorEl={addSongMenuAnchor}
-        open={Boolean(addSongMenuAnchor)}
-        onClose={() => setAddSongMenuAnchor(null)}
-      >
-        <MenuItem onClick={handleAddEmptySong}>{t('addEmptySong')}</MenuItem>
-        <MenuItem
-          onClick={() => {
-            setAddSongMenuAnchor(null);
-            importFileRef.current?.click();
-          }}
-        >
-          {t('importFromFile')}
-        </MenuItem>
-        <MenuItem
-          onClick={() => {
-            setImportUrl({
-              value: getStarterBookUrl(useStore.getState().instrumentType),
-              error: null,
-            });
-            setAddSongMenuAnchor(null);
-          }}
-        >
-          {t('importAbcUrl')}
-        </MenuItem>
-      </Menu>
-
-      <Menu
         anchorEl={sortMenuAnchor}
         open={Boolean(sortMenuAnchor)}
         onClose={() => setSortMenuAnchor(null)}
@@ -599,11 +610,6 @@ export function IndexPage({ onSelectSong }: IndexPageProps) {
         onChange={(e) => void handleImportFile(e)}
       />
 
-      <SettingsDialog
-        open={settingsOpen}
-        onClose={() => setSettingsOpen(false)}
-      />
-
       <Menu
         anchorEl={editMenuAnchor}
         open={Boolean(editMenuAnchor)}
@@ -612,20 +618,85 @@ export function IndexPage({ onSelectSong }: IndexPageProps) {
         <MenuItem
           onClick={() => {
             setEditMenuAnchor(null);
-            setDeleteConfirmOpen(true);
+            handleAddEmptySong();
           }}
-          sx={{ color: 'error.main' }}
         >
-          {t('deleteSongs')}
+          {t('addEmptySong')}
         </MenuItem>
         <MenuItem
           onClick={() => {
             setEditMenuAnchor(null);
-            handleExportSongs();
+            importFileRef.current?.click();
           }}
         >
-          {t('exportSongs')}
+          {t('importFromFile')}
         </MenuItem>
+        <MenuItem
+          onClick={() => {
+            setImportUrl({
+              value: getStarterBookUrl(useStore.getState().instrumentType),
+              error: null,
+            });
+            setEditMenuAnchor(null);
+          }}
+        >
+          {t('importAbcUrl')}
+        </MenuItem>
+        <Divider />
+        {isSelectMode ? (
+          [
+            <MenuItem
+              key="unselect"
+              onClick={() => {
+                exitSelectMode();
+                setEditMenuAnchor(null);
+              }}
+            >
+              {t('unselectSongs')}
+            </MenuItem>,
+            <MenuItem
+              key="createSet"
+              disabled={selectedIds.size === 0}
+              onClick={() => {
+                setEditMenuAnchor(null);
+                setNewSetTitle(t('newSet'));
+                setCreateSetDialogOpen(true);
+              }}
+            >
+              {t('createSet')}
+            </MenuItem>,
+            <MenuItem
+              key="addToSet"
+              disabled={selectedIds.size === 0 || sets.length === 0}
+              onClick={() => {
+                setEditMenuAnchor(null);
+                setAddToSetOpen(true);
+              }}
+            >
+              {t('addToSet')}
+            </MenuItem>,
+            <MenuItem
+              key="delete"
+              disabled={selectedIds.size === 0}
+              onClick={() => {
+                setEditMenuAnchor(null);
+                setDeleteConfirmOpen(true);
+              }}
+              sx={{ color: selectedIds.size > 0 ? 'error.main' : undefined }}
+            >
+              {t('deleteSongs')}
+            </MenuItem>,
+          ]
+        ) : (
+          <MenuItem
+            onClick={() => {
+              setIsSelectMode(true);
+              setEditMenuAnchor(null);
+            }}
+          >
+            {t('selectSongs')}
+          </MenuItem>
+        )}
       </Menu>
 
       {/* Delete confirmation */}
@@ -674,6 +745,180 @@ export function IndexPage({ onSelectSong }: IndexPageProps) {
           <Button onClick={() => setImportUrl(null)}>{t('cancel')}</Button>
           <Button onClick={() => void handleImportUrl()} variant="contained">
             {t('import')}
+          </Button>
+        </DialogActions>
+      </Dialog>
+
+      {/* Song info dialog */}
+      <Dialog open={infoSong !== null} onClose={() => setInfoSong(null)}>
+        <DialogTitle>{t('songInfo')}</DialogTitle>
+        <DialogContent sx={{ pt: '8px !important' }}>
+          <Table size="small">
+            <TableBody>
+              <TableRow>
+                <TableCell sx={{ fontWeight: 'bold', border: 0 }}>
+                  {t('songTitle')}
+                </TableCell>
+                <TableCell sx={{ border: 0 }}>{infoSong?.title}</TableCell>
+              </TableRow>
+              {(() => {
+                return infoSong?.composer ? (
+                  <TableRow>
+                    <TableCell sx={{ fontWeight: 'bold', border: 0 }}>
+                      {t('composer')}
+                    </TableCell>
+                    <TableCell sx={{ border: 0 }}>
+                      {infoSong.composer}
+                    </TableCell>
+                  </TableRow>
+                ) : null;
+              })()}
+              {infoSong?.beats != null && (
+                <TableRow>
+                  <TableCell sx={{ fontWeight: 'bold', border: 0 }}>
+                    {t('sortLength')}
+                  </TableCell>
+                  <TableCell sx={{ border: 0 }}>{infoSong.beats}</TableCell>
+                </TableRow>
+              )}
+              {method !== 'none' && infoSong?.difficulty && (
+                <TableRow>
+                  <TableCell sx={{ fontWeight: 'bold', border: 0 }}>
+                    {t('sortDifficulty')}
+                  </TableCell>
+                  <TableCell sx={{ border: 0 }}>
+                    {infoSong.difficulty}
+                  </TableCell>
+                </TableRow>
+              )}
+              <TableRow>
+                <TableCell sx={{ fontWeight: 'bold', border: 0 }}>
+                  {t('sortPracticeCount')}
+                </TableCell>
+                <TableCell sx={{ border: 0 }}>
+                  {infoSong?.practiceCount ?? 0}
+                </TableCell>
+              </TableRow>
+              <TableRow>
+                <TableCell sx={{ fontWeight: 'bold', border: 0 }}>
+                  {t('sortAverageScore')}
+                </TableCell>
+                <TableCell sx={{ border: 0 }}>
+                  {infoSong?.practiceHistory?.length
+                    ? `${Math.round(infoSong.practiceHistory.reduce((a, b) => a + b, 0) / infoSong.practiceHistory.length)}%`
+                    : '—'}
+                </TableCell>
+              </TableRow>
+            </TableBody>
+          </Table>
+        </DialogContent>
+        <DialogActions>
+          <Button color="error" onClick={() => setInfoSongDeleteConfirm(true)}>
+            {t('deleteSong')}
+          </Button>
+          <Button
+            onClick={() => {
+              if (!infoSong) return;
+              const blob = new Blob([infoSong.abc], { type: 'text/plain' });
+              const url = URL.createObjectURL(blob);
+              const a = document.createElement('a');
+              a.href = url;
+              a.download = `${infoSong.title}.abc`;
+              a.click();
+              URL.revokeObjectURL(url);
+            }}
+          >
+            {t('exportSong')}
+          </Button>
+          <Button onClick={() => setInfoSong(null)}>{t('close')}</Button>
+        </DialogActions>
+      </Dialog>
+
+      {/* Single-song delete confirmation */}
+      <Dialog
+        open={infoSongDeleteConfirm}
+        onClose={() => setInfoSongDeleteConfirm(false)}
+      >
+        <DialogTitle>{t('deleteSong')}</DialogTitle>
+        <DialogContent>{t('confirmDeleteSongs', { count: 1 })}</DialogContent>
+        <DialogActions>
+          <Button onClick={() => setInfoSongDeleteConfirm(false)}>
+            {t('cancel')}
+          </Button>
+          <Button
+            color="error"
+            variant="contained"
+            onClick={() => {
+              if (infoSong) removeSong(infoSong.id);
+              setInfoSongDeleteConfirm(false);
+              setInfoSong(null);
+            }}
+          >
+            {t('deleteSong')}
+          </Button>
+        </DialogActions>
+      </Dialog>
+
+      {/* Add to Set dialog */}
+      <Dialog open={addToSetOpen} onClose={() => setAddToSetOpen(false)}>
+        <DialogTitle>{t('addToSet')}</DialogTitle>
+        <DialogContent sx={{ pt: '8px !important', minWidth: 280 }}>
+          {sets.map((s) => (
+            <MenuItem
+              key={s.id}
+              onClick={() => {
+                addSongsToSet(s.id, [...selectedIds]);
+                exitSelectMode();
+                setAddToSetOpen(false);
+              }}
+            >
+              {s.title}
+            </MenuItem>
+          ))}
+        </DialogContent>
+        <DialogActions>
+          <Button onClick={() => setAddToSetOpen(false)}>{t('cancel')}</Button>
+        </DialogActions>
+      </Dialog>
+
+      {/* Create a Set dialog */}
+      <Dialog
+        open={createSetDialogOpen}
+        onClose={() => setCreateSetDialogOpen(false)}
+      >
+        <DialogTitle>{t('createSet')}</DialogTitle>
+        <DialogContent>
+          <TextField
+            autoFocus
+            label={t('setName')}
+            value={newSetTitle}
+            onChange={(e) => setNewSetTitle(e.target.value)}
+            onKeyDown={(e) => {
+              if (e.key === 'Enter' && newSetTitle.trim()) {
+                e.preventDefault();
+                createSet(newSetTitle.trim(), [...selectedIds]);
+                exitSelectMode();
+                setCreateSetDialogOpen(false);
+              }
+            }}
+            sx={{ mt: 1 }}
+            fullWidth
+          />
+        </DialogContent>
+        <DialogActions>
+          <Button onClick={() => setCreateSetDialogOpen(false)}>
+            {t('cancel')}
+          </Button>
+          <Button
+            variant="contained"
+            disabled={!newSetTitle.trim()}
+            onClick={() => {
+              createSet(newSetTitle.trim(), [...selectedIds]);
+              exitSelectMode();
+              setCreateSetDialogOpen(false);
+            }}
+          >
+            {t('create')}
           </Button>
         </DialogActions>
       </Dialog>

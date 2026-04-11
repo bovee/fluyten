@@ -1,10 +1,11 @@
 import {
   useCallback,
   useEffect,
+  useLayoutEffect,
   useMemo,
   useRef,
   useState,
-  useLayoutEffect,
+  useTransition,
 } from 'react';
 import { useTranslation } from 'react-i18next';
 import { useTheme } from '@mui/material/styles';
@@ -16,6 +17,8 @@ import Tooltip from '@mui/material/Tooltip';
 import SpeedDialAction from '@mui/material/SpeedDialAction';
 import Typography from '@mui/material/Typography';
 import ArrowBack from '@mui/icons-material/ArrowBack';
+import ArrowBackIos from '@mui/icons-material/ArrowBackIos';
+import ArrowForwardIos from '@mui/icons-material/ArrowForwardIos';
 import Close from '@mui/icons-material/Close';
 import Edit from '@mui/icons-material/Edit';
 import Mic from '@mui/icons-material/Mic';
@@ -524,7 +527,7 @@ function useAudioPlayback(
     doStartPlaying(startTimeOffset);
   };
 
-  const seekToNote = (origNoteIdx: number) => {
+  const seekToNoteImpl = (origNoteIdx: number) => {
     // Compute the time offset from the selected voice's expanded sequence.
     const selectedVoice = voicesRef.current[selectedVoiceIdxRef.current];
     if (!selectedVoice) return;
@@ -573,6 +576,14 @@ function useAudioPlayback(
     clearMusicPlayer();
     doStartPlaying(startTimeOffset);
   };
+  // Stable ref-backed wrapper so Score's React.memo comparison passes when
+  // onNoteClick is passed as a prop (avoids re-renders on every SongPage render).
+  const seekToNoteImplRef = useRef(seekToNoteImpl);
+  seekToNoteImplRef.current = seekToNoteImpl;
+  const seekToNote = useCallback(
+    (origNoteIdx: number) => seekToNoteImplRef.current(origNoteIdx),
+    []
+  );
 
   // eslint-disable-next-line react-hooks/exhaustive-deps
   useEffect(() => () => musicPlayerInterval.clear(), []); // cleanup on unmount only
@@ -621,11 +632,29 @@ function useMetronome(
   };
 }
 
+function initSongPageState(
+  abc: string,
+  clef: Music['clef'],
+  middle: string | undefined
+) {
+  try {
+    const voices = voicesFromAbc(abc, clef, middle);
+    return {
+      voices,
+      editOpen: voices.every((v) => v.music.notes.length === 0),
+    };
+  } catch {
+    return { voices: [], editOpen: true };
+  }
+}
+
 interface SongPageProps {
   song: Song;
   onBack: () => void;
   readOnly?: boolean;
   onAbcChange?: (abc: string) => void;
+  onPrevSong?: () => void;
+  onNextSong?: () => void;
 }
 
 export function SongPage({
@@ -633,6 +662,8 @@ export function SongPage({
   onBack,
   readOnly,
   onAbcChange,
+  onPrevSong,
+  onNextSong,
 }: SongPageProps) {
   const { t } = useTranslation();
   const theme = useTheme();
@@ -649,25 +680,16 @@ export function SongPage({
   let defaultMiddle = undefined;
   if (defaultClef === 'bass8va') defaultMiddle = 'd';
   if (defaultClef === 'bass') defaultMiddle = 'D';
-  const [editOpen, setEditOpen] = useState(() => {
-    try {
-      const v = voicesFromAbc(song.abc, defaultClef, defaultMiddle);
-      return v.every((voice) => voice.music.notes.length === 0);
-    } catch {
-      return true;
-    }
-  });
+  const [{ voices: initVoices, editOpen: initEditOpen }] = useState(() =>
+    initSongPageState(song.abc, defaultClef, defaultMiddle)
+  );
+  const [editOpen, setEditOpen] = useState(initEditOpen);
   const [drawerHeight, setDrawerHeight] = useState(0);
   const [speedDialOpen, setSpeedDialOpen] = useState(false);
   const [abcMusic, setAbcMusic] = useState(song.abc);
   const [currentParseError, setCurrentParseError] = useState('');
-  const [voices, setVoices] = useState(() => {
-    try {
-      return voicesFromAbc(song.abc, defaultClef, defaultMiddle);
-    } catch {
-      return [];
-    }
-  });
+  const [voices, setVoices] = useState(initVoices);
+  const [, startTransition] = useTransition();
   const [selectedVoiceIdx, setSelectedVoiceIdx] = useState(0);
   const music = useMemo(
     () =>
@@ -819,10 +841,11 @@ export function SongPage({
   useEffect(() => {
     try {
       const newVoices = voicesFromAbc(abcMusic, defaultClef, defaultMiddle);
-
-      setVoices(newVoices);
-      setSelectedVoiceIdx((idx) => Math.min(idx, newVoices.length - 1));
-      setCurrentParseError('');
+      startTransition(() => {
+        setVoices(newVoices);
+        setSelectedVoiceIdx((idx) => Math.min(idx, newVoices.length - 1));
+        setCurrentParseError('');
+      });
       if (!readOnly) onAbcChange?.(abcMusic);
     } catch (error) {
       setCurrentParseError((error as Error).message);
@@ -857,22 +880,53 @@ export function SongPage({
           <ArrowBack />
         </IconButton>
       </Tooltip>
-      <Typography
-        variant="h4"
-        component="h1"
-        sx={{
-          color: theme.palette.text.primary,
-          px: '52px',
-          mt: 0,
-          pt: 1,
-          fontSize: { xs: '1.4rem', sm: '2rem', md: '2.125rem' },
-          lineHeight: 1.2,
-          wordBreak: 'break-word',
-          fontFamily: "'EB Garamond', Georgia, serif",
+      <div
+        style={{
+          paddingLeft: '52px',
+          paddingRight: '52px',
+          paddingTop: '8px',
+          textAlign: onPrevSong || onNextSong ? 'center' : undefined,
         }}
       >
-        {song.title}
-      </Typography>
+        {onPrevSong && (
+          <Tooltip title={t('prevSong')}>
+            <IconButton
+              onClick={onPrevSong}
+              aria-label={t('prevSong')}
+              size="small"
+              sx={{ verticalAlign: 'middle', mb: '12px', mr: '4px' }}
+            >
+              <ArrowBackIos fontSize="small" />
+            </IconButton>
+          </Tooltip>
+        )}
+        <Typography
+          variant="h4"
+          component="h1"
+          sx={{
+            color: theme.palette.text.primary,
+            display: 'inline',
+            fontSize: { xs: '1.4rem', sm: '2rem', md: '2.125rem' },
+            lineHeight: 1.2,
+            wordBreak: 'break-word',
+            fontFamily: "'EB Garamond', Georgia, serif",
+          }}
+        >
+          {song.title}
+        </Typography>
+        {onNextSong && (
+          <Tooltip title={t('nextSong')}>
+            <IconButton
+              onClick={onNextSong}
+              aria-label={t('nextSong')}
+              size="small"
+              sx={{ verticalAlign: 'middle', mb: '12px', ml: '4px' }}
+            >
+              <ArrowForwardIos fontSize="small" />
+            </IconButton>
+          </Tooltip>
+        )}
+      </div>
       {music.composer && (
         <Typography
           variant="subtitle2"

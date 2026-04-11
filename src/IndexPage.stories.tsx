@@ -21,6 +21,7 @@ const meta = {
   },
   args: {
     onSelectSong: fn(),
+    onSelectSet: fn(),
   },
   decorators: [
     (Story) => {
@@ -58,11 +59,15 @@ export const WithSongs: Story = {
   decorators: [withSongs(manySongs)],
 };
 
-export const AddSongMenu: Story = {
+/** Opens the Edit Songs dropdown to reveal add/import/select options. */
+export const EditSongsMenu: Story = {
   play: async ({ canvasElement }) => {
     const canvas = within(canvasElement);
-    const addButton = await canvas.findByRole('button', { name: /add song/i });
-    await userEvent.click(addButton);
+    const editButton = await canvas.findByRole('button', {
+      name: /edit songs/i,
+    });
+    await userEvent.click(editButton);
+    await within(document.body).findByRole('menu');
   },
 };
 
@@ -74,21 +79,25 @@ const oneSong: UserSong[] = [
   },
 ];
 
-export const EditSongDialog: Story = {
+/** Opens the Edit Songs menu after entering select mode via Select Songs. */
+export const SelectModeMenu: Story = {
   decorators: [withSongs(oneSong)],
-  parameters: {
-    a11y: {
-      config: {
-        rules: [{ id: 'color-contrast', enabled: false }],
-      },
-    },
-  },
   play: async ({ canvasElement }) => {
     const canvas = within(canvasElement);
-    // Select the song first, then open the Edit Songs menu
+    // Enter select mode via Edit Songs → Select Songs
+    await userEvent.click(
+      await canvas.findByRole('button', { name: /edit songs/i })
+    );
+    await userEvent.click(
+      await within(document.body).findByRole('menuitem', {
+        name: /select songs/i,
+      })
+    );
+    // Select the song
     await userEvent.click(
       await canvas.findByRole('button', { name: /select song/i })
     );
+    // Reopen menu to show the delete/export options
     await userEvent.click(
       await canvas.findByRole('button', { name: /edit songs/i })
     );

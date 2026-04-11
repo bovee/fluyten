@@ -68,7 +68,7 @@ export const NavigateBack: Story = {
     );
 
     // IndexPage is restored
-    await canvas.findByRole('button', { name: /add song/i });
+    await canvas.findByRole('button', { name: /edit songs/i });
   },
 };
 

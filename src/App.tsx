@@ -1,10 +1,6 @@
 import { lazy, Suspense, useMemo, useState } from 'react';
 import { useTranslation } from 'react-i18next';
-import {
-  createTheme,
-  ThemeProvider,
-  type ThemeOptions,
-} from '@mui/material/styles';
+import { ThemeProvider } from '@mui/material/styles';
 import CssBaseline from '@mui/material/CssBaseline';
 import useMediaQuery from '@mui/material/useMediaQuery';
 import { CacheProvider } from '@emotion/react';
@@ -14,8 +10,10 @@ import { prefixer } from 'stylis';
 import { type Song } from './music';
 import { IndexPage } from './IndexPage';
 import { OnboardingDialog } from './OnboardingDialog';
-import { useStore } from './store';
+import { SetPage } from './SetPage';
+import { useStore, type UserSet } from './store';
 import { RTL_LANGUAGES } from './i18n';
+import { createAppTheme } from './theme';
 
 const SongPage = lazy(() =>
   import('./SongPage').then((m) => ({ default: m.SongPage }))
@@ -31,6 +29,8 @@ const cacheRtl = createCache({
 interface SelectedSong {
   song: Song;
   readOnly: boolean;
+  setSongs?: Song[];
+  setIndex?: number;
 }
 
 function App() {
@@ -40,35 +40,8 @@ function App() {
   const prefersDark = useMediaQuery('(prefers-color-scheme: dark)');
   const resolvedMode =
     colorMode === 'system' ? (prefersDark ? 'dark' : 'light') : colorMode;
-  const DARK_SHADOW =
-    '0px 3px 10px rgba(255,255,255,0.15), 0px 1px 4px rgba(255,255,255,0.1)';
   const theme = useMemo(
-    () =>
-      createTheme({
-        direction: isRtl ? 'rtl' : 'ltr',
-        typography: {
-          fontFamily: "'EB Garamond', Georgia, serif",
-        },
-        palette: {
-          mode: resolvedMode,
-          primary: { main: resolvedMode === 'dark' ? '#6a8a9e' : '#4a6272' },
-          ...(resolvedMode === 'dark' && {
-            text: { primary: '#d8d5d0' },
-          }),
-        },
-        ...(resolvedMode === 'dark' && {
-          shadows: Array.from({ length: 25 }, (_, i) =>
-            i === 0 ? 'none' : DARK_SHADOW
-          ) as ThemeOptions['shadows'],
-        }),
-        components: {
-          MuiAccordion: {
-            defaultProps: {
-              slots: { heading: 'h2' },
-            },
-          },
-        },
-      }),
+    () => createAppTheme(resolvedMode, isRtl),
     [resolvedMode, isRtl]
   );
 
@@ -76,25 +49,78 @@ function App() {
   const setOnboarded = useStore((state) => state.setOnboarded);
 
   const [selected, setSelected] = useState<SelectedSong | null>(null);
+  const [selectedSet, setSelectedSet] = useState<UserSet | null>(null);
+  const sets = useStore((state) => state.sets);
+  const storeSongs = useStore((state) => state.songs);
   const updateSongAbc = useStore((state) => state.updateSongAbc);
 
+  // Keep selectedSet in sync with store (e.g. after reorder)
+  const liveSet = selectedSet
+    ? (sets.find((s) => s.id === selectedSet.id) ?? null)
+    : null;
+
   if (selected) {
-    const { song, readOnly } = selected;
+    const { song, readOnly, setSongs, setIndex } = selected;
     const onAbcChange = readOnly
       ? undefined
       : (abc: string) => updateSongAbc(song.id, abc);
+    const hasStepping = setSongs !== undefined && setIndex !== undefined;
+    const onPrevSong =
+      hasStepping && setIndex > 0
+        ? () =>
+            setSelected({
+              song: setSongs[setIndex - 1],
+              readOnly,
+              setSongs,
+              setIndex: setIndex - 1,
+            })
+        : undefined;
+    const onNextSong =
+      hasStepping && setIndex < setSongs.length - 1
+        ? () =>
+            setSelected({
+              song: setSongs[setIndex + 1],
+              readOnly,
+              setSongs,
+              setIndex: setIndex + 1,
+            })
+        : undefined;
     return (
       <CacheProvider value={isRtl ? cacheRtl : cacheLtr}>
         <ThemeProvider theme={theme}>
           <CssBaseline />
           <Suspense fallback={null}>
             <SongPage
+              key={song.id}
               song={song}
               onBack={() => setSelected(null)}
               readOnly={readOnly}
               onAbcChange={onAbcChange}
+              onPrevSong={onPrevSong}
+              onNextSong={onNextSong}
             />
           </Suspense>
+        </ThemeProvider>
+      </CacheProvider>
+    );
+  }
+
+  if (liveSet) {
+    return (
+      <CacheProvider value={isRtl ? cacheRtl : cacheLtr}>
+        <ThemeProvider theme={theme}>
+          <CssBaseline />
+          <SetPage
+            set={liveSet}
+            onBack={() => setSelectedSet(null)}
+            onSelectSong={(song, readOnly) => {
+              const setSongs = liveSet.songIds
+                .map((id) => storeSongs.find((s) => s.id === id))
+                .filter((s): s is NonNullable<typeof s> => s !== undefined);
+              const setIndex = setSongs.findIndex((s) => s.id === song.id);
+              setSelected({ song, readOnly, setSongs, setIndex });
+            }}
+          />
         </ThemeProvider>
       </CacheProvider>
     );
@@ -107,6 +133,7 @@ function App() {
         <OnboardingDialog open={!onboarded} onComplete={setOnboarded} />
         <IndexPage
           onSelectSong={(song, readOnly) => setSelected({ song, readOnly })}
+          onSelectSet={setSelectedSet}
         />
       </ThemeProvider>
     </CacheProvider>

@@ -1157,6 +1157,7 @@ export function voicesFromAbc(
     {
       name: string;
       clef?: 'treble' | 'bass' | 'alto' | 'treble8va' | 'bass8va';
+      middle?: string;
     }
   >();
   for (const line of lines) {
@@ -1168,12 +1169,14 @@ export function voicesFromAbc(
     if (voiceDefs.has(id)) continue;
     const nameMatch = rest.match(/(?:name|nm)="([^"]+)"|(?:name|nm)=(\S+)/i);
     const clefMatch = rest.match(/clef=([\w+]+)/i);
+    const middleMatch = rest.match(/\bmiddle=([A-Ga-g][,'']*)/);
     const name = nameMatch ? (nameMatch[1] ?? nameMatch[2]) : id;
     let clef: 'treble' | 'bass' | 'alto' | 'treble8va' | 'bass8va' | undefined;
     if (clefMatch) {
       clef = parseClefName(clefMatch[1]);
     }
-    voiceDefs.set(id, { name, clef });
+    const middle = middleMatch ? middleMatch[1] : undefined;
+    voiceDefs.set(id, { name, clef, middle });
   }
 
   const firstVoiceId = voiceDefs.keys().next().value as string;
@@ -1194,6 +1197,9 @@ export function voicesFromAbc(
         if (idMatch && voiceDefs.has(idMatch[1])) {
           currentVoiceId = idMatch[1];
         }
+      } else if (line.startsWith('w:') || line.startsWith('W:')) {
+        // Lyrics lines belong to the current voice, not the global header
+        voiceSegments.get(currentVoiceId)?.push(line);
       } else {
         globalHeaderLines.push(line);
       }
@@ -1222,12 +1228,16 @@ export function voicesFromAbc(
 
   // Build Music for each voice
   const result: VoiceInfo[] = [];
-  for (const [id, { name, clef }] of voiceDefs) {
+  for (const [id, { name, clef, middle }] of voiceDefs) {
     const segments = voiceSegments.get(id) ?? [];
     if (segments.length === 0) continue;
-    const voiceAbc = [...globalHeaderLines, segments.join(' ')].join('\n');
+    const voiceAbc = [...globalHeaderLines, segments.join('\n')].join('\n');
     try {
-      const music = fromAbc(voiceAbc, clef ?? defaultClef, defaultMiddle);
+      const music = fromAbc(
+        voiceAbc,
+        clef ?? defaultClef,
+        middle ?? defaultMiddle
+      );
       if (clef) music.clef = clef;
       result.push({ id, name, music });
     } catch {
@@ -1380,7 +1390,13 @@ function parseLyricTokens(text: string): LyricToken[] {
     if (!word) continue;
     if (word === '*') {
       tokens.push({ type: 'skip' });
-    } else if (word === '|') {
+    } else if (
+      word === '|' ||
+      word === '||' ||
+      word === '|:' ||
+      word === ':|' ||
+      word === '::'
+    ) {
       tokens.push({ type: 'bar' });
     } else {
       // Handles _, __, time__, hel-lo, \-, of~the~day, and combinations.
@@ -1434,14 +1450,19 @@ function assignLyricsToNotes(
       noteIdx++;
       skipNonLyricNotes();
     } else if (token.type === 'bar') {
-      // Advance noteIdx to the first note after the next bar line
-      for (const bar of music.bars) {
-        if (bar.afterNoteNum !== undefined && bar.afterNoteNum >= noteIdx) {
-          noteIdx = bar.afterNoteNum + 1;
-          skipNonLyricNotes();
-          break;
-        }
+      // Find the barline that ends the bar containing the last assigned note.
+      // Per the ABC spec: if there are fewer syllables than notes in the bar,
+      // advance to the next bar; if syllables already filled the bar, ignore |.
+      const lastAssigned = noteIdx - 1;
+      const barline = music.bars.find(
+        (bar) =>
+          bar.afterNoteNum !== undefined && bar.afterNoteNum >= lastAssigned
+      );
+      if (barline !== undefined && noteIdx <= barline.afterNoteNum!) {
+        noteIdx = barline.afterNoteNum! + 1;
+        skipNonLyricNotes();
       }
+      // else: already past this barline — | is ignored per spec
     }
   }
 }

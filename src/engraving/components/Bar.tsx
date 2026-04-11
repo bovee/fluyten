@@ -1,3 +1,4 @@
+import { memo } from 'react';
 import { type BarLayout, type PreambleBarLayout } from '../layout/types';
 import { staffPositionToY } from '../layout/pitchLayout';
 import { Glyph } from '../glyphs/Glyph';
@@ -22,11 +23,14 @@ type Clef = 'treble' | 'treble8va' | 'bass' | 'bass8va' | 'alto';
 interface BarProps {
   bar: BarLayout;
   staffTopY: number;
-  clef: Clef;
   /** Per-note fill color override. Index = musicNoteIndex. */
   noteFills?: Map<number, string>;
   /** Set of note indices that are wrong (renders red X). */
   wrongNotes?: ReadonlySet<number>;
+  /** If the playback cursor is on a note in this bar, its musicNoteIndex. */
+  cursorNoteIdx?: number;
+  /** Color to use for the cursor note. */
+  cursorColor?: string;
   onNoteClick?: (noteIdx: number, x: number, y: number) => void;
 }
 
@@ -169,11 +173,13 @@ function beamedNoteSet(bar: BarLayout): Set<number> {
   return beamed;
 }
 
-export function Bar({
+export const Bar = memo(function Bar({
   bar,
   staffTopY,
   noteFills,
   wrongNotes,
+  cursorNoteIdx,
+  cursorColor,
   onNoteClick,
 }: BarProps) {
   const beamed = beamedNoteSet(bar);
@@ -222,7 +228,10 @@ export function Bar({
 
       {/* Notes, grace notes, beams */}
       {bar.notes.map((note, i) => {
-        const fill = noteFills?.get(note.musicNoteIndex) ?? 'currentColor';
+        const fill =
+          note.musicNoteIndex === cursorNoteIdx && cursorColor !== undefined
+            ? cursorColor
+            : (noteFills?.get(note.musicNoteIndex) ?? 'currentColor');
         return (
           <g key={note.musicNoteIndex}>
             {note.graceNotes.map((gn) => (
@@ -250,4 +259,4 @@ export function Bar({
       ))}
     </g>
   );
-}
+});
