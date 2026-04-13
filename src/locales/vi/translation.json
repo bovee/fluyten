@@ -146,12 +146,14 @@
   "reorderSong": "Sắp xếp lại (phím mũi tên)",
   "emptySet": "Không có bài hát nào trong bộ sưu tập này",
   "back": "Quay lại",
-  "renameSet": "Đổi tên bộ sưu tập",
-  "rename": "Đổi tên",
+  "deleteSet": "Xóa bộ",
+  "confirmDeleteSet": "Xóa bộ này? Các bài hát sẽ không bị xóa.",
   "prevSong": "Bài hát trước",
   "nextSong": "Bài hát tiếp theo",
   "removeFromSet": "Xóa khỏi bộ sưu tập",
   "selectSongs": "Chọn bài hát",
   "unselectSongs": "Bỏ chọn bài hát",
-  "addToSet": "Thêm vào bộ sưu tập"
+  "addToSet": "Thêm vào bộ sưu tập",
+  "editSet": "Chỉnh sửa bộ",
+  "save": "Lưu"
 }

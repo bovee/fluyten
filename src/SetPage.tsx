@@ -37,8 +37,10 @@ export function SetPage({ set, onBack, onSelectSong }: SetPageProps) {
   const songs = useStore((state) => state.songs);
   const reorderSet = useStore((state) => state.reorderSet);
   const renameSet = useStore((state) => state.renameSet);
-  const [renameOpen, setRenameOpen] = useState(false);
-  const [renameValue, setRenameValue] = useState('');
+  const deleteSet = useStore((state) => state.deleteSet);
+  const [editOpen, setEditOpen] = useState(false);
+  const [editValue, setEditValue] = useState('');
+  const [deleteConfirmOpen, setDeleteConfirmOpen] = useState(false);
 
   // Resolve songs in set order, filtering out any deleted songs
   const setSongs = set.songIds
@@ -130,13 +132,13 @@ export function SetPage({ set, onBack, onSelectSong }: SetPageProps) {
         subtitle={
           <>
             {set.title}
-            <Tooltip title={t('renameSet')}>
+            <Tooltip title={t('editSet')}>
               <IconButton
                 size="small"
-                aria-label={t('renameSet')}
+                aria-label={t('editSet')}
                 onClick={() => {
-                  setRenameValue(set.title);
-                  setRenameOpen(true);
+                  setEditValue(set.title);
+                  setEditOpen(true);
                 }}
                 sx={{ color: 'text.disabled' }}
               >
@@ -231,19 +233,19 @@ export function SetPage({ set, onBack, onSelectSong }: SetPageProps) {
         </Typography>
       )}
 
-      <Dialog open={renameOpen} onClose={() => setRenameOpen(false)}>
-        <DialogTitle>{t('renameSet')}</DialogTitle>
+      <Dialog open={editOpen} onClose={() => setEditOpen(false)}>
+        <DialogTitle>{t('editSet')}</DialogTitle>
         <DialogContent>
           <TextField
             autoFocus
             label={t('setName')}
-            value={renameValue}
-            onChange={(e) => setRenameValue(e.target.value)}
+            value={editValue}
+            onChange={(e) => setEditValue(e.target.value)}
             onKeyDown={(e) => {
-              if (e.key === 'Enter' && renameValue.trim()) {
+              if (e.key === 'Enter' && editValue.trim()) {
                 e.preventDefault();
-                renameSet(set.id, renameValue.trim());
-                setRenameOpen(false);
+                renameSet(set.id, editValue.trim());
+                setEditOpen(false);
               }
             }}
             sx={{ mt: 1 }}
@@ -251,16 +253,49 @@ export function SetPage({ set, onBack, onSelectSong }: SetPageProps) {
           />
         </DialogContent>
         <DialogActions>
-          <Button onClick={() => setRenameOpen(false)}>{t('cancel')}</Button>
           <Button
-            variant="contained"
-            disabled={!renameValue.trim()}
+            color="error"
             onClick={() => {
-              renameSet(set.id, renameValue.trim());
-              setRenameOpen(false);
+              setEditOpen(false);
+              setDeleteConfirmOpen(true);
             }}
           >
-            {t('rename')}
+            {t('deleteSet')}
+          </Button>
+          <Box sx={{ flex: 1 }} />
+          <Button onClick={() => setEditOpen(false)}>{t('cancel')}</Button>
+          <Button
+            variant="contained"
+            disabled={!editValue.trim()}
+            onClick={() => {
+              renameSet(set.id, editValue.trim());
+              setEditOpen(false);
+            }}
+          >
+            {t('save')}
+          </Button>
+        </DialogActions>
+      </Dialog>
+
+      <Dialog
+        open={deleteConfirmOpen}
+        onClose={() => setDeleteConfirmOpen(false)}
+      >
+        <DialogTitle>{t('deleteSet')}</DialogTitle>
+        <DialogContent>{t('confirmDeleteSet')}</DialogContent>
+        <DialogActions>
+          <Button onClick={() => setDeleteConfirmOpen(false)}>
+            {t('cancel')}
+          </Button>
+          <Button
+            color="error"
+            variant="contained"
+            onClick={() => {
+              deleteSet(set.id);
+              onBack();
+            }}
+          >
+            {t('deleteSet')}
           </Button>
         </DialogActions>
       </Dialog>

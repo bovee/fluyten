@@ -38,7 +38,7 @@ import {
 } from './io/fileImport';
 import { getStarterBookUrl, isStarterBookUrl } from './instrument';
 import { type Song } from './music';
-import { useStore, type SortKey, type UserSet } from './store';
+import { useStore, type SortKey, type UserSet, type UserSong } from './store';
 
 interface IndexPageProps {
   onSelectSong: (song: Song, readOnly: boolean) => void;
@@ -131,6 +131,21 @@ export function IndexPage({ onSelectSong, onSelectSet }: IndexPageProps) {
     return base;
   })();
 
+  // Shared handler: add parsed songs and auto-create a set when there are multiple.
+  // Pass setTitle to enable set creation; omit it to skip (e.g. starter book).
+  const handleImportParsed = useCallback(
+    (songs: UserSong[], setTitle?: string) => {
+      addSongs(songs);
+      if (songs.length > 1 && setTitle) {
+        createSet(
+          setTitle,
+          songs.map((s) => s.id)
+        );
+      }
+    },
+    [addSongs, createSet]
+  );
+
   useEffect(() => {
     const onDragOver = (e: DragEvent) => {
       e.preventDefault();
@@ -146,7 +161,7 @@ export function IndexPage({ onSelectSong, onSelectSet }: IndexPageProps) {
       if (!file || !/\.(abc|txt|musicxml|xml|mxl)$/i.test(file.name)) return;
       try {
         const parsed = await parseSongsFromFile(file);
-        addSongs(parsed);
+        handleImportParsed(parsed, file.name.replace(/\.[^.]+$/, ''));
       } catch (err) {
         alert(`Failed to import file: ${(err as Error).message}`);
       }
@@ -159,7 +174,7 @@ export function IndexPage({ onSelectSong, onSelectSet }: IndexPageProps) {
       window.removeEventListener('dragleave', onDragLeave);
       window.removeEventListener('drop', onDrop);
     };
-  }, [addSongs]);
+  }, [handleImportParsed]);
 
   const handleLongPressStart = useCallback((songId: string) => {
     const timer = setTimeout(() => {
@@ -217,7 +232,7 @@ export function IndexPage({ onSelectSong, onSelectSet }: IndexPageProps) {
     e.target.value = '';
     try {
       const parsed = await parseSongsFromFile(file);
-      addSongs(parsed);
+      handleImportParsed(parsed, file.name.replace(/\.[^.]+$/, ''));
     } catch (err) {
       alert(`Failed to import file: ${(err as Error).message}`);
     }
@@ -248,7 +263,13 @@ export function IndexPage({ onSelectSong, onSelectSet }: IndexPageProps) {
             };
           })
         : parsed;
-      addSongs(toAdd);
+      const urlSetTitle = isStarter
+        ? undefined
+        : (
+            new URL(current.value).pathname.split('/').pop()?.split('?')[0] ??
+            'Imported'
+          ).replace(/\.[^.]+$/, '');
+      handleImportParsed(toAdd, urlSetTitle);
       setImportUrl(null);
     } catch (err) {
       if (err instanceof HttpError) {
@@ -761,18 +782,14 @@ export function IndexPage({ onSelectSong, onSelectSet }: IndexPageProps) {
                 </TableCell>
                 <TableCell sx={{ border: 0 }}>{infoSong?.title}</TableCell>
               </TableRow>
-              {(() => {
-                return infoSong?.composer ? (
-                  <TableRow>
-                    <TableCell sx={{ fontWeight: 'bold', border: 0 }}>
-                      {t('composer')}
-                    </TableCell>
-                    <TableCell sx={{ border: 0 }}>
-                      {infoSong.composer}
-                    </TableCell>
-                  </TableRow>
-                ) : null;
-              })()}
+              {infoSong?.composer && (
+                <TableRow>
+                  <TableCell sx={{ fontWeight: 'bold', border: 0 }}>
+                    {t('composer')}
+                  </TableCell>
+                  <TableCell sx={{ border: 0 }}>{infoSong.composer}</TableCell>
+                </TableRow>
+              )}
               {infoSong?.beats != null && (
                 <TableRow>
                   <TableCell sx={{ fontWeight: 'bold', border: 0 }}>

@@ -146,12 +146,14 @@
   "reorderSong": "પુનઃ ક્રમ ગોઠવો (ઍરો કી)",
   "emptySet": "આ સેટમાં કોઈ ગીત નથી",
   "back": "પાછળ",
-  "renameSet": "સેટ નામ બદલો",
-  "rename": "નામ બદલો",
+  "deleteSet": "સેટ કાઢી નાખો",
+  "confirmDeleteSet": "આ સેટ કાઢી નાખવો? ગીતો કાઢી નાખવામાં આવશે નહીં.",
   "prevSong": "પહેલાનું ગીત",
   "nextSong": "આગળનું ગીત",
   "removeFromSet": "સેટમાંથી દૂર કરો",
   "selectSongs": "ગીત પસંદ કરો",
   "unselectSongs": "પસંદગી રદ કરો",
-  "addToSet": "સેટમાં ઉમેરો"
+  "addToSet": "સેટમાં ઉમેરો",
+  "editSet": "સેટ સંપાદિત કરો",
+  "save": "સાચવો"
 }

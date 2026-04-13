@@ -146,12 +146,14 @@
   "reorderSong": "ਕ੍ਰਮ ਬਦਲੋ (ਤੀਰ ਕੁੰਜੀਆਂ)",
   "emptySet": "ਇਸ ਸੈੱਟ ਵਿੱਚ ਕੋਈ ਗਾਣਾ ਨਹੀਂ ਹੈ",
   "back": "ਵਾਪਸ",
-  "renameSet": "ਸੈੱਟ ਦਾ ਨਾਮ ਬਦਲੋ",
-  "rename": "ਨਾਮ ਬਦਲੋ",
+  "deleteSet": "ਸੈੱਟ ਮਿਟਾਓ",
+  "confirmDeleteSet": "ਇਸ ਸੈੱਟ ਨੂੰ ਮਿਟਾਓ? ਗੀਤ ਮਿਟਾਏ ਨਹੀਂ ਜਾਣਗੇ।",
   "prevSong": "ਪਿਛਲਾ ਗਾਣਾ",
   "nextSong": "ਅਗਲਾ ਗਾਣਾ",
   "removeFromSet": "ਸੈੱਟ ਤੋਂ ਹਟਾਓ",
   "selectSongs": "ਗਾਣੇ ਚੁਣੋ",
   "unselectSongs": "ਚੋਣ ਰੱਦ ਕਰੋ",
-  "addToSet": "ਸੈੱਟ ਵਿੱਚ ਜੋੜੋ"
+  "addToSet": "ਸੈੱਟ ਵਿੱਚ ਜੋੜੋ",
+  "editSet": "ਸੈੱਟ ਸੰਪਾਦਿਤ ਕਰੋ",
+  "save": "ਸੁਰੱਖਿਅਤ ਕਰੋ"
 }

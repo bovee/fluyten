@@ -146,12 +146,14 @@
   "reorderSong": "Riordina (tasti freccia)",
   "emptySet": "Nessun brano in questa raccolta",
   "back": "Indietro",
-  "renameSet": "Rinomina raccolta",
-  "rename": "Rinomina",
+  "deleteSet": "Elimina set",
+  "confirmDeleteSet": "Eliminare questo set? I brani non verranno eliminati.",
   "prevSong": "Brano precedente",
   "nextSong": "Brano successivo",
   "removeFromSet": "Rimuovi dalla raccolta",
   "selectSongs": "Seleziona brani",
   "unselectSongs": "Deseleziona brani",
-  "addToSet": "Aggiungi alla raccolta"
+  "addToSet": "Aggiungi alla raccolta",
+  "editSet": "Modifica set",
+  "save": "Salva"
 }

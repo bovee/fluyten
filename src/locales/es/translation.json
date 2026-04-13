@@ -146,12 +146,14 @@
   "reorderSong": "Reordenar (teclas de flecha)",
   "emptySet": "No hay canciones en este conjunto",
   "back": "Atrás",
-  "renameSet": "Renombrar conjunto",
-  "rename": "Renombrar",
+  "deleteSet": "Eliminar conjunto",
+  "confirmDeleteSet": "¿Eliminar este conjunto? Las canciones no se eliminarán.",
   "prevSong": "Canción anterior",
   "nextSong": "Canción siguiente",
   "removeFromSet": "Quitar del conjunto",
   "selectSongs": "Seleccionar canciones",
   "unselectSongs": "Deseleccionar canciones",
-  "addToSet": "Añadir al conjunto"
+  "addToSet": "Añadir al conjunto",
+  "editSet": "Editar conjunto",
+  "save": "Guardar"
 }

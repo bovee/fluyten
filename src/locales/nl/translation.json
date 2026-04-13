@@ -146,12 +146,14 @@
   "reorderSong": "Opnieuw ordenen (pijltjestoetsen)",
   "emptySet": "Geen stukken in deze set",
   "back": "Terug",
-  "renameSet": "Set hernoemen",
-  "rename": "Hernoemen",
+  "deleteSet": "Set verwijderen",
+  "confirmDeleteSet": "Dit set verwijderen? De nummers worden niet verwijderd.",
   "prevSong": "Vorig stuk",
   "nextSong": "Volgend stuk",
   "removeFromSet": "Verwijderen uit set",
   "selectSongs": "Stukken selecteren",
   "unselectSongs": "Selectie opheffen",
-  "addToSet": "Toevoegen aan set"
+  "addToSet": "Toevoegen aan set",
+  "editSet": "Set bewerken",
+  "save": "Opslaan"
 }

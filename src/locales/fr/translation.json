@@ -146,12 +146,14 @@
   "reorderSong": "Réorganiser (touches fléchées)",
   "emptySet": "Aucune pièce dans cet ensemble",
   "back": "Retour",
-  "renameSet": "Renommer l'ensemble",
-  "rename": "Renommer",
+  "deleteSet": "Supprimer le lot",
+  "confirmDeleteSet": "Supprimer ce lot ? Les chansons ne seront pas supprimées.",
   "prevSong": "Pièce précédente",
   "nextSong": "Pièce suivante",
   "removeFromSet": "Retirer de l'ensemble",
   "selectSongs": "Sélectionner des pièces",
   "unselectSongs": "Désélectionner des pièces",
-  "addToSet": "Ajouter à l'ensemble"
+  "addToSet": "Ajouter à l'ensemble",
+  "editSet": "Modifier le lot",
+  "save": "Enregistrer"
 }

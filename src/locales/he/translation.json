@@ -146,12 +146,14 @@
   "reorderSong": "סדר מחדש (מקשי חצים)",
   "emptySet": "אין שירים במערכת זו",
   "back": "חזור",
-  "renameSet": "שנה שם מערכת",
-  "rename": "שנה שם",
+  "deleteSet": "מחק סט",
+  "confirmDeleteSet": "למחוק את הסט הזה? השירים לא יימחקו.",
   "prevSong": "שיר קודם",
   "nextSong": "שיר הבא",
   "removeFromSet": "הסר מהמערכת",
   "selectSongs": "בחר שירים",
   "unselectSongs": "בטל בחירה",
-  "addToSet": "הוסף למערכת"
+  "addToSet": "הוסף למערכת",
+  "editSet": "ערוך סט",
+  "save": "שמור"
 }

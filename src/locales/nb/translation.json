@@ -146,12 +146,14 @@
   "reorderSong": "Reorganiser (piltaster)",
   "emptySet": "Ingen sanger i dette settet",
   "back": "Tilbake",
-  "renameSet": "Gi settet nytt navn",
-  "rename": "Gi nytt navn",
+  "deleteSet": "Slett sett",
+  "confirmDeleteSet": "Slett dette settet? Sangene vil ikke bli slettet.",
   "prevSong": "Forrige sang",
   "nextSong": "Neste sang",
   "removeFromSet": "Fjern fra sett",
   "selectSongs": "Velg sanger",
   "unselectSongs": "Fjern valg",
-  "addToSet": "Legg til i sett"
+  "addToSet": "Legg til i sett",
+  "editSet": "Rediger sett",
+  "save": "Lagre"
 }

@@ -146,12 +146,14 @@
   "reorderSong": "ترتیب بدلیں (تیر کیز)",
   "emptySet": "اس سیٹ میں کوئی گانا نہیں",
   "back": "واپس",
-  "renameSet": "سیٹ کا نام بدلیں",
-  "rename": "نام بدلیں",
+  "deleteSet": "سیٹ حذف کریں",
+  "confirmDeleteSet": "یہ سیٹ حذف کریں؟ گانے حذف نہیں ہوں گے۔",
   "prevSong": "پچھلا گانا",
   "nextSong": "اگلا گانا",
   "removeFromSet": "سیٹ سے ہٹائیں",
   "selectSongs": "گانے منتخب کریں",
   "unselectSongs": "انتخاب ہٹائیں",
-  "addToSet": "سیٹ میں شامل کریں"
+  "addToSet": "سیٹ میں شامل کریں",
+  "editSet": "سیٹ ترمیم کریں",
+  "save": "محفوظ کریں"
 }

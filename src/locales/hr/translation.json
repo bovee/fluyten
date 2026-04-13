@@ -146,12 +146,14 @@
   "reorderSong": "Rasporedi (tipke sa strelicama)",
   "emptySet": "Nema skladbi u ovom skupu",
   "back": "Natrag",
-  "renameSet": "Preimenuj skup",
-  "rename": "Preimenuj",
+  "deleteSet": "Izbriši skup",
+  "confirmDeleteSet": "Izbrisati ovaj skup? Pjesme neće biti izbrisane.",
   "prevSong": "Prethodna skladba",
   "nextSong": "Sljedeća skladba",
   "removeFromSet": "Ukloni iz skupa",
   "selectSongs": "Odaberi skladbe",
   "unselectSongs": "Poništi odabir",
-  "addToSet": "Dodaj u skup"
+  "addToSet": "Dodaj u skup",
+  "editSet": "Uredi skup",
+  "save": "Spremi"
 }

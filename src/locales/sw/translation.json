@@ -146,12 +146,14 @@
   "reorderSong": "Panga upya (vitufe vya mishale)",
   "emptySet": "Hakuna nyimbo katika mkusanyiko huu",
   "back": "Rudi",
-  "renameSet": "Badilisha jina la mkusanyiko",
-  "rename": "Badilisha jina",
+  "deleteSet": "Futa seti",
+  "confirmDeleteSet": "Futa seti hii? Nyimbo hazitafutwa.",
   "prevSong": "Wimbo uliotangulia",
   "nextSong": "Wimbo unaofuata",
   "removeFromSet": "Ondoa kutoka mkusanyiko",
   "selectSongs": "Chagua nyimbo",
   "unselectSongs": "Futa uchaguzi",
-  "addToSet": "Ongeza kwenye mkusanyiko"
+  "addToSet": "Ongeza kwenye mkusanyiko",
+  "editSet": "Hariri seti",
+  "save": "Hifadhi"
 }

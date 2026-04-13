@@ -146,12 +146,14 @@
   "reorderSong": "Ordna om (piltangenter)",
   "emptySet": "Inga stycken i detta set",
   "back": "Tillbaka",
-  "renameSet": "Byt namn på set",
-  "rename": "Byt namn",
+  "deleteSet": "Ta bort set",
+  "confirmDeleteSet": "Ta bort detta set? Låtarna tas inte bort.",
   "prevSong": "Föregående stycke",
   "nextSong": "Nästa stycke",
   "removeFromSet": "Ta bort från set",
   "selectSongs": "Välj stycken",
   "unselectSongs": "Avmarkera stycken",
-  "addToSet": "Lägg till i set"
+  "addToSet": "Lägg till i set",
+  "editSet": "Redigera set",
+  "save": "Spara"
 }

@@ -146,12 +146,14 @@
   "reorderSong": "重新排列（方向键）",
   "emptySet": "此曲集中没有歌曲",
   "back": "返回",
-  "renameSet": "重命名曲集",
-  "rename": "重命名",
+  "deleteSet": "删除合集",
+  "confirmDeleteSet": "删除此合集？歌曲不会被删除。",
   "prevSong": "上一首歌曲",
   "nextSong": "下一首歌曲",
   "removeFromSet": "从曲集移除",
   "selectSongs": "选择歌曲",
   "unselectSongs": "取消选择",
-  "addToSet": "添加到曲集"
+  "addToSet": "添加到曲集",
+  "editSet": "编辑合集",
+  "save": "保存"
 }

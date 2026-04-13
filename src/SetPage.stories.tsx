@@ -89,19 +89,19 @@ export const RemoveSong: Story = {
   },
 };
 
-/** Opening the rename dialog and renaming the set. */
+/** Opening the edit dialog and saving a new set name. */
 export const RenameSet: Story = {
   play: async ({ canvasElement }) => {
     const canvas = within(canvasElement);
     await userEvent.click(
-      await canvas.findByRole('button', { name: /rename set/i })
+      await canvas.findByRole('button', { name: /edit set/i })
     );
     const dialog = await within(document.body).findByRole('dialog');
     const input = within(dialog).getByRole('textbox');
     await userEvent.clear(input);
     await userEvent.type(input, 'Recital Songs');
     await userEvent.click(
-      within(dialog).getByRole('button', { name: /rename/i })
+      within(dialog).getByRole('button', { name: /^save$/i })
     );
     // Dialog closed, set title updated in store
     expect(useStore.getState().sets[0].title).toBe('Recital Songs');

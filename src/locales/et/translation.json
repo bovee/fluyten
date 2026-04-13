@@ -146,12 +146,14 @@
   "reorderSong": "Muuda järjekorda (nooleklahvid)",
   "emptySet": "Selles kogus pole laule",
   "back": "Tagasi",
-  "renameSet": "Nimeta kogu ümber",
-  "rename": "Nimeta ümber",
+  "deleteSet": "Kustuta komplekt",
+  "confirmDeleteSet": "Kustutada see komplekt? Laulud ei kustutata.",
   "prevSong": "Eelmine laul",
   "nextSong": "Järgmine laul",
   "removeFromSet": "Eemalda kogust",
   "selectSongs": "Vali laulud",
   "unselectSongs": "Tühista valik",
-  "addToSet": "Lisa kogusse"
+  "addToSet": "Lisa kogusse",
+  "editSet": "Muuda komplekti",
+  "save": "Salvesta"
 }

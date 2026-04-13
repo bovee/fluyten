@@ -146,12 +146,14 @@
   "reorderSong": "Reordonează (tastele săgeți)",
   "emptySet": "Nu există piese în acest set",
   "back": "Înapoi",
-  "renameSet": "Redenumire set",
-  "rename": "Redenumire",
+  "deleteSet": "Șterge setul",
+  "confirmDeleteSet": "Ștergeți acest set? Melodiile nu vor fi șterse.",
   "prevSong": "Piesa anterioară",
   "nextSong": "Piesa următoare",
   "removeFromSet": "Eliminare din set",
   "selectSongs": "Selectează piese",
   "unselectSongs": "Deselectează piese",
-  "addToSet": "Adaugă în set"
+  "addToSet": "Adaugă în set",
+  "editSet": "Editează setul",
+  "save": "Salvează"
 }

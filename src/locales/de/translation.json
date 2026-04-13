@@ -146,12 +146,14 @@
   "reorderSong": "Neu anordnen (Pfeiltasten)",
   "emptySet": "Keine Stücke in diesem Set",
   "back": "Zurück",
-  "renameSet": "Set umbenennen",
-  "rename": "Umbenennen",
+  "deleteSet": "Set löschen",
+  "confirmDeleteSet": "Dieses Set löschen? Die Lieder werden nicht gelöscht.",
   "prevSong": "Vorheriges Stück",
   "nextSong": "Nächstes Stück",
   "removeFromSet": "Aus Set entfernen",
   "selectSongs": "Stücke auswählen",
   "unselectSongs": "Auswahl aufheben",
-  "addToSet": "Zu Set hinzufügen"
+  "addToSet": "Zu Set hinzufügen",
+  "editSet": "Set bearbeiten",
+  "save": "Speichern"
 }

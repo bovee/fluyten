@@ -146,12 +146,14 @@
   "reorderSong": "Järjestä uudelleen (nuolinäppäimet)",
   "emptySet": "Tässä kokoelmassa ei ole kappaleita",
   "back": "Takaisin",
-  "renameSet": "Nimeä kokoelma uudelleen",
-  "rename": "Nimeä uudelleen",
+  "deleteSet": "Poista setti",
+  "confirmDeleteSet": "Poistetaanko tämä setti? Kappaleita ei poisteta.",
   "prevSong": "Edellinen kappale",
   "nextSong": "Seuraava kappale",
   "removeFromSet": "Poista kokoelmasta",
   "selectSongs": "Valitse kappaleet",
   "unselectSongs": "Poista valinta",
-  "addToSet": "Lisää kokoelmaan"
+  "addToSet": "Lisää kokoelmaan",
+  "editSet": "Muokkaa settiä",
+  "save": "Tallenna"
 }

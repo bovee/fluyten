@@ -146,12 +146,14 @@
   "reorderSong": "Urut maneh (tombol panah)",
   "emptySet": "Ora ana lagu ing set iki",
   "back": "Bali",
-  "renameSet": "Jenengke maneh set",
-  "rename": "Jenengke maneh",
+  "deleteSet": "Busak set",
+  "confirmDeleteSet": "Busak set iki? Lagu-lagune ora bakal dibusak.",
   "prevSong": "Lagu sadurunge",
   "nextSong": "Lagu sabanjure",
   "removeFromSet": "Busak saka set",
   "selectSongs": "Pilih lagu",
   "unselectSongs": "Batalake pilihan",
-  "addToSet": "Tambahake menyang set"
+  "addToSet": "Tambahake menyang set",
+  "editSet": "Sunting set",
+  "save": "Simpen"
 }

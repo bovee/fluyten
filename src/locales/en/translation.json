@@ -146,12 +146,14 @@
   "reorderSong": "Reorder (arrow keys)",
   "emptySet": "No songs in this set",
   "back": "Back",
-  "renameSet": "Rename Set",
-  "rename": "Rename",
+  "deleteSet": "Delete Set",
+  "confirmDeleteSet": "Delete this set? The songs will not be deleted.",
   "prevSong": "Previous Song",
   "nextSong": "Next Song",
   "removeFromSet": "Remove from Set",
   "selectSongs": "Select Songs",
   "unselectSongs": "Unselect Songs",
-  "addToSet": "Add to Set"
+  "addToSet": "Add to Set",
+  "editSet": "Edit Set",
+  "save": "Save"
 }

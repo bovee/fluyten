@@ -146,12 +146,14 @@
   "reorderSong": "Muling ayusin (mga arrow key)",
   "emptySet": "Walang kanta sa set na ito",
   "back": "Bumalik",
-  "renameSet": "Palitan ang pangalan ng set",
-  "rename": "Palitan ang pangalan",
+  "deleteSet": "Burahin ang set",
+  "confirmDeleteSet": "Burahin ang set na ito? Hindi mabubura ang mga kanta.",
   "prevSong": "Nakaraang kanta",
   "nextSong": "Susunod na kanta",
   "removeFromSet": "Alisin mula sa set",
   "selectSongs": "Pumili ng mga kanta",
   "unselectSongs": "Alisin ang pagpili",
-  "addToSet": "Idagdag sa set"
+  "addToSet": "Idagdag sa set",
+  "editSet": "I-edit ang set",
+  "save": "I-save"
 }

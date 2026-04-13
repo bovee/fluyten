@@ -146,12 +146,14 @@
   "reorderSong": "เรียงลำดับใหม่ (แป้นลูกศร)",
   "emptySet": "ไม่มีเพลงในชุดนี้",
   "back": "กลับ",
-  "renameSet": "เปลี่ยนชื่อชุด",
-  "rename": "เปลี่ยนชื่อ",
+  "deleteSet": "ลบชุด",
+  "confirmDeleteSet": "ลบชุดนี้หรือไม่? เพลงจะไม่ถูกลบ",
   "prevSong": "เพลงก่อนหน้า",
   "nextSong": "เพลงถัดไป",
   "removeFromSet": "นำออกจากชุด",
   "selectSongs": "เลือกเพลง",
   "unselectSongs": "ยกเลิกการเลือก",
-  "addToSet": "เพิ่มในชุด"
+  "addToSet": "เพิ่มในชุด",
+  "editSet": "แก้ไขชุด",
+  "save": "บันทึก"
 }

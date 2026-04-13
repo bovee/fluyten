@@ -146,12 +146,14 @@
   "reorderSong": "Urutkan ulang (tombol panah)",
   "emptySet": "Tidak ada lagu dalam set ini",
   "back": "Kembali",
-  "renameSet": "Ganti nama set",
-  "rename": "Ganti nama",
+  "deleteSet": "Hapus set",
+  "confirmDeleteSet": "Hapus set ini? Lagu-lagu tidak akan dihapus.",
   "prevSong": "Lagu sebelumnya",
   "nextSong": "Lagu berikutnya",
   "removeFromSet": "Hapus dari set",
   "selectSongs": "Pilih lagu",
   "unselectSongs": "Batalkan pilihan",
-  "addToSet": "Tambahkan ke set"
+  "addToSet": "Tambahkan ke set",
+  "editSet": "Edit set",
+  "save": "Simpan"
 }

@@ -146,12 +146,14 @@
   "reorderSong": "क्रम बदलें (तीर कुंजियाँ)",
   "emptySet": "इस सेट में कोई गाना नहीं है",
   "back": "वापस",
-  "renameSet": "सेट का नाम बदलें",
-  "rename": "नाम बदलें",
+  "deleteSet": "सेट हटाएं",
+  "confirmDeleteSet": "इस सेट को हटाएं? गाने नहीं हटाए जाएंगे।",
   "prevSong": "पिछला गाना",
   "nextSong": "अगला गाना",
   "removeFromSet": "सेट से हटाएं",
   "selectSongs": "गाने चुनें",
   "unselectSongs": "चयन रद्द करें",
-  "addToSet": "सेट में जोड़ें"
+  "addToSet": "सेट में जोड़ें",
+  "editSet": "सेट संपादित करें",
+  "save": "सहेजें"
 }

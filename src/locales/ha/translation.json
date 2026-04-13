@@ -146,12 +146,14 @@
   "reorderSong": "Sake tsarawa (maɓallan kibiya)",
   "emptySet": "Babu waƙoƙi a wannan jerin",
   "back": "Baya",
-  "renameSet": "Canza sunan jerin waƙoƙi",
-  "rename": "Canza suna",
+  "deleteSet": "Goge saitin",
+  "confirmDeleteSet": "Goge wannan saitin? Waƙoƙin ba za a gogewa ba.",
   "prevSong": "Waƙa ta baya",
   "nextSong": "Waƙa ta gaba",
   "removeFromSet": "Cire daga jerin",
   "selectSongs": "Zaɓi waƙoƙi",
   "unselectSongs": "Soke zaɓi",
-  "addToSet": "Ƙara zuwa jerin"
+  "addToSet": "Ƙara zuwa jerin",
+  "editSet": "Gyara saitin",
+  "save": "Ajiye"
 }

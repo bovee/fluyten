@@ -146,12 +146,14 @@
   "reorderSong": "Zmień kolejność (klawisze strzałek)",
   "emptySet": "Brak utworów w tym zestawie",
   "back": "Wstecz",
-  "renameSet": "Zmień nazwę zestawu",
-  "rename": "Zmień nazwę",
+  "deleteSet": "Usuń zestaw",
+  "confirmDeleteSet": "Usunąć ten zestaw? Piosenki nie zostaną usunięte.",
   "prevSong": "Poprzedni utwór",
   "nextSong": "Następny utwór",
   "removeFromSet": "Usuń z zestawu",
   "selectSongs": "Wybierz utwory",
   "unselectSongs": "Usuń zaznaczenie",
-  "addToSet": "Dodaj do zestawu"
+  "addToSet": "Dodaj do zestawu",
+  "editSet": "Edytuj zestaw",
+  "save": "Zapisz"
 }

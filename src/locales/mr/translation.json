@@ -146,12 +146,14 @@
   "reorderSong": "क्रम बदला (बाण कळा)",
   "emptySet": "या संचात कोणतेही गाणे नाही",
   "back": "मागे",
-  "renameSet": "संचाचे नाव बदला",
-  "rename": "नाव बदला",
+  "deleteSet": "संच हटवा",
+  "confirmDeleteSet": "हा संच हटवायचा? गाणी हटवली जाणार नाहीत.",
   "prevSong": "मागील गाणे",
   "nextSong": "पुढील गाणे",
   "removeFromSet": "संचातून काढा",
   "selectSongs": "गाणी निवडा",
   "unselectSongs": "निवड रद्द करा",
-  "addToSet": "संचात जोडा"
+  "addToSet": "संचात जोडा",
+  "editSet": "संच संपादित करा",
+  "save": "जतन करा"
 }

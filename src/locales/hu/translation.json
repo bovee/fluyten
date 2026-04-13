@@ -146,12 +146,14 @@
   "reorderSong": "Átrendezés (nyílbillentyűk)",
   "emptySet": "Nincs dal ebben a készletben",
   "back": "Vissza",
-  "renameSet": "Készlet átnevezése",
-  "rename": "Átnevezés",
+  "deleteSet": "Készlet törlése",
+  "confirmDeleteSet": "Törli ezt a készletet? A dalok nem törlődnek.",
   "prevSong": "Előző dal",
   "nextSong": "Következő dal",
   "removeFromSet": "Eltávolítás a készletből",
   "selectSongs": "Dalok kijelölése",
   "unselectSongs": "Kijelölés megszüntetése",
-  "addToSet": "Hozzáadás a készlethez"
+  "addToSet": "Hozzáadás a készlethez",
+  "editSet": "Készlet szerkesztése",
+  "save": "Mentés"
 }

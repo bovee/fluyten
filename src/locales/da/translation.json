@@ -146,12 +146,14 @@
   "reorderSong": "Omarranger (piletaster)",
   "emptySet": "Ingen sange i dette sæt",
   "back": "Tilbage",
-  "renameSet": "Omdøb sæt",
-  "rename": "Omdøb",
+  "deleteSet": "Slet sæt",
+  "confirmDeleteSet": "Slet dette sæt? Sangene slettes ikke.",
   "prevSong": "Forrige sang",
   "nextSong": "Næste sang",
   "removeFromSet": "Fjern fra sæt",
   "selectSongs": "Vælg sange",
   "unselectSongs": "Fravælg sange",
-  "addToSet": "Tilføj til sæt"
+  "addToSet": "Tilføj til sæt",
+  "editSet": "Rediger sæt",
+  "save": "Gem"
 }

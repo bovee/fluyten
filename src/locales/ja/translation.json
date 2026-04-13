@@ -146,12 +146,14 @@
   "reorderSong": "並び替え（矢印キー）",
   "emptySet": "このセットに曲はありません",
   "back": "戻る",
-  "renameSet": "セット名を変更",
-  "rename": "名前を変更",
+  "deleteSet": "セットを削除",
+  "confirmDeleteSet": "このセットを削除しますか？曲は削除されません。",
   "prevSong": "前の曲",
   "nextSong": "次の曲",
   "removeFromSet": "セットから削除",
   "selectSongs": "曲を選択",
   "unselectSongs": "選択を解除",
-  "addToSet": "セットに追加"
+  "addToSet": "セットに追加",
+  "editSet": "セットを編集",
+  "save": "保存"
 }

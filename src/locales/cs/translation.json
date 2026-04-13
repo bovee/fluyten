@@ -146,12 +146,14 @@
   "reorderSong": "Přeuspořádat (šipky)",
   "emptySet": "V této sadě nejsou žádné skladby",
   "back": "Zpět",
-  "renameSet": "Přejmenovat sadu",
-  "rename": "Přejmenovat",
+  "deleteSet": "Smazat sadu",
+  "confirmDeleteSet": "Smazat tuto sadu? Písně nebudou smazány.",
   "prevSong": "Předchozí skladba",
   "nextSong": "Další skladba",
   "removeFromSet": "Odebrat ze sady",
   "selectSongs": "Vybrat skladby",
   "unselectSongs": "Zrušit výběr",
-  "addToSet": "Přidat do sady"
+  "addToSet": "Přidat do sady",
+  "editSet": "Upravit sadu",
+  "save": "Uložit"
 }
