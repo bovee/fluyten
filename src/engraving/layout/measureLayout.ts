@@ -10,6 +10,7 @@ import {
 
 const ACCIDENTAL_EXTRA_SPACING = 15; // extra px reserved when a note has an accidental
 import {
+  noteLetter,
   pitchToStaffPosition,
   restStaffPosition,
   staffPositionToY,
@@ -63,6 +64,10 @@ export function layoutBar(
 
   const layouts: NoteLayout[] = [];
   let accTicks = 0;
+  // Tracks accidentals written earlier in this bar (letter → ±1/±2/0).
+  // Overrides the key signature when spelling chromatic pitches that carry
+  // no explicit accidental (e.g. the second note in _dd/ should be D, not C).
+  const barAccidentalMap: Record<string, number> = {};
 
   for (const group of mainGroups) {
     const note = notes[group.mainIndex];
@@ -91,6 +96,29 @@ export function layoutBar(
       }
     }
 
+    // Update barAccidentalMap for any explicitly-accidentalled pitches on this note.
+    // This lets subsequent notes in the bar inherit the correct spelling.
+    for (let i = 0; i < note.pitches.length; i++) {
+      const acc = note.accidentals[i];
+      if (acc) {
+        const letter = noteLetter(note.pitches[i], acc, displayPitchOffset);
+        const value =
+          acc === '##'
+            ? 2
+            : acc === '#'
+              ? 1
+              : acc === 'bb'
+                ? -2
+                : acc === 'b'
+                  ? -1
+                  : 0;
+        barAccidentalMap[letter] = value;
+      }
+    }
+
+    // Merge: bar accidentals take precedence over the key signature for spelling.
+    const spellingMap = { ...keyAccidentalMap, ...barAccidentalMap };
+
     const isRest = note.pitches.length === 0;
 
     // Compute staff positions and Y coordinates.
@@ -108,7 +136,7 @@ export function layoutBar(
           note.accidentals[i],
           clef,
           displayPitchOffset,
-          keyAccidentalMap
+          spellingMap
         )
       );
       // Reference Y: top notehead (stem down) or bottom notehead (stem up).

@@ -52,8 +52,8 @@ const FIFTHS_TO_MINOR_KEY: Record<number, string> = {
 
 // MusicXML note type → internal Duration
 const TYPE_TO_DURATION: Record<string, Duration> = {
-  '64th': Duration.SIXTEENTH, // approximate
-  '32nd': Duration.SIXTEENTH, // approximate
+  '64th': Duration.THIRTY_SECOND, // approximate
+  '32nd': Duration.THIRTY_SECOND,
   '16th': Duration.SIXTEENTH,
   eighth: Duration.EIGHTH,
   quarter: Duration.QUARTER,

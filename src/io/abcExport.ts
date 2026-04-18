@@ -29,6 +29,7 @@ const DURATION_TO_L: Partial<Record<Duration, string>> = {
   [Duration.QUARTER]: '1/4',
   [Duration.EIGHTH]: '1/8',
   [Duration.SIXTEENTH]: '1/16',
+  [Duration.THIRTY_SECOND]: '1/32',
 };
 import { PITCH_CONSTANTS } from '../constants';
 import { voicesFromAbc } from './abcImport';
@@ -157,6 +158,7 @@ const NOTE_SIXTEENTHS: Partial<Record<Duration, number>> = {
   [Duration.QUARTER]: 8,
   [Duration.EIGHTH]: 4,
   [Duration.SIXTEENTH]: 2,
+  [Duration.THIRTY_SECOND]: 1,
 };
 
 function gcd(a: number, b: number): number {

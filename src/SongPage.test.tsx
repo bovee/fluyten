@@ -141,13 +141,17 @@ describe('SongPage', () => {
     expect(editor).toBeInTheDocument();
   });
 
-  it('calls onAbcChange when ABC is edited', () => {
+  it('calls onAbcChange when ABC is edited and the editor is closed', () => {
     const onAbcChange = vi.fn();
     render(<SongPage {...defaultProps({ onAbcChange })} />);
-    fireEvent.click(screen.getByRole('button', { name: /edit music/i }));
+    const editBtn = screen.getByRole('button', { name: /edit music/i });
+    fireEvent.click(editBtn);
     const editor = screen.getByRole('textbox');
     const newAbc = 'X:1\nT:Updated\nM:C\nL:1/4\nK:G\nG A B c |';
     fireEvent.change(editor, { target: { value: newAbc } });
+    // Persistence is deferred until the editor drawer closes.
+    expect(onAbcChange).not.toHaveBeenCalled();
+    fireEvent.click(editBtn);
     expect(onAbcChange).toHaveBeenCalledWith(newAbc);
   });
 

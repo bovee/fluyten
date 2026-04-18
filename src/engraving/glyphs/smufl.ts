@@ -30,11 +30,14 @@ export const SMUFL: Record<string, string> = {
   restQuarter: '\uE4E5',
   rest8th: '\uE4E6',
   rest16th: '\uE4E7',
+  rest32nd: '\uE4E8',
   // Flags
   flag8thUp: '\uE240',
   flag8thDown: '\uE241',
   flag16thUp: '\uE242',
   flag16thDown: '\uE243',
+  flag32ndUp: '\uE244',
+  flag32ndDown: '\uE245',
   // Accidentals
   accidentalDoubleSharp: '\uE263',
   accidentalSharp: '\uE262',

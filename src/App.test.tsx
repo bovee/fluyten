@@ -125,6 +125,8 @@ describe('App', () => {
       const editor = screen.getByRole('textbox');
       const newAbc = 'X:1\nT:Changed\nM:C\nL:1/4\nK:C\nG A B c |';
       fireEvent.change(editor, { target: { value: newAbc } });
+      // Persistence is deferred until the editor drawer closes.
+      fireEvent.click(editBtn);
       expect(useStore.getState().songs[0].abc).toBe(newAbc);
     });
 
@@ -140,6 +142,7 @@ describe('App', () => {
       fireEvent.change(editor, {
         target: { value: 'X:1\nT:New Title\nM:C\nL:1/4\nK:C\nG' },
       });
+      fireEvent.click(editBtn);
       expect(useStore.getState().songs[0].title).toBe('New Title');
     });
 

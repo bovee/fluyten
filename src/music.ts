@@ -6,6 +6,7 @@ export const Duration = {
   QUARTER: 'q',
   EIGHTH: '8',
   SIXTEENTH: '16',
+  THIRTY_SECOND: '32',
   GRACE: 'grace',
   GRACE_SLASH: 'grace-slash',
 } as const;
@@ -272,6 +273,7 @@ export class Note {
       [Duration.QUARTER]: DURATION_TICKS.QUARTER,
       [Duration.EIGHTH]: DURATION_TICKS.EIGHTH,
       [Duration.SIXTEENTH]: DURATION_TICKS.SIXTEENTH,
+      [Duration.THIRTY_SECOND]: DURATION_TICKS.THIRTY_SECOND,
       [Duration.GRACE]: 0,
       [Duration.GRACE_SLASH]: 0,
     };
@@ -551,6 +553,8 @@ const TICKS_ORDERED: [number, Duration, number][] = [
   [DURATION_TICKS.EIGHTH, Duration.EIGHTH, 0],
   [DURATION_TICKS.SIXTEENTH_DOTTED, Duration.SIXTEENTH, 1],
   [DURATION_TICKS.SIXTEENTH, Duration.SIXTEENTH, 0],
+  [DURATION_TICKS.THIRTY_SECOND_DOTTED, Duration.THIRTY_SECOND, 1],
+  [DURATION_TICKS.THIRTY_SECOND, Duration.THIRTY_SECOND, 0],
 ];
 
 /** Maps a tick count to [Duration, DurationModifier] if it names a standard notated value, else null. */
@@ -565,7 +569,7 @@ export function ticksToDuration(ticks: number): [Duration, number] | null {
 function splitTicks(ticks: number): [Duration, number][] {
   const result: [Duration, number][] = [];
   let rem = ticks;
-  while (rem >= DURATION_TICKS.SIXTEENTH) {
+  while (rem >= DURATION_TICKS.THIRTY_SECOND) {
     let placed = false;
     for (const [t, dur, mod] of TICKS_ORDERED) {
       if (t <= rem) {

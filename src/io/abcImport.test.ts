@@ -291,6 +291,19 @@ describe('fromAbc', () => {
       expect(music.notes[0].duration).toBe(Duration.SIXTEENTH);
     });
 
+    it('should parse 32nd note from L:1/4 with /8 suffix', () => {
+      const abc = `T:Test\nM:4/4\nL:1/4\nK:C\nC/8`;
+      const music = fromAbc(abc);
+      expect(music.notes[0].duration).toBe(Duration.THIRTY_SECOND);
+      expect(music.notes[0].dots).toBe(0);
+    });
+
+    it('should parse 32nd note from L:1/32 default duration', () => {
+      const abc = `T:Test\nM:4/4\nL:1/32\nK:C\nC`;
+      const music = fromAbc(abc);
+      expect(music.notes[0].duration).toBe(Duration.THIRTY_SECOND);
+    });
+
     it('should parse dotted notes', () => {
       const abc = `T:Test\nM:4/4\nL:1/4\nK:C\nC3/2`;
       const music = fromAbc(abc);
@@ -933,6 +946,22 @@ describe('fromAbc', () => {
 
       expect(reimported.notes[0].duration).toBe(Duration.SIXTEENTH);
       expect(reimported.notes[0].dots).toBe(1);
+    });
+
+    it('32nd note round-trips through ABC export and re-import', () => {
+      const music = new Music();
+      music.signatures[0].keySignature = 'C';
+      music.signatures[0].beatsPerBar = 4;
+      music.signatures[0].beatValue = 4;
+      music.notes.push(new Note(69, Duration.THIRTY_SECOND, [], undefined, 0));
+      music.notes.push(new Note(69, Duration.QUARTER, [], undefined, 0));
+      music.bars.push({ afterNoteNum: 1, type: 'standard' });
+
+      const abc = toAbc(music);
+      const reimported = fromAbc(abc);
+
+      expect(reimported.notes[0].duration).toBe(Duration.THIRTY_SECOND);
+      expect(reimported.notes[0].dots).toBe(0);
     });
   });
 

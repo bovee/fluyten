@@ -523,11 +523,6 @@ function computeTuplets(
     const groupSize = i - tupletStart;
     const expectedGroupSize = currentTuplet?.groupSize ?? 0;
 
-    if (isTuplet && tupletStart === -1) {
-      tupletStart = i;
-      currentTuplet = noteTuplet;
-    }
-
     if (tupletStart !== -1) {
       const posA = notePosMap.get(tupletStart);
       const posB = notePosMap.get(i - 1);
@@ -546,48 +541,78 @@ function computeTuplets(
         groupSize === expectedGroupSize
       ) {
         if (groupSize > 0 && posA && posB && currentTuplet) {
-          const avgStemY = (posA.stemEndY + posB.stemEndY) / 2;
-          const bracketY = avgStemY - 8;
           const NOTEHEAD_HALF = 5;
           const num = currentTuplet.actual;
-          // Layout engine doesn't have time-sig context, so we always show just p.
           const writtenLabel = undefined as number | undefined;
 
+          let downCount = 0;
+          let upCount = 0;
+          for (let j = tupletStart; j < i; j++) {
+            const p = notePosMap.get(j);
+            if (p) {
+              if (p.stemDirection === 'down') downCount++;
+              else upCount++;
+            }
+          }
+          const direction: 'above' | 'below' =
+            downCount > upCount ? 'below' : 'above';
+          const BRACKET_OFFSET = 8;
+
           if (posA.lineIndex === posB.lineIndex) {
+            let bracketY: number;
+            if (direction === 'above') {
+              bracketY =
+                Math.min(posA.stemEndY, posB.stemEndY) - BRACKET_OFFSET;
+            } else {
+              bracketY =
+                Math.max(posA.stemEndY, posB.stemEndY) + BRACKET_OFFSET;
+            }
             result[posA.lineIndex].push({
               startX: posA.x - NOTEHEAD_HALF,
               endX: posB.x + NOTEHEAD_HALF,
               y: bracketY,
               num,
               written: writtenLabel,
+              direction,
               lineIndex: posA.lineIndex,
             });
           } else {
+            const bracketYA =
+              direction === 'above'
+                ? posA.stemEndY - BRACKET_OFFSET
+                : posA.stemEndY + BRACKET_OFFSET;
+            const bracketYB =
+              direction === 'above'
+                ? posB.stemEndY - BRACKET_OFFSET
+                : posB.stemEndY + BRACKET_OFFSET;
             result[posA.lineIndex].push({
               startX: posA.x - NOTEHEAD_HALF,
               endX: posA.x + 60,
-              y: posA.stemEndY - 8,
+              y: bracketYA,
               num,
               written: writtenLabel,
+              direction,
               lineIndex: posA.lineIndex,
             });
             result[posB.lineIndex].push({
               startX: lineFirstNoteAreaX.get(posB.lineIndex) ?? posB.x - 60,
               endX: posB.x + NOTEHEAD_HALF,
-              y: posB.stemEndY - 8,
+              y: bracketYB,
               num,
               written: writtenLabel,
+              direction,
               lineIndex: posB.lineIndex,
             });
           }
         }
-        tupletStart = isTuplet && !groupChanged ? i : isTuplet ? i : -1;
-        currentTuplet = isTuplet ? noteTuplet : undefined;
-        if (groupChanged && isTuplet) {
-          tupletStart = i;
-          currentTuplet = noteTuplet;
-        }
+        tupletStart = -1;
+        currentTuplet = undefined;
       }
+    }
+
+    if (isTuplet && tupletStart === -1) {
+      tupletStart = i;
+      currentTuplet = noteTuplet;
     }
   }
 

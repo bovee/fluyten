@@ -6,16 +6,19 @@ export const DURATION_TICKS = {
   QUARTER: 1024,
   EIGHTH: 512,
   SIXTEENTH: 256,
+  THIRTY_SECOND: 128,
   // Dotted notes (1.5x base duration)
   HALF_DOTTED: 3072,
   QUARTER_DOTTED: 1536,
   EIGHTH_DOTTED: 768,
   SIXTEENTH_DOTTED: 384,
+  THIRTY_SECOND_DOTTED: 192,
   // Triplet notes (2/3 of base duration)
   HALF_TRIPLET: 1365,
   QUARTER_TRIPLET: 683,
   EIGHTH_TRIPLET: 341,
   SIXTEENTH_TRIPLET: 171,
+  THIRTY_SECOND_TRIPLET: 85,
 } as const;
 
 // Note values to MIDI pitch offsets

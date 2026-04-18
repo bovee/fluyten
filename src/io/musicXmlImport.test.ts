@@ -293,13 +293,21 @@ describe('fromMusicXml', () => {
       ['quarter', Duration.QUARTER],
       ['eighth', Duration.EIGHTH],
       ['16th', Duration.SIXTEENTH],
+      ['32nd', Duration.THIRTY_SECOND],
     ])('parses %s note', (type, expectedDur) => {
-      const dur =
-        { whole: 16, half: 8, quarter: 4, eighth: 2, '16th': 1 }[type] ?? 4;
+      const dur: Record<string, number> = {
+        whole: 16,
+        half: 8,
+        quarter: 4,
+        eighth: 2,
+        '16th': 1,
+        '32nd': 1,
+      };
+      const d = dur[type] ?? 4;
       const xml = makeScore(
         measure(`<note>
         <pitch><step>C</step><octave>4</octave></pitch>
-        <duration>${dur}</duration>
+        <duration>${d}</duration>
         <type>${type}</type>
       </note>`)
       );

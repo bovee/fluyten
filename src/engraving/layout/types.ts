@@ -196,6 +196,7 @@ export interface TupletLayout {
   y: number; // Y of the bracket line
   num: number; // actual (p) — always shown
   written?: number; // shown only for non-standard ratios (e.g. "3:4")
+  direction: 'above' | 'below';
   lineIndex: number;
 }
 

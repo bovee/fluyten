@@ -99,11 +99,11 @@ const GLYPH_X_CENTER_OFFSET: Partial<Record<Decoration, number>> = {
   open: -5,
 };
 
-// Dynamics glyph map for individual letters
-const DYNAMIC_GLYPHS: Record<string, string> = {
-  p: 'dynamicPiano',
-  m: 'dynamicMezzo',
-  f: 'dynamicForte',
+// Maps each letter of a dynamic marking to its SMuFL Unicode character.
+const DYNAMIC_CHARS: Record<string, string> = {
+  p: '\uE520', // dynamicPiano
+  m: '\uE521', // dynamicMezzo
+  f: '\uE522', // dynamicForte
 };
 
 export function DecorationGroup({
@@ -128,20 +128,25 @@ export function DecorationGroup({
         // Dynamics: rendered below the staff in italic
         const dynText = DYNAMICS[dec];
         if (dynText !== undefined) {
-          // Build from individual glyph characters
-          let gx = x - (dynText.length * 5) / 2;
+          // Render all characters as one <text> element so the browser handles
+          // advance widths correctly — avoids overlap between m/f and p/f etc.
+          const chars = dynText
+            .split('')
+            .map((ch) => DYNAMIC_CHARS[ch] ?? '')
+            .join('');
           return (
-            <g key={i}>
-              {dynText.split('').map((ch, ci) => {
-                const glyphName = DYNAMIC_GLYPHS[ch];
-                if (!glyphName) return null;
-                const el = (
-                  <Glyph key={ci} name={glyphName} x={gx} y={belowStaffY} />
-                );
-                gx += 8;
-                return el;
-              })}
-            </g>
+            <text
+              key={i}
+              x={x}
+              y={belowStaffY}
+              textAnchor="middle"
+              fontFamily="Bravura, serif"
+              fontSize={4 * STAFF_SPACE}
+              fill="currentColor"
+              style={{ userSelect: 'none' }}
+            >
+              {chars}
+            </text>
           );
         }
 

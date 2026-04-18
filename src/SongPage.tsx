@@ -771,20 +771,17 @@ export function SongPage({
     correctCount: number;
     totalCount: number;
   } | null>(null);
-  const onPracticeFinish = useCallback(
-    (
-      results: ReadonlyMap<number, 'correct' | 'wrong'>,
-      correctCount: number,
-      totalCount: number
-    ) => {
-      if (totalCount > 0) {
-        const pct = Math.round((correctCount / totalCount) * 100);
-        useStore.getState().recordPracticeSession(song.id, pct);
-        setPracticeSummary({ noteResults: results, correctCount, totalCount });
-      }
-    },
-    [song.id]
-  );
+  const onPracticeFinish = (
+    results: ReadonlyMap<number, 'correct' | 'wrong'>,
+    correctCount: number,
+    totalCount: number
+  ) => {
+    if (totalCount > 0) {
+      const pct = Math.round((correctCount / totalCount) * 100);
+      useStore.getState().recordPracticeSession(song.id, pct);
+      setPracticeSummary({ noteResults: results, correctCount, totalCount });
+    }
+  };
 
   const {
     detectedPitch: pitchA,
@@ -846,12 +843,41 @@ export function SongPage({
         setSelectedVoiceIdx((idx) => Math.min(idx, newVoices.length - 1));
         setCurrentParseError('');
       });
-      if (!readOnly) onAbcChange?.(abcMusic);
     } catch (error) {
-      setCurrentParseError((error as Error).message);
+      startTransition(() => {
+        setCurrentParseError((error as Error).message);
+      });
     }
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [abcMusic, defaultClef, defaultMiddle]); // intentionally omits onAbcChange/readOnly — adding them would cause loops
+  }, [abcMusic, defaultClef, defaultMiddle]);
+
+  // Persist ABC edits to the store only when the user closes the editor
+  // drawer, navigates away, or the component unmounts — not on every keystroke.
+  // Store writes re-parse the ABC (for derived title/difficulty/etc.) and
+  // serialize the whole store to localStorage, so keeping them off the hot
+  // edit path avoids fan-pegging on long songs.
+  const onAbcChangeRef = useRef(onAbcChange);
+  useEffect(() => {
+    onAbcChangeRef.current = onAbcChange;
+  }, [onAbcChange]);
+  const abcMusicRef = useRef(abcMusic);
+  useEffect(() => {
+    abcMusicRef.current = abcMusic;
+  }, [abcMusic]);
+  const lastPersistedAbcRef = useRef(song.abc);
+  const flushAbc = useCallback(() => {
+    if (readOnly) return;
+    if (abcMusicRef.current === lastPersistedAbcRef.current) return;
+    lastPersistedAbcRef.current = abcMusicRef.current;
+    onAbcChangeRef.current?.(abcMusicRef.current);
+  }, [readOnly]);
+
+  const prevEditOpenRef = useRef(editOpen);
+  useEffect(() => {
+    if (prevEditOpenRef.current && !editOpen) flushAbc();
+    prevEditOpenRef.current = editOpen;
+  }, [editOpen, flushAbc]);
+
+  useEffect(() => () => flushAbc(), [flushAbc]);
 
   const detectedNoteName =
     detectedPitch !== null ? NOTE_NAMES[detectedPitch % 12] : null;
@@ -872,7 +898,10 @@ export function SongPage({
       />
       <Tooltip title={t('backToSongList')}>
         <IconButton
-          onClick={onBack}
+          onClick={() => {
+            flushAbc();
+            onBack();
+          }}
           aria-label={t('backToSongList')}
           style={{ position: 'fixed', top: 8, left: 8 }}
           sx={{ displayPrint: 'none' }}

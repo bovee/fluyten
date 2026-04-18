@@ -64,6 +64,7 @@ describe('toAbc', () => {
       [Duration.QUARTER, 1, 'C3'],
       [Duration.EIGHTH, 1, 'C3/2'],
       [Duration.SIXTEENTH, 1, 'C3/4'],
+      [Duration.THIRTY_SECOND, 0, 'C/4'],
     ])('encodes %s with %i dot(s)', (duration, dots, expected) => {
       const abc = singleNoteAbc(duration, dots);
       if (typeof expected === 'string') expect(abc).toContain(expected);

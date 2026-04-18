@@ -48,53 +48,51 @@ interface TupletBracketProps {
 const BRACKET_HEIGHT = 6;
 
 export function TupletBracket({ tuplet }: TupletBracketProps) {
-  const { startX, endX, y, num, written } = tuplet;
+  const { startX, endX, y, num, written, direction = 'above' } = tuplet;
   const midX = (startX + endX) / 2;
   const label = written !== undefined ? `${num}:${written}` : String(num);
-  // Wider gap when showing p:q
   const halfGap = written !== undefined ? 14 : 8;
+  const sign = direction === 'above' ? -1 : 1;
+  const armEnd = y + sign * BRACKET_HEIGHT;
+  const textY = direction === 'above' ? armEnd + 4 : armEnd - 2;
 
   return (
     <g>
-      {/* Left arm */}
       <line
         x1={startX}
         y1={y}
         x2={startX}
-        y2={y - BRACKET_HEIGHT}
+        y2={armEnd}
         stroke="currentColor"
         strokeWidth={1}
       />
-      {/* Horizontal line, broken in the middle for the label */}
       <line
         x1={startX}
-        y1={y - BRACKET_HEIGHT}
+        y1={armEnd}
         x2={midX - halfGap}
-        y2={y - BRACKET_HEIGHT}
+        y2={armEnd}
         stroke="currentColor"
         strokeWidth={1}
       />
       <line
         x1={midX + halfGap}
-        y1={y - BRACKET_HEIGHT}
+        y1={armEnd}
         x2={endX}
-        y2={y - BRACKET_HEIGHT}
+        y2={armEnd}
         stroke="currentColor"
         strokeWidth={1}
       />
-      {/* Right arm */}
       <line
         x1={endX}
         y1={y}
         x2={endX}
-        y2={y - BRACKET_HEIGHT}
+        y2={armEnd}
         stroke="currentColor"
         strokeWidth={1}
       />
-      {/* Number (or p:q label) */}
       <text
         x={midX}
-        y={y - BRACKET_HEIGHT + 4}
+        y={textY}
         textAnchor="middle"
         fontSize={10}
         fontFamily="serif"

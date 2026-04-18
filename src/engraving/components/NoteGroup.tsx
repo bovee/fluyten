@@ -42,6 +42,7 @@ function noteheadGlyph(duration: Duration): string | null {
     case Duration.QUARTER:
     case Duration.EIGHTH:
     case Duration.SIXTEENTH:
+    case Duration.THIRTY_SECOND:
       return 'noteheadBlack';
     default:
       return null;
@@ -60,6 +61,8 @@ function restGlyph(duration: Duration): string | null {
       return 'rest8th';
     case Duration.SIXTEENTH:
       return 'rest16th';
+    case Duration.THIRTY_SECOND:
+      return 'rest32nd';
     default:
       return null;
   }
@@ -73,6 +76,8 @@ function flagGlyph(
     return direction === 'up' ? 'flag8thUp' : 'flag8thDown';
   if (duration === Duration.SIXTEENTH)
     return direction === 'up' ? 'flag16thUp' : 'flag16thDown';
+  if (duration === Duration.THIRTY_SECOND)
+    return direction === 'up' ? 'flag32ndUp' : 'flag32ndDown';
   return null;
 }
 
@@ -202,7 +207,9 @@ export function NoteGroup({
   const hasFlag =
     hasStem &&
     !isBeamed &&
-    (duration === Duration.EIGHTH || duration === Duration.SIXTEENTH);
+    (duration === Duration.EIGHTH ||
+      duration === Duration.SIXTEENTH ||
+      duration === Duration.THIRTY_SECOND);
   const isDotted = dots > 0;
   const stemX = stemDirection === 'up' ? x + 5 : x - 5;
 

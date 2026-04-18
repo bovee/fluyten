@@ -101,10 +101,14 @@ export function EditorDrawer({
 
   const debouncedOnAbcChange = useMemo(
     () =>
-      debounce((value: string) => {
-        lastSentRef.current = value;
-        onAbcChangeRef.current(value);
-      }, 300),
+      debounce(
+        (value: string) => {
+          lastSentRef.current = value;
+          onAbcChangeRef.current(value);
+        },
+        150,
+        500
+      ),
     [] // stable — reads latest callback via ref at call-time
   );
 

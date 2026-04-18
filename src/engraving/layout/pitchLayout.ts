@@ -10,6 +10,37 @@ const SEMITONE_TO_STEP: number[] = [0, 0, 1, 1, 2, 3, 3, 4, 4, 5, 5, 6];
 // Diatonic letter names indexed by step (0–6).
 const STEP_TO_LETTER = ['C', 'D', 'E', 'F', 'G', 'A', 'B'] as const;
 
+/**
+ * Returns the diatonic letter (C–B) for a note given its MIDI pitch and its
+ * *explicit* written accidental. Used by the layout engine to accumulate
+ * bar-accidental state so that later notes in the same bar without a written
+ * accidental are spelled correctly.
+ *
+ * e.g. pitch=61, accidental='b' → 'D'  (D-flat)
+ *      pitch=61, accidental='#' → 'C'  (C-sharp)
+ */
+export function noteLetter(
+  pitch: number,
+  accidental: Accidental,
+  displayPitchOffset = 0
+): string {
+  const accOff =
+    accidental === '##'
+      ? 2
+      : accidental === '#'
+        ? 1
+        : accidental === 'bb'
+          ? -2
+          : accidental === 'b'
+            ? -1
+            : 0;
+  const nat =
+    pitch + displayPitchOffset - PITCH_CONSTANTS.OCTAVE_OFFSET - accOff;
+  let sem = nat % 12;
+  if (sem < 0) sem += 12;
+  return STEP_TO_LETTER[SEMITONE_TO_STEP[sem]];
+}
+
 /** Clef name as stored in Music.clef. */
 export type Clef = 'treble' | 'treble8va' | 'bass' | 'bass8va' | 'alto';
 

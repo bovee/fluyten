@@ -200,12 +200,14 @@ const DURATION_SIXTEENTHS: Record<Duration, number> = {
   [Duration.QUARTER]: 8,
   [Duration.EIGHTH]: 4,
   [Duration.SIXTEENTH]: 2,
+  [Duration.THIRTY_SECOND]: 1,
   [Duration.GRACE]: 0,
   [Duration.GRACE_SLASH]: 0,
 };
 
 // Maps thirty-second count → [Duration, dots]
 const SIXTEENTHS_TO_DURATION = new Map<number, [Duration, number]>([
+  [1, [Duration.THIRTY_SECOND, 0]],
   [2, [Duration.SIXTEENTH, 0]],
   [3, [Duration.SIXTEENTH, 1]],
   [4, [Duration.EIGHTH, 0]],
@@ -237,10 +239,11 @@ function splitSixteenths(sixteenths: number): [Duration, number][] {
     [6, Duration.EIGHTH, 1],
     [2, Duration.SIXTEENTH, 0],
     [3, Duration.SIXTEENTH, 1],
+    [1, Duration.THIRTY_SECOND, 0],
   ];
   const result: [Duration, number][] = [];
   let rem = sixteenths;
-  while (rem >= 2) {
+  while (rem >= 1) {
     let placed = false;
     for (const [s, dur, mod] of ORDERED) {
       if (s <= rem) {
@@ -263,6 +266,7 @@ function parseLDuration(data: string): Duration {
     throw new Error(`L: value must have 1 as numerator in ABC: ${data}`);
   return (
     {
+      32: Duration.THIRTY_SECOND,
       16: Duration.SIXTEENTH,
       8: Duration.EIGHTH,
       4: Duration.QUARTER,
@@ -560,7 +564,12 @@ export function parseScore(
       const allBeamable = Array.from(
         { length: music.notes.length - beamStart },
         (_, i) => music.notes[beamStart + i].duration
-      ).every((d) => d === Duration.EIGHTH || d === Duration.SIXTEENTH);
+      ).every(
+        (d) =>
+          d === Duration.EIGHTH ||
+          d === Duration.SIXTEENTH ||
+          d === Duration.THIRTY_SECOND
+      );
       if (allBeamable) {
         music.beams.push([beamStart, music.notes.length - 1]);
       }
@@ -569,13 +578,16 @@ export function parseScore(
   }
 
   for (const token of tokens) {
-    // Any token other than a note, beam-join, or slur marker terminates the current beam group.
-    // Slur open/close are transparent to beaming so notes can be beamed across slur boundaries.
+    // Any token other than a note, beam-join, slur marker, or broken-rhythm operator
+    // terminates the current beam group.
+    // Slur open/close and broken_rhythm are transparent to beaming: notes can be beamed
+    // across slur boundaries and across `>` / `<` operators (spaces already emit beam_break).
     if (
       token.type !== 'note' &&
       token.type !== 'beam_join' &&
       token.type !== 'slur_open' &&
-      token.type !== 'slur_close'
+      token.type !== 'slur_close' &&
+      token.type !== 'broken_rhythm'
     )
       closeBeam();
 
