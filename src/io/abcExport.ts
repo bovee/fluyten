@@ -62,12 +62,27 @@ export function singlePitchToAbc(
   accidental: Accidental,
   keyAdjustment: { [n: string]: number }
 ): string {
+  // For microtonal accidentals the stored pitch is fractional (e.g. 60.5 for
+  // C half-sharp). Derive the integer base pitch by reversing the cent offset,
+  // then use that for octave and pitch-class arithmetic.
+  const microtonalOffset =
+    accidental === 'd#'
+      ? 0.5
+      : accidental === '3d#'
+        ? 1.5
+        : accidental === 'db'
+          ? -0.5
+          : accidental === '3db'
+            ? -1.5
+            : 0;
+  const basePitch = Math.round(midiPitch - microtonalOffset);
+
   const octave = Math.floor(
-    (midiPitch - PITCH_CONSTANTS.OCTAVE_OFFSET) /
+    (basePitch - PITCH_CONSTANTS.OCTAVE_OFFSET) /
       PITCH_CONSTANTS.SEMITONES_PER_OCTAVE
   );
   const pitchClass =
-    (midiPitch - PITCH_CONSTANTS.OCTAVE_OFFSET) %
+    (basePitch - PITCH_CONSTANTS.OCTAVE_OFFSET) %
     PITCH_CONSTANTS.SEMITONES_PER_OCTAVE;
 
   let accidentalPrefix = '';
@@ -92,6 +107,18 @@ export function singlePitchToAbc(
   } else if (accidental === 'n') {
     letter = PITCH_CLASS_TO_NOTE[pitchClass] ?? 'C';
     accidentalPrefix = '=';
+  } else if (accidental === 'd#') {
+    letter = PITCH_CLASS_TO_NOTE[pitchClass] ?? 'C';
+    accidentalPrefix = '^/';
+  } else if (accidental === '3d#') {
+    letter = PITCH_CLASS_TO_NOTE[pitchClass] ?? 'C';
+    accidentalPrefix = '^3/';
+  } else if (accidental === 'db') {
+    letter = PITCH_CLASS_TO_NOTE[pitchClass] ?? 'C';
+    accidentalPrefix = '_/';
+  } else if (accidental === '3db') {
+    letter = PITCH_CLASS_TO_NOTE[pitchClass] ?? 'C';
+    accidentalPrefix = '_3/';
   } else {
     const naturalLetter = PITCH_CLASS_TO_NOTE[pitchClass];
     if (naturalLetter !== undefined) {

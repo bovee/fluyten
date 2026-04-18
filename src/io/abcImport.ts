@@ -306,7 +306,7 @@ type ScoreToken =
 const NOTE_PATTERN_SRC = [
   '(?<text>(?:"[^"]*"\\s?)*)',
   '(?<decoration>(?:[.~HLMOPSTuv]|![A-Za-z0-9()<>+./]+!\\s?)*)',
-  '(?<accidental>[\\^=_]{0,2})',
+  '(?<accidental>[\\^_]3/2?|[\\^_]1/2|[\\^_]/|[\\^=_]{0,2})',
   "(?<note>[A-Ga-gZXzx][,']*)",
   '(?<duration>\\d*(?:\\/\\/?)?\\d*)',
 ].join('');
@@ -673,6 +673,8 @@ export function parseScore(
           else if (groups.accidental === '__') barAccidentals[n] = -2;
           else if (groups.accidental === '_') barAccidentals[n] = -1;
           else if (groups.accidental === '=') barAccidentals[n] = 0;
+          // Microtonal accidentals are not propagated within the bar;
+          // each note must carry its own explicit microtonal marking.
         }
 
         if (noteType === 'chord' && chordAccum) {

@@ -2,7 +2,7 @@ import { PITCH_CONSTANTS } from '../constants';
 
 function abcOctaveOf(pitch: number): number {
   return Math.floor(
-    (pitch - PITCH_CONSTANTS.OCTAVE_OFFSET) /
+    (Math.round(pitch) - PITCH_CONSTANTS.OCTAVE_OFFSET) /
       PITCH_CONSTANTS.SEMITONES_PER_OCTAVE
   );
 }

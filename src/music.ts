@@ -167,7 +167,17 @@ export type BarLineType =
   | 'end_repeat'
   | 'begin_end_repeat'
   | 'end';
-export type Accidental = '##' | '#' | 'b' | 'bb' | 'n' | undefined;
+export type Accidental =
+  | '##'
+  | '#'
+  | 'd#'
+  | '3d#'
+  | 'b'
+  | 'bb'
+  | 'db'
+  | '3db'
+  | 'n'
+  | undefined;
 export type Decoration =
   | 'accent'
   | 'breath'
@@ -313,6 +323,24 @@ export class Note {
     } else if (accidental === '_' && value !== -1) {
       value -= 1;
       cleanedAccidental = 'b' as Accidental;
+    } else if ((accidental === '^/' || accidental === '^1/2') && value !== -1) {
+      value += 0.5;
+      cleanedAccidental = 'd#';
+    } else if ((accidental === '_/' || accidental === '_1/2') && value !== -1) {
+      value -= 0.5;
+      cleanedAccidental = 'db';
+    } else if (
+      (accidental === '^3/' || accidental === '^3/2') &&
+      value !== -1
+    ) {
+      value += 1.5;
+      cleanedAccidental = '3d#';
+    } else if (
+      (accidental === '_3/' || accidental === '_3/2') &&
+      value !== -1
+    ) {
+      value -= 1.5;
+      cleanedAccidental = '3db';
     } else {
       // Bar accidentals apply only to the exact same note+octave string.
       // Key signature adjustments (uppercase letter keys) apply to all octaves.
@@ -461,6 +489,27 @@ export class Note {
     accidental: Accidental,
     useSharpSpelling: boolean
   ): string {
+    // Microtonal: reverse the fractional offset to find the base note letter,
+    // then append a quarter/three-quarter sharp or flat suffix.
+    if (accidental === 'd#' || accidental === '3d#') {
+      const offset = accidental === 'd#' ? 0.5 : 1.5;
+      const base = this.namePitch(
+        Math.round(pitch - offset),
+        undefined,
+        useSharpSpelling
+      );
+      return base + (accidental === 'd#' ? '¼♯' : '¾♯');
+    }
+    if (accidental === 'db' || accidental === '3db') {
+      const offset = accidental === 'db' ? 0.5 : 1.5;
+      const base = this.namePitch(
+        Math.round(pitch + offset),
+        undefined,
+        useSharpSpelling
+      );
+      return base + (accidental === 'db' ? '¼♭' : '¾♭');
+    }
+
     const pitchClass = pitch % PITCH_CONSTANTS.SEMITONES_PER_OCTAVE;
     const isBlackKey =
       pitchClass === 1 ||

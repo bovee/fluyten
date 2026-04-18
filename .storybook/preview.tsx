@@ -2,7 +2,7 @@ import type { Preview } from '@storybook/react-vite';
 import '../src/index.css';
 import { ThemeProvider, CssBaseline, createTheme } from '@mui/material';
 import { createAppTheme } from '../src/theme';
-import React, { useEffect } from 'react';
+import { useEffect } from 'react';
 import { setupAudioMocks } from '../src/test/audioMocks';
 import i18n, { RTL_LANGUAGES } from '../src/i18n';
 import { useStore } from '../src/store';

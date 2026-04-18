@@ -1,5 +1,10 @@
 import React from 'react';
-import { Duration, type Annotation, type Decoration } from '../../music';
+import {
+  Duration,
+  type Accidental,
+  type Annotation,
+  type Decoration,
+} from '../../music';
 import {
   staffPositionToY,
   staffPositionToY as spToY,
@@ -84,8 +89,12 @@ function flagGlyph(
 function accidentalGlyph(acc: string): string | null {
   if (acc === '##') return 'accidentalDoubleSharp';
   if (acc === '#') return 'accidentalSharp';
+  if (acc === 'd#') return 'accidentalQuarterToneSharp';
+  if (acc === '3d#') return 'accidentalThreeQuarterTonesSharp';
   if (acc === 'bb') return 'accidentalDoubleFlat';
   if (acc === 'b') return 'accidentalFlat';
+  if (acc === 'db') return 'accidentalQuarterToneFlat';
+  if (acc === '3db') return 'accidentalThreeQuarterTonesFlat';
   if (acc === 'n') return 'accidentalNatural';
   return null;
 }
@@ -180,8 +189,16 @@ function renderAnnotations(
   return <g>{elements}</g>;
 }
 
-const ACCIDENTAL_X_OFFSET = 15; // px to the left of notehead center per accidental
-const SHARP_EXTRA_OFFSET = 2; // sharps need 2px more clearance than flats/naturals
+// Base distance from notehead center to accidental anchor (left edge of glyph).
+// Each entry is added on top of this base so the right edge of every accidental
+// lands at the same position regardless of glyph width.
+const ACCIDENTAL_X_OFFSET = 15;
+const ACCIDENTAL_EXTRA: Partial<Record<NonNullable<Accidental>, number>> = {
+  '#': 2,
+  '##': 2,
+  '3d#': 7,
+  '3db': 9,
+};
 
 export function NoteGroup({
   note,
@@ -269,7 +286,7 @@ export function NoteGroup({
             x={
               x -
               ACCIDENTAL_X_OFFSET -
-              (acc === '#' || acc === '##' ? SHARP_EXTRA_OFFSET : 0) -
+              (acc ? (ACCIDENTAL_EXTRA[acc] ?? 0) : 0) -
               (staffPositions.length - 1 - i) * 8
             }
             y={ay}

@@ -347,6 +347,60 @@ describe('fromAbc', () => {
       expect(music.notes[2].pitches[0]).toBe(60); // carries natural
     });
 
+    it('parses quarter-tone sharp ^/ as half-sharp with fractional pitch', () => {
+      const music = fromAbc(`T:T\nM:4/4\nL:1/4\nK:C\n^/C`);
+      expect(music.notes[0].pitches[0]).toBe(60.5);
+      expect(music.notes[0].accidentals[0]).toBe('d#');
+    });
+
+    it('parses quarter-tone sharp ^1/2 identically to ^/', () => {
+      const music = fromAbc(`T:T\nM:4/4\nL:1/4\nK:C\n^1/2C`);
+      expect(music.notes[0].pitches[0]).toBe(60.5);
+      expect(music.notes[0].accidentals[0]).toBe('d#');
+    });
+
+    it('parses quarter-tone flat _/ as half-flat with fractional pitch', () => {
+      const music = fromAbc(`T:T\nM:4/4\nL:1/4\nK:C\n_/C`);
+      expect(music.notes[0].pitches[0]).toBe(59.5);
+      expect(music.notes[0].accidentals[0]).toBe('db');
+    });
+
+    it('parses quarter-tone flat _1/2 identically to _/', () => {
+      const music = fromAbc(`T:T\nM:4/4\nL:1/4\nK:C\n_1/2C`);
+      expect(music.notes[0].pitches[0]).toBe(59.5);
+      expect(music.notes[0].accidentals[0]).toBe('db');
+    });
+
+    it('parses three-quarter-tone sharp ^3/ with fractional pitch', () => {
+      const music = fromAbc(`T:T\nM:4/4\nL:1/4\nK:C\n^3/C`);
+      expect(music.notes[0].pitches[0]).toBe(61.5);
+      expect(music.notes[0].accidentals[0]).toBe('3d#');
+    });
+
+    it('parses three-quarter-tone sharp ^3/2 identically to ^3/', () => {
+      const music = fromAbc(`T:T\nM:4/4\nL:1/4\nK:C\n^3/2C`);
+      expect(music.notes[0].pitches[0]).toBe(61.5);
+      expect(music.notes[0].accidentals[0]).toBe('3d#');
+    });
+
+    it('parses three-quarter-tone flat _3/ with fractional pitch', () => {
+      const music = fromAbc(`T:T\nM:4/4\nL:1/4\nK:C\n_3/C`);
+      expect(music.notes[0].pitches[0]).toBe(58.5);
+      expect(music.notes[0].accidentals[0]).toBe('3db');
+    });
+
+    it('parses three-quarter-tone flat _3/2 identically to _3/', () => {
+      const music = fromAbc(`T:T\nM:4/4\nL:1/4\nK:C\n_3/2C`);
+      expect(music.notes[0].pitches[0]).toBe(58.5);
+      expect(music.notes[0].accidentals[0]).toBe('3db');
+    });
+
+    it('microtonal accidental does not carry forward within a bar', () => {
+      const music = fromAbc(`T:T\nM:4/4\nL:1/4\nK:C\n^/C C`);
+      expect(music.notes[0].pitches[0]).toBe(60.5); // ^/C half-sharp
+      expect(music.notes[1].pitches[0]).toBe(60); // C stays natural — not carried
+    });
+
     it('natural sign cancels key-signature accidental within bar', () => {
       // K:G has F#; =F should make F natural for the rest of the bar
       const music = fromAbc(`T:T\nM:4/4\nL:1/4\nK:G\n=F F | F`);
@@ -962,6 +1016,29 @@ describe('fromAbc', () => {
 
       expect(reimported.notes[0].duration).toBe(Duration.THIRTY_SECOND);
       expect(reimported.notes[0].dots).toBe(0);
+    });
+    it('microtonal accidentals round-trip through ABC export and re-import', () => {
+      const music = new Music();
+      music.signatures[0].keySignature = 'C';
+      music.signatures[0].beatsPerBar = 4;
+      music.signatures[0].beatValue = 4;
+      music.notes.push(new Note(60.5, Duration.QUARTER, [], 'd#')); // C half-sharp
+      music.notes.push(new Note(59.5, Duration.QUARTER, [], 'db')); // C half-flat
+      music.notes.push(new Note(61.5, Duration.QUARTER, [], '3d#')); // C three-quarter-sharp
+      music.notes.push(new Note(58.5, Duration.QUARTER, [], '3db')); // C three-quarter-flat
+      music.bars.push({ afterNoteNum: 3, type: 'standard' });
+
+      const abc = toAbc(music);
+      const reimported = fromAbc(abc);
+
+      expect(reimported.notes[0].pitches[0]).toBe(60.5);
+      expect(reimported.notes[0].accidentals[0]).toBe('d#');
+      expect(reimported.notes[1].pitches[0]).toBe(59.5);
+      expect(reimported.notes[1].accidentals[0]).toBe('db');
+      expect(reimported.notes[2].pitches[0]).toBe(61.5);
+      expect(reimported.notes[2].accidentals[0]).toBe('3d#');
+      expect(reimported.notes[3].pitches[0]).toBe(58.5);
+      expect(reimported.notes[3].accidentals[0]).toBe('3db');
     });
   });
 

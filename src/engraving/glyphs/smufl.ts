@@ -41,8 +41,12 @@ export const SMUFL: Record<string, string> = {
   // Accidentals
   accidentalDoubleSharp: '\uE263',
   accidentalSharp: '\uE262',
+  accidentalQuarterToneSharp: '\uE282',
+  accidentalThreeQuarterTonesSharp: '\uE283',
   accidentalFlat: '\uE260',
   accidentalDoubleFlat: '\uE264',
+  accidentalQuarterToneFlat: '\uE280',
+  accidentalThreeQuarterTonesFlat: '\uE281',
   accidentalNatural: '\uE261',
   // Articulations
   articAccentAbove: '\uE4A0',

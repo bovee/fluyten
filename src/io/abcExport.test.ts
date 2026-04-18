@@ -99,6 +99,34 @@ describe('toAbc', () => {
       expect(toAbc(music)).toContain('_B');
     });
 
+    it('encodes half-sharp with ^/ prefix', () => {
+      const music = new Music();
+      music.signatures[0].keySignature = 'C';
+      music.notes = [new Note(60.5, Duration.EIGHTH, [], 'd#')]; // C half-sharp
+      expect(toAbc(music)).toContain('^/C');
+    });
+
+    it('encodes half-flat with _/ prefix', () => {
+      const music = new Music();
+      music.signatures[0].keySignature = 'C';
+      music.notes = [new Note(59.5, Duration.EIGHTH, [], 'db')]; // C half-flat
+      expect(toAbc(music)).toContain('_/C');
+    });
+
+    it('encodes three-quarter-tone sharp with ^3/ prefix', () => {
+      const music = new Music();
+      music.signatures[0].keySignature = 'C';
+      music.notes = [new Note(61.5, Duration.EIGHTH, [], '3d#')]; // C three-quarter-sharp
+      expect(toAbc(music)).toContain('^3/C');
+    });
+
+    it('encodes three-quarter-tone flat with _3/ prefix', () => {
+      const music = new Music();
+      music.signatures[0].keySignature = 'C';
+      music.notes = [new Note(58.5, Duration.EIGHTH, [], '3db')]; // C three-quarter-flat
+      expect(toAbc(music)).toContain('_3/C');
+    });
+
     it('encodes rest as z', () => {
       const music = new Music();
       music.signatures[0].keySignature = 'C';

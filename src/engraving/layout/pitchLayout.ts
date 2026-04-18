@@ -29,13 +29,22 @@ export function noteLetter(
       ? 2
       : accidental === '#'
         ? 1
-        : accidental === 'bb'
-          ? -2
-          : accidental === 'b'
-            ? -1
-            : 0;
-  const nat =
-    pitch + displayPitchOffset - PITCH_CONSTANTS.OCTAVE_OFFSET - accOff;
+        : accidental === '3d#'
+          ? 1.5
+          : accidental === 'd#'
+            ? 0.5
+            : accidental === 'bb'
+              ? -2
+              : accidental === 'b'
+                ? -1
+                : accidental === '3db'
+                  ? -1.5
+                  : accidental === 'db'
+                    ? -0.5
+                    : 0;
+  const nat = Math.round(
+    pitch + displayPitchOffset - PITCH_CONSTANTS.OCTAVE_OFFSET - accOff
+  );
   let sem = nat % 12;
   if (sem < 0) sem += 12;
   return STEP_TO_LETTER[SEMITONE_TO_STEP[sem]];
@@ -76,13 +85,24 @@ export function pitchToStaffPosition(
       ? 2
       : accidental === '#'
         ? 1
-        : accidental === 'bb'
-          ? -2
-          : accidental === 'b'
-            ? -1
-            : 0;
-  const naturalNumber =
-    effectivePitch - PITCH_CONSTANTS.OCTAVE_OFFSET - accidentalOffset;
+        : accidental === '3d#'
+          ? 1.5
+          : accidental === 'd#'
+            ? 0.5
+            : accidental === 'bb'
+              ? -2
+              : accidental === 'b'
+                ? -1
+                : accidental === '3db'
+                  ? -1.5
+                  : accidental === 'db'
+                    ? -0.5
+                    : 0;
+  // Round to integer after removing the accidental offset so that microtonal
+  // fractional pitches resolve to their diatonic base note for staff placement.
+  const naturalNumber = Math.round(
+    effectivePitch - PITCH_CONSTANTS.OCTAVE_OFFSET - accidentalOffset
+  );
   const octave = Math.floor(naturalNumber / 12);
   let semitone = naturalNumber % 12;
   if (semitone < 0) semitone += 12;

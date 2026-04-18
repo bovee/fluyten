@@ -68,6 +68,27 @@ export const Accidentals: Story = {
   },
 };
 
+// --- Microtonal accidentals ---
+
+export const MicrotonalAccidentals: Story = {
+  args: {
+    music: (() => {
+      const music = new Music();
+      music.signatures[0].beatsPerBar = 4;
+      music.signatures[0].beatValue = 4;
+      music.notes = [
+        Q(60.5, 'd#'), // C quarter-sharp
+        Q(59.5, 'db'), // C quarter-flat
+        Q(61.5, '3d#'), // C three-quarter-sharp
+        Q(58.5, '3db'), // C three-quarter-flat
+      ];
+      music.reflow();
+      return music;
+    })(),
+    width: WIDTH,
+  },
+};
+
 // --- Key signature ---
 
 export const KeySignature: Story = {

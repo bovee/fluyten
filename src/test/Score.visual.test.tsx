@@ -1,8 +1,13 @@
 import { cdp, commands, page } from 'vitest/browser';
-import { composeStories } from '@storybook/react';
+import { composeStories, setProjectAnnotations } from '@storybook/react';
 import { render, cleanup, waitFor } from '@testing-library/react';
 import { beforeAll, describe, it, expect, afterEach } from 'vitest';
 import * as stories from '../engraving/Score.stories';
+import * as preview from '../../.storybook/preview';
+
+// Apply storybook preview annotations (decorators, CSS imports including the
+// Bravura @font-face) so that composeStories picks them up in this test context.
+setProjectAnnotations([preview]);
 
 declare module 'vitest/browser' {
   interface BrowserCommands {
@@ -17,24 +22,17 @@ declare module 'vitest/browser' {
 const composed = composeStories(stories);
 
 // Pin to a fixed viewport so stories that depend on line-wrapping are stable.
-// Also wait for fonts (Bravura) to finish loading before any test runs.
+// Also warm up the Bravura font cache with a throwaway render so all glyph
+// subsets (including accidentals) are GPU-cached before any comparison test runs.
 beforeAll(async () => {
   await page.viewport(1280, 720);
+  const [FirstStory] = Object.values(composed);
+  const { container, unmount } = render(<FirstStory />);
+  await waitFor(() => expect(container.querySelector('svg')).toBeTruthy());
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  const cdpSession = cdp() as any;
-  await cdpSession.send('Runtime.evaluate', {
-    expression: 'document.fonts.ready',
-    awaitPromise: true,
-  });
-  // document.fonts.ready resolves before fonts are applied to newly-mounted
-  // DOM nodes, causing the first test to capture a screenshot before glyphs
-  // are painted. Render a warmup story and wait for several frames so the
-  // browser fully applies fonts before any real test screenshot is taken.
-  const WarmupStory = Object.values(composed)[0];
-  const { unmount } = render(<WarmupStory />);
-  await cdpSession.send('Runtime.evaluate', {
+  await (cdp() as any).send('Runtime.evaluate', {
     expression:
-      'new Promise(r => requestAnimationFrame(() => requestAnimationFrame(() => requestAnimationFrame(r))))',
+      "document.fonts.load('1em Bravura').then(() => new Promise(r => requestAnimationFrame(() => requestAnimationFrame(r))))",
     awaitPromise: true,
   });
   unmount();
@@ -55,13 +53,14 @@ describe('Score visual regression', () => {
     it(name, async () => {
       const { container } = render(<Story />);
       await waitFor(() => expect(container.querySelector('svg')).toBeTruthy());
-      // Wait for two animation frames so the browser finishes painting glyphs
-      // (especially important for the first test, where fonts may not yet be
-      // applied to DOM elements even though document.fonts.ready resolved).
+      // document.fonts.load() blocks until Bravura is fully applied to the
+      // current document context, which is more reliable than document.fonts.ready
+      // (which resolves before fonts are painted on newly-mounted DOM nodes).
+      // The rAF chain after ensures the browser has finished the paint pass.
       // eslint-disable-next-line @typescript-eslint/no-explicit-any
       await (cdp() as any).send('Runtime.evaluate', {
         expression:
-          'new Promise(r => requestAnimationFrame(() => requestAnimationFrame(r)))',
+          "document.fonts.load('1em Bravura').then(() => new Promise(r => requestAnimationFrame(() => requestAnimationFrame(r))))",
         awaitPromise: true,
       });
       const base64 = await captureBase64();

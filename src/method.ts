@@ -184,7 +184,11 @@ const METHOD_DIFFICULTY: Record<string, DifficultyMap> = {
 function midiToAbcName(midi: number): string {
   const relative = midi - PITCH_CONSTANTS.OCTAVE_OFFSET;
   const octave = Math.floor(relative / PITCH_CONSTANTS.SEMITONES_PER_OCTAVE);
-  const semitone = relative % PITCH_CONSTANTS.SEMITONES_PER_OCTAVE;
+  // Round to nearest semitone so microtonal (fractional) pitches resolve to
+  // the closest named note, then wrap to keep the index in 0–11.
+  const semitone =
+    Math.round(relative % PITCH_CONSTANTS.SEMITONES_PER_OCTAVE) %
+    PITCH_CONSTANTS.SEMITONES_PER_OCTAVE;
   const name = NOTE_NAMES[semitone];
   // octave 3 = uppercase (C, G#)
   // octave 4 = lowercase (c, g#)
