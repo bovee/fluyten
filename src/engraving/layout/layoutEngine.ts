@@ -11,6 +11,7 @@ import { layoutBar, computeBarBeams, unifyBeamStems } from './measureLayout';
 import { staffPositionToY, type Clef } from './pitchLayout';
 import {
   BAR_HEIGHT,
+  FREE_TIME_BAR_TARGET_WIDTH,
   LEFT_MARGIN,
   LYRICS_LINE_HEIGHT,
   NOTE_AREA_PADDING,
@@ -70,7 +71,12 @@ export function computeLayout(
   // ---------------------------------------------------------------------------
   // Stage 3: Line breaking
   // ---------------------------------------------------------------------------
-  const linePlans = breakIntoLines(barSizings, containerWidth);
+  const isFreeTime = music.bars.length === 0;
+  const linePlans = breakIntoLines(
+    barSizings,
+    containerWidth,
+    isFreeTime ? FREE_TIME_BAR_TARGET_WIDTH : undefined
+  );
 
   // ---------------------------------------------------------------------------
   // Stage 4: Build per-bar note layouts

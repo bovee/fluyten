@@ -19,7 +19,8 @@ import {
  */
 export function breakIntoLines(
   barSizings: BarSizing[],
-  containerWidth: number
+  containerWidth: number,
+  targetBarWidth = BAR_TARGET_WIDTH
 ): LinePlan[] {
   if (barSizings.length === 0) return [];
 
@@ -35,7 +36,7 @@ export function breakIntoLines(
     // Estimate using the target width as a starting point.
     const estimatedBarsPerLine = Math.max(
       1,
-      Math.floor(availableWidth / BAR_TARGET_WIDTH)
+      Math.floor(availableWidth / targetBarWidth)
     );
     let candidate = Math.min(
       barStart + estimatedBarsPerLine,
@@ -53,7 +54,7 @@ export function breakIntoLines(
     const isLastLine = lineEnd === barSizings.length;
     // Last line: expand to natural target width but don't stretch to fill the container.
     const targetWidth = isLastLine
-      ? Math.min((lineEnd - barStart) * BAR_TARGET_WIDTH, availableWidth)
+      ? Math.min((lineEnd - barStart) * targetBarWidth, availableWidth)
       : availableWidth;
     lines.push(buildLinePlan(barSizings, barStart, lineEnd, targetWidth));
     barStart = lineEnd;

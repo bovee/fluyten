@@ -1,6 +1,6 @@
 import { Duration, signatureAt, type Music } from '../../music';
 import { DURATION_TICKS } from '../../constants';
-import { BAR_TARGET_WIDTH, LEFT_MARGIN, type BarData } from './types';
+import { FREE_TIME_BAR_TARGET_WIDTH, LEFT_MARGIN, type BarData } from './types';
 
 function isGrace(duration: string): boolean {
   return duration === Duration.GRACE || duration === Duration.GRACE_SLASH;
@@ -91,7 +91,7 @@ function assignFreeTimePseudoBars(
   const sig = music.signatures[0];
   const barsPerLine = Math.max(
     1,
-    Math.floor((containerWidth - LEFT_MARGIN) / BAR_TARGET_WIDTH)
+    Math.floor((containerWidth - LEFT_MARGIN) / FREE_TIME_BAR_TARGET_WIDTH)
   );
   const ticksPerLine = barsPerLine * sig.beatsPerBar * DURATION_TICKS.QUARTER;
 

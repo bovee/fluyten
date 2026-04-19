@@ -1,6 +1,7 @@
 import { Duration, type Note } from '../../music';
 import {
   CLEF_WIDTH,
+  FLAG_EXTRA_SPACING,
   KEY_SIG_ACCIDENTAL_WIDTH,
   MIN_NOTE_SPACING,
   NOTE_AREA_PADDING,
@@ -57,11 +58,17 @@ export function computeBarSizings(
 
     const minNoteAreaWidth = Math.max(
       mainNotes.reduce((sum, idx) => {
-        const hasAccidental = notes[idx].accidentals.some((a) => a);
+        const note = notes[idx];
+        const hasAccidental = note.accidentals.some((a) => a);
+        const isFlagged =
+          note.duration === Duration.EIGHTH ||
+          note.duration === Duration.SIXTEENTH ||
+          note.duration === Duration.THIRTY_SECOND;
         return (
           sum +
           MIN_NOTE_SPACING +
-          (hasAccidental ? ACCIDENTAL_EXTRA_SPACING : 0)
+          (hasAccidental ? ACCIDENTAL_EXTRA_SPACING : 0) +
+          (isFlagged ? FLAG_EXTRA_SPACING : 0)
         );
       }, 0),
       MIN_NOTE_SPACING

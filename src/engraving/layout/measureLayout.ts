@@ -1,5 +1,6 @@
 import { Duration, KEYS, FIFTHS_TO_ACCIDENTALS, type Note } from '../../music';
 import {
+  FLAG_EXTRA_SPACING,
   GRACE_NOTE_SPACING,
   MIN_NOTE_SPACING,
   type BarData,
@@ -9,6 +10,7 @@ import {
 } from './types';
 
 const ACCIDENTAL_EXTRA_SPACING = 15; // extra px reserved when a note has an accidental
+const STEM_COLLISION_EXTRA_SPACING = 5; // extra px when stem-up note is followed by stem-down
 import {
   noteLetter,
   pitchToStaffPosition,
@@ -87,12 +89,37 @@ export function layoutBar(
     // Enforce minimum spacing from the previous main note.
     // Notes with accidentals need extra room to the left.
     const hasAccidental = note.accidentals.some((a) => a);
+    const prevLayout = layouts[layouts.length - 1];
+    const earlyDir =
+      note.pitches.length === 0
+        ? 'up'
+        : stemDirection(
+            note.pitches.map((p) =>
+              pitchToStaffPosition(
+                p,
+                note.accidentals[note.pitches.indexOf(p)],
+                clef,
+                displayPitchOffset,
+                keyAccidentalMap
+              )
+            )
+          );
+    const stemCollision =
+      prevLayout?.stemDirection === 'up' && earlyDir === 'down';
+    const prevIsFlagged =
+      prevLayout !== undefined &&
+      prevLayout.stemDirection === 'up' &&
+      (prevLayout.duration === Duration.EIGHTH ||
+        prevLayout.duration === Duration.SIXTEENTH ||
+        prevLayout.duration === Duration.THIRTY_SECOND);
     const minSpacing =
-      MIN_NOTE_SPACING + (hasAccidental ? ACCIDENTAL_EXTRA_SPACING : 0);
-    if (layouts.length > 0) {
-      const prevX = layouts[layouts.length - 1].x;
-      if (x - prevX < minSpacing) {
-        x = prevX + minSpacing;
+      MIN_NOTE_SPACING +
+      (hasAccidental ? ACCIDENTAL_EXTRA_SPACING : 0) +
+      (stemCollision ? STEM_COLLISION_EXTRA_SPACING : 0) +
+      (prevIsFlagged ? FLAG_EXTRA_SPACING : 0);
+    if (prevLayout !== undefined) {
+      if (x - prevLayout.x < minSpacing) {
+        x = prevLayout.x + minSpacing;
       }
     }
 

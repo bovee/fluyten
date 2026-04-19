@@ -14,20 +14,22 @@ import type {
 
 export const STAFF_SPACE = 10; // distance between adjacent staff lines
 export const STAFF_HEIGHT = 4 * STAFF_SPACE; // 5 lines = 4 spaces = 40px
-export const BAR_TARGET_WIDTH = 320; // preferred measure width
+export const BAR_TARGET_WIDTH = 160; // preferred measure width
+export const FREE_TIME_BAR_TARGET_WIDTH = 320; // target width per pseudo-bar in free time
 export const BAR_HEIGHT = 120; // base vertical space per staff system
 export const LYRICS_LINE_HEIGHT = 18; // extra height per lyrics verse
 export const TOP_MARGIN = 30; // space above first system
 export const LEFT_MARGIN = 15; // left edge padding
 export const RIGHT_MARGIN = 15; // right edge padding
-export const MIN_NOTE_SPACING = 20; // minimum horizontal gap between main notes
+export const MIN_NOTE_SPACING = 12; // minimum horizontal gap between main notes
 export const CLEF_WIDTH = 30; // space reserved for clef glyph
 export const TIME_SIG_WIDTH = 20; // space reserved for time signature digits
 export const KEY_SIG_ACCIDENTAL_WIDTH = 10; // space per accidental in key signature
-export const NOTE_AREA_PADDING = 20; // padding between preamble and first note
+export const NOTE_AREA_PADDING = 15; // padding between preamble and first note
 export const REPEAT_BARLINE_GAP = 8; // extra gap before a begin-repeat barline that follows a preamble
 export const STEM_LENGTH = 35; // 3.5 staff spaces
 export const GRACE_NOTE_SPACING = 12; // horizontal space per grace note
+export const FLAG_EXTRA_SPACING = 10; // extra px after stem-up eighth/sixteenth/32nd notes for flag clearance
 
 // ---------------------------------------------------------------------------
 // Intermediate types used during layout computation

@@ -28,6 +28,7 @@ export const Technique = {
   Tenuto: 'tenuto',
   Repeat: 'repeat',
   Volta: 'volta',
+  DCAlFine: 'dc-al-fine',
 } as const;
 export type Technique = (typeof Technique)[keyof typeof Technique];
 
@@ -41,6 +42,43 @@ export type SongFeatures = Set<string | Technique>;
 type DifficultyMap = Record<string, string>;
 
 const METHOD_DIFFICULTY: Record<string, DifficultyMap> = {
+  jefferyC: {
+    G: '1.08',
+    [Technique.QuarterNote]: '1.08',
+    [Technique.WholeRest]: '1.08',
+    [Technique.WholeNote]: '1.08',
+    [Technique.HalfRest]: '1.09',
+    E: '1.09',
+    [Technique.HalfNote]: '1.09',
+    [Technique.QuarterRest]: '1.09',
+    [Technique.Breath]: '1.11',
+    [Technique.Fermata]: '1.11',
+    [Technique.Repeat]: '1.12',
+    A: '1.14',
+    [Technique.DottedHalfNote]: '1.14',
+    [Technique.Tie]: '1.18',
+    // [Technique.Tremolo]: '1.19',
+    B: '1.19',
+    [Technique.EighthNote]: '1.21',
+    D: '1.23',
+    [Technique.Slur]: '1.24',
+    c: '1.26',
+    [Technique.Staccato]: '1.26',
+    [Technique.DottedQuarterNote]: '1.27',
+    [Technique.Volta]: '1.28',
+    [Technique.EighthRest]: '1.28',
+    [Technique.SixteenthNote]: '1.32',
+    F: '1.36',
+    'F#': '1.41',
+    [Technique.DCAlFine]: '1.43',
+    C: '1.50',
+    [Technique.Triplet]: '1.52',
+    'A#': '1.56',
+    e: '1.62',
+    [Technique.Trill]: '1.66',
+    'c#': '1.70',
+    [Technique.Accent]: '1.74',
+  },
   orrC: {
     G: '1.12',
     [Technique.WholeNote]: '1.12',
@@ -61,6 +99,22 @@ const METHOD_DIFFICULTY: Record<string, DifficultyMap> = {
     E: '1.29',
     F: '1.29',
     'A#': '1.33',
+    e: '2.08',
+    'F#': '2.10',
+    [Technique.SixteenthNote]: '2.12',
+    f: '2.13',
+    g: '2.14',
+    [Technique.EighthRest]: '2.24',
+    a: '2.26',
+    'f#': '2.29',
+    'G#': '2.33',
+    'c#': '2.37',
+    b: '2.44',
+    "c'": '2.46',
+    'g#': '2.51',
+    'a#': '2.55',
+    'd#': '2.60',
+    "d'": '2.66',
   },
   sweetPipesC: {
     G: '1.06',
@@ -88,7 +142,7 @@ const METHOD_DIFFICULTY: Record<string, DifficultyMap> = {
     D: '1.24',
     'c#': '1.27',
     C: '1.29',
-    // [Technique.DCAlFine]: '1.30',
+    [Technique.DCAlFine]: '1.30',
     F: '1.31',
     'A#': '1.34',
     'G#': '1.37',
@@ -119,7 +173,7 @@ const METHOD_DIFFICULTY: Record<string, DifficultyMap> = {
     G: '1.24',
     'f#': '1.27',
     F: '1.29',
-    // [Technique.DCAlFine]: '1.30',
+    [Technique.DCAlFine]: '1.30',
     'A#': '1.31',
     'd#': '1.34',
     'c#': '1.37',
@@ -159,7 +213,7 @@ const METHOD_DIFFICULTY: Record<string, DifficultyMap> = {
     [Technique.DottedEighthNote]: '2.12',
     f: '2.15',
     g: '2.17',
-    // [Technique.DCAlFine]: '2.19',
+    [Technique.DCAlFine]: '2.19',
     a: '2.24',
     'f#': '2.24',
     [Technique.Tenuto]: '2.26',
@@ -253,6 +307,7 @@ export function featuresFromMusic(music: Music): SongFeatures {
       else if (dec === 'accent') features.add(Technique.Accent);
       else if (dec === 'staccato') features.add(Technique.Staccato);
       else if (dec === 'tenuto') features.add(Technique.Tenuto);
+      else if (dec === 'd.c.alfine') features.add(Technique.DCAlFine);
     }
   }
 
@@ -291,19 +346,20 @@ export const METHODS_FOR_INSTRUMENT: Record<RecorderType, string[]> = {
   CONTRABASS: [],
   GREATBASS: [],
   BASS: [],
-  TENOR: ['orrC', 'sweetPipesC', 'zeitlinC'],
+  TENOR: ['jefferyC', 'orrC', 'sweetPipesC', 'zeitlinC'],
   VOICEFLUTE: [],
   ALTO: ['sweetPipesF'],
-  SOPRANO: ['orrC', 'sweetPipesC', 'zeitlinC'],
+  SOPRANO: ['jefferyC', 'orrC', 'sweetPipesC', 'zeitlinC'],
   SOPRANINO: ['sweetPipesF'],
   GARKLEIN: [],
 };
 
 export const METHOD_DISPLAY_NAMES: Record<string, string> = {
-  orrC: 'Orr (C)',
-  sweetPipesC: 'Sweet Pipes (C)',
-  sweetPipesF: 'Sweet Pipes (F)',
-  zeitlinC: 'Zeitlin (C)',
+  jefferyC: "Jeffery's Recorder Method",
+  orrC: "Orr's Basic Recorder Technique (Soprano)",
+  sweetPipesC: 'The Sweet Pipes Recorder Book (Soprano)',
+  sweetPipesF: 'The Sweet Pipes Recorder Book (Alto)',
+  zeitlinC: "Zeitlin's Basic Recorder Lessons",
 };
 
 export function difficultyFromFeatures(

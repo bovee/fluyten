@@ -68,16 +68,21 @@ const ACCIDENTAL_MAP: Record<string, Accidental> = {
   sharp: '#',
   flat: 'b',
   natural: 'n',
-  'double-sharp': '#',
-  'sharp-sharp': '#',
-  'flat-flat': 'b',
+  'double-sharp': '##',
+  'sharp-sharp': '##',
+  'flat-flat': 'bb',
   'natural-sharp': '#',
   'natural-flat': 'b',
+  'quarter-sharp': 'd#',
+  'quarter-flat': 'db',
+  'three-quarters-sharp': '3d#',
+  'three-quarters-flat': '3db',
 };
 
 function stepOctaveToMidi(step: string, alter: number, octave: number): number {
   const semitones = STEP_SEMITONES[step.toUpperCase()] ?? 0;
-  return (octave + 1) * 12 + semitones + Math.round(alter);
+  // Preserve fractional alter values (e.g. ±0.5 quarter-tones) in the MIDI pitch.
+  return (octave + 1) * 12 + semitones + alter;
 }
 
 function parseDecorations(noteEl: Element): Decoration[] {
@@ -430,7 +435,12 @@ export function fromMusicXml(xmlText: string): Music {
           noteEl.querySelector('accidental')?.textContent?.trim() ?? '';
         let accidental: Accidental = ACCIDENTAL_MAP[accidentalText];
         if (accidental === undefined && alter !== 0) {
-          accidental = alter > 0 ? '#' : 'b';
+          if (alter === 0.5) accidental = 'd#';
+          else if (alter === -0.5) accidental = 'db';
+          else if (alter === 1.5) accidental = '3d#';
+          else if (alter === -1.5) accidental = '3db';
+          else if (alter >= 1) accidental = alter >= 2 ? '##' : '#';
+          else accidental = alter <= -2 ? 'bb' : 'b';
         }
 
         if (isChord && music.notes.length > 0) {
