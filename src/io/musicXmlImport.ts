@@ -208,6 +208,8 @@ export function fromMusicXml(xmlText: string): Music {
   const openTieChains = new Map<number, number>();
   // Slur tracking: slur number → note index at which the slur started
   const openSlurs = new Map<number, number>();
+  // Glissando tracking: glissando number → note index at which the glissando started
+  const openGlissandos = new Map<number, number>();
   // Span decoration (crescendo/diminuendo) tracking: wedge number → {type, startNoteIndex}
   const openWedges = new Map<
     number,
@@ -525,6 +527,28 @@ export function fromMusicXml(xmlText: string): Music {
             if (startIdx !== undefined) {
               music.curves.push([startIdx, noteIndex]);
               openSlurs.delete(slurNumber);
+            }
+          }
+        }
+
+        // Glissandos
+        for (const glissEl of noteEl.querySelectorAll('notations glissando')) {
+          const glissType = glissEl.getAttribute('type');
+          const glissNumber = parseInt(
+            glissEl.getAttribute('number') || '1',
+            10
+          );
+          if (glissType === 'start') {
+            openGlissandos.set(glissNumber, noteIndex);
+          } else if (glissType === 'stop') {
+            const startIdx = openGlissandos.get(glissNumber);
+            if (startIdx !== undefined) {
+              music.spanDecorations.push({
+                type: 'glissando',
+                startNoteIndex: startIdx,
+                endNoteIndex: noteIndex,
+              });
+              openGlissandos.delete(glissNumber);
             }
           }
         }

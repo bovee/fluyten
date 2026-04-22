@@ -4,6 +4,7 @@ import { render, cleanup, waitFor } from '@testing-library/react';
 import { beforeAll, describe, it, expect, afterEach } from 'vitest';
 import * as stories from '../engraving/Score.stories';
 import * as preview from '../../.storybook/preview';
+import { SMUFL } from '../engraving/glyphs/smufl';
 
 // Apply storybook preview annotations (decorators, CSS imports including the
 // Bravura @font-face) so that composeStories picks them up in this test context.
@@ -22,20 +23,33 @@ declare module 'vitest/browser' {
 const composed = composeStories(stories);
 
 // Pin to a fixed viewport so stories that depend on line-wrapping are stable.
-// Also warm up the Bravura font cache with a throwaway render so all glyph
-// subsets (including accidentals) are GPU-cached before any comparison test runs.
+// Warm up the Bravura font cache by (1) painting every SMuFL glyph as HTML
+// text and (2) throwaway-rendering every story. document.fonts.load resolves
+// once the font file is available, but Chromium rasterizes glyph subsets
+// lazily on first paint and keys its glyph cache on (font, size), so a single
+// warmup render doesn't cover glyphs that only appear in later stories (e.g.
+// accidentals first appear in the Accidentals story). Rendering every story
+// once here guarantees all glyph+size combinations are rasterized before any
+// screenshot comparison runs.
 beforeAll(async () => {
   await page.viewport(1280, 720);
-  const [FirstStory] = Object.values(composed);
-  const { container, unmount } = render(<FirstStory />);
-  await waitFor(() => expect(container.querySelector('svg')).toBeTruthy());
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  await (cdp() as any).send('Runtime.evaluate', {
-    expression:
-      "document.fonts.load('1em Bravura').then(() => new Promise(r => requestAnimationFrame(() => requestAnimationFrame(r))))",
-    awaitPromise: true,
-  });
-  unmount();
+  const allGlyphs = Object.values(SMUFL).join('');
+  const warmup = document.createElement('div');
+  warmup.style.cssText =
+    'position:fixed;top:0;left:0;font-family:Bravura;font-size:40px;opacity:0;pointer-events:none;';
+  warmup.textContent = allGlyphs;
+  document.body.appendChild(warmup);
+  for (const Story of Object.values(composed)) {
+    const { unmount } = render(<Story />);
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    await (cdp() as any).send('Runtime.evaluate', {
+      expression:
+        "document.fonts.load('1em Bravura').then(() => new Promise(r => requestAnimationFrame(() => requestAnimationFrame(r))))",
+      awaitPromise: true,
+    });
+    unmount();
+  }
+  document.body.removeChild(warmup);
 });
 
 afterEach(cleanup);

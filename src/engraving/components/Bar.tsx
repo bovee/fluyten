@@ -162,6 +162,63 @@ export function PreambleBar({ item, staffTopY, clef }: PreambleBarProps) {
   return <g>{parts}</g>;
 }
 
+const LYRIC_PX_PER_CHAR = 6;
+const LYRIC_MIN_GAP = 4;
+
+/**
+ * Compute per-note per-verse x nudges so adjacent syllables don't overlap.
+ * Notes stay fixed; only the text rendering shifts slightly left or right.
+ * Returns nudges[noteIndex][verse].
+ */
+function computeLyricNudges(notes: BarLayout['notes']): number[][] {
+  const numVerses =
+    notes.length > 0 ? Math.max(...notes.map((n) => n.lyrics.length)) : 0;
+  const nudges: number[][] = notes.map(() => Array(numVerses).fill(0));
+
+  for (let v = 0; v < numVerses; v++) {
+    // Simple left-to-right pass: push each syllable right if it overlaps the previous.
+    let prevRight = -Infinity;
+    const pendingRight: number[] = [];
+
+    for (let i = 0; i < notes.length; i++) {
+      const syl = notes[i].lyrics[v];
+      if (!syl) {
+        pendingRight.push(-Infinity);
+        continue;
+      }
+      const halfW = (syl.length * LYRIC_PX_PER_CHAR) / 2;
+      const noteX = notes[i].x;
+      const desiredLeft = noteX - halfW;
+      let nudge = 0;
+      if (desiredLeft < prevRight + LYRIC_MIN_GAP) {
+        nudge = prevRight + LYRIC_MIN_GAP - desiredLeft;
+      }
+      nudges[i][v] = nudge;
+      prevRight = noteX + halfW + nudge;
+      pendingRight.push(prevRight);
+    }
+
+    // Right-to-left pass: push syllables left if they overlap the next.
+    let nextLeft = Infinity;
+    for (let i = notes.length - 1; i >= 0; i--) {
+      const syl = notes[i].lyrics[v];
+      if (!syl) {
+        nextLeft = Infinity;
+        continue;
+      }
+      const halfW = (syl.length * LYRIC_PX_PER_CHAR) / 2;
+      const noteX = notes[i].x;
+      const currentRight = noteX + halfW + nudges[i][v];
+      if (currentRight > nextLeft - LYRIC_MIN_GAP) {
+        nudges[i][v] -= currentRight - (nextLeft - LYRIC_MIN_GAP);
+      }
+      nextLeft = noteX - halfW + nudges[i][v];
+    }
+  }
+
+  return nudges;
+}
+
 // Set of note indices that are covered by a beam
 function beamedNoteSet(bar: BarLayout): Set<number> {
   const beamed = new Set<number>();
@@ -183,6 +240,7 @@ export const Bar = memo(function Bar({
   onNoteClick,
 }: BarProps) {
   const beamed = beamedNoteSet(bar);
+  const lyricNudges = computeLyricNudges(bar.notes);
 
   // Collect breath mark positions: after the note they're marked on.
   // Last note in bar → over the barline at bar end.
@@ -248,6 +306,7 @@ export const Bar = memo(function Bar({
               fill={fill}
               isBeamed={beamed.has(i)}
               isWrong={wrongNotes?.has(note.musicNoteIndex)}
+              lyricNudges={lyricNudges[i]}
               onClick={onNoteClick}
             />
           </g>

@@ -3,6 +3,7 @@ import type {
   TupletLayout,
   VoltaSegment,
   SpanDecorationLayout,
+  GlissandoLayout,
 } from '../layout/types';
 import { Glyph } from '../glyphs/Glyph';
 
@@ -262,5 +263,58 @@ export function TrillSpan({ span }: TrillSpanProps) {
         <path d={wavePath} fill="none" stroke="currentColor" strokeWidth={1} />
       )}
     </g>
+  );
+}
+
+// ---------------------------------------------------------------------------
+// Glissando (zigzag line between two noteheads)
+// ---------------------------------------------------------------------------
+
+interface GlissandoProps {
+  glissando: GlissandoLayout;
+}
+
+const GLISS_TOOTH = 8; // px per zigzag tooth (horizontal)
+const GLISS_AMP = 3; // half-height of each tooth (px)
+
+function glissandoPath(x0: number, y0: number, x1: number, y1: number): string {
+  const dx = x1 - x0;
+  const dy = y1 - y0;
+  if (dx <= 0) return '';
+  const len = Math.sqrt(dx * dx + dy * dy);
+  // Unit vector along the line and perpendicular to it
+  const ux = dx / len;
+  const uy = dy / len;
+  const px = -uy; // perpendicular x
+  const py = ux; // perpendicular y
+
+  const teeth = Math.max(1, Math.round(dx / GLISS_TOOTH));
+  const step = 1 / teeth;
+  let d = `M ${x0} ${y0}`;
+  for (let i = 0; i < teeth; i++) {
+    const t1 = (i + 0.5) * step;
+    const t2 = (i + 1) * step;
+    const sign = i % 2 === 0 ? 1 : -1;
+    const mx = x0 + t1 * dx + sign * GLISS_AMP * px;
+    const my = y0 + t1 * dy + sign * GLISS_AMP * py;
+    const ex = x0 + t2 * dx;
+    const ey = y0 + t2 * dy;
+    d += ` L ${mx} ${my} L ${ex} ${ey}`;
+  }
+  return d;
+}
+
+export function Glissando({ glissando }: GlissandoProps) {
+  const { startX, startY, endX, endY } = glissando;
+  const d = glissandoPath(startX, startY, endX, endY);
+  if (!d) return null;
+  return (
+    <path
+      d={d}
+      fill="none"
+      stroke="currentColor"
+      strokeWidth={1.5}
+      strokeLinejoin="round"
+    />
   );
 }

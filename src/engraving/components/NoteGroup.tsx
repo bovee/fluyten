@@ -20,6 +20,8 @@ interface NoteGroupProps {
   fill?: string;
   isBeamed?: boolean;
   isWrong?: boolean;
+  /** Per-verse horizontal nudge for lyric text (to avoid overlap with neighbors). */
+  lyricNudges?: number[];
   onClick?: (noteIdx: number, x: number, y: number) => void;
 }
 
@@ -206,6 +208,7 @@ export function NoteGroup({
   fill = 'currentColor',
   isBeamed = false,
   isWrong = false,
+  lyricNudges,
   onClick,
 }: NoteGroupProps) {
   const {
@@ -367,7 +370,12 @@ export function NoteGroup({
       />
 
       {/* Lyrics */}
-      <LyricsSyllables lyrics={note.lyrics} x={x} staffTopY={staffTopY} />
+      <LyricsSyllables
+        lyrics={note.lyrics}
+        x={x}
+        staffTopY={staffTopY}
+        nudges={lyricNudges}
+      />
 
       {/* Annotations */}
       {renderAnnotations(note.annotations, x, note.y, stemEndY, staffTopY)}

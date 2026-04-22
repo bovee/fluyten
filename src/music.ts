@@ -223,7 +223,11 @@ export type Decoration =
   | 'fff'
   | 'ffff';
 
-export type SpanDecorationType = 'trill' | 'crescendo' | 'diminuendo';
+export type SpanDecorationType =
+  | 'trill'
+  | 'crescendo'
+  | 'diminuendo'
+  | 'glissando';
 export interface SpanDecoration {
   type: SpanDecorationType;
   startNoteIndex: number;

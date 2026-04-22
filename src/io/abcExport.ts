@@ -308,11 +308,13 @@ function scoreToAbc(
     trill: '!trill(!',
     crescendo: '!crescendo(!',
     diminuendo: '!diminuendo(!',
+    glissando: '',
   };
   const SPAN_CLOSE_MARKER: Record<SpanDecorationType, string> = {
     trill: '!trill)!',
     crescendo: '!crescendo)!',
     diminuendo: '!diminuendo)!',
+    glissando: '!gliss!',
   };
   const spanStartAt = new Map<number, SpanDecorationType[]>();
   const spanEndAt = new Map<number, SpanDecorationType[]>();

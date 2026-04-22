@@ -102,6 +102,7 @@ export function EditorDrawer({
   const debouncedOnAbcChange = useMemo(
     () =>
       debounce(
+        // eslint-disable-next-line react-hooks/refs
         (value: string) => {
           lastSentRef.current = value;
           onAbcChangeRef.current(value);
@@ -279,6 +280,7 @@ export function EditorDrawer({
   };
 
   useEffect(() => {
+    // eslint-disable-next-line react-hooks/set-state-in-effect
     if (!open && isTranscribing) stopTranscribing();
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [open]); // intentionally omits isTranscribing — only react to drawer close

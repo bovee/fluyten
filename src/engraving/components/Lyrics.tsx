@@ -5,13 +5,15 @@ interface LyricsProps {
   lyrics: (string | undefined)[];
   x: number;
   staffTopY: number;
+  /** Per-verse horizontal nudge to avoid overlap with adjacent syllables. */
+  nudges?: number[];
 }
 
 const LYRICS_FONT_SIZE = 14;
 // First verse starts far enough below the bottom staff line to clear ledger lines
 const LYRICS_BASE_OFFSET = STAFF_HEIGHT + LYRICS_LINE_HEIGHT * 2;
 
-export function LyricsSyllables({ lyrics, x, staffTopY }: LyricsProps) {
+export function LyricsSyllables({ lyrics, x, staffTopY, nudges }: LyricsProps) {
   const visible = lyrics.filter((s) => s !== undefined);
   if (visible.length === 0) return null;
 
@@ -23,7 +25,7 @@ export function LyricsSyllables({ lyrics, x, staffTopY }: LyricsProps) {
         return (
           <text
             key={verse}
-            x={x}
+            x={x + (nudges?.[verse] ?? 0)}
             y={y}
             textAnchor="middle"
             fontSize={LYRICS_FONT_SIZE}

@@ -711,6 +711,17 @@ export function parseScore(
               }
             }
           }
+          // Glissando: single marker before a note draws a zigzag from the previous note
+          if (
+            /!gliss(ando)?!/i.test(groups.decoration) &&
+            music.notes.length >= 2
+          ) {
+            music.spanDecorations.push({
+              type: 'glissando',
+              startNoteIndex: music.notes.length - 2,
+              endNoteIndex: music.notes.length - 1,
+            });
+          }
           // If the duration was split (e.g. z8 with L:1/4), emit extra notes
           if (parsedDurs && parsedDurs.length > 1) {
             for (const [dur, d] of parsedDurs.slice(1)) {

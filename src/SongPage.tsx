@@ -579,7 +579,9 @@ function useAudioPlayback(
   // Stable ref-backed wrapper so Score's React.memo comparison passes when
   // onNoteClick is passed as a prop (avoids re-renders on every SongPage render).
   const seekToNoteImplRef = useRef(seekToNoteImpl);
-  seekToNoteImplRef.current = seekToNoteImpl;
+  useEffect(() => {
+    seekToNoteImplRef.current = seekToNoteImpl;
+  });
   const seekToNote = useCallback(
     (origNoteIdx: number) => seekToNoteImplRef.current(origNoteIdx),
     []

@@ -29,6 +29,7 @@ import {
   type TupletLayout,
   type VoltaSegment,
   type SpanDecorationLayout,
+  type GlissandoLayout,
   STAFF_HEIGHT,
   STAFF_SPACE,
 } from './types';
@@ -245,6 +246,14 @@ export function computeLayout(
     lineHeight
   );
 
+  const glissandosByLine = computeGlissandos(
+    music,
+    allBarLayouts,
+    barToLine,
+    linePlans.length,
+    lineHeight
+  );
+
   // Voltas
   assignVoltas(barData, allBarLayouts);
 
@@ -317,6 +326,7 @@ export function computeLayout(
       ties: tiesByLine[lineIndex] ?? [],
       tuplets: tupletsByLine[lineIndex] ?? [],
       spanDecorations: spanDecorationsByLine[lineIndex] ?? [],
+      glissandos: glissandosByLine[lineIndex] ?? [],
     };
   });
 
@@ -640,6 +650,7 @@ function computeSpanDecorations(
   );
 
   for (const span of music.spanDecorations) {
+    if (span.type === 'glissando') continue;
     const startPos = notePosMap.get(span.startNoteIndex);
     const endPos = notePosMap.get(span.endNoteIndex);
     if (!startPos || !endPos) continue;
@@ -700,6 +711,42 @@ function computeSpanDecorations(
         });
       }
     }
+  }
+
+  return result;
+}
+
+function computeGlissandos(
+  music: Music,
+  barLayouts: BarLayout[],
+  barToLine: Map<number, { lineIndex: number; posInLine: number }>,
+  numLines: number,
+  lineHeight: number
+): GlissandoLayout[][] {
+  const notePosMap = buildNotePosMap(barLayouts, barToLine, lineHeight);
+  const result: GlissandoLayout[][] = Array.from(
+    { length: numLines },
+    () => []
+  );
+
+  for (const span of music.spanDecorations) {
+    if (span.type !== 'glissando') continue;
+    const startPos = notePosMap.get(span.startNoteIndex);
+    const endPos = notePosMap.get(span.endNoteIndex);
+    if (!startPos || !endPos) continue;
+    // Only render same-line glissandos for now
+    if (startPos.lineIndex !== endPos.lineIndex) continue;
+
+    const startY = (startPos.topY + startPos.bottomY) / 2;
+    const endY = (endPos.topY + endPos.bottomY) / 2;
+
+    result[startPos.lineIndex].push({
+      startX: startPos.x + 12,
+      startY,
+      endX: endPos.x - 12,
+      endY,
+      lineIndex: startPos.lineIndex,
+    });
   }
 
   return result;

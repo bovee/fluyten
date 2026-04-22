@@ -1,5 +1,5 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest';
-import { render, screen, fireEvent } from '@testing-library/react';
+import { render, screen, fireEvent, act } from '@testing-library/react';
 
 vi.mock('./utils', () => ({
   debounce: (fn: (...args: unknown[]) => void) => ({
@@ -150,7 +150,7 @@ describe('EditorDrawer', () => {
       expect(screen.getByRole('button', { name: /transform/i })).toBeDisabled();
     });
 
-    it('transform button is enabled when notes are selected', () => {
+    it('transform button is enabled when notes are selected', async () => {
       render(<EditorDrawer {...defaultProps()} />);
       const textarea = screen.getByRole('textbox') as HTMLTextAreaElement;
       // Notes start after 'X:1\nT:Test\nK:C\n' = position 15
@@ -162,13 +162,15 @@ describe('EditorDrawer', () => {
         value: 20,
         configurable: true,
       });
-      fireEvent.select(textarea);
+      await act(async () => {
+        fireEvent.select(textarea);
+      });
       expect(
         screen.getByRole('button', { name: /transform/i })
       ).not.toBeDisabled();
     });
 
-    it('transform button is disabled when selection is in the header', () => {
+    it('transform button is disabled when selection is in the header', async () => {
       render(<EditorDrawer {...defaultProps()} />);
       const textarea = screen.getByRole('textbox') as HTMLTextAreaElement;
       Object.defineProperty(textarea, 'selectionStart', {
@@ -179,11 +181,13 @@ describe('EditorDrawer', () => {
         value: 5,
         configurable: true,
       });
-      fireEvent.select(textarea);
+      await act(async () => {
+        fireEvent.select(textarea);
+      });
       expect(screen.getByRole('button', { name: /transform/i })).toBeDisabled();
     });
 
-    it('clicking transform button opens the transform menu', () => {
+    it('clicking transform button opens the transform menu', async () => {
       render(<EditorDrawer {...defaultProps()} />);
       const textarea = screen.getByRole('textbox') as HTMLTextAreaElement;
       Object.defineProperty(textarea, 'selectionStart', {
@@ -194,12 +198,14 @@ describe('EditorDrawer', () => {
         value: 20,
         configurable: true,
       });
-      fireEvent.select(textarea);
+      await act(async () => {
+        fireEvent.select(textarea);
+      });
       fireEvent.click(screen.getByRole('button', { name: /transform/i }));
       expect(screen.getByRole('menu')).toBeInTheDocument();
     });
 
-    it('transform menu contains octave shift options', () => {
+    it('transform menu contains octave shift options', async () => {
       render(<EditorDrawer {...defaultProps()} />);
       const textarea = screen.getByRole('textbox') as HTMLTextAreaElement;
       Object.defineProperty(textarea, 'selectionStart', {
@@ -210,7 +216,9 @@ describe('EditorDrawer', () => {
         value: 20,
         configurable: true,
       });
-      fireEvent.select(textarea);
+      await act(async () => {
+        fireEvent.select(textarea);
+      });
       fireEvent.click(screen.getByRole('button', { name: /transform/i }));
       expect(
         screen.getByRole('menuitem', { name: /octave up/i })

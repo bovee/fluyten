@@ -14,6 +14,7 @@ import {
   VoltaBracket,
   Hairpin,
   TrillSpan,
+  Glissando,
 } from './components/CrossBarElements';
 import { TempoMark } from './components/TempoMark';
 import { Cursor } from './components/Cursor';
@@ -296,6 +297,10 @@ export const Score = memo(function Score({
                   <Hairpin key={i} span={span} />
                 )
               )}
+
+              {line.glissandos.map((g, i) => (
+                <Glissando key={i} glissando={g} />
+              ))}
             </g>
           );
         })}

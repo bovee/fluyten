@@ -83,6 +83,14 @@ export interface LayoutResult {
   lines: LineLayout[];
 }
 
+export interface GlissandoLayout {
+  startX: number;
+  startY: number; // vertical center of start notehead
+  endX: number;
+  endY: number; // vertical center of end notehead
+  lineIndex: number;
+}
+
 export interface LineLayout {
   y: number; // absolute SVG y of the top staff line
   bars: BarLayout[];
@@ -90,6 +98,7 @@ export interface LineLayout {
   ties: TieLayout[];
   tuplets: TupletLayout[];
   spanDecorations: SpanDecorationLayout[];
+  glissandos: GlissandoLayout[];
 }
 
 export interface SpanDecorationLayout {
