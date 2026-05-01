@@ -12,7 +12,7 @@ import {
   Note,
   signatureAt,
 } from '../music';
-import { PITCH_CONSTANTS, TIME_SIGNATURES } from '../constants';
+import { NOTE_NAMES, PITCH_CONSTANTS, TIME_SIGNATURES } from '../constants';
 
 // Mapping of two-character ABC mnemonics (after \) to their Unicode equivalents.
 // See https://abcnotation.com/wiki/abc:standard:v2.1#supported_accents_ligatures
@@ -533,6 +533,12 @@ export function parseScore(
   let tupletCounter = 0;
   let pendingTuplet: Tuplet | null = null;
   let startSlur: number | null = null;
+  // When entering a volta-1 bracket we save the current slur-open state so
+  // that slurs opened before the split can be reopened for the volta-2 branch.
+  // E.g. `A (B |1 c) d :|2 e)` — the `(` before B must match both `c)` (pass 1)
+  // and `e)` (pass 2), even though only one close token actually appears in
+  // each branch.
+  let preVoltaStartSlur: number | null | undefined = undefined;
   let chordAccum: ChordAccum | null = null;
   let pendingBrokenRhythm: 'dot' | 'halve' | null = null;
   const openSpans = new Map<SpanDecorationType, number>();
@@ -743,10 +749,19 @@ export function parseScore(
       case 'bar':
         for (const k of Object.keys(barAccidentals)) delete barAccidentals[k];
         if (!isFreeTime) {
-          music.bars.push({
-            afterNoteNum: music.notes.length - 1,
-            type: token.barType,
-          });
+          const afterNoteNum = music.notes.length - 1;
+          music.bars.push({ afterNoteNum, type: token.barType });
+          // Slur opened inside the repeat but not closed before :| — treat it as
+          // dangling off the end of the repeat (visually closes at the barline).
+          if (
+            startSlur !== null &&
+            startSlur <= afterNoteNum &&
+            (token.barType === 'end_repeat' ||
+              token.barType === 'begin_end_repeat')
+          ) {
+            music.openEndSlurs.push([startSlur, afterNoteNum]);
+            startSlur = null;
+          }
         }
         break;
 
@@ -754,30 +769,36 @@ export function parseScore(
         // Attach the volta number to the most recently pushed bar line.
         const lastBar = music.bars[music.bars.length - 1];
         if (lastBar) lastBar.volta = token.number;
+        if (token.number === 1) {
+          preVoltaStartSlur = startSlur;
+        } else if (token.number === 2 && preVoltaStartSlur !== undefined) {
+          startSlur = preVoltaStartSlur;
+          preVoltaStartSlur = undefined;
+        }
         break;
       }
 
       case 'grace_open':
         if (noteType !== null)
-          throw new Error(`Unexpected { after note ${music.notes.length}`);
+          throw new Error(`Unexpected { after ${lastNoteContext(music.notes)}`);
         noteType = 'grace';
         break;
 
       case 'grace_open_slash':
         if (noteType !== null)
-          throw new Error(`Unexpected { after note ${music.notes.length}`);
+          throw new Error(`Unexpected { after ${lastNoteContext(music.notes)}`);
         noteType = 'grace_slash';
         break;
 
       case 'grace_close':
         if (noteType !== 'grace' && noteType !== 'grace_slash')
-          throw new Error(`Unexpected } after note ${music.notes.length}`);
+          throw new Error(`Unexpected } after ${lastNoteContext(music.notes)}`);
         noteType = null;
         break;
 
       case 'chord_open':
         if (noteType !== null)
-          throw new Error(`Unexpected [ after note ${music.notes.length}`);
+          throw new Error(`Unexpected [ after ${lastNoteContext(music.notes)}`);
         noteType = 'chord';
         chordAccum = {
           pitches: [],
@@ -853,13 +874,13 @@ export function parseScore(
 
       case 'slur_open':
         if (startSlur !== null)
-          throw new Error(`Unexpected ( after note ${music.notes.length}`);
+          throw new Error(`Unexpected ( after ${lastNoteContext(music.notes)}`);
         startSlur = music.notes.length;
         break;
 
       case 'slur_close':
         if (startSlur === null)
-          throw new Error(`Unexpected ) after note ${music.notes.length}`);
+          throw new Error(`Unexpected ) after ${lastNoteContext(music.notes)}`);
         music.curves.push([startSlur, music.notes.length - 1]);
         startSlur = null;
         break;
@@ -888,6 +909,11 @@ export function parseScore(
       }
 
       case 'inline_field': {
+        if (token.field === 'V') {
+          throw new Error(
+            'fromAbc received multi-voice ABC; use voicesFromAbc instead'
+          );
+        }
         const noteIndex = music.notes.length;
         const prev = signatureAt(music, noteIndex);
         const next: Signature = { ...prev, atNoteIndex: noteIndex };
@@ -1492,6 +1518,34 @@ function assignLyricsToNotes(
   }
 }
 
+function lastNoteContext(notes: Note[]): string {
+  const last = notes[notes.length - 1];
+  if (!last) return 'start of tune';
+  const pitch = Array.isArray(last.pitches) ? last.pitches[0] : last.pitches;
+  if (pitch === undefined) return 'rest';
+  const relative = pitch - PITCH_CONSTANTS.OCTAVE_OFFSET;
+  const octave = Math.floor(relative / PITCH_CONSTANTS.SEMITONES_PER_OCTAVE);
+  const semitone = Math.round(
+    ((relative % PITCH_CONSTANTS.SEMITONES_PER_OCTAVE) +
+      PITCH_CONSTANTS.SEMITONES_PER_OCTAVE) %
+      PITCH_CONSTANTS.SEMITONES_PER_OCTAVE
+  );
+  const name = NOTE_NAMES[semitone] ?? '?';
+  const abcName =
+    octave < 4
+      ? name + ','.repeat(Math.max(0, 3 - octave))
+      : name.toLowerCase() + "'".repeat(octave - 4);
+  return `note ${notes.length} (${abcName})`;
+}
+
+/**
+ * Parses single-voice ABC into a Music object. **Do not call directly on
+ * user-provided ABC** — it may contain multiple voices, in which case
+ * `fromAbc` will throw. Use `voicesFromAbc` instead, which handles both
+ * single- and multi-voice input. This function is the per-voice primitive
+ * `voicesFromAbc` builds on top of, and is exported only for that purpose
+ * and for unit tests of the parser itself.
+ */
 export function fromAbc(
   text: string,
   defaultClef: Music['clef'] = 'treble',

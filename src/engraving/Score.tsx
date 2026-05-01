@@ -32,7 +32,7 @@ export interface ScoreProps {
   width: number;
   /** Per-note result map: note index → 'correct' | 'wrong' */
   noteResults?: ReadonlyMap<number, 'correct' | 'wrong'>;
-  cursor?: { noteIdx: number };
+  cursor?: number;
   autoScroll?: boolean;
   onNoteClick?: (noteIdx: number) => void;
 }
@@ -118,23 +118,24 @@ export const Score = memo(function Score({
     return set;
   }, [noteFills]);
 
-  // Lookup: musicNoteIndex → barIndex (changes only when layout changes, i.e. when music/width change)
-  const noteToBar = useMemo(() => {
-    const map = new Map<number, number>();
-    for (const line of layout.lines) {
-      for (const bar of line.bars) {
-        for (const note of bar.notes) {
-          map.set(note.musicNoteIndex, bar.barIndex);
+  // Lookups: musicNoteIndex → barIndex / lineIndex (rebuilt only when the
+  // layout changes, so the per-frame cursor path stays O(1)).
+  const { noteToBar, noteToLine } = useMemo(() => {
+    const bar = new Map<number, number>();
+    const line = new Map<number, number>();
+    for (let i = 0; i < layout.lines.length; i++) {
+      for (const b of layout.lines[i].bars) {
+        for (const note of b.notes) {
+          bar.set(note.musicNoteIndex, b.barIndex);
+          line.set(note.musicNoteIndex, i);
         }
       }
     }
-    return map;
+    return { noteToBar: bar, noteToLine: line };
   }, [layout]);
 
   const cursorNoteIdx =
-    cursor !== undefined && cursor.noteIdx >= 0
-      ? Math.floor(cursor.noteIdx)
-      : undefined;
+    cursor !== undefined && cursor >= 0 ? Math.floor(cursor) : undefined;
   const cursorBarIndex =
     cursorNoteIdx !== undefined ? noteToBar.get(cursorNoteIdx) : undefined;
 
@@ -149,22 +150,12 @@ export const Score = memo(function Score({
   // Auto-scroll: keep the current staff line visible during playback/practice
   const prevLineIdxRef = useRef<number>(-1);
   useEffect(() => {
-    if (!autoScroll || cursor === undefined || cursor.noteIdx < 0) {
+    if (!autoScroll || cursor === undefined || cursor < 0) {
       prevLineIdxRef.current = -1;
       return;
     }
-    const targetNoteIdx = Math.floor(cursor.noteIdx);
-    let lineIdx = -1;
-    outer: for (let i = 0; i < layout.lines.length; i++) {
-      for (const bar of layout.lines[i].bars) {
-        for (const note of bar.notes) {
-          if (note.musicNoteIndex === targetNoteIdx) {
-            lineIdx = i;
-            break outer;
-          }
-        }
-      }
-    }
+    const targetNoteIdx = Math.floor(cursor);
+    const lineIdx = noteToLine.get(targetNoteIdx) ?? -1;
     if (lineIdx === -1 || lineIdx === prevLineIdxRef.current) return;
     prevLineIdxRef.current = lineIdx;
     if (!svgEl) return;
@@ -187,7 +178,7 @@ export const Score = memo(function Score({
       top: docAnchorTop - window.innerHeight,
       behavior: 'smooth',
     });
-  }, [autoScroll, cursor, layout, svgEl]);
+  }, [autoScroll, cursor, layout, noteToLine, svgEl]);
 
   const handleNoteClick = useCallback(
     (noteIdx: number, x: number, y: number) => {
@@ -306,8 +297,8 @@ export const Score = memo(function Score({
         })}
 
         {/* Playback/recording cursor */}
-        {cursor !== undefined && cursor.noteIdx >= 0 && (
-          <Cursor noteIdx={cursor.noteIdx} layout={layout} />
+        {cursor !== undefined && cursor >= 0 && (
+          <Cursor noteIdx={cursor} layout={layout} />
         )}
       </svg>
 

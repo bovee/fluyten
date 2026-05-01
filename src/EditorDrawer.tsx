@@ -130,18 +130,24 @@ export function EditorDrawer({
   );
   const [scaleDialogOpen, setScaleDialogOpen] = useState(false);
 
+  const lastHeightRef = useRef<number | null>(null);
   useLayoutEffect(() => {
     const el = drawerRef.current;
     if (!el || !onHeightChange) return;
     if (!open) {
+      lastHeightRef.current = 0;
       onHeightChange(0);
       return;
     }
-    const observer = new ResizeObserver(() => {
-      onHeightChange(el.offsetHeight);
-    });
+    const reportHeight = () => {
+      const h = el.offsetHeight;
+      if (h === lastHeightRef.current) return;
+      lastHeightRef.current = h;
+      onHeightChange(h);
+    };
+    const observer = new ResizeObserver(reportHeight);
     observer.observe(el);
-    onHeightChange(el.offsetHeight);
+    reportHeight();
     return () => observer.disconnect();
   }, [open, onHeightChange]);
 
@@ -306,12 +312,12 @@ export function EditorDrawer({
   // --- Editor helpers ---
   const updateAbcSelection = () => {
     const textarea = abcTextareaRef.current;
-    if (textarea) {
-      setAbcSelection({
-        start: textarea.selectionStart,
-        end: textarea.selectionEnd,
-      });
-    }
+    if (!textarea) return;
+    const start = textarea.selectionStart;
+    const end = textarea.selectionEnd;
+    setAbcSelection((prev) =>
+      prev.start === start && prev.end === end ? prev : { start, end }
+    );
   };
 
   // `onSelect` on the textarea doesn't fire reliably on iOS/iPadOS for

@@ -46,7 +46,8 @@ Fluyten generally follows [the 2.1 spec for the ABC format](https://abcnotation.
  - `!d.c.alfine!`, `!d.c.alcoda!`, `!alcoda!`, `!d.s.alfine!` and `!d.s.alcoda!` are supported for complex repetition patterns.
  - Microtonal notes are supported via `^/` and `_/` (instead of `^` or `_` accidentals) for quartertones and `^3/2` and `_3/2` for three-quartertones.
  - `!glissando!` and `!gliss!` can be used as a decoration to draw a glissando to the previous note.
- - Several parts of the ABC spec are not supported: instructions (3.1.17), symbol lines (4.15), redefinable symbols (4.16), typesettings (6.1), macros (9), stylesheet directives (11), HTML special symbols (part of 14.1), etc
+
+Several parts of the ABC spec are not supported: instructions (3.1.17), symbol lines (4.15), redefinable symbols (4.16), typesettings (6.1), macros (9), stylesheet directives (11), HTML special symbols (part of 14.1), etc
 
 ### Third-party assets
 

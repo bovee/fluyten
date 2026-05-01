@@ -461,6 +461,27 @@ describe('fromAbc', () => {
         expect(volta1Bars[0].type).toBe('standard');
       });
 
+      it('slur opened before volta closes in both branches', () => {
+        // The `(` before B must match both `c)` (volta 1) and `e)` (volta 2),
+        // producing two curves from the same start note.
+        const music = fromAbc(
+          `T:Test\nM:4/4\nL:1/4\nK:C\nA (B |1 c) d :|2 e) f`
+        );
+        expect(music.curves).toContainEqual([1, 2]);
+        expect(music.curves).toContainEqual([1, 4]);
+      });
+
+      it('open slur before :| is recorded as an open-end slur', () => {
+        // `(f` opens a slur inside the first ending that is never closed in the
+        // written music; it visually closes at the `:|` repeat barline.
+        const music = fromAbc(
+          `T:Test\nM:4/4\nL:1/4\nK:C\nA (B |: c) d |1 e (f :| g a`
+        );
+        expect(music.curves).toContainEqual([1, 2]); // B → c
+        // f is note 5; :| sits after note 5
+        expect(music.openEndSlurs).toContainEqual([5, 5]);
+      });
+
       it('round-trips volta bracket through export and re-import', () => {
         const music = fromAbc(
           `T:Test\nM:4/4\nL:1/4\nK:C\n|: C D E F |1 G A B c :|2 d e f g |]`

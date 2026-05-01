@@ -375,6 +375,59 @@ export const VoltaBrackets: Story = {
   },
 };
 
+// Slur that opens before a volta split and closes inside each branch.
+// ABC: A (B |1 c) d :|2 e) f — the `(B` matches both `c)` (volta 1) and `e)`
+// (volta 2). The volta-2 closure should render from the start of the volta-2
+// bar to `e`, not all the way back from `B`.
+export const VoltaBracketsWithSlur: Story = {
+  args: {
+    music: (() => {
+      const music = new Music();
+      music.signatures[0].beatsPerBar = 4;
+      music.signatures[0].beatValue = 4;
+      music.notes = [Q(69), Q(71), Q(60), Q(62), Q(64), Q(65)];
+      music.curves = [
+        [1, 2], // B → c (volta 1)
+        [1, 4], // B → e (volta 2) — rendered from :|2 bar start
+      ];
+      const bars: BarLine[] = [
+        { afterNoteNum: 1, type: 'standard', volta: 1 },
+        { afterNoteNum: 3, type: 'end_repeat', volta: 2 },
+        { afterNoteNum: 5, type: 'end' },
+      ];
+      music.bars = bars;
+      return music;
+    })(),
+    width: WIDTH,
+  },
+};
+
+// Slur that opens inside a repeat and is never explicitly closed; visually
+// hangs off the `:|` barline. ABC: `A (B |: c) d |1 e (f :| g a` — the `(f`
+// has no `)` so we render an open-ended slur from f to the end of the bar.
+export const VoltaBracketsOpenEndSlur: Story = {
+  args: {
+    music: (() => {
+      const music = new Music();
+      music.signatures[0].beatsPerBar = 4;
+      music.signatures[0].beatValue = 4;
+      music.notes = [Q(69), Q(71), Q(60), Q(62), Q(64), Q(65), Q(67), Q(69)];
+      music.curves = [[1, 2]]; // B → c
+      music.openEndSlurs = [[5, 5]]; // f → end of :| bar
+      const bars: BarLine[] = [
+        { afterNoteNum: 1, type: 'standard' },
+        { afterNoteNum: -1, type: 'begin_repeat' },
+        { afterNoteNum: 3, type: 'standard', volta: 1 },
+        { afterNoteNum: 5, type: 'end_repeat' },
+        { afterNoteNum: 7, type: 'end' },
+      ];
+      music.bars = bars;
+      return music;
+    })(),
+    width: WIDTH,
+  },
+};
+
 // --- Begin-repeat on first bar (preamble gap) ---
 
 export const BeginRepeat: Story = {
@@ -505,7 +558,7 @@ export const WithCursor: Story = {
   args: {
     music: createSimpleMusic(),
     width: WIDTH,
-    cursor: { noteIdx: 1 },
+    cursor: 1,
   },
 };
 

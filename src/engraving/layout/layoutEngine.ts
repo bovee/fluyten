@@ -222,6 +222,7 @@ export function computeLayout(
   // ---------------------------------------------------------------------------
   const tiesByLine = computeTies(
     music,
+    barData,
     allBarLayouts,
     barToLine,
     linePlans.length,
@@ -433,6 +434,7 @@ function buildNotePosMap(
 
 function computeTies(
   music: Music,
+  barData: BarData[],
   barLayouts: BarLayout[],
   barToLine: Map<number, { lineIndex: number; posInLine: number }>,
   numLines: number,
@@ -442,6 +444,12 @@ function computeTies(
   const notePosMap = buildNotePosMap(barLayouts, barToLine, lineHeight);
   const result: TieLayout[][] = Array.from({ length: numLines }, () => []);
 
+  // Map note index -> bar index, for detecting curves that cross volta boundaries.
+  const noteToBar = new Map<number, number>();
+  for (const bar of barData) {
+    for (const idx of bar.noteIndices) noteToBar.set(idx, bar.barIndex);
+  }
+
   for (const [startIdx, endIdx] of music.curves) {
     // Don't draw ties to/from rests
     if (music.notes[startIdx]?.pitches.length === 0) continue;
@@ -449,6 +457,28 @@ function computeTies(
     const startPos = notePosMap.get(startIdx);
     const endPos = notePosMap.get(endIdx);
     if (!startPos || !endPos) continue;
+
+    // If the curve crosses into a volta bracket (start is outside, end is inside
+    // the volta), visually anchor the start to the left edge of the volta bar
+    // rather than dragging the slur all the way back to the original note.
+    const startBarIdx = noteToBar.get(startIdx);
+    const endBarIdx = noteToBar.get(endIdx);
+    if (startBarIdx !== undefined && endBarIdx !== undefined) {
+      const endVolta = barData[endBarIdx]?.volta;
+      const startVolta = barData[startBarIdx]?.volta;
+      if (endVolta !== undefined && endVolta >= 2 && endVolta !== startVolta) {
+        const endBarLayout = barLayouts[endBarIdx];
+        if (endBarLayout) {
+          startPos.x = endBarLayout.x;
+          startPos.lineIndex =
+            barToLine.get(endBarIdx)?.lineIndex ?? startPos.lineIndex;
+          const endStaffTopY = TOP_MARGIN + startPos.lineIndex * lineHeight;
+          startPos.topY = endStaffTopY;
+          startPos.bottomY = endStaffTopY + STAFF_HEIGHT;
+          startPos.staffTopY = endStaffTopY;
+        }
+      }
+    }
 
     // Curve direction set by start note's stem: stem-up → below (notehead side), stem-down → above.
     const curveDirection: 'above' | 'below' =
@@ -493,6 +523,40 @@ function computeTies(
         curveDirection,
         isOpenEnd: false,
         isOpenStart: true,
+      });
+    }
+  }
+
+  // Slurs that open but never explicitly close before a `:|` barline. Render
+  // them as a curve from the open note to the right edge of the bar that ends
+  // at the `:|`.
+  for (const [startIdx, afterNoteIdx] of music.openEndSlurs) {
+    const startPos = notePosMap.get(startIdx);
+    if (!startPos) continue;
+    if (music.notes[startIdx]?.pitches.length === 0) continue;
+    const bar = barData.find(
+      (b) => b.noteIndices[b.noteIndices.length - 1] === afterNoteIdx
+    );
+    if (!bar) continue;
+    const barLayout = barLayouts[bar.barIndex];
+    if (!barLayout) continue;
+    const loc = barToLine.get(bar.barIndex);
+    if (!loc) continue;
+    const curveDirection: 'above' | 'below' =
+      startPos.stemDirection === 'down' ? 'above' : 'below';
+    const startY =
+      curveDirection === 'above' ? startPos.topY - 8 : startPos.bottomY + 8;
+    const endX = barLayout.x + barLayout.width;
+    if (loc.lineIndex === startPos.lineIndex) {
+      result[startPos.lineIndex].push({
+        startX: startPos.x,
+        startY,
+        endX,
+        endY: startY,
+        lineIndex: startPos.lineIndex,
+        curveDirection,
+        isOpenEnd: true,
+        isOpenStart: false,
       });
     }
   }

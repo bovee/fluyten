@@ -5,7 +5,6 @@ import {
   useMemo,
   useRef,
   useState,
-  useTransition,
 } from 'react';
 import { useTranslation } from 'react-i18next';
 import { useTheme } from '@mui/material/styles';
@@ -45,6 +44,10 @@ import { EditorDrawer } from './EditorDrawer';
 
 const PLAY_SAMPLE_RATE = 1000;
 const RECORD_SAMPLE_RATE = 20;
+/** Cursor sub-note quantization step: skip RAF setCursor calls whose noteIdx
+ * rounds to the same bucket as the last one we pushed, so Score doesn't
+ * re-render every frame for sub-note cursor motion. */
+const CURSOR_QUANT = 0.1;
 
 /** Tracks a repeating window.setInterval ID in both state (for reactive UI) and a ref (for stale-closure-safe cleanup). */
 function useIntervalRef() {
@@ -86,7 +89,7 @@ function usePitchDetection(
   const [noteResults, setNoteResults] = useState<
     ReadonlyMap<number, 'correct' | 'wrong'>
   >(new Map());
-  const [cursor, setCursor] = useState<{ noteIdx: number } | undefined>();
+  const [cursor, setCursor] = useState<number | undefined>();
   const noteResultsMapRef = useRef(new Map<number, 'correct' | 'wrong'>());
   // True while the target note is currently sounding, so we count each note
   // onset only once even if the player holds the note across multiple polls.
@@ -109,9 +112,7 @@ function usePitchDetection(
     setNoteResults(new Map());
     expandedTrackingRef.current.idx = 0;
     const firstOriginalIdx = expandedTrackingRef.current.originalIndices[0];
-    setCursor(
-      firstOriginalIdx !== undefined ? { noteIdx: firstOriginalIdx } : undefined
-    );
+    setCursor(firstOriginalIdx);
 
     const { tuning, instrumentType, customBasePitchStr, customHighNoteStr } =
       useStore.getState();
@@ -165,11 +166,7 @@ function usePitchDetection(
           } else {
             tracker.setTarget(tracking.notes[tracking.idx].pitches[0], tuning);
             const nextOriginalIdx = tracking.originalIndices[tracking.idx];
-            setCursor(
-              nextOriginalIdx !== undefined
-                ? { noteIdx: nextOriginalIdx }
-                : undefined
-            );
+            setCursor(nextOriginalIdx);
           }
         }
       } else {
@@ -224,7 +221,7 @@ function useInTempoChecking(
   const [noteResults, setNoteResults] = useState<
     ReadonlyMap<number, 'correct' | 'wrong'>
   >(new Map());
-  const [cursor, setCursor] = useState<{ noteIdx: number } | undefined>();
+  const [cursor, setCursor] = useState<number | undefined>();
   const [countdown, setCountdown] = useState<number | null>(null);
   // Track the current note index (original) being evaluated, and whether the
   // correct pitch was detected at any point during that note's time window.
@@ -389,7 +386,7 @@ function useInTempoChecking(
         }
         currentNoteIdxRef.current = floorIdx;
 
-        setCursor({ noteIdx });
+        setCursor(Math.round(noteIdx / CURSOR_QUANT) * CURSOR_QUANT);
         rafRef.current = requestAnimationFrame(animate);
       };
       rafRef.current = requestAnimationFrame(animate);
@@ -422,7 +419,7 @@ function useAudioPlayback(
   const musicPlayersRef = useRef<PlayerEntry[]>([]);
   const cursorTimelineRef = useRef<MusicTimeline | null>(null);
   const musicPlayerInterval = useIntervalRef();
-  const [cursor, setCursor] = useState<{ noteIdx: number } | undefined>();
+  const [cursor, setCursor] = useState<number | undefined>();
   const cursorRafRef = useRef<number | null>(null);
 
   const clearMusicPlayer = () => {
@@ -497,7 +494,10 @@ function useAudioPlayback(
           cursorRafRef.current = null;
           return;
         }
-        setCursor({ noteIdx: tl.getNoteIdxAtTime(tl.getCurrentTime()) });
+        setCursor(
+          Math.round(tl.getNoteIdxAtTime(tl.getCurrentTime()) / CURSOR_QUANT) *
+            CURSOR_QUANT
+        );
         cursorRafRef.current = requestAnimationFrame(animateCursor);
         return;
       }
@@ -512,7 +512,7 @@ function useAudioPlayback(
       const noteIdx = selectedEntry.player.getNoteIdxAtTime(
         selectedEntry.player.audioCtx.currentTime
       );
-      setCursor({ noteIdx });
+      setCursor(Math.round(noteIdx / CURSOR_QUANT) * CURSOR_QUANT);
       cursorRafRef.current = requestAnimationFrame(animateCursor);
     };
     cursorRafRef.current = requestAnimationFrame(animateCursor);
@@ -691,7 +691,6 @@ export function SongPage({
   const [abcMusic, setAbcMusic] = useState(song.abc);
   const [currentParseError, setCurrentParseError] = useState('');
   const [voices, setVoices] = useState(initVoices);
-  const [, startTransition] = useTransition();
   const [selectedVoiceIdx, setSelectedVoiceIdx] = useState(0);
   const music = useMemo(
     () =>
@@ -837,20 +836,28 @@ export function SongPage({
     if (!isRecording) stopMetronome();
   }, [isRecording, stopMetronome]);
 
-  useEffect(() => {
+  // Re-parse when the ABC or clef/middle hints change. We adjust state during
+  // render (rather than in an effect) so the new voices are visible in the
+  // same render pass; on parse error we keep the previous voices so the score
+  // doesn't blank out during transient mid-edit failures.
+  const [parseInputs, setParseInputs] = useState({
+    abcMusic,
+    defaultClef,
+    defaultMiddle,
+  });
+  if (
+    parseInputs.abcMusic !== abcMusic ||
+    parseInputs.defaultClef !== defaultClef ||
+    parseInputs.defaultMiddle !== defaultMiddle
+  ) {
+    setParseInputs({ abcMusic, defaultClef, defaultMiddle });
     try {
-      const newVoices = voicesFromAbc(abcMusic, defaultClef, defaultMiddle);
-      startTransition(() => {
-        setVoices(newVoices);
-        setSelectedVoiceIdx((idx) => Math.min(idx, newVoices.length - 1));
-        setCurrentParseError('');
-      });
+      setVoices(voicesFromAbc(abcMusic, defaultClef, defaultMiddle));
+      setCurrentParseError('');
     } catch (error) {
-      startTransition(() => {
-        setCurrentParseError((error as Error).message);
-      });
+      setCurrentParseError((error as Error).message);
     }
-  }, [abcMusic, defaultClef, defaultMiddle]);
+  }
 
   // Persist ABC edits to the store only when the user closes the editor
   // drawer, navigates away, or the component unmounts — not on every keystroke.

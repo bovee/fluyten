@@ -50,20 +50,28 @@ function App() {
 
   const [selected, setSelected] = useState<SelectedSong | null>(null);
   const [selectedSet, setSelectedSet] = useState<UserSet | null>(null);
-  const sets = useStore((state) => state.sets);
-  const storeSongs = useStore((state) => state.songs);
   const updateSongAbc = useStore((state) => state.updateSongAbc);
 
-  // Keep selectedSet in sync with store (e.g. after reorder)
-  const liveSet = selectedSet
-    ? (sets.find((s) => s.id === selectedSet.id) ?? null)
-    : null;
+  // Narrow the subscription: we only need the live copy of the selected set,
+  // not the whole sets/songs arrays. Subscribing to the whole lists at App
+  // level means every store mutation (practice results, settings) re-renders
+  // the entire tree including Score.
+  const liveSet = useStore((s) =>
+    selectedSet ? (s.sets.find((ss) => ss.id === selectedSet.id) ?? null) : null
+  );
+
+  const selectedSongId = selected?.song.id;
+  const selectedReadOnly = selected?.readOnly;
+  const onAbcChange = useMemo(
+    () =>
+      selectedSongId && !selectedReadOnly
+        ? (abc: string) => updateSongAbc(selectedSongId, abc)
+        : undefined,
+    [selectedSongId, selectedReadOnly, updateSongAbc]
+  );
 
   if (selected) {
     const { song, readOnly, setSongs, setIndex } = selected;
-    const onAbcChange = readOnly
-      ? undefined
-      : (abc: string) => updateSongAbc(song.id, abc);
     const hasStepping = setSongs !== undefined && setIndex !== undefined;
     const onPrevSong =
       hasStepping && setIndex > 0
@@ -114,6 +122,7 @@ function App() {
             set={liveSet}
             onBack={() => setSelectedSet(null)}
             onSelectSong={(song, readOnly) => {
+              const storeSongs = useStore.getState().songs;
               const setSongs = liveSet.songIds
                 .map((id) => storeSongs.find((s) => s.id === id))
                 .filter((s): s is NonNullable<typeof s> => s !== undefined);

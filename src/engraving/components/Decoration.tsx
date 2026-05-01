@@ -40,20 +40,34 @@ const TEXT_ABOVE: Partial<Record<Decoration, string>> = {
 
 // Articulations placed adjacent to the notehead, opposite the stem.
 // Uses Above/Below glyph variants depending on stem direction.
-const NOTEHEAD_ARTICULATIONS = new Set<Decoration>(['staccato', 'tenuto']);
+// Order determines stacking from notehead outward (first = closest to notehead).
+const NOTEHEAD_ARTICULATION_ORDER: Decoration[] = [
+  'tenuto',
+  'staccato',
+  'accent',
+];
+const NOTEHEAD_ARTICULATIONS = new Set<Decoration>(NOTEHEAD_ARTICULATION_ORDER);
 
 const NOTEHEAD_GLYPH_ABOVE: Partial<Record<Decoration, string>> = {
   staccato: 'articStaccatoAbove',
   tenuto: 'articTenutoAbove',
+  accent: 'articAccentAbove',
 };
 const NOTEHEAD_GLYPH_BELOW: Partial<Record<Decoration, string>> = {
   staccato: 'articStaccatoBelow',
   tenuto: 'articTenutoBelow',
+  accent: 'articAccentBelow',
+};
+
+// Height consumed by each notehead articulation (used for stacking offset).
+const NOTEHEAD_ARTICULATION_HEIGHT: Partial<Record<Decoration, number>> = {
+  staccato: 8,
+  tenuto: 8,
+  accent: 12,
 };
 
 // Maps decoration → SMuFL glyph name (above-note versions, for stem-end placement)
 const GLYPH_MAP: Partial<Record<Decoration, string>> = {
-  accent: 'articAccentAbove',
   fermata: 'fermataAbove',
   trill: 'ornamentTrill',
   lowermordent: 'ornamentMordent',
@@ -119,6 +133,28 @@ export function DecorationGroup({
   const aboveY = Math.min(stemEndY, staffTopY) - 8;
   const belowStaffY = staffTopY + STAFF_HEIGHT + STAFF_SPACE * 3;
 
+  // Pre-compute stacked Y positions for notehead articulations.
+  // Order is from notehead outward: innermost (e.g. staccato) → outermost (e.g. accent).
+  const noteheadArticulationsPresent = NOTEHEAD_ARTICULATION_ORDER.filter((d) =>
+    decorations.includes(d)
+  );
+  const noteheadArticulationY = new Map<Decoration, number>();
+  if (stemDirection === 'up') {
+    // Below the notehead: start just below and move further down
+    let yBelow = noteY + 10;
+    for (const d of noteheadArticulationsPresent) {
+      noteheadArticulationY.set(d, yBelow);
+      yBelow += NOTEHEAD_ARTICULATION_HEIGHT[d] ?? 8;
+    }
+  } else {
+    // Above the notehead: start just above and move further up
+    let yAbove = noteY - 8;
+    for (const d of noteheadArticulationsPresent) {
+      noteheadArticulationY.set(d, yAbove);
+      yAbove -= NOTEHEAD_ARTICULATION_HEIGHT[d] ?? 8;
+    }
+  }
+
   return (
     <g>
       {decorations.map((dec, i) => {
@@ -150,12 +186,12 @@ export function DecorationGroup({
           );
         }
 
-        // Notehead articulations: placed adjacent to notehead, opposite the stem
+        // Notehead articulations: placed adjacent to notehead, stacked outward from it
         if (NOTEHEAD_ARTICULATIONS.has(dec)) {
           const xOffset = GLYPH_X_CENTER_OFFSET[dec] ?? 0;
+          const articulationY = noteheadArticulationY.get(dec)!;
           const staccatoFontSize = dec === 'staccato' ? 56 : undefined;
           if (stemDirection === 'up') {
-            // Stem up → notehead is at bottom → articulation goes below
             const glyphName = NOTEHEAD_GLYPH_BELOW[dec];
             if (glyphName)
               return (
@@ -163,12 +199,11 @@ export function DecorationGroup({
                   key={i}
                   name={glyphName}
                   x={x + xOffset}
-                  y={noteY + 10}
+                  y={articulationY}
                   fontSize={staccatoFontSize}
                 />
               );
           } else {
-            // Stem down → notehead is at top → articulation goes above
             const glyphName = NOTEHEAD_GLYPH_ABOVE[dec];
             if (glyphName)
               return (
@@ -176,7 +211,7 @@ export function DecorationGroup({
                   key={i}
                   name={glyphName}
                   x={x + xOffset}
-                  y={noteY - 8}
+                  y={articulationY}
                   fontSize={staccatoFontSize}
                 />
               );

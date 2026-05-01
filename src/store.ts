@@ -2,7 +2,8 @@ import { create } from 'zustand';
 import { persist, createJSONStorage } from 'zustand/middleware';
 
 import { type RecorderType } from './instrument';
-import { fromAbc, voicesFromAbc } from './io/abcImport';
+import { voicesFromAbc } from './io/abcImport';
+import { Music } from './music';
 import { featuresFromMusic, difficultyFromFeatures } from './method';
 
 export type PlaybackVoices = 'selected' | 'others' | 'all';
@@ -40,14 +41,13 @@ function derivedFields(
   abc: string,
   method: string
 ): Pick<UserSong, 'title' | 'composer' | 'beats' | 'difficulty'> {
-  const music = fromAbc(abc);
+  const voices = voicesFromAbc(abc);
+  const music = voices[0]?.music ?? new Music();
   const title = music.title ?? '';
   const composer = music.composer;
   const barCount = music.bars.filter((b) => b.type !== 'begin').length;
   const beats = barCount * music.signatures[0].beatsPerBar;
-  const voices = voicesFromAbc(abc);
-  const firstVoice = voices.length > 0 ? voices[0].music : music;
-  const features = featuresFromMusic(firstVoice);
+  const features = featuresFromMusic(music);
   const difficulty = difficultyFromFeatures(features, method);
   return { title, composer, beats, difficulty };
 }
@@ -180,12 +180,22 @@ export const useStore = create<SettingsState>()(
         set((state) => ({
           songs: [
             ...state.songs,
-            ...songs.map((s) => ({
-              ...s,
-              practiceHistory: s.practiceHistory ?? [],
-              practiceCount: s.practiceCount ?? 0,
-              ...derivedFields(s.abc, state.method),
-            })),
+            ...songs.map((s) => {
+              let derived: ReturnType<typeof derivedFields>;
+              try {
+                derived = derivedFields(s.abc, state.method);
+              } catch (err) {
+                const xMatch = s.abc.match(/^X:\s*(\S+)/m);
+                const prefix = xMatch ? `[X:${xMatch[1]}] ` : '';
+                throw new Error(`${prefix}${(err as Error).message}`);
+              }
+              return {
+                ...s,
+                practiceHistory: s.practiceHistory ?? [],
+                practiceCount: s.practiceCount ?? 0,
+                ...derived,
+              };
+            }),
           ],
         })),
       removeSong: (songId) =>
@@ -255,7 +265,7 @@ export const useStore = create<SettingsState>()(
         if (version < 3) {
           state.sets = [];
           (state.songs as UserSong[]).forEach((s) => {
-            s.composer = fromAbc(s.abc).composer;
+            s.composer = voicesFromAbc(s.abc)[0]?.music.composer;
           });
         }
         return state;

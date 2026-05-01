@@ -19,9 +19,14 @@ export function Tie({ tie }: TieProps) {
   const { startX, startY, endX, endY, curveDirection, isOpenEnd, isOpenStart } =
     tie;
 
-  const cx1 = startX + (endX - startX) / 3;
-  const cx2 = startX + (2 * (endX - startX)) / 3;
-  const bulge = 12 * (curveDirection === 'above' ? -1 : 1);
+  const span = endX - startX;
+  const bulge =
+    Math.max(12, Math.min(span * 0.15, 28)) *
+    (curveDirection === 'above' ? -1 : 1);
+  // Control point horizontal offset matches bulge magnitude → ~45° departure angle at endpoints
+  const cpOffset = Math.min(Math.abs(bulge), span / 2);
+  const cx1 = startX + cpOffset;
+  const cx2 = endX - cpOffset;
   const cy1 = startY + bulge;
   const cy2 = endY + bulge;
 
@@ -121,7 +126,6 @@ export function VoltaBracket({ volta, staffTopY }: VoltaBracketProps) {
   const { number, type, x, width } = volta;
   const y = staffTopY + VOLTA_Y_OFFSET;
   const showLeftArm = type === 'begin' || type === 'begin_end';
-  const showRightArm = type === 'end' || type === 'begin_end';
 
   return (
     <g>
@@ -140,17 +144,6 @@ export function VoltaBracket({ volta, staffTopY }: VoltaBracketProps) {
           x1={x}
           y1={y}
           x2={x}
-          y2={y + VOLTA_HEIGHT}
-          stroke="currentColor"
-          strokeWidth={1.5}
-        />
-      )}
-      {/* Right arm */}
-      {showRightArm && (
-        <line
-          x1={x + width}
-          y1={y}
-          x2={x + width}
           y2={y + VOLTA_HEIGHT}
           stroke="currentColor"
           strokeWidth={1.5}

@@ -218,6 +218,7 @@ const METHOD_DIFFICULTY: Record<string, DifficultyMap> = {
     'f#': '2.24',
     [Technique.Tenuto]: '2.26',
     'c#': '2.32',
+    'G#': '2.38',
     'd#': '2.42',
     'a#': '3.06',
     [Technique.GraceNote]: '3.08',
@@ -226,7 +227,7 @@ const METHOD_DIFFICULTY: Record<string, DifficultyMap> = {
     b: '3.20',
     'C#': '3.24',
     'D#': '3.26',
-    'G#': '3.36',
+    'g#': '3.36',
     "c'": '3.42',
   },
 };

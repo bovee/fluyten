@@ -26,6 +26,7 @@ function assignBarredNotes(music: Music): BarData[] {
   const bars: BarData[] = [];
   let noteStart = 0;
   let pendingStartType = undefined as BarData['barLineStartType'];
+  let pendingVolta: number | undefined = undefined;
 
   for (const bar of music.bars) {
     // Bars with no afterNoteNum (or negative) are markers before any notes — e.g. an
@@ -34,6 +35,7 @@ function assignBarredNotes(music: Music): BarData[] {
       if (bar.type === 'begin_repeat' || bar.type === 'begin_end_repeat') {
         pendingStartType = bar.type;
       }
+      if (bar.volta !== undefined) pendingVolta = bar.volta;
       continue;
     }
 
@@ -56,11 +58,12 @@ function assignBarredNotes(music: Music): BarData[] {
       noteIndices,
       barLineType: bar.type,
       barLineStartType: pendingStartType,
-      volta: bar.volta,
+      volta: pendingVolta,
       signature: signatureAt(music, noteIndices[0] ?? 0),
     });
 
     pendingStartType = undefined;
+    pendingVolta = bar.volta;
     // The begin_repeat and begin_end_repeat types also signal the NEXT bar's start
     if (bar.type === 'begin_repeat' || bar.type === 'begin_end_repeat') {
       pendingStartType = bar.type;
@@ -77,6 +80,7 @@ function assignBarredNotes(music: Music): BarData[] {
       noteIndices,
       barLineType: 'end',
       barLineStartType: pendingStartType,
+      volta: pendingVolta,
       signature: signatureAt(music, noteStart),
     });
   }

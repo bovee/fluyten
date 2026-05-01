@@ -648,6 +648,11 @@ export class Music {
   notes: Note[] = [];
   beams: number[][] = [];
   curves: number[][] = [];
+  // Slurs opened inside a repeat that never get an explicit close in the written
+  // music — e.g. `|1 e (f :|`. Each entry is `[startNoteIdx, afterNoteIdx]`
+  // where afterNoteIdx identifies the :| barline (matches BarLine.afterNoteNum).
+  // Rendered as a curve from the note to the right edge of that bar.
+  openEndSlurs: number[][] = [];
   spanDecorations: SpanDecoration[] = [];
   bars: BarLine[] = [];
   // Aligned lyrics from w: fields. lyrics[verse][noteIndex] = syllable or undefined.
