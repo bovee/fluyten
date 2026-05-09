@@ -1,3 +1,4 @@
+import { useId } from 'react';
 import { useTranslation } from 'react-i18next';
 import { useTheme } from '@mui/material/styles';
 import { type Note } from './music';
@@ -52,33 +53,39 @@ function parseFingerings(raw: { [offset: number]: string[] }): {
 }
 
 const FINGERINGS: { [offset: number]: Hole[][] } = parseFingerings({
+  0: ['CCCCCCCCH'], // B
   1: ['CCCCCCCC'], // C
   2: ['CCCCCCCH'],
-  3: ['CCCCCCCO'],
+  3: ['CCCCCCCO'], // D
   4: ['CCCCCCHO'],
   5: ['CCCCCCOO'], // E
-  6: ['CCCCCOCC'],
+  6: ['CCCCCOCC'], // F
   7: ['CCCCOCCO'],
   8: ['CCCCOOOO'], // G
   9: ['CCCOCCHO'],
-  10: ['CCCOOOOO'],
+  10: ['CCCOOOOO'], // A
   11: ['CCOCCOOO', 'COCCCOOO'],
   12: ['CCOOOOOO', 'COCCOOOO'], // B
   13: ['COCOOOOO'],
-  14: ['OCCOOOOO', 'COOOOOOO'],
+  14: ['OCCOOOOO', 'COOOOOOO'], // C
   15: ['OOCOOOOO'], // D
-  16: ['OOCCCCCO', 'HCCCCCOO'],
-  17: ['HCCCCCOO'],
+  16: ['OOCCCCCO'],
+  17: ['HCCCCCOO'], // E
   18: ['HCCCCOCO'], // F
   19: ['HCCCOCOO'],
-  20: ['HCCCOOOO'],
+  20: ['HCCCOOOO'], // G
   21: ['HCCOCOOO'],
   22: ['HCCOOOOO'], // A
   23: ['HCCOCCCO'],
-  24: ['HCCOCCOO'],
+  24: ['HCCOCCOO'], // B
   25: ['HCOOCCOO'], // C
-  26: ['HCOCCOCCC'],
-  27: ['HCOCCOCH'],
+  26: ['HCOCCOCCC', 'HCHCCOCC'],
+  27: ['HCOCCOCH'], // D
+  28: ['HOCCOOOO'],
+  29: ['HOCCOCCOC'], // E
+  30: ['HCCOCCOOC'], // F
+  31: ['HCCOCCOO'],
+  32: ['HCOOCOOO'], // G
 });
 
 const GERMAN_FINGERINGS: { [offset: number]: Hole[][] } = parseFingerings({
@@ -95,6 +102,8 @@ const GERMAN_FINGERINGS: { [offset: number]: Hole[][] } = parseFingerings({
 export const TRILLED_FINGERINGS: { [offset: number]: Hole[][] } =
   parseFingerings({
     5: ['CCCCCVOO'], // E
+    8: ['CCCTOOOO'], // G
+    10: ['CCTOOOOO'], // A
     11: ['CTOCCOOO'],
     12: ['COCTOOOO', 'CTOOOOOO'], // B
     15: ['OCCCCTCC'], // D
@@ -157,6 +166,7 @@ export function FingeringDiagram({
   const theme = useTheme();
   const bgColor = theme.palette.background.paper;
   const dimColor = theme.palette.text.disabled;
+  const uid = useId();
 
   if (!note) return EMPTY_DIAGRAM;
   const { instrumentType: storeType, isGerman: storeGerman } =
@@ -370,6 +380,23 @@ export function FingeringDiagram({
           d={`M ${FRONT_X - BELL_RADIUS} ${BELL_Y} A ${BELL_ARC_RADIUS} ${BELL_ARC_RADIUS} 0 0 1 ${FRONT_X + BELL_RADIUS} ${BELL_Y} Z`}
           fill={f !== 0 ? dimColor : 'currentColor'}
         />
+      )}
+      {fingering[8] === Hole.Half && (
+        <>
+          <defs>
+            <clipPath
+              id={`bell-half-${uid}-${f}`}
+              clipPathUnits="userSpaceOnUse"
+            >
+              <rect x={-1000} y={-1000} width={1000 + FRONT_X} height={2000} />
+            </clipPath>
+          </defs>
+          <path
+            d={`M ${FRONT_X - BELL_RADIUS} ${BELL_Y} A ${BELL_ARC_RADIUS} ${BELL_ARC_RADIUS} 0 0 1 ${FRONT_X + BELL_RADIUS} ${BELL_Y} Z`}
+            fill={f !== 0 ? dimColor : 'currentColor'}
+            clipPath={`url(#bell-half-${uid}-${f})`}
+          />
+        </>
       )}
     </svg>
   ));

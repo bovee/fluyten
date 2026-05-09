@@ -22,7 +22,7 @@ describe('lookupFingerings', () => {
   });
 
   it('returns undefined for a pitch outside the fingering table', () => {
-    expect(lookupFingerings(71, 'SOPRANO', false)).toBeUndefined(); // offset 0
+    expect(lookupFingerings(70, 'SOPRANO', false)).toBeUndefined(); // offset -1
     expect(lookupFingerings(200, 'SOPRANO', false)).toBeUndefined();
   });
 

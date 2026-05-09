@@ -1,5 +1,6 @@
 import {
   type Accidental,
+  type Annotation,
   type BarLineType,
   type Decoration,
   type Signature,
@@ -12,7 +13,12 @@ import {
   Note,
   signatureAt,
 } from '../music';
-import { NOTE_NAMES, PITCH_CONSTANTS, TIME_SIGNATURES } from '../constants';
+import {
+  DURATION_TICKS,
+  NOTE_NAMES,
+  PITCH_CONSTANTS,
+  TIME_SIGNATURES,
+} from '../constants';
 
 // Mapping of two-character ABC mnemonics (after \) to their Unicode equivalents.
 // See https://abcnotation.com/wiki/abc:standard:v2.1#supported_accents_ligatures
@@ -279,7 +285,6 @@ function parseLDuration(data: string): Duration {
 // ---- Tokenizer --------------------------------------------------------------
 
 interface NoteGroups {
-  text: string;
   decoration: string;
   accidental: string;
   note: string;
@@ -288,6 +293,7 @@ interface NoteGroups {
 
 type ScoreToken =
   | { type: 'note'; groups: NoteGroups }
+  | { type: 'annotation'; text: string }
   | { type: 'bar'; barType: BarLineType }
   | { type: 'volta'; number: number }
   | { type: 'grace_open' | 'grace_open_slash' | 'grace_close' }
@@ -304,7 +310,6 @@ type ScoreToken =
 // Note sub-pattern (no ^ anchor; named groups survive the outer alternation
 // because only one branch can match at a time)
 const NOTE_PATTERN_SRC = [
-  '(?<text>(?:"[^"]*"\\s?)*)',
   '(?<decoration>(?:[.~HLMOPSTuv]|![A-Za-z0-9()<>+./]+!\\s?)*)',
   '(?<accidental>[\\^_]3/2?|[\\^_]1/2|[\\^_]/|[\\^=_]{0,2})',
   "(?<note>[A-Ga-gZXzx][,']*)",
@@ -315,6 +320,11 @@ const NOTE_PATTERN_SRC = [
 // Alternatives are ordered longest-match-first within each group.
 const TOKEN_RE = new RegExp(
   [
+    // Standalone quoted strings (annotations / chord symbols). Tokenized first
+    // so they're captured even when not directly followed by a note (e.g. before
+    // a slur `(`, grace `{`, chord `[`, or barline). The trailing optional
+    // whitespace is consumed silently — it must not emit a beam_break.
+    '(?<annText>"[^"]*"\\s?)',
     NOTE_PATTERN_SRC,
     // bars — longest first so "|:" isn't consumed as "|" + ":"
     // Volta variants (e.g. :|2, |1) must precede their non-volta counterparts
@@ -369,6 +379,11 @@ export function tokenize(score: string): ScoreToken[] {
 
     if (g.note !== undefined) {
       tokens.push({ type: 'note', groups: g as unknown as NoteGroups });
+      continue;
+    }
+
+    if (g.annText !== undefined) {
+      tokens.push({ type: 'annotation', text: g.annText.trimEnd() });
       continue;
     }
 
@@ -516,6 +531,7 @@ interface ChordAccum {
   duration: Duration;
   dots: number;
   decorations: Decoration[];
+  annotations: Annotation[];
 }
 
 export function parseScore(
@@ -541,6 +557,10 @@ export function parseScore(
   let preVoltaStartSlur: number | null | undefined = undefined;
   let chordAccum: ChordAccum | null = null;
   let pendingBrokenRhythm: 'dot' | 'halve' | null = null;
+  // Buffered quoted-string annotations waiting to attach to the next note (or
+  // chord wrapper). Cleared on bar / inline_field / volta — annotations don't
+  // legally cross those boundaries.
+  let pendingAnnotationText = '';
   const openSpans = new Map<SpanDecorationType, number>();
 
   // Maps ABC span decoration markers to their type and whether they open or close.
@@ -593,7 +613,8 @@ export function parseScore(
       token.type !== 'beam_join' &&
       token.type !== 'slur_open' &&
       token.type !== 'slur_close' &&
-      token.type !== 'broken_rhythm'
+      token.type !== 'broken_rhythm' &&
+      token.type !== 'annotation'
     )
       closeBeam();
 
@@ -654,6 +675,9 @@ export function parseScore(
           pendingBrokenRhythm = null;
         }
 
+        // Grace notes don't consume pending annotations — annotations belong
+        // to the main note that follows the grace group.
+        const isGrace = noteType === 'grace' || noteType === 'grace_slash';
         const note = Note.fromAbc(
           groups.note,
           noteDuration,
@@ -661,9 +685,10 @@ export function parseScore(
           curKeyAdjustment,
           groups.accidental,
           groups.decoration,
-          groups.text ?? '',
+          isGrace ? '' : pendingAnnotationText,
           barAccidentals
         );
+        if (!isGrace) pendingAnnotationText = '';
 
         if (noteType === 'tuplet' && pendingTuplet) {
           note.tuplet = { ...pendingTuplet };
@@ -689,6 +714,7 @@ export function parseScore(
             chordAccum.duration = note.duration;
             chordAccum.dots = note.dots;
             chordAccum.decorations = note.decorations;
+            chordAccum.annotations = note.annotations;
           }
           chordAccum.pitches.push(...note.pitches);
           chordAccum.accidentals.push(...note.accidentals);
@@ -745,6 +771,10 @@ export function parseScore(
         }
         break;
       }
+
+      case 'annotation':
+        pendingAnnotationText += token.text;
+        break;
 
       case 'bar':
         for (const k of Object.keys(barAccidentals)) delete barAccidentals[k];
@@ -806,6 +836,7 @@ export function parseScore(
           duration: curDefaultDuration,
           dots: 0,
           decorations: [],
+          annotations: [],
         };
         break;
 
@@ -826,6 +857,7 @@ export function parseScore(
             chordAccum.accidentals,
             chordAccum.dots
           );
+          chordNote.annotations = chordAccum.annotations;
           if (noteType === 'tuplet' && pendingTuplet) {
             chordNote.tuplet = { ...pendingTuplet };
             if (--tupletCounter === 0) {
@@ -1538,6 +1570,65 @@ function lastNoteContext(notes: Note[]): string {
   return `note ${notes.length} (${abcName})`;
 }
 
+// Bar types where the bar line itself implies a partial-bar boundary that
+// we should not validate against the time signature: a partial bar before
+// `:|` typically pairs with a partial bar after `|:` to form one full bar
+// across the repeat seam.
+const REPEAT_BARLINE_TYPES = new Set<BarLineType>([
+  'begin_repeat',
+  'end_repeat',
+  'begin_end_repeat',
+]);
+
+/**
+ * Validates that every "checkable" bar in `music` matches the active time
+ * signature's capacity. A bar is checkable iff it is bounded on both sides
+ * by explicit, non-repeat bar lines (so lead-ins, trailing tails, and bars
+ * adjacent to repeats are skipped) and the time signature is constant
+ * across the whole bar. Throws a descriptive Error on the first mismatch.
+ *
+ * Tuplets are handled correctly — `Note.ticks()` already applies the
+ * `written/actual` ratio. A small tolerance absorbs the per-note rounding
+ * that `Note.ticks()` introduces for tuplets (e.g. quarter-note triplet =
+ * 683 + 683 + 683 = 2049 vs the exact 2048).
+ */
+function validateBarDurations(music: Music): void {
+  const TUPLET_ROUNDING_TOLERANCE = 4; // ticks
+
+  for (let i = 1; i < music.bars.length; i++) {
+    const prevBar = music.bars[i - 1];
+    const bar = music.bars[i];
+
+    // Skip if either bounding bar line is a repeat (partial bar by design).
+    if (REPEAT_BARLINE_TYPES.has(prevBar.type)) continue;
+    if (REPEAT_BARLINE_TYPES.has(bar.type)) continue;
+
+    const startIdx = (prevBar.afterNoteNum ?? -1) + 1;
+    const endIdx = bar.afterNoteNum ?? -1;
+    if (endIdx < startIdx) continue; // empty segment (e.g. `||`)
+
+    // Lenient: skip when the meter changes inside this bar.
+    const startSig = signatureAt(music, startIdx);
+    const endSig = signatureAt(music, endIdx);
+    if (startSig !== endSig) continue;
+
+    const capacity =
+      (DURATION_TICKS.WHOLE / startSig.beatValue) * startSig.beatsPerBar;
+    let total = 0;
+    for (let n = startIdx; n <= endIdx; n++) {
+      total += music.notes[n].ticks();
+    }
+    if (Math.abs(total - capacity) <= TUPLET_ROUNDING_TOLERANCE) continue;
+
+    const beatTicks = DURATION_TICKS.WHOLE / startSig.beatValue;
+    const gotBeats = parseFloat((total / beatTicks).toFixed(3));
+    throw new Error(
+      `Bar ${i} has ${gotBeats} beat(s), expected ${startSig.beatsPerBar} ` +
+        `(time signature ${startSig.beatsPerBar}/${startSig.beatValue})`
+    );
+  }
+}
+
 /**
  * Parses single-voice ABC into a Music object. **Do not call directly on
  * user-provided ABC** — it may contain multiple voices, in which case
@@ -1592,6 +1683,11 @@ export function fromAbc(
       note.pitches = note.pitches.map((p) => p + totalShift);
     }
   }
+
+  // Free-time scores have no defined bar capacity, so the rhythm check
+  // doesn't apply.
+  if (!isFreeTime) validateBarDurations(music);
+
   return music;
 }
 

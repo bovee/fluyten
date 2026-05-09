@@ -25,11 +25,14 @@ export const MIN_NOTE_SPACING = 12; // minimum horizontal gap between main notes
 export const CLEF_WIDTH = 30; // space reserved for clef glyph
 export const TIME_SIG_WIDTH = 20; // space reserved for time signature digits
 export const KEY_SIG_ACCIDENTAL_WIDTH = 10; // space per accidental in key signature
-export const NOTE_AREA_PADDING = 15; // padding between preamble and first note
+export const NOTE_AREA_PADDING = 20; // padding between preamble and first note
 export const REPEAT_BARLINE_GAP = 8; // extra gap before a begin-repeat barline that follows a preamble
 export const STEM_LENGTH = 35; // 3.5 staff spaces
 export const GRACE_NOTE_SPACING = 12; // horizontal space per grace note
-export const FLAG_EXTRA_SPACING = 10; // extra px after stem-up eighth/sixteenth/32nd notes for flag clearance
+export const GRACE_FONT_SIZE_RATIO = 0.65; // grace notes rendered at 65% of normal size
+export const GRACE_STEM_LENGTH = 20; // stem length in grace-note local coords (before scale)
+export const FLAG_EXTRA_SPACING = 8; // extra px after stem-up eighth/sixteenth/32nd notes for flag clearance
+export const REST_EXTRA_SPACING = 8; // extra px before a rest symbol for visual breathing room
 
 // ---------------------------------------------------------------------------
 // Intermediate types used during layout computation
@@ -176,6 +179,8 @@ export interface GraceNoteLayout {
   staffPositions: number[];
   isSlash: boolean;
   accidentals: Accidental[];
+  stemX: number; // x of the stem
+  stemEndY: number; // y at the tip of the stem (top, since grace notes are stem-up)
 }
 
 export interface BeamLayout {

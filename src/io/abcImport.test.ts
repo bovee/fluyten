@@ -418,6 +418,138 @@ describe('fromAbc', () => {
     });
   });
 
+  describe('annotations', () => {
+    it('should attach annotation to the note immediately following', () => {
+      const abc = `T:Test\nM:4/4\nL:1/4\nK:C\n"_a tempo"f2 d2`;
+      const music = fromAbc(abc);
+      expect(music.notes).toHaveLength(2);
+      expect(music.notes[0].annotations).toEqual([
+        { placement: 'below', text: 'a tempo' },
+      ]);
+      expect(music.notes[0].pitches[0]).toBe(77); // f5, no spurious flat
+    });
+
+    it('should attach annotation across an intervening slur open', () => {
+      // Regression: previously the tokenizer required a note immediately after
+      // the quoted text, so "_a tempo" before "(" was dropped and `_a` got
+      // re-tokenized as a flat-accidented `a` note.
+      const abc = `T:Test\nM:4/4\nL:1/4\nK:C\n"_a tempo" (Lf2 d2 | e2 c2)`;
+      const music = fromAbc(abc);
+      expect(music.notes).toHaveLength(4);
+      expect(music.notes[0].annotations).toEqual([
+        { placement: 'below', text: 'a tempo' },
+      ]);
+      expect(music.notes[0].pitches[0]).toBe(77); // f5
+      // No spurious flat from `_` being misread as an accidental
+      expect(music.notes[0].accidentals[0] ?? '').toBe('');
+    });
+
+    it('should attach annotation across a grace-note group', () => {
+      const abc = `T:Test\nM:4/4\nL:1/4\nK:C\n"^Allegro"{ag}f2 d2`;
+      const music = fromAbc(abc);
+      const realNote = music.notes.find((n) => n.duration !== Duration.GRACE);
+      expect(realNote?.annotations).toEqual([
+        { placement: 'above', text: 'Allegro' },
+      ]);
+    });
+
+    it('should accumulate multiple annotations onto the same note', () => {
+      const abc = `T:Test\nM:4/4\nL:1/4\nK:C\n"^A""_B"c2`;
+      const music = fromAbc(abc);
+      expect(music.notes[0].annotations).toEqual([
+        { placement: 'above', text: 'A' },
+        { placement: 'below', text: 'B' },
+      ]);
+    });
+
+    it('should attach annotation to a chord wrapper', () => {
+      const abc = `T:Test\nM:4/4\nL:1/4\nK:C\n"_chord"[CEG]2`;
+      const music = fromAbc(abc);
+      expect(music.notes[0].pitches).toHaveLength(3);
+      expect(music.notes[0].annotations).toEqual([
+        { placement: 'below', text: 'chord' },
+      ]);
+    });
+  });
+
+  describe('rhythm check', () => {
+    it('accepts a fully-filled middle bar', () => {
+      expect(() =>
+        fromAbc(`T:t\nM:2/4\nL:1/4\nK:C\nA B | C D | E F |`)
+      ).not.toThrow();
+    });
+
+    it('rejects a short middle bar', () => {
+      // 4/4 bar containing only two quarters
+      expect(() =>
+        fromAbc(`T:t\nM:4/4\nL:1/4\nK:C\nA B | C D | E F |`)
+      ).toThrow(/Bar \d+ has 2 beat\(s\), expected 4/);
+    });
+
+    it('rejects an over-long middle bar', () => {
+      expect(() =>
+        fromAbc(`T:t\nM:2/4\nL:1/4\nK:C\nA B | C D E | F G |`)
+      ).toThrow(/Bar 1 has 3 beat\(s\), expected 2/);
+    });
+
+    it('allows a partial lead-in (anacrusis)', () => {
+      // Single quarter pickup, then full 4/4 bars.
+      expect(() =>
+        fromAbc(`T:t\nM:4/4\nL:1/4\nK:C\nA | B B B B | c c c c |`)
+      ).not.toThrow();
+    });
+
+    it('allows a partial trailing tail', () => {
+      expect(() =>
+        fromAbc(`T:t\nM:4/4\nL:1/4\nK:C\nA A A A | B B B B | c c`)
+      ).not.toThrow();
+    });
+
+    it('allows partial bars adjacent to a repeat', () => {
+      // The bar right after |: and right before :| are partial pickups
+      // that pair up across the repeat seam.
+      expect(() =>
+        fromAbc(`T:t\nM:4/4\nL:1/4\nK:C\nA A A A |: B B | C C C C :| D D |]`)
+      ).not.toThrow();
+    });
+
+    it('skips the check when the meter changes mid-bar (lenient)', () => {
+      // No barline at the meter change; first segment starts in 2/4 and ends
+      // in 3/4. Lenient: skip rather than guess where the implicit bar lies.
+      expect(() =>
+        fromAbc(`T:t\nM:2/4\nL:1/4\nK:C\nA B [M:3/4] C D E | F G A |`)
+      ).not.toThrow();
+    });
+
+    it('honors a mid-song meter change at a barline', () => {
+      expect(() =>
+        fromAbc(`T:t\nM:2/4\nL:1/4\nK:C\nA B | C D | [M:3/4] E F G | A B c |`)
+      ).not.toThrow();
+      expect(() =>
+        fromAbc(`T:t\nM:2/4\nL:1/4\nK:C\nA B | C D | [M:3/4] E F | A B c |`)
+      ).toThrow(/Bar 2 has 2 beat\(s\), expected 3/);
+    });
+
+    it('treats a triplet as 2 beats (not 3) toward the bar', () => {
+      // Triplet of three quarters notated-as-two fills 2 quarters; plus a
+      // half = 4 quarters in 4/4. Per-note rounding (683+683+683 vs the
+      // exact 2048) is absorbed by the validator's tolerance.
+      expect(() =>
+        fromAbc(`T:t\nM:4/4\nL:1/4\nK:C\n(3 ABC D2 | (3 EFG A2 | C2 D2 |`)
+      ).not.toThrow();
+    });
+
+    it('skips check entirely for free-time scores', () => {
+      expect(() => fromAbc(`T:t\nM:none\nL:1/4\nK:C\nA B C`)).not.toThrow();
+    });
+
+    it('does not flag a bar with no notes (e.g. ||)', () => {
+      expect(() =>
+        fromAbc(`T:t\nM:2/4\nL:1/4\nK:C\nA B || C D |`)
+      ).not.toThrow();
+    });
+  });
+
   describe('bar lines', () => {
     it.each([
       ['C D | E F', 'standard'],

@@ -257,7 +257,7 @@ describe('NotePlayer', () => {
     const createOscSpy = vi.spyOn(player.audioCtx!, 'createOscillator');
 
     // C quarter tied across a bar line to another C quarter
-    const music = fromAbc('X:1\nT:Test\nM:C\nL:1/4\nK:C\nC- |C |');
+    const music = fromAbc('X:1\nT:Test\nM:1/4\nL:1/4\nK:C\nC- |C |');
 
     expect(music.notes).toHaveLength(2);
     expect(music.curves).toHaveLength(1);

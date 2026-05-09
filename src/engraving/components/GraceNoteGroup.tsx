@@ -1,13 +1,19 @@
 import { staffPositionToY } from '../layout/pitchLayout';
-import { STAFF_SPACE, type GraceNoteLayout } from '../layout/types';
+import {
+  GRACE_FONT_SIZE_RATIO,
+  GRACE_STEM_LENGTH,
+  STAFF_SPACE,
+  type GraceNoteLayout,
+} from '../layout/types';
 import { Glyph } from '../glyphs/Glyph';
 
-const GRACE_FONT_SIZE_RATIO = 0.65; // grace notes are ~65% of normal size
-const GRACE_STEM_LENGTH = 20;
+const GRACE_ACCIDENTAL_FONT_SIZE = 34; // slightly smaller than normal 40px accidentals
+const GRACE_FLAG_FONT_SIZE = 28; // smaller than notehead to keep flags trim
 
 interface GraceNoteGroupProps {
   graceNote: GraceNoteLayout;
   staffTopY: number;
+  isBeamed?: boolean;
   fill?: string;
 }
 
@@ -23,6 +29,7 @@ function accidentalGlyph(acc: string): string | null {
 export function GraceNoteGroup({
   graceNote,
   staffTopY,
+  isBeamed = false,
   fill = 'black',
 }: GraceNoteGroupProps) {
   const { x, staffPositions, isSlash, accidentals } = graceNote;
@@ -39,7 +46,7 @@ export function GraceNoteGroup({
 
   return (
     <g
-      transform={`scale(${GRACE_FONT_SIZE_RATIO}) translate(${x * (1 - 1 / GRACE_FONT_SIZE_RATIO)}, ${noteheadY * (1 - 1 / GRACE_FONT_SIZE_RATIO)})`}
+      transform={`scale(${GRACE_FONT_SIZE_RATIO}) translate(${x * (1 / GRACE_FONT_SIZE_RATIO - 1)}, ${noteheadY * (1 / GRACE_FONT_SIZE_RATIO - 1)})`}
     >
       {/* Accidental */}
       {staffPositions.map((s, i) => {
@@ -47,7 +54,16 @@ export function GraceNoteGroup({
         const acc = raw ? accidentalGlyph(raw) : null;
         if (!acc) return null;
         const ay = staffPositionToY(s, staffTopY);
-        return <Glyph key={i} name={acc} x={x - 10} y={ay} fill={fill} />;
+        return (
+          <Glyph
+            key={i}
+            name={acc}
+            x={x - 14}
+            y={ay}
+            fill={fill}
+            fontSize={GRACE_ACCIDENTAL_FONT_SIZE}
+          />
+        );
       })}
 
       {/* Notehead */}
@@ -63,13 +79,24 @@ export function GraceNoteGroup({
         strokeWidth={1.5}
       />
 
+      {/* Flag (eighth-note flag, stem up) — omitted when beamed */}
+      {!isBeamed && (
+        <Glyph
+          name="flag8thUp"
+          x={stemX}
+          y={stemY2}
+          fill={fill}
+          fontSize={GRACE_FLAG_FONT_SIZE}
+        />
+      )}
+
       {/* Slash (grace-slash) through stem */}
       {isSlash && (
         <line
           x1={stemX - 5}
-          y1={stemY2 + 8}
+          y1={stemY2 + 14}
           x2={stemX + 5}
-          y2={stemY2 - 2}
+          y2={stemY2 + 4}
           stroke={fill}
           strokeWidth={1.5}
         />

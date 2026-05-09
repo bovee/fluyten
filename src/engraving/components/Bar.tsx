@@ -297,9 +297,53 @@ export const Bar = memo(function Bar({
                 key={gn.musicNoteIndex}
                 graceNote={gn}
                 staffTopY={staffTopY}
+                isBeamed={note.graceNotes.length >= 2}
                 fill={fill}
               />
             ))}
+            {note.graceNotes.length >= 2 &&
+              note.graceNotes.slice(0, -1).map((gn, k) => {
+                const next = note.graceNotes[k + 1]!;
+                const x1 = gn.stemX;
+                const x2 = next.stemX;
+                const y1 = gn.stemEndY;
+                const y2 = next.stemEndY;
+                const t = 3; // beam thickness for grace notes
+                const points = [
+                  `${x1},${y1}`,
+                  `${x2},${y2}`,
+                  `${x2},${y2 + t}`,
+                  `${x1},${y1 + t}`,
+                ].join(' ');
+                return (
+                  <polygon
+                    key={gn.musicNoteIndex}
+                    points={points}
+                    fill={fill}
+                  />
+                );
+              })}
+            {note.graceNotes.length >= 1 &&
+              (() => {
+                // Slur from first grace note notehead to main note notehead, curving below.
+                const startX = note.graceNotes[0]!.x;
+                const startY = note.graceNotes[0]!.y + 6;
+                const endX = note.x - 4;
+                const endY = note.y + 6;
+                const span = endX - startX;
+                const bulge = Math.max(8, Math.min(span * 0.15, 20));
+                const cpOffset = Math.min(bulge, span / 2);
+                const d = `M ${startX} ${startY} C ${startX + cpOffset} ${startY + bulge} ${endX - cpOffset} ${endY + bulge} ${endX} ${endY}`;
+                return (
+                  <path
+                    d={d}
+                    fill="none"
+                    stroke={fill}
+                    strokeWidth={0.8}
+                    strokeLinecap="round"
+                  />
+                );
+              })()}
             <NoteGroup
               note={note}
               staffTopY={staffTopY}

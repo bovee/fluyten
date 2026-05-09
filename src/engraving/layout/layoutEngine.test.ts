@@ -11,14 +11,14 @@ function tuplets(abc: string, width = 800) {
 
 describe('computeLayout tuplets', () => {
   it('emits one bracket per triplet group', () => {
-    const abc = `X:1\nT:t\nM:4/4\nL:1/4\nK:C\n(3 BAB G4 (3 CCC | F4 c4 | (3 BAG F4 c2 | (3 BAG f4 | (3 BAB G4 CC |`;
+    const abc = `X:1\nT:t\nM:8/4\nL:1/4\nK:C\n(3 BAB G4 (3 CCC | F4 c4 | (3 BAG F4 c2 | (3 BAG f4 c2 | (3 BAB G4 CC |`;
     const result = tuplets(abc);
     expect(result).toHaveLength(5);
     result.forEach((t) => expect(t.num).toBe(3));
   });
 
   it('does not emit spurious cross-line brackets at line breaks', () => {
-    const abc = `X:1\nT:t\nM:4/4\nL:1/4\nK:C\n(3 BAB G4 (3 CCC | F4 c4 | (3 BAG F4 c2 | (3 BAG f4 | (3 BAB G4 CC |`;
+    const abc = `X:1\nT:t\nM:8/4\nL:1/4\nK:C\n(3 BAB G4 (3 CCC | F4 c4 | (3 BAG F4 c2 | (3 BAG f4 c2 | (3 BAB G4 CC |`;
     const result = tuplets(abc);
     for (const t of result) {
       expect(t.endX - t.startX).toBeLessThan(200);

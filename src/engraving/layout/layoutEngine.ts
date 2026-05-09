@@ -643,6 +643,8 @@ function computeTuplets(
             if (direction === 'above') {
               bracketY =
                 Math.min(posA.stemEndY, posB.stemEndY) - BRACKET_OFFSET;
+              // Prevent bracket from being clipped at the top of the SVG.
+              bracketY = Math.max(bracketY, posA.staffTopY - TOP_MARGIN + 8);
             } else {
               bracketY =
                 Math.max(posA.stemEndY, posB.stemEndY) + BRACKET_OFFSET;
@@ -659,7 +661,10 @@ function computeTuplets(
           } else {
             const bracketYA =
               direction === 'above'
-                ? posA.stemEndY - BRACKET_OFFSET
+                ? Math.max(
+                    posA.stemEndY - BRACKET_OFFSET,
+                    posA.staffTopY - TOP_MARGIN + 8
+                  )
                 : posA.stemEndY + BRACKET_OFFSET;
             const bracketYB =
               direction === 'above'

@@ -1,8 +1,11 @@
 import { Duration, KEYS, FIFTHS_TO_ACCIDENTALS, type Note } from '../../music';
 import {
   FLAG_EXTRA_SPACING,
+  GRACE_FONT_SIZE_RATIO,
   GRACE_NOTE_SPACING,
+  GRACE_STEM_LENGTH,
   MIN_NOTE_SPACING,
+  REST_EXTRA_SPACING,
   type BarData,
   type BeamLayout,
   type GraceNoteLayout,
@@ -11,6 +14,10 @@ import {
 
 const ACCIDENTAL_EXTRA_SPACING = 15; // extra px reserved when a note has an accidental
 const STEM_COLLISION_EXTRA_SPACING = 5; // extra px when stem-up note is followed by stem-down
+// Use slightly smaller spacings for actual placement than for bar sizing,
+// so notes pack tighter while the allocated bar width stays unchanged.
+const FLAG_LAYOUT_SPACING = FLAG_EXTRA_SPACING - 2;
+const REST_LAYOUT_SPACING = REST_EXTRA_SPACING - 2;
 import {
   noteLetter,
   pitchToStaffPosition,
@@ -112,11 +119,13 @@ export function layoutBar(
       (prevLayout.duration === Duration.EIGHTH ||
         prevLayout.duration === Duration.SIXTEENTH ||
         prevLayout.duration === Duration.THIRTY_SECOND);
+    const currentIsRest = note.pitches.length === 0;
     const minSpacing =
       MIN_NOTE_SPACING +
+      (currentIsRest ? REST_LAYOUT_SPACING : 0) +
       (hasAccidental ? ACCIDENTAL_EXTRA_SPACING : 0) +
       (stemCollision ? STEM_COLLISION_EXTRA_SPACING : 0) +
-      (prevIsFlagged ? FLAG_EXTRA_SPACING : 0);
+      (prevIsFlagged ? FLAG_LAYOUT_SPACING : 0);
     if (prevLayout !== undefined) {
       if (x - prevLayout.x < minSpacing) {
         x = prevLayout.x + minSpacing;
@@ -281,6 +290,11 @@ function layoutGraceNotes(
     );
     const sp = staffPositions[0] ?? 0;
     const y = staffPositionToY(sp, staffTopY);
+    // Stem tip in screen space: the group is scaled by GRACE_FONT_SIZE_RATIO, so a
+    // local offset of (4, -(STAFF_SPACE/2 + GRACE_STEM_LENGTH)) maps to screen offset
+    // of (4 * ratio, -(STAFF_SPACE/2 + GRACE_STEM_LENGTH) * ratio).
+    const stemX = x + 4 * GRACE_FONT_SIZE_RATIO;
+    const stemEndY = y - (5 + GRACE_STEM_LENGTH) * GRACE_FONT_SIZE_RATIO;
 
     return {
       musicNoteIndex: idx,
@@ -289,6 +303,8 @@ function layoutGraceNotes(
       staffPositions,
       isSlash: note.duration === Duration.GRACE_SLASH,
       accidentals: note.accidentals,
+      stemX,
+      stemEndY,
     };
   });
 }

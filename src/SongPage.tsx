@@ -634,22 +634,6 @@ function useMetronome(
   };
 }
 
-function initSongPageState(
-  abc: string,
-  clef: Music['clef'],
-  middle: string | undefined
-) {
-  try {
-    const voices = voicesFromAbc(abc, clef, middle);
-    return {
-      voices,
-      editOpen: voices.every((v) => v.music.notes.length === 0),
-    };
-  } catch {
-    return { voices: [], editOpen: true };
-  }
-}
-
 interface SongPageProps {
   song: Song;
   onBack: () => void;
@@ -682,15 +666,12 @@ export function SongPage({
   let defaultMiddle = undefined;
   if (defaultClef === 'bass8va') defaultMiddle = 'd';
   if (defaultClef === 'bass') defaultMiddle = 'D';
-  const [{ voices: initVoices, editOpen: initEditOpen }] = useState(() =>
-    initSongPageState(song.abc, defaultClef, defaultMiddle)
-  );
-  const [editOpen, setEditOpen] = useState(initEditOpen);
+  const [editOpen, setEditOpen] = useState(false);
   const [drawerHeight, setDrawerHeight] = useState(0);
   const [speedDialOpen, setSpeedDialOpen] = useState(false);
   const [abcMusic, setAbcMusic] = useState(song.abc);
   const [currentParseError, setCurrentParseError] = useState('');
-  const [voices, setVoices] = useState(initVoices);
+  const [voices, setVoices] = useState<ReturnType<typeof voicesFromAbc>>([]);
   const [selectedVoiceIdx, setSelectedVoiceIdx] = useState(0);
   const music = useMemo(
     () =>
@@ -840,11 +821,11 @@ export function SongPage({
   // render (rather than in an effect) so the new voices are visible in the
   // same render pass; on parse error we keep the previous voices so the score
   // doesn't blank out during transient mid-edit failures.
-  const [parseInputs, setParseInputs] = useState({
-    abcMusic,
-    defaultClef,
-    defaultMiddle,
-  });
+  const [parseInputs, setParseInputs] = useState<{
+    abcMusic: string | null;
+    defaultClef: Music['clef'];
+    defaultMiddle: string | undefined;
+  }>({ abcMusic: null, defaultClef, defaultMiddle });
   if (
     parseInputs.abcMusic !== abcMusic ||
     parseInputs.defaultClef !== defaultClef ||
@@ -852,10 +833,13 @@ export function SongPage({
   ) {
     setParseInputs({ abcMusic, defaultClef, defaultMiddle });
     try {
-      setVoices(voicesFromAbc(abcMusic, defaultClef, defaultMiddle));
+      const newVoices = voicesFromAbc(abcMusic, defaultClef, defaultMiddle);
+      setVoices(newVoices);
       setCurrentParseError('');
+      if (newVoices.every((v) => v.music.notes.length === 0)) setEditOpen(true);
     } catch (error) {
       setCurrentParseError((error as Error).message);
+      setEditOpen(true);
     }
   }
 

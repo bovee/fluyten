@@ -671,7 +671,7 @@ describe('expandRepeats', () => {
       // The intermediate | bar (after C) has no volta annotation and must not
       // be processed as part of the common section.
       const music = fromAbc(
-        'X:1\nT:Test\nM:4/4\nL:1/4\nK:C\n|: A B |1 C D | E F :|2 G |]'
+        'X:1\nT:Test\nM:2/4\nL:1/4\nK:C\n|: A B |1 C D | E F :|2 G |]'
       );
       const result = expandRepeats(music);
       // notes: A(0) B(1) C(2) D(3) E(4) F(5) G(6)
