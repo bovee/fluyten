@@ -20,6 +20,7 @@ import Autorenew from '@mui/icons-material/Autorenew';
 import Mic from '@mui/icons-material/Mic';
 import MicOff from '@mui/icons-material/MicOff';
 import Piano from '@mui/icons-material/Piano';
+import Cable from '@mui/icons-material/Cable';
 import SwapVert from '@mui/icons-material/SwapVert';
 
 import {
@@ -31,11 +32,9 @@ import { resolveInstrumentConfig, RECORDER_TYPES } from './instrument';
 import { singlePitchToAbc, durationToAbc, reflowAbc } from './io/abcExport';
 import { TRANSFORMATIONS, transformFragment } from './io/transformations';
 import { Music, Duration } from './music';
-import { FrequencyTracker } from './audio/FrequencyTracker';
+import { Transcriber, type TranscribeSource } from './audio/Transcriber';
 import { GenerateNotesDialog } from './scales/GenerateNotesDialog';
 import { useStore } from './store';
-
-const RECORD_SAMPLE_RATE = 50;
 
 const TRANSCRIBE_DURATION_CANDIDATES: [number, Duration, number][] = [
   [1, Duration.SIXTEENTH, 0],
@@ -74,6 +73,7 @@ export function EditorDrawer({
 }: EditorDrawerProps) {
   const { t } = useTranslation();
   const tempo = useStore((s) => s.tempo);
+  const useMidi = useStore((s) => s.useMidi);
   const drawerRef = useRef<HTMLDivElement>(null);
   const abcTextareaRef = useRef<HTMLTextAreaElement>(null);
   const [abcSelection, setAbcSelection] = useState({ start: 0, end: 0 });
@@ -165,8 +165,7 @@ export function EditorDrawer({
   }, [tempo]);
 
   // --- Transcription ---
-  const transcribeTrackerRef = useRef<FrequencyTracker | null>(null);
-  const transcribeIntervalRef = useRef<number | null>(null);
+  const transcriberRef = useRef<Transcriber | null>(null);
   const [isTranscribing, setIsTranscribing] = useState(false);
   const transcribeCursorRef = useRef<number>(0);
   const transcribeContextRef = useRef<{
@@ -186,17 +185,14 @@ export function EditorDrawer({
   })();
 
   const stopTranscribing = () => {
-    if (transcribeIntervalRef.current !== null) {
-      clearInterval(transcribeIntervalRef.current);
-      transcribeIntervalRef.current = null;
-    }
-    transcribeTrackerRef.current?.stop();
-    transcribeTrackerRef.current = null;
+    transcriberRef.current?.stop();
+    transcriberRef.current = null;
     transcribeContextRef.current = null;
     setIsTranscribing(false);
   };
 
   const startTranscribing = async () => {
+    const source: TranscribeSource = useMidi ? 'midi' : 'mic';
     const lines = abcMusic.split('\n');
     const { instrumentType, tuning, customBasePitchStr, customHighNoteStr } =
       useStore.getState();
@@ -225,11 +221,11 @@ export function EditorDrawer({
     );
     transcribeCursorRef.current = cursorPos;
 
-    const tracker = new FrequencyTracker(
-      (_p: number) => {},
-      (pitch: number, durationSecs: number) => {
+    const transcriber = new Transcriber(
+      source,
+      (pitches: number[], durationSecs: number) => {
         const ctx = transcribeContextRef.current;
-        if (!ctx) return;
+        if (!ctx || pitches.length === 0) return;
 
         const sixteenths = durationSecs * (tempoRef.current / 60) * 4;
         let bestCandidate: [Duration, number] = [Duration.QUARTER, 0];
@@ -246,12 +242,16 @@ export function EditorDrawer({
           }
         }
         const [dur, mod] = bestCandidate;
-        const writtenPitch = ctx.clef.endsWith('8va') ? pitch - 12 : pitch;
-        const pitchStr = singlePitchToAbc(
-          writtenPitch,
-          undefined as never,
-          ctx.keyAdjustment
+        const octaveShift = ctx.clef.endsWith('8va') ? -12 : 0;
+        const tokens = pitches.map((p) =>
+          singlePitchToAbc(
+            p + octaveShift,
+            undefined as never,
+            ctx.keyAdjustment
+          )
         );
+        const pitchStr =
+          tokens.length === 1 ? tokens[0] : `[${tokens.join('')}]`;
         const durStr = durationToAbc(dur, mod, ctx.defaultDuration);
         const noteStr = pitchStr + durStr + ' ';
 
@@ -269,17 +269,14 @@ export function EditorDrawer({
       }
     );
 
-    transcribeTrackerRef.current = tracker;
+    transcriberRef.current = transcriber;
 
     try {
-      await tracker.start();
+      await transcriber.start({ ...config, tuning });
       setIsTranscribing(true);
-      const id = window.setInterval(() => {
-        tracker.checkFrequency({ ...config, tuning });
-      }, RECORD_SAMPLE_RATE);
-      transcribeIntervalRef.current = id;
     } catch (error) {
-      transcribeTrackerRef.current = null;
+      transcriberRef.current = null;
+      transcribeContextRef.current = null;
       console.error('Failed to start transcription:', error);
       alert(`Failed to start transcription: ${(error as Error).message}`);
     }
@@ -293,9 +290,7 @@ export function EditorDrawer({
 
   useEffect(() => {
     return () => {
-      if (transcribeIntervalRef.current)
-        clearInterval(transcribeIntervalRef.current);
-      transcribeTrackerRef.current?.stop();
+      transcriberRef.current?.stop();
     };
   }, []);
 
@@ -486,7 +481,7 @@ export function EditorDrawer({
                   aria-label={t('transcribe')}
                   sx={{ color: isTranscribing ? 'primary.main' : undefined }}
                 >
-                  {isTranscribing ? <MicOff /> : <Mic />}
+                  {useMidi ? <Cable /> : isTranscribing ? <MicOff /> : <Mic />}
                 </IconButton>
               </span>
             </Tooltip>

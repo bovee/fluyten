@@ -84,6 +84,7 @@
   "playbackVoicesOthers": "Giọng không được chọn",
   "playbackVoicesAll": "Tất cả giọng",
   "playMetronome": "Phát máy đếm nhịp",
+  "useMidi": "Dùng MIDI thay vì micrô",
   "autoScroll": "Tự động cuộn khi phát",
   "practiceMode": "Kiểm tra chơi nhạc",
   "practiceDontCheck": "Không kiểm tra",

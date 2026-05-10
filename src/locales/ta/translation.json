@@ -84,6 +84,7 @@
   "playbackVoicesOthers": "தேர்வுசெய்யப்படாத குரல்கள்",
   "playbackVoicesAll": "அனைத்து குரல்களும்",
   "playMetronome": "மெட்ரோனோம் வாசி",
+  "useMidi": "மைக்ரோஃபோனுக்குப் பதிலாக MIDI பயன்படுத்தவும்",
   "autoScroll": "இயக்கும்போது தானாக உருட்டு",
   "practiceMode": "வாசிப்பை சரிபார்க்கவும்",
   "practiceDontCheck": "சரிபார்க்காதே",

@@ -84,6 +84,7 @@
   "playbackVoicesOthers": "Ikke-valgte stemmer",
   "playbackVoicesAll": "Alle stemmer",
   "playMetronome": "Spil metronom",
+  "useMidi": "Brug MIDI i stedet for mikrofon",
   "autoScroll": "Rul automatisk under afspilning",
   "practiceMode": "Kontrollér spil",
   "practiceDontCheck": "Ingen kontrol",

@@ -12,12 +12,11 @@ import { axe } from 'jest-axe';
 import { useStore } from './store';
 import { Music } from './music';
 
-vi.mock('./audio/FrequencyTracker', () => ({
-  FrequencyTracker: class {
-    constructor(_onStart: unknown, _onStop: unknown) {}
+vi.mock('./audio/Transcriber', () => ({
+  Transcriber: class {
+    constructor(_source: unknown, _onNote: unknown) {}
     start = vi.fn().mockResolvedValue(undefined);
     stop = vi.fn();
-    checkFrequency = vi.fn();
   },
 }));
 
@@ -108,14 +107,14 @@ describe('EditorDrawer', () => {
     it('renders the transcribe button', () => {
       render(<EditorDrawer {...defaultProps()} />);
       expect(
-        screen.getByRole('button', { name: /transcribe/i })
+        screen.getByRole('button', { name: /^transcribe$/i })
       ).toBeInTheDocument();
     });
 
     it('disables the transcribe button when readOnly', () => {
       render(<EditorDrawer {...defaultProps({ readOnly: true })} />);
       expect(
-        screen.getByRole('button', { name: /transcribe/i })
+        screen.getByRole('button', { name: /^transcribe$/i })
       ).toBeDisabled();
     });
 

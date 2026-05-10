@@ -32,6 +32,7 @@ import {
 import { resolveInstrumentConfig, RECORDER_TYPES } from './instrument';
 import { Music, expandRepeats, findNearestExpandedIndex } from './music';
 import { SingleFrequencyTracker } from './audio/SingleFrequencyTracker';
+import { MidiTracker } from './audio/MidiTracker';
 import { NotePlayer } from './audio/NotePlayer';
 import { MusicTimeline } from './audio/MusicTimeline';
 import { Score } from './engraving';
@@ -70,22 +71,92 @@ function useIntervalRef() {
   return { isActive, set, clear };
 }
 
-function usePitchDetection(
+type OnCheck = (active: boolean, pitch: number | null) => void;
+type PitchTracker = SingleFrequencyTracker | MidiTracker;
+
+/**
+ * Owns the shared input/tracker lifecycle for all checking modes: one
+ * tracker (mic-based `SingleFrequencyTracker` or `MidiTracker`, depending on
+ * the `useMidi` setting), one input permission, one AudioContext. Each mode
+ * hook calls `start(onCheck)` to attach its detection callback and `stop()`
+ * to tear down. `detectedPitch` and `isRecording` are surfaced here so the
+ * call site can render them regardless of which mode is active.
+ */
+function useFreqTrackerSession(setStatusMessage: (msg: string) => void) {
+  const { t } = useTranslation();
+  const trackerRef = useRef<PitchTracker | null>(null);
+  const [isRecording, setIsRecording] = useState(false);
+  const [detectedPitch, setDetectedPitch] = useState<number | null>(null);
+
+  const start = async (onCheck: OnCheck): Promise<PitchTracker | null> => {
+    if (trackerRef.current) return null;
+
+    const {
+      tuning,
+      instrumentType,
+      customBasePitchStr,
+      customHighNoteStr,
+      useMidi,
+    } = useStore.getState();
+    const config =
+      resolveInstrumentConfig(
+        instrumentType,
+        customBasePitchStr,
+        customHighNoteStr
+      ) ?? RECORDER_TYPES.SOPRANO;
+
+    const tracker: PitchTracker = useMidi
+      ? new MidiTracker(RECORD_SAMPLE_RATE)
+      : new SingleFrequencyTracker(RECORD_SAMPLE_RATE);
+    tracker.onCheck = (active, pitch) => {
+      setDetectedPitch(pitch);
+      onCheck(active, pitch);
+    };
+
+    try {
+      await tracker.start(config.basePitch, config.pitchRange, tuning);
+    } catch (error) {
+      tracker.stop();
+      console.error('Failed to start recording:', error);
+      alert(`Failed to start recording: ${(error as Error).message}`);
+      return null;
+    }
+
+    trackerRef.current = tracker;
+    setIsRecording(true);
+    setStatusMessage(t('recordingStarted'));
+    return tracker;
+  };
+
+  const stop = () => {
+    if (!trackerRef.current) return;
+    trackerRef.current.stop();
+    trackerRef.current = null;
+    setIsRecording(false);
+    setDetectedPitch(null);
+    setStatusMessage(t('recordingStopped'));
+  };
+
+  useEffect(() => () => trackerRef.current?.stop(), []);
+
+  return { isRecording, detectedPitch, start, stop };
+}
+
+type FreqTrackerSession = ReturnType<typeof useFreqTrackerSession>;
+
+function useAsPlayedChecking(
+  session: FreqTrackerSession,
   expandedTrackingRef: React.RefObject<{
     notes: { pitches: number[] }[];
     originalIndices: number[];
     idx: number;
   }>,
-  setStatusMessage: (msg: string) => void,
   onFinish: (
     results: ReadonlyMap<number, 'correct' | 'wrong'>,
     correctCount: number,
     totalCount: number
   ) => void
 ) {
-  const { t } = useTranslation();
-  const [detectedPitch, setDetectedPitch] = useState<number | null>(null);
-  const [isRecording, setIsRecording] = useState(false);
   const [noteResults, setNoteResults] = useState<
     ReadonlyMap<number, 'correct' | 'wrong'>
   >(new Map());
@@ -95,129 +166,84 @@ function usePitchDetection(
   // onset only once even if the player holds the note across multiple polls.
   const wasActiveRef = useRef(false);
 
-  const freqTrackerRef = useRef<SingleFrequencyTracker | null>(null);
-
   const startRecording = async () => {
-    if (isRecording) {
-      freqTrackerRef.current?.stop();
-      freqTrackerRef.current = null;
-      setIsRecording(false);
-      setDetectedPitch(null);
+    if (session.isRecording) {
+      session.stop();
       setCursor(undefined);
-      setStatusMessage(t('recordingStopped'));
       return;
     }
 
     noteResultsMapRef.current = new Map();
     setNoteResults(new Map());
-    expandedTrackingRef.current.idx = 0;
-    const firstOriginalIdx = expandedTrackingRef.current.originalIndices[0];
-    setCursor(firstOriginalIdx);
-
-    const { tuning, instrumentType, customBasePitchStr, customHighNoteStr } =
-      useStore.getState();
-    const config =
-      resolveInstrumentConfig(
-        instrumentType,
-        customBasePitchStr,
-        customHighNoteStr
-      ) ?? RECORDER_TYPES.SOPRANO;
-
-    // Point the tracker at the first non-rest note.
     const tracking = expandedTrackingRef.current;
+    tracking.idx = 0;
     while (
       tracking.idx < tracking.notes.length &&
       tracking.notes[tracking.idx].pitches.length === 0
     )
       tracking.idx++;
-    const firstNote = tracking.notes[tracking.idx];
+    setCursor(tracking.originalIndices[tracking.idx]);
 
-    const tracker = new SingleFrequencyTracker((active, pitch) => {
-      setDetectedPitch(pitch);
-      if (active) {
-        if (!wasActiveRef.current) {
-          // Note onset: advance the cursor.
-          wasActiveRef.current = true;
-          const tracking = expandedTrackingRef.current;
-          const originalIdx = tracking.originalIndices[tracking.idx];
-          if (originalIdx !== undefined) {
-            noteResultsMapRef.current.set(originalIdx, 'correct');
-            setNoteResults(new Map(noteResultsMapRef.current));
-          }
-          tracking.idx++;
-          // Skip over rests to reach the next pitched note.
-          while (
-            tracking.idx < tracking.notes.length &&
-            tracking.notes[tracking.idx].pitches.length === 0
-          )
-            tracking.idx++;
-          if (tracking.idx >= tracking.notes.length) {
-            tracker.stop();
-            freqTrackerRef.current = null;
-            setIsRecording(false);
-            setDetectedPitch(null);
-            setCursor(undefined);
-            setStatusMessage(t('recordingStopped'));
-            onFinish(
-              new Map(noteResultsMapRef.current),
-              tracking.notes.length,
-              tracking.notes.length
-            );
-          } else {
-            tracker.setTarget(tracking.notes[tracking.idx].pitches[0], tuning);
-            const nextOriginalIdx = tracking.originalIndices[tracking.idx];
-            setCursor(nextOriginalIdx);
-          }
-        }
-      } else {
+    const { tuning } = useStore.getState();
+    wasActiveRef.current = false;
+
+    let tracker: PitchTracker | null = null;
+    tracker = await session.start((active) => {
+      if (!active) {
         wasActiveRef.current = false;
+        return;
       }
-    }, RECORD_SAMPLE_RATE);
-
-    if (firstNote) tracker.setTarget(firstNote.pitches[0], tuning);
-
-    try {
-      await tracker.start(config.basePitch, config.pitchRange, tuning);
-      wasActiveRef.current = false;
-      freqTrackerRef.current = tracker;
-      setIsRecording(true);
-      setStatusMessage(t('recordingStarted'));
-    } catch (error) {
-      tracker.stop();
-      console.error('Failed to start recording:', error);
-      alert(`Failed to start recording: ${(error as Error).message}`);
-    }
+      if (wasActiveRef.current) return;
+      // Note onset: advance the cursor.
+      wasActiveRef.current = true;
+      const tracking = expandedTrackingRef.current;
+      const originalIdx = tracking.originalIndices[tracking.idx];
+      if (originalIdx !== undefined) {
+        noteResultsMapRef.current.set(originalIdx, 'correct');
+        setNoteResults(new Map(noteResultsMapRef.current));
+      }
+      tracking.idx++;
+      while (
+        tracking.idx < tracking.notes.length &&
+        tracking.notes[tracking.idx].pitches.length === 0
+      )
+        tracking.idx++;
+      if (tracking.idx >= tracking.notes.length) {
+        session.stop();
+        setCursor(undefined);
+        onFinish(
+          new Map(noteResultsMapRef.current),
+          tracking.notes.length,
+          tracking.notes.length
+        );
+      } else {
+        tracker?.setTarget(tracking.notes[tracking.idx].pitches, tuning);
+        setCursor(tracking.originalIndices[tracking.idx]);
+      }
+    });
+    if (!tracker) return;
+    const firstNote = tracking.notes[tracking.idx];
+    if (firstNote) tracker.setTarget(firstNote.pitches, tuning);
   };
 
-  useEffect(
-    () => () => {
-      freqTrackerRef.current?.stop();
-    },
-    [] // cleanup on unmount only
-  );
-
   return {
-    detectedPitch,
-    isRecording,
     startRecording,
     noteResults,
     cursor,
+    countdown: null as number | null,
   };
 }
 
 function useInTempoChecking(
+  session: FreqTrackerSession,
   musicRef: React.RefObject<Music>,
   tempoRef: React.RefObject<number>,
-  setStatusMessage: (msg: string) => void,
   onFinish: (
     results: ReadonlyMap<number, 'correct' | 'wrong'>,
     correctCount: number,
     totalCount: number
   ) => void
 ) {
-  const { t } = useTranslation();
-  const [detectedPitch, setDetectedPitch] = useState<number | null>(null);
-  const [isRecording, setIsRecording] = useState(false);
   const [noteResults, setNoteResults] = useState<
     ReadonlyMap<number, 'correct' | 'wrong'>
   >(new Map());
@@ -235,15 +261,11 @@ function useInTempoChecking(
   const countdownTimeoutsRef = useRef<number[]>([]);
   const clickCtxRef = useRef<AudioContext | null>(null);
 
-  const freqTrackerRef = useRef<SingleFrequencyTracker | null>(null);
-
   const stopAll = () => {
     for (const id of countdownTimeoutsRef.current) clearTimeout(id);
     countdownTimeoutsRef.current = [];
     setCountdown(null);
-    setIsRecording(false);
-    freqTrackerRef.current?.stop();
-    freqTrackerRef.current = null;
+    session.stop();
     clickCtxRef.current?.close();
     clickCtxRef.current = null;
     timelineRef.current = null;
@@ -255,46 +277,25 @@ function useInTempoChecking(
   };
 
   const startRecording = async () => {
-    if (isRecording) {
+    if (session.isRecording) {
       stopAll();
-      setStatusMessage(t('recordingStopped'));
       return;
     }
 
-    const { tuning, instrumentType, customBasePitchStr, customHighNoteStr } =
-      useStore.getState();
-    const config =
-      resolveInstrumentConfig(
-        instrumentType,
-        customBasePitchStr,
-        customHighNoteStr
-      ) ?? RECORDER_TYPES.SOPRANO;
+    const { tuning } = useStore.getState();
     const music = musicRef.current;
 
-    const tracker = new SingleFrequencyTracker((active, pitch) => {
-      setDetectedPitch(pitch);
+    correctSeenRef.current = false;
+    const tracker = await session.start((active) => {
       if (active) correctSeenRef.current = true;
-    }, RECORD_SAMPLE_RATE);
-
-    try {
-      await tracker.start(config.basePitch, config.pitchRange, tuning);
-    } catch (error) {
-      tracker.stop();
-      console.error('Failed to start recording:', error);
-      alert(`Failed to start recording: ${(error as Error).message}`);
-      return;
-    }
-
-    freqTrackerRef.current = tracker;
-    setIsRecording(true);
+    });
+    if (!tracker) return;
 
     currentNoteIdxRef.current = -1;
-    correctSeenRef.current = false;
     noteResultsMapRef.current = new Map();
     correctCountRef.current = 0;
     totalCountRef.current = 0;
     setNoteResults(new Map());
-    setStatusMessage(t('recordingStarted'));
 
     // 3-2-1 countdown: schedule audible beeps at the song's tempo, then start
     // the player and cursor only after all 3 beats have elapsed.
@@ -379,8 +380,8 @@ function useInTempoChecking(
             correctSeenRef.current = false;
           }
           const newNote = music.notes[floorIdx];
-          freqTrackerRef.current?.setTarget(
-            newNote && newNote.pitches.length > 0 ? newNote.pitches[0] : 0,
+          tracker.setTarget(
+            newNote && newNote.pitches.length > 0 ? newNote.pitches : 0,
             tuning
           );
         }
@@ -395,11 +396,15 @@ function useInTempoChecking(
     countdownTimeoutsRef.current = [closeClick, id2, id1, id0];
   };
 
-  useEffect(() => () => stopAll(), []); // cleanup on unmount only
+  // Cleanup on unmount. Stash in a ref so the unmount effect can stay
+  // deps-free while still calling the latest `stopAll`.
+  const stopAllRef = useRef(stopAll);
+  useEffect(() => {
+    stopAllRef.current = stopAll;
+  });
+  useEffect(() => () => stopAllRef.current(), []);
 
   return {
-    detectedPitch,
-    isRecording,
     startRecording,
     noteResults,
     cursor,
@@ -765,36 +770,28 @@ export function SongPage({
     }
   };
 
-  const {
-    detectedPitch: pitchA,
-    isRecording: isRecordingA,
-    startRecording: startRecordingA,
-    noteResults: asPlayedNoteResults,
-    cursor: asPlayedCursor,
-  } = usePitchDetection(
+  const session = useFreqTrackerSession(setStatusMessage);
+
+  const asPlayedResult = useAsPlayedChecking(
+    session,
     expandedTrackingRef,
-    setStatusMessage,
     onPracticeFinish
   );
 
-  const {
-    detectedPitch: pitchB,
-    isRecording: isRecordingB,
-    startRecording: startRecordingB,
-    noteResults,
-    cursor: inTempoCursor,
-    countdown,
-  } = useInTempoChecking(
+  const inTempoResult = useInTempoChecking(
+    session,
     musicRef,
     tempoRef,
-    setStatusMessage,
     onPracticeFinish
   );
 
-  const detectedPitch = practiceMode === 'in-tempo' ? pitchB : pitchA;
-  const isRecording = practiceMode === 'in-tempo' ? isRecordingB : isRecordingA;
-  const startRecording =
-    practiceMode === 'in-tempo' ? startRecordingB : startRecordingA;
+  const { detectedPitch, isRecording } = session;
+  const {
+    startRecording,
+    noteResults,
+    cursor: practiceCursor,
+    countdown,
+  } = practiceMode === 'in-tempo' ? inTempoResult : asPlayedResult;
   const {
     isPlaying,
     startPlaying,
@@ -978,20 +975,8 @@ export function SongPage({
         <Score
           music={music}
           width={scoreWidth}
-          noteResults={
-            isRecordingB
-              ? noteResults
-              : isRecordingA
-                ? asPlayedNoteResults
-                : practiceSummary?.noteResults
-          }
-          cursor={
-            isRecordingB
-              ? inTempoCursor
-              : isRecordingA
-                ? asPlayedCursor
-                : playbackCursor
-          }
+          noteResults={isRecording ? noteResults : practiceSummary?.noteResults}
+          cursor={isRecording ? practiceCursor : playbackCursor}
           autoScroll={autoScroll}
           onNoteClick={isPlaying ? seekToNote : undefined}
         />

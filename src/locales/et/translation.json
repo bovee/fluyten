@@ -84,6 +84,7 @@
   "playbackVoicesOthers": "Valimata hääled",
   "playbackVoicesAll": "Kõik hääled",
   "playMetronome": "Mängi metronoomi",
+  "useMidi": "Kasuta MIDI-d mikrofoni asemel",
   "autoScroll": "Keri esitamise ajal automaatselt",
   "practiceMode": "Kontrolli mängimist",
   "practiceDontCheck": "Ära kontrolli",

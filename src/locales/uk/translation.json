@@ -84,6 +84,7 @@
   "playbackVoicesOthers": "Невибрані голоси",
   "playbackVoicesAll": "Всі голоси",
   "playMetronome": "Відтворити метроном",
+  "useMidi": "Використовувати MIDI замість мікрофона",
   "autoScroll": "Автоматичне прокручування під час відтворення",
   "practiceMode": "Перевірити виконання",
   "practiceDontCheck": "Не перевіряти",

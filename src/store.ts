@@ -79,6 +79,8 @@ interface SettingsState {
   setPracticeMode: (mode: PracticeMode) => void;
   playMetronome: boolean;
   setPlayMetronome: (v: boolean) => void;
+  useMidi: boolean;
+  setUseMidi: (v: boolean) => void;
   autoScroll: boolean;
   setAutoScroll: (v: boolean) => void;
   sortKey: SortKey;
@@ -139,6 +141,8 @@ export const useStore = create<SettingsState>()(
       setPracticeMode: (practiceMode) => set({ practiceMode }),
       playMetronome: false,
       setPlayMetronome: (playMetronome) => set({ playMetronome }),
+      useMidi: false,
+      setUseMidi: (useMidi) => set({ useMidi }),
       autoScroll: true,
       setAutoScroll: (autoScroll) => set({ autoScroll }),
       sortKey: 'order',

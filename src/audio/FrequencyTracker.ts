@@ -1,6 +1,5 @@
 import { PITCH_CONSTANTS, FREQUENCY_TRACKER_CONSTANTS } from '../constants';
 import { findPeriodLag } from './mpm';
-import { midiToHz } from './utils';
 export { DETECTION_LOW_HZ, DETECTION_HIGH_HZ } from './utils';
 
 export function freqToMidiPitch(freq: number): number {
@@ -11,36 +10,27 @@ export function freqToMidiPitch(freq: number): number {
   );
 }
 
-export type OnStartNote = (pitch: number, volume: number) => void;
-export type OnStopNote = (pitch: number, duration: number) => void;
-
 export type RawFrequencyResult = { frequency: number; volume: number } | null;
 
+/**
+ * Mic + analyser + raw MPM primitive. Callers poll `checkRawFrequency` at
+ * their preferred cadence; higher-level note-on/note-off bookkeeping lives in
+ * consumers (e.g. `Transcriber`).
+ */
 export class FrequencyTracker {
-  private currentNote: number = 0;
-  private currentNoteStart: number = 0;
-  private currentVol: number = 0;
   samples?: Float32Array<ArrayBuffer>;
   source?: MediaStreamAudioSourceNode;
   mediaStream?: MediaStream;
   audioCtx?: AudioContext;
   analyser?: AnalyserNode;
-  onStartNote: OnStartNote;
-  onStopNote: OnStopNote;
 
-  constructor(onStartNote: OnStartNote, onStopNote: OnStopNote) {
-    this.onStartNote = onStartNote;
-    this.onStopNote = onStopNote;
-  }
-
-  checkRawFrequency(lowNote: number, highNote: number): RawFrequencyResult {
+  checkRawFrequency(lowHz: number, highHz: number): RawFrequencyResult {
     if (!this.audioCtx || !this.analyser || !this.source) return null;
     const bufferSize = this.analyser.fftSize;
     if (!this.samples)
       this.samples = new Float32Array(bufferSize) as Float32Array<ArrayBuffer>;
     this.analyser.getFloatTimeDomainData(this.samples);
 
-    // RMS silence gate
     let sumSq = 0;
     for (let i = 0; i < bufferSize; i++)
       sumSq += this.samples[i] * this.samples[i];
@@ -48,8 +38,8 @@ export class FrequencyTracker {
     if (rms < FREQUENCY_TRACKER_CONSTANTS.MIN_RMS) return null;
 
     const sampleRate = this.audioCtx.sampleRate;
-    const minLag = Math.floor(sampleRate / highNote);
-    const maxLag = Math.ceil(sampleRate / lowNote);
+    const minLag = Math.floor(sampleRate / highHz);
+    const maxLag = Math.ceil(sampleRate / lowHz);
 
     const lag = findPeriodLag(this.samples, minLag, maxLag);
     if (lag === null) return null;
@@ -58,43 +48,6 @@ export class FrequencyTracker {
       frequency: sampleRate / lag,
       volume: rms,
     };
-  }
-
-  checkFrequency({
-    basePitch,
-    pitchRange,
-    tuning,
-  }: {
-    basePitch: number;
-    pitchRange: number;
-    tuning: number;
-  }) {
-    const result = this.checkRawFrequency(
-      midiToHz(basePitch - 1),
-      midiToHz(basePitch + pitchRange + 1)
-    );
-    if (result === null) {
-      if (this.currentNote) {
-        // a note was active and has now stopped
-        const duration = this.audioCtx!.currentTime - this.currentNoteStart;
-        this.onStopNote(this.currentNote, duration);
-        this.currentNote = 0;
-        this.currentVol = 0;
-      }
-      return;
-    }
-
-    const note = freqToMidiPitch(result.frequency / tuning);
-    if (note === this.currentNote) {
-      return;
-    } else if (this.currentNote !== 0) {
-      const duration = this.audioCtx!.currentTime - this.currentNoteStart;
-      this.onStopNote(this.currentNote, duration);
-    }
-    this.currentNoteStart = this.audioCtx!.currentTime;
-    this.currentNote = note;
-    this.currentVol = result.volume;
-    this.onStartNote(note, this.currentVol);
   }
 
   async start() {

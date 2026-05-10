@@ -84,6 +84,7 @@
   "playbackVoicesOthers": "الأصوات غير المحددة",
   "playbackVoicesAll": "جميع الأصوات",
   "playMetronome": "تشغيل الميترونوم",
+  "useMidi": "استخدم MIDI بدلاً من الميكروفون",
   "autoScroll": "التمرير التلقائي أثناء التشغيل",
   "practiceMode": "التحقق من العزف",
   "practiceDontCheck": "لا تتحقق",

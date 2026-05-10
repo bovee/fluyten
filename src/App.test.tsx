@@ -14,12 +14,11 @@ import { useStore } from './store';
 // resolves immediately rather than racing against waitFor's timeout.
 import './SongPage';
 
-vi.mock('./audio/FrequencyTracker', () => ({
-  FrequencyTracker: class {
-    constructor(_onStart: unknown, _onStop: unknown) {}
+vi.mock('./audio/Transcriber', () => ({
+  Transcriber: class {
+    constructor(_source: unknown, _onNote: unknown) {}
     start = vi.fn().mockResolvedValue(undefined);
     stop = vi.fn();
-    checkFrequency = vi.fn();
   },
 }));
 

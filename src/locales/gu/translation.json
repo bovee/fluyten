@@ -84,6 +84,7 @@
   "playbackVoicesOthers": "પસંદ ન કરેલ સ્વરો",
   "playbackVoicesAll": "તમામ સ્વરો",
   "playMetronome": "મેટ્રોનોમ વગાડો",
+  "useMidi": "માઇક્રોફોનને બદલે MIDI વાપરો",
   "autoScroll": "વગાડતી વખતે આપોઆપ સ્ક્રોલ કરો",
   "practiceMode": "વાદન તપાસો",
   "practiceDontCheck": "તપાસો નહીં",

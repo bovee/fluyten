@@ -84,6 +84,7 @@
   "playbackVoicesOthers": "未選択の声部",
   "playbackVoicesAll": "すべての声部",
   "playMetronome": "メトロノームを再生",
+  "useMidi": "マイクの代わりにMIDIを使用",
   "autoScroll": "再生中に自動スクロール",
   "practiceMode": "演奏確認",
   "practiceDontCheck": "チェックしない",

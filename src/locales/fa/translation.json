@@ -84,6 +84,7 @@
   "playbackVoicesOthers": "صداهای انتخاب‌نشده",
   "playbackVoicesAll": "همه صداها",
   "playMetronome": "پخش مترونوم",
+  "useMidi": "استفاده از MIDI به جای میکروفون",
   "autoScroll": "پیمایش خودکار هنگام پخش",
   "practiceMode": "بررسی نوازندگی",
   "practiceDontCheck": "بررسی نکن",

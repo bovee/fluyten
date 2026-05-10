@@ -84,6 +84,7 @@
   "playbackVoicesOthers": "Nevybrané hlasy",
   "playbackVoicesAll": "Všetky hlasy",
   "playMetronome": "Prehrať metronóm",
+  "useMidi": "Použiť MIDI namiesto mikrofónu",
   "autoScroll": "Automaticky posúvať počas prehrávania",
   "practiceMode": "Skontrolovať hranie",
   "practiceDontCheck": "Nekontrolovať",

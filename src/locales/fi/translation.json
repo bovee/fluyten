@@ -84,6 +84,7 @@
   "playbackVoicesOthers": "Valitsemattomat äänet",
   "playbackVoicesAll": "Kaikki äänet",
   "playMetronome": "Toista metronomi",
+  "useMidi": "Käytä MIDIä mikrofonin sijaan",
   "autoScroll": "Vieritä automaattisesti toiston aikana",
   "practiceMode": "Tarkista soitto",
   "practiceDontCheck": "Älä tarkista",

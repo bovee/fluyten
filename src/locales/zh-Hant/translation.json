@@ -84,6 +84,7 @@
   "playbackVoicesOthers": "未選聲部",
   "playbackVoicesAll": "所有聲部",
   "playMetronome": "播放節拍器",
+  "useMidi": "使用 MIDI 取代麥克風",
   "autoScroll": "播放時自動捲動",
   "practiceMode": "檢查演奏",
   "practiceDontCheck": "不檢查",

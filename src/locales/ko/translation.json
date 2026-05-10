@@ -84,6 +84,7 @@
   "playbackVoicesOthers": "선택되지 않은 성부",
   "playbackVoicesAll": "모든 성부",
   "playMetronome": "메트로놈 재생",
+  "useMidi": "마이크 대신 MIDI 사용",
   "autoScroll": "재생 중 자동 스크롤",
   "practiceMode": "연주 확인",
   "practiceDontCheck": "확인 안 함",

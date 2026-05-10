@@ -64,6 +64,14 @@ describe('SingleFrequencyTracker.check()', () => {
     expect(tracker.check()).toBe(true);
   });
 
+  it('degrades a chord to its bottom note (mic mode is monophonic)', () => {
+    const buf = makeSineBuffer(440, SAMPLE_RATE, BUFFER_SIZE); // A4
+    injectContext(tracker, buf);
+    tracker.setTarget([69, 73], 1.0); // A4 + C#5 — only A4 should be checked
+    expect(tracker.check()).toBe(true);
+    expect(tracker.targetPitch).toBe(69);
+  });
+
   it('returns false for a harmonically unrelated pitch (E3 vs A4 target)', () => {
     // E3 (164.81 Hz, lag ~268 samples) vs target A4 (440 Hz, lag ~100 samples).
     // E3's harmonics land at lags ~268, 134, 89, 67 — none inside A4's window [97–104].

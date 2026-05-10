@@ -84,6 +84,7 @@
   "playbackVoicesOthers": "Suara Tidak Terpilih",
   "playbackVoicesAll": "Semua Suara",
   "playMetronome": "Mainkan metronom",
+  "useMidi": "Gunakan MIDI alih-alih mikrofon",
   "autoScroll": "Gulir otomatis saat memutar",
   "practiceMode": "Periksa Permainan",
   "practiceDontCheck": "Jangan periksa",

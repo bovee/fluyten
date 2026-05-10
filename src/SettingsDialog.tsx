@@ -203,6 +203,8 @@ export function SettingsDialog({ open, onClose }: SettingsDialogProps) {
   const setPracticeMode = useStore((state) => state.setPracticeMode);
   const playMetronome = useStore((state) => state.playMetronome);
   const setPlayMetronome = useStore((state) => state.setPlayMetronome);
+  const useMidi = useStore((state) => state.useMidi);
+  const setUseMidi = useStore((state) => state.setUseMidi);
   const autoScroll = useStore((state) => state.autoScroll);
   const setAutoScroll = useStore((state) => state.setAutoScroll);
 
@@ -582,6 +584,16 @@ export function SettingsDialog({ open, onClose }: SettingsDialogProps) {
                   />
                 }
                 label={t('playMetronome')}
+              />
+              <FormControlLabel
+                disabled={practiceMode === 'metronome-only'}
+                control={
+                  <Checkbox
+                    checked={useMidi}
+                    onChange={(e) => setUseMidi(e.target.checked)}
+                  />
+                }
+                label={t('useMidi')}
               />
               <PracticeHeatmap />
             </Box>

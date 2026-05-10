@@ -84,6 +84,7 @@
   "playbackVoicesOthers": "غیر منتخب آوازیں",
   "playbackVoicesAll": "تمام آوازیں",
   "playMetronome": "میٹرونوم چلائیں",
+  "useMidi": "مائیکروفون کے بجائے MIDI استعمال کریں",
   "autoScroll": "چلاتے وقت خود بخود اسکرول کریں",
   "practiceMode": "بجانے کی جانچ",
   "practiceDontCheck": "جانچ نہ کریں",

@@ -84,6 +84,7 @@
   "playbackVoicesOthers": "Voci neselectate",
   "playbackVoicesAll": "Toate vocile",
   "playMetronome": "Redă metronom",
+  "useMidi": "Folosește MIDI în loc de microfon",
   "autoScroll": "Derulare automată în timpul redării",
   "practiceMode": "Verifică interpretarea",
   "practiceDontCheck": "Nu verifica",

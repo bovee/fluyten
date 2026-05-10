@@ -84,6 +84,7 @@
   "playbackVoicesOthers": "निवड न केलेले स्वर",
   "playbackVoicesAll": "सर्व स्वर",
   "playMetronome": "मेट्रोनोम वाजवा",
+  "useMidi": "मायक्रोफोनऐवजी MIDI वापरा",
   "autoScroll": "वाजवताना आपोआप स्क्रोल करा",
   "practiceMode": "वादन तपासा",
   "practiceDontCheck": "तपासू नका",

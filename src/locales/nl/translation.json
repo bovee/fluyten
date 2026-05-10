@@ -84,6 +84,7 @@
   "playbackVoicesOthers": "Niet-geselecteerde stemmen",
   "playbackVoicesAll": "Alle stemmen",
   "playMetronome": "Metronoom afspelen",
+  "useMidi": "Gebruik MIDI in plaats van microfoon",
   "autoScroll": "Automatisch scrollen tijdens afspelen",
   "practiceMode": "Spel controleren",
   "practiceDontCheck": "Niet controleren",

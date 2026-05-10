@@ -24,7 +24,8 @@ export type OnCheckCallback = (
  * poll interval.
  *
  * Typical usage:
- *   const tracker = new SingleFrequencyTracker((active, pitch) => { ... });
+ *   const tracker = new SingleFrequencyTracker();
+ *   tracker.onCheck = (active, pitch) => { ... };
  *   await tracker.start('SOPRANO', tuning);
  *   tracker.setTarget(midiPitch, tuning);
  *   // poll loop is internal; stop when done:
@@ -57,19 +58,23 @@ export class SingleFrequencyTracker {
 
   // ── internal poll loop ───────────────────────────────────────────────────
   private intervalId?: ReturnType<typeof setInterval>;
-  private readonly onCheck?: OnCheckCallback;
+  /** Settable so a single tracker can be shared across UI modes that each
+   * want to react to detections differently. */
+  onCheck?: OnCheckCallback;
   private readonly pollIntervalMs: number;
 
   // ── NSDF threshold: a peak must reach this fraction of 1.0 to count ──────
   static readonly DETECTION_THRESHOLD = 0.5;
 
-  constructor(onCheck?: OnCheckCallback, pollIntervalMs: number = 50) {
-    this.onCheck = onCheck;
+  constructor(pollIntervalMs: number = 50) {
     this.pollIntervalMs = pollIntervalMs;
   }
 
-  setTarget(midiPitch: number, tuning: number = 1.0) {
-    this.targetPitch = midiPitch;
+  setTarget(midiPitch: number | number[], tuning: number = 1.0) {
+    // Mic mode is monophonic: a chord degrades to checking the bottom note.
+    this.targetPitch = Array.isArray(midiPitch)
+      ? (midiPitch[0] ?? 0)
+      : midiPitch;
     this.targetTuning = tuning;
     this._updateLagWindow();
   }

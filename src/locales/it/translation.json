@@ -84,6 +84,7 @@
   "playbackVoicesOthers": "Voci non selezionate",
   "playbackVoicesAll": "Tutte le voci",
   "playMetronome": "Riproduci metronomo",
+  "useMidi": "Usa MIDI invece del microfono",
   "autoScroll": "Scorri automaticamente durante la riproduzione",
   "practiceMode": "Verifica esecuzione",
   "practiceDontCheck": "Non verificare",

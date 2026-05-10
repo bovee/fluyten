@@ -12,19 +12,19 @@ import { axe } from 'jest-axe';
 import { useStore } from './store';
 
 // Mock audio-related classes so they don't fail in jsdom
-vi.mock('./audio/FrequencyTracker', () => ({
-  FrequencyTracker: class {
-    constructor(_onStart: unknown, _onStop: unknown) {}
+vi.mock('./audio/Transcriber', () => ({
+  Transcriber: class {
+    constructor(_source: unknown, _onNote: unknown) {}
     start = vi.fn().mockResolvedValue(undefined);
     stop = vi.fn();
-    checkFrequency = vi.fn();
   },
 }));
 
 vi.mock('./audio/SingleFrequencyTracker', () => ({
   SingleFrequencyTracker: class {
     targetPitch = 0;
-    constructor(_onCheck: unknown, _pollMs: unknown) {}
+    onCheck: unknown = undefined;
+    constructor(_pollMs?: unknown) {}
     start = vi.fn().mockResolvedValue(undefined);
     stop = vi.fn();
     setTarget = vi.fn();

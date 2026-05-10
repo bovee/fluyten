@@ -84,6 +84,7 @@
   "playbackVoicesOthers": "Nem kiválasztott szólamok",
   "playbackVoicesAll": "Összes szólam",
   "playMetronome": "Metronóm lejátszása",
+  "useMidi": "MIDI használata mikrofon helyett",
   "autoScroll": "Automatikus görgetés lejátszás közben",
   "practiceMode": "Játék ellenőrzése",
   "practiceDontCheck": "Ne ellenőrizz",

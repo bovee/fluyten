@@ -70,10 +70,7 @@ export class RecorderDetector {
   }
 
   async start(): Promise<void> {
-    this.tracker = new FrequencyTracker(
-      () => {},
-      () => {}
-    );
+    this.tracker = new FrequencyTracker();
     await this.tracker.start();
     this.runStep1();
   }

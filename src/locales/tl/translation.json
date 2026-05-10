@@ -84,6 +84,7 @@
   "playbackVoicesOthers": "Mga boses na hindi pinili",
   "playbackVoicesAll": "Lahat ng boses",
   "playMetronome": "I-play ang metronomo",
+  "useMidi": "Gumamit ng MIDI sa halip na mikropono",
   "autoScroll": "Awtomatikong mag-scroll habang nagpapatugtog",
   "practiceMode": "Suriin ang pagtutog",
   "practiceDontCheck": "Huwag suriin",

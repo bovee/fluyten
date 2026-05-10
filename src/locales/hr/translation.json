@@ -84,6 +84,7 @@
   "playbackVoicesOthers": "Neodabrani glasovi",
   "playbackVoicesAll": "Svi glasovi",
   "playMetronome": "Pusti metronom",
+  "useMidi": "Koristi MIDI umjesto mikrofona",
   "autoScroll": "Automatski pomicaj tijekom reprodukcije",
   "practiceMode": "Provjeri sviranje",
   "practiceDontCheck": "Ne provjeri",
