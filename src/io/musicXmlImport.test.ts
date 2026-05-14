@@ -1,7 +1,18 @@
 import { describe, it, expect } from 'vitest';
 import { fromMusicXml, extractMxl } from './musicXmlImport';
-import { Duration, expandRepeats } from '../music';
+import { Duration, expandRepeats, type Music } from '../music';
 import { zipSync } from 'fflate';
+
+// Test-only adapter: keep old `notes`/`originalIndices` shape so existing
+// assertions don't need to change after expandRepeats was refactored to entries[].
+function expandToLegacy(music: Music) {
+  const r = expandRepeats(music);
+  return {
+    notes: r.entries.map((e) => e.note),
+    originalIndices: r.entries.map((e) => e.originalIndex),
+    curves: r.curves,
+  };
+}
 
 // ---------------------------------------------------------------------------
 // XML helpers
@@ -612,7 +623,7 @@ describe('fromMusicXml', () => {
 
       it('expandRepeats plays common+volta1 then common+volta2', () => {
         const music = fromMusicXml(voltaXml());
-        const result = expandRepeats(music);
+        const result = expandToLegacy(music);
         // Pass 1: C D E F G A B c  (8 notes)
         // Pass 2: C D E F d e f g  (8 notes)
         expect(result.notes).toHaveLength(16);

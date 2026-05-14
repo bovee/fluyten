@@ -29,11 +29,17 @@ import {
   defaultClefForInstrument,
   type VoiceInfo,
 } from './io/abcImport';
+import { findGrandStaffPair } from './io/grandStaff';
+import {
+  buildGrandStaffPracticeSequence,
+  type PracticeEvent,
+} from './practice/grandStaffSequence';
 import { resolveInstrumentConfig, RECORDER_TYPES } from './instrument';
 import { Music, expandRepeats, findNearestExpandedIndex } from './music';
 import { SingleFrequencyTracker } from './audio/SingleFrequencyTracker';
 import { MidiTracker } from './audio/MidiTracker';
 import { NotePlayer } from './audio/NotePlayer';
+import { getSynthProfileForGmInstrument } from './audio/synthProfiles';
 import { MusicTimeline } from './audio/MusicTimeline';
 import { Score } from './engraving';
 import { useStore } from './store';
@@ -155,13 +161,21 @@ function useAsPlayedChecking(
     results: ReadonlyMap<number, 'correct' | 'wrong'>,
     correctCount: number,
     totalCount: number
-  ) => void
+  ) => void,
+  grandStaffPracticeRef: React.RefObject<{
+    events: PracticeEvent[];
+    idx: number;
+  } | null>
 ) {
   const [noteResults, setNoteResults] = useState<
     ReadonlyMap<number, 'correct' | 'wrong'>
   >(new Map());
+  const [secondaryNoteResults, setSecondaryNoteResults] = useState<
+    ReadonlyMap<number, 'correct' | 'wrong'>
+  >(new Map());
   const [cursor, setCursor] = useState<number | undefined>();
   const noteResultsMapRef = useRef(new Map<number, 'correct' | 'wrong'>());
+  const secondaryResultsMapRef = useRef(new Map<number, 'correct' | 'wrong'>());
   // True while the target note is currently sounding, so we count each note
   // onset only once even if the player holds the note across multiple polls.
   const wasActiveRef = useRef(false);
@@ -174,7 +188,87 @@ function useAsPlayedChecking(
     }
 
     noteResultsMapRef.current = new Map();
+    secondaryResultsMapRef.current = new Map();
     setNoteResults(new Map());
+    setSecondaryNoteResults(new Map());
+    const { tuning, useMidi } = useStore.getState();
+
+    // Grand-staff MIDI path: iterate over PracticeEvents, each carrying the
+    // expected pitches and original-note indices for both voices.
+    const gsTracking = grandStaffPracticeRef.current;
+    if (useMidi && gsTracking && gsTracking.events.length > 0) {
+      gsTracking.idx = 0;
+      // Skip leading events with no expected pitches in any voice.
+      while (
+        gsTracking.idx < gsTracking.events.length &&
+        gsTracking.events[gsTracking.idx].expectedPitches.flat().length === 0
+      )
+        gsTracking.idx++;
+      const setCursorForEvent = (e: PracticeEvent | undefined) => {
+        if (!e) {
+          setCursor(undefined);
+          return;
+        }
+        // Cursor follows the treble's original index for this event; if the
+        // treble has no onset, fall back to bass.
+        const idx = e.originalIndices[0] ?? e.originalIndices[1];
+        if (idx !== null && idx !== undefined) setCursor(idx);
+      };
+      setCursorForEvent(gsTracking.events[gsTracking.idx]);
+      wasActiveRef.current = false;
+
+      let tracker: PitchTracker | null = null;
+      tracker = await session.start((active) => {
+        if (!active) {
+          wasActiveRef.current = false;
+          return;
+        }
+        if (wasActiveRef.current) return;
+        wasActiveRef.current = true;
+        const t = grandStaffPracticeRef.current;
+        if (!t) return;
+        const event = t.events[t.idx];
+        if (event) {
+          // Mark each voice's note correct.
+          for (let v = 0; v < event.originalIndices.length; v++) {
+            const oi = event.originalIndices[v];
+            if (oi === null) continue;
+            const map =
+              v === 0
+                ? noteResultsMapRef.current
+                : secondaryResultsMapRef.current;
+            map.set(oi, 'correct');
+          }
+          setNoteResults(new Map(noteResultsMapRef.current));
+          setSecondaryNoteResults(new Map(secondaryResultsMapRef.current));
+        }
+        t.idx++;
+        while (
+          t.idx < t.events.length &&
+          t.events[t.idx].expectedPitches.flat().length === 0
+        )
+          t.idx++;
+        if (t.idx >= t.events.length) {
+          session.stop();
+          setCursor(undefined);
+          onFinish(
+            new Map(noteResultsMapRef.current),
+            t.events.length,
+            t.events.length
+          );
+        } else {
+          const next = t.events[t.idx];
+          tracker?.setTarget(next.expectedPitches.flat(), tuning);
+          setCursorForEvent(next);
+        }
+      });
+      if (!tracker) return;
+      const first = gsTracking.events[gsTracking.idx];
+      if (first) tracker.setTarget(first.expectedPitches.flat(), tuning);
+      return;
+    }
+
+    // Single-voice (existing) path.
     const tracking = expandedTrackingRef.current;
     tracking.idx = 0;
     while (
@@ -184,7 +278,6 @@ function useAsPlayedChecking(
       tracking.idx++;
     setCursor(tracking.originalIndices[tracking.idx]);
 
-    const { tuning } = useStore.getState();
     wasActiveRef.current = false;
 
     let tracker: PitchTracker | null = null;
@@ -229,6 +322,7 @@ function useAsPlayedChecking(
   return {
     startRecording,
     noteResults,
+    secondaryNoteResults,
     cursor,
     countdown: null as number | null,
   };
@@ -242,9 +336,13 @@ function useInTempoChecking(
     results: ReadonlyMap<number, 'correct' | 'wrong'>,
     correctCount: number,
     totalCount: number
-  ) => void
+  ) => void,
+  secondaryMusicRef: React.RefObject<Music | null>
 ) {
   const [noteResults, setNoteResults] = useState<
+    ReadonlyMap<number, 'correct' | 'wrong'>
+  >(new Map());
+  const [secondaryNoteResults, setSecondaryNoteResults] = useState<
     ReadonlyMap<number, 'correct' | 'wrong'>
   >(new Map());
   const [cursor, setCursor] = useState<number | undefined>();
@@ -252,11 +350,15 @@ function useInTempoChecking(
   // Track the current note index (original) being evaluated, and whether the
   // correct pitch was detected at any point during that note's time window.
   const currentNoteIdxRef = useRef(-1);
+  const bassCurrentNoteIdxRef = useRef(-1);
   const correctSeenRef = useRef(false);
+  const bassCorrectSeenRef = useRef(false);
   const noteResultsMapRef = useRef(new Map<number, 'correct' | 'wrong'>());
+  const secondaryResultsMapRef = useRef(new Map<number, 'correct' | 'wrong'>());
   const correctCountRef = useRef(0);
   const totalCountRef = useRef(0);
   const timelineRef = useRef<MusicTimeline | null>(null);
+  const bassTimelineRef = useRef<MusicTimeline | null>(null);
   const rafRef = useRef<number | null>(null);
   const countdownTimeoutsRef = useRef<number[]>([]);
   const clickCtxRef = useRef<AudioContext | null>(null);
@@ -269,6 +371,7 @@ function useInTempoChecking(
     clickCtxRef.current?.close();
     clickCtxRef.current = null;
     timelineRef.current = null;
+    bassTimelineRef.current = null;
     if (rafRef.current !== null) {
       cancelAnimationFrame(rafRef.current);
       rafRef.current = null;
@@ -282,20 +385,41 @@ function useInTempoChecking(
       return;
     }
 
-    const { tuning } = useStore.getState();
+    const { tuning, useMidi } = useStore.getState();
     const music = musicRef.current;
+    const bassMusic = secondaryMusicRef.current;
+    const useGrandStaff = useMidi && bassMusic !== null;
 
     correctSeenRef.current = false;
+    bassCorrectSeenRef.current = false;
     const tracker = await session.start((active) => {
-      if (active) correctSeenRef.current = true;
+      if (!active) return;
+      if (!useGrandStaff || !(tracker instanceof MidiTracker)) {
+        correctSeenRef.current = true;
+        return;
+      }
+      // Per-voice correctness: check whether held notes cover each voice's
+      // current expected pitches independently.
+      const held = tracker.getHeldNotes();
+      const tIdx = currentNoteIdxRef.current;
+      const bIdx = bassCurrentNoteIdxRef.current;
+      const tPitches = tIdx >= 0 ? music.notes[tIdx]?.pitches : undefined;
+      const bPitches = bIdx >= 0 ? bassMusic!.notes[bIdx]?.pitches : undefined;
+      if (tPitches && tPitches.length > 0 && tPitches.every((p) => held.has(p)))
+        correctSeenRef.current = true;
+      if (bPitches && bPitches.length > 0 && bPitches.every((p) => held.has(p)))
+        bassCorrectSeenRef.current = true;
     });
     if (!tracker) return;
 
     currentNoteIdxRef.current = -1;
+    bassCurrentNoteIdxRef.current = -1;
     noteResultsMapRef.current = new Map();
+    secondaryResultsMapRef.current = new Map();
     correctCountRef.current = 0;
     totalCountRef.current = 0;
     setNoteResults(new Map());
+    setSecondaryNoteResults(new Map());
 
     // 3-2-1 countdown: schedule audible beeps at the song's tempo, then start
     // the player and cursor only after all 3 beats have elapsed.
@@ -336,6 +460,13 @@ function useInTempoChecking(
       const timeline = new MusicTimeline(music, tempoRef.current);
       timeline.start();
       timelineRef.current = timeline;
+      const bassTimeline = useGrandStaff
+        ? new MusicTimeline(bassMusic!, tempoRef.current)
+        : null;
+      if (bassTimeline) {
+        bassTimeline.start();
+        bassTimelineRef.current = bassTimeline;
+      }
 
       const animate = () => {
         const tl = timelineRef.current;
@@ -351,6 +482,15 @@ function useInTempoChecking(
             totalCountRef.current++;
             if (result === 'correct') correctCountRef.current++;
           }
+          if (useGrandStaff && bassMusic) {
+            const bIdx = bassCurrentNoteIdxRef.current;
+            const bNote = bassMusic.notes[bIdx];
+            if (bIdx >= 0 && bNote && bNote.pitches.length > 0) {
+              const r = bassCorrectSeenRef.current ? 'correct' : 'wrong';
+              secondaryResultsMapRef.current.set(bIdx, r);
+              setSecondaryNoteResults(new Map(secondaryResultsMapRef.current));
+            }
+          }
           stopAll();
           onFinish(
             new Map(noteResultsMapRef.current),
@@ -364,8 +504,10 @@ function useInTempoChecking(
         const noteIdx = tl.getNoteIdxAtTime(now);
         const floorIdx = Math.floor(noteIdx);
 
-        // When the note index advances, evaluate the note that just finished
-        // and point the tracker at the new expected note.
+        // Treble (primary): advance and re-target. In grand-staff mode the
+        // tracker target gets the union of treble+bass expected pitches; in
+        // single-voice mode just the treble's.
+        let trebleAdvanced = false;
         if (floorIdx !== currentNoteIdxRef.current) {
           if (currentNoteIdxRef.current >= 0) {
             const prevIdx = currentNoteIdxRef.current;
@@ -379,13 +521,49 @@ function useInTempoChecking(
             }
             correctSeenRef.current = false;
           }
-          const newNote = music.notes[floorIdx];
-          tracker.setTarget(
-            newNote && newNote.pitches.length > 0 ? newNote.pitches : 0,
-            tuning
-          );
+          currentNoteIdxRef.current = floorIdx;
+          trebleAdvanced = true;
         }
-        currentNoteIdxRef.current = floorIdx;
+
+        // Bass: independent timeline drives bass-side correctness.
+        let bassAdvanced = false;
+        if (bassTimeline) {
+          const bNow = bassTimeline.getCurrentTime();
+          const bIdx = Math.floor(bassTimeline.getNoteIdxAtTime(bNow));
+          if (bIdx !== bassCurrentNoteIdxRef.current) {
+            if (bassCurrentNoteIdxRef.current >= 0 && bassMusic) {
+              const prevB = bassCurrentNoteIdxRef.current;
+              const prevBNote = bassMusic.notes[prevB];
+              if (prevBNote && prevBNote.pitches.length > 0) {
+                const r = bassCorrectSeenRef.current ? 'correct' : 'wrong';
+                secondaryResultsMapRef.current.set(prevB, r);
+                setSecondaryNoteResults(
+                  new Map(secondaryResultsMapRef.current)
+                );
+              }
+              bassCorrectSeenRef.current = false;
+            }
+            bassCurrentNoteIdxRef.current = bIdx;
+            bassAdvanced = true;
+          }
+        }
+
+        // Refresh the tracker target whenever either voice advanced.
+        if (trebleAdvanced || bassAdvanced) {
+          const trebleNote = music.notes[currentNoteIdxRef.current];
+          const tPitches =
+            trebleNote && trebleNote.pitches.length > 0
+              ? trebleNote.pitches
+              : [];
+          const bassNote =
+            bassMusic && bassCurrentNoteIdxRef.current >= 0
+              ? bassMusic.notes[bassCurrentNoteIdxRef.current]
+              : undefined;
+          const bPitches =
+            bassNote && bassNote.pitches.length > 0 ? bassNote.pitches : [];
+          const union = [...tPitches, ...bPitches];
+          tracker.setTarget(union.length > 0 ? union : 0, tuning);
+        }
 
         setCursor(Math.round(noteIdx / CURSOR_QUANT) * CURSOR_QUANT);
         rafRef.current = requestAnimationFrame(animate);
@@ -407,6 +585,7 @@ function useInTempoChecking(
   return {
     startRecording,
     noteResults,
+    secondaryNoteResults,
     cursor,
     countdown,
   };
@@ -418,7 +597,8 @@ function useAudioPlayback(
   voicesRef: React.RefObject<VoiceInfo[]>,
   selectedVoiceIdxRef: React.RefObject<number>,
   tempoRef: React.RefObject<number>,
-  setStatusMessage: (msg: string) => void
+  setStatusMessage: (msg: string) => void,
+  grandStaffBassIdxRef: React.RefObject<number | null>
 ) {
   const { t } = useTranslation();
   const musicPlayersRef = useRef<PlayerEntry[]>([]);
@@ -444,18 +624,28 @@ function useAudioPlayback(
     const voices = voicesRef.current;
     const selectedIdx = selectedVoiceIdxRef.current;
 
+    const bassIdx = grandStaffBassIdxRef.current;
+    const isSelected = (i: number) =>
+      i === selectedIdx || (bassIdx !== null && i === bassIdx);
+
     // Only create audible players. The selected voice cursor is handled
     // separately by a MusicTimeline when that voice has no audible player.
     const entries: PlayerEntry[] = voices
       .map((v, i) => {
-        const audible =
+        const inPlaybackSet =
           playbackVoices === 'selected'
-            ? i === selectedIdx
+            ? isSelected(i)
             : playbackVoices === 'others'
-              ? i !== selectedIdx
+              ? !isSelected(i)
               : true; // 'all'
-        if (!audible) return null;
+        // %%MIDI voice mute silences a voice except when the user has
+        // explicitly selected it — selecting always overrides the tune's hint.
+        const muted = v.music.midiMute && !isSelected(i);
+        if (!inPlaybackSet || muted) return null;
         const player = new NotePlayer();
+        player.setProfile(
+          getSynthProfileForGmInstrument(v.music.midiInstrument)
+        );
         player.start();
         player.scheduleNotes(tempoRef.current, v.music, startTimeOffset);
         return { player, music: v.music, voiceIdx: i };
@@ -537,7 +727,7 @@ function useAudioPlayback(
     const selectedVoice = voicesRef.current[selectedVoiceIdxRef.current];
     if (!selectedVoice) return;
 
-    const { notes, originalIndices } = expandRepeats(selectedVoice.music);
+    const { entries } = expandRepeats(selectedVoice.music);
     const beatValue = selectedVoice.music.signatures[0].beatValue;
     const tempo = tempoRef.current;
     const lengthToTime = (ticks: number) =>
@@ -554,18 +744,18 @@ function useAudioPlayback(
         selectedEntry.player.startTime;
       // Walk the expanded sequence to find the current expanded index by time.
       let acc = 0;
-      for (let i = 0; i < notes.length; i++) {
-        acc += lengthToTime(notes[i].ticks());
+      for (let i = 0; i < entries.length; i++) {
+        acc += lengthToTime(entries[i].note.ticks());
         if (acc > elapsed) {
           currentExpandedIdx = i;
           break;
         }
-        if (i === notes.length - 1) currentExpandedIdx = i;
+        if (i === entries.length - 1) currentExpandedIdx = i;
       }
     }
 
     const targetK = findNearestExpandedIndex(
-      originalIndices,
+      entries,
       origNoteIdx,
       currentExpandedIdx
     );
@@ -574,7 +764,7 @@ function useAudioPlayback(
     // Sum durations up to targetK to get the time offset.
     let startTimeOffset = 0;
     for (let i = 0; i < targetK; i++) {
-      startTimeOffset += lengthToTime(notes[i].ticks());
+      startTimeOffset += lengthToTime(entries[i].note.ticks());
     }
 
     // Stop current playback and restart from the computed offset.
@@ -678,11 +868,29 @@ export function SongPage({
   const [currentParseError, setCurrentParseError] = useState('');
   const [voices, setVoices] = useState<ReturnType<typeof voicesFromAbc>>([]);
   const [selectedVoiceIdx, setSelectedVoiceIdx] = useState(0);
+  const [grandStaffActive, setGrandStaffActive] = useState(false);
+  const fingeringSystem = useStore((s) => s.fingeringSystem);
+  const grandStaffPair = useMemo(() => {
+    if (fingeringSystem !== 'piano') return null;
+    const pair = findGrandStaffPair(voices);
+    if (!pair) return null;
+    const trebleIdx = voices.indexOf(pair.treble);
+    const bassIdx = voices.indexOf(pair.bass);
+    if (trebleIdx === -1 || bassIdx === -1) return null;
+    return { treble: pair.treble, bass: pair.bass, trebleIdx, bassIdx };
+  }, [voices, fingeringSystem]);
   const music = useMemo(
     () =>
       voices[Math.min(selectedVoiceIdx, voices.length - 1)]?.music ??
       new Music(),
     [voices, selectedVoiceIdx]
+  );
+  const secondaryMusic = useMemo(
+    () =>
+      grandStaffActive && grandStaffPair
+        ? grandStaffPair.bass.music
+        : undefined,
+    [grandStaffActive, grandStaffPair]
   );
   const [statusMessage, setStatusMessage] = useState('');
   const tempo = useStore((s) => s.tempo);
@@ -712,10 +920,53 @@ export function SongPage({
   useEffect(() => {
     selectedVoiceIdxRef.current = selectedVoiceIdx;
   }, [selectedVoiceIdx]);
+  const grandStaffActiveRef = useRef(grandStaffActive);
+  useEffect(() => {
+    grandStaffActiveRef.current = grandStaffActive;
+  }, [grandStaffActive]);
+  const grandStaffBassIdxRef = useRef<number | null>(null);
+  useEffect(() => {
+    grandStaffBassIdxRef.current = grandStaffPair?.bassIdx ?? null;
+  }, [grandStaffPair]);
+
+  // Auto-activate grand-staff mode when a pair first appears; deactivate when
+  // it disappears (e.g. fingering switched away from piano). We track the
+  // boolean transition, not the pair object identity — re-parsing the ABC
+  // produces a new pair object but should NOT override the user's voice choice.
+  const [hadPair, setHadPair] = useState(false);
+  const hasPair = grandStaffPair !== null;
+  if (hadPair !== hasPair) {
+    setHadPair(hasPair);
+    if (hasPair && grandStaffPair) {
+      if (!grandStaffActive) setGrandStaffActive(true);
+      if (selectedVoiceIdx !== grandStaffPair.trebleIdx)
+        setSelectedVoiceIdx(grandStaffPair.trebleIdx);
+    } else if (grandStaffActive) {
+      setGrandStaffActive(false);
+    }
+  }
   const musicRef = useRef(music);
   useEffect(() => {
     musicRef.current = music;
   }, [music]);
+  const secondaryMusicRef = useRef<Music | null>(secondaryMusic ?? null);
+  useEffect(() => {
+    secondaryMusicRef.current = secondaryMusic ?? null;
+  }, [secondaryMusic]);
+  const grandStaffPracticeRef = useRef<{
+    events: PracticeEvent[];
+    idx: number;
+  } | null>(null);
+  useEffect(() => {
+    if (secondaryMusic) {
+      grandStaffPracticeRef.current = {
+        events: buildGrandStaffPracticeSequence([music, secondaryMusic]),
+        idx: 0,
+      };
+    } else {
+      grandStaffPracticeRef.current = null;
+    }
+  }, [music, secondaryMusic]);
 
   const expandedTrackingRef = useRef({
     notes: [] as { pitches: number[] }[],
@@ -728,8 +979,8 @@ export function SongPage({
     // expanded note has the same pitches and a curve connects them.
     const isTieContinuation = (i: number): boolean => {
       if (i === 0) return false;
-      const prev = expanded.notes[i - 1];
-      const curr = expanded.notes[i];
+      const prev = expanded.entries[i - 1].note;
+      const curr = expanded.entries[i].note;
       if (
         prev.pitches.length === 0 ||
         prev.pitches.length !== curr.pitches.length ||
@@ -740,10 +991,10 @@ export function SongPage({
     };
     const notes: { pitches: number[] }[] = [];
     const originalIndices: number[] = [];
-    for (let i = 0; i < expanded.notes.length; i++) {
+    for (let i = 0; i < expanded.entries.length; i++) {
       if (!isTieContinuation(i)) {
-        notes.push(expanded.notes[i]);
-        originalIndices.push(expanded.originalIndices[i]);
+        notes.push(expanded.entries[i].note);
+        originalIndices.push(expanded.entries[i].originalIndex);
       }
     }
     expandedTrackingRef.current = { notes, originalIndices, idx: 0 };
@@ -775,20 +1026,23 @@ export function SongPage({
   const asPlayedResult = useAsPlayedChecking(
     session,
     expandedTrackingRef,
-    onPracticeFinish
+    onPracticeFinish,
+    grandStaffPracticeRef
   );
 
   const inTempoResult = useInTempoChecking(
     session,
     musicRef,
     tempoRef,
-    onPracticeFinish
+    onPracticeFinish,
+    secondaryMusicRef
   );
 
   const { detectedPitch, isRecording } = session;
   const {
     startRecording,
     noteResults,
+    secondaryNoteResults,
     cursor: practiceCursor,
     countdown,
   } = practiceMode === 'in-tempo' ? inTempoResult : asPlayedResult;
@@ -801,7 +1055,8 @@ export function SongPage({
     voicesRef,
     selectedVoiceIdxRef,
     tempoRef,
-    setStatusMessage
+    setStatusMessage,
+    grandStaffBassIdxRef
   );
   const { isMetronomeActive, startMetronome, stopMetronome } = useMetronome(
     tempoRef,
@@ -974,8 +1229,10 @@ export function SongPage({
       <div ref={scoreContainerRef} style={{ width: '100%' }}>
         <Score
           music={music}
+          secondaryMusic={secondaryMusic}
           width={scoreWidth}
           noteResults={isRecording ? noteResults : practiceSummary?.noteResults}
+          secondaryNoteResults={isRecording ? secondaryNoteResults : undefined}
           cursor={isRecording ? practiceCursor : playbackCursor}
           autoScroll={autoScroll}
           onNoteClick={isPlaying ? seekToNote : undefined}
@@ -1144,7 +1401,24 @@ export function SongPage({
         onAbcChange={setAbcMusic}
         voices={voices}
         selectedVoiceIdx={selectedVoiceIdx}
-        onVoiceChange={setSelectedVoiceIdx}
+        onVoiceChange={(idx) => {
+          setGrandStaffActive(false);
+          setSelectedVoiceIdx(idx);
+        }}
+        grandStaffPair={
+          grandStaffPair
+            ? {
+                trebleIdx: grandStaffPair.trebleIdx,
+                bassIdx: grandStaffPair.bassIdx,
+              }
+            : undefined
+        }
+        grandStaffActive={grandStaffActive}
+        onGrandStaffSelect={() => {
+          if (!grandStaffPair) return;
+          setSelectedVoiceIdx(grandStaffPair.trebleIdx);
+          setGrandStaffActive(true);
+        }}
         parseError={currentParseError}
       />
     </>

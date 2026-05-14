@@ -252,6 +252,9 @@ export class Note {
   accidentals: Accidental[];
   decorations: Decoration[];
   annotations: Annotation[];
+  /** Chord symbol attached to this note (e.g. "Am7", "C/E"). Rendered above
+   *  the staff. Parsed from unprefixed quoted strings in ABC. */
+  chord?: string;
 
   constructor(
     pitch: number | number[] | undefined = undefined,
@@ -464,14 +467,24 @@ export class Note {
       '>': 'right',
       '@': 'auto',
     };
-    for (const m of text.matchAll(/"([_<>@^])([^"]*?)"/g)) {
-      const placement = PLACEMENT_MAP[m[1]];
-      if (placement) annotations.push({ placement, text: m[2] });
+    let chord: string | undefined;
+    for (const m of text.matchAll(/"([^"]*?)"/g)) {
+      const inner = m[1];
+      const first = inner[0];
+      if (first in PLACEMENT_MAP) {
+        annotations.push({
+          placement: PLACEMENT_MAP[first],
+          text: inner.slice(1),
+        });
+      } else if (inner.length > 0) {
+        chord = inner;
+      }
     }
 
     if (NOTE_VALUES[upperCaseNote as keyof typeof NOTE_VALUES] === -1) {
       const n = new Note(undefined, duration, decorations, [], dots);
       n.annotations = annotations;
+      n.chord = chord;
       return n;
     } else {
       const n = new Note(
@@ -484,6 +497,7 @@ export class Note {
         dots
       );
       n.annotations = annotations;
+      n.chord = chord;
       return n;
     }
   }
@@ -659,6 +673,12 @@ export class Music {
   lyrics: (string | undefined)[][] = [];
   // Unaligned lyrics from W: fields, newline-separated.
   endLyrics?: string;
+  // GM program number (1..128) from `%%MIDI voice instrument=N`. Selects a
+  // synth profile in NotePlayer; absence means use the default timbre.
+  midiInstrument?: number;
+  // Set by `%%MIDI voice mute`. Voice is silenced during playback unless the
+  // user explicitly selects it (SongPage layers selection on top of mute).
+  midiMute?: boolean;
 
   reflow(): Music {
     // Signatures are sorted by atNoteIndex; track which one is current.
@@ -831,10 +851,15 @@ export class Music {
  * Limitation: nested repeats (e.g. |: A |: B :| C :|) are not supported.
  * This matches ABC standard practice where nested repeats are poorly defined.
  */
+export interface ExpandedEntry {
+  note: Note;
+  /** Index back into the original `music.notes` array. */
+  originalIndex: number;
+}
+
 export function expandRepeats(music: Music): {
-  notes: Note[];
+  entries: ExpandedEntry[];
   curves: number[][];
-  originalIndices: number[];
 } {
   const resultNotes: Note[] = [];
   const resultCurves: number[][] = [];
@@ -1140,11 +1165,11 @@ export function expandRepeats(music: Music): {
     }
   }
 
-  return {
-    notes: resultNotes,
-    curves: resultCurves,
-    originalIndices: resultOriginalIndices,
-  };
+  const entries: ExpandedEntry[] = resultNotes.map((note, i) => ({
+    note,
+    originalIndex: resultOriginalIndices[i],
+  }));
+  return { entries, curves: resultCurves };
 }
 
 /**
@@ -1152,14 +1177,14 @@ export function expandRepeats(music: Music): {
  * original note index matches `targetOrigIdx`.  Returns -1 if no match exists.
  */
 export function findNearestExpandedIndex(
-  originalIndices: number[],
+  entries: ExpandedEntry[],
   targetOrigIdx: number,
   currentExpandedIdx: number
 ): number {
   let bestIdx = -1;
   let bestDist = Infinity;
-  for (let k = 0; k < originalIndices.length; k++) {
-    if (originalIndices[k] === targetOrigIdx) {
+  for (let k = 0; k < entries.length; k++) {
+    if (entries[k].originalIndex === targetOrigIdx) {
       const dist = Math.abs(k - currentExpandedIdx);
       if (dist < bestDist) {
         bestDist = dist;

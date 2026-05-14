@@ -22,9 +22,33 @@ export class AudioContextMock {
       disconnect: () => {},
       start: () => {},
       stop: () => {},
+      setPeriodicWave: () => {},
       type: 'sine',
-      frequency: { value: 440 },
+      frequency: {
+        value: 440,
+        setValueAtTime: () => {},
+        linearRampToValueAtTime: () => {},
+      },
+      detune: {
+        value: 0,
+        setValueAtTime: () => {},
+        linearRampToValueAtTime: () => {},
+      },
     };
+  }
+
+  createBiquadFilter() {
+    return {
+      connect: () => {},
+      disconnect: () => {},
+      type: 'lowpass',
+      frequency: { value: 350 },
+      Q: { value: 1 },
+    };
+  }
+
+  createPeriodicWave() {
+    return {};
   }
 
   createAnalyser() {

@@ -9,6 +9,17 @@ import {
 } from './music';
 import { fromAbc } from './io/abcImport';
 
+// Test-only adapter: keep old `notes`/`originalIndices` shape so existing
+// assertions don't need to change after expandRepeats was refactored to entries[].
+function expandToLegacy(music: Music) {
+  const r = expandRepeats(music);
+  return {
+    notes: r.entries.map((e) => e.note),
+    originalIndices: r.entries.map((e) => e.originalIndex),
+    curves: r.curves,
+  };
+}
+
 describe('Note', () => {
   describe('fromAbc', () => {
     it('should parse basic notes', () => {
@@ -409,7 +420,7 @@ describe('expandRepeats', () => {
     music.curves = [[0, 1]];
     music.bars = [];
 
-    const result = expandRepeats(music);
+    const result = expandToLegacy(music);
 
     expect(result.notes).toHaveLength(2);
     expect(result.notes[0].pitches).toEqual([60]);
@@ -428,7 +439,7 @@ describe('expandRepeats', () => {
     ];
     music.bars = [{ afterNoteNum: 1, type: 'standard' }];
 
-    const result = expandRepeats(music);
+    const result = expandToLegacy(music);
 
     expect(result.notes).toHaveLength(4);
     expect(result.originalIndices).toEqual([0, 1, 2, 3]);
@@ -445,7 +456,7 @@ describe('expandRepeats', () => {
       { afterNoteNum: 1, type: 'end_repeat' },
     ];
 
-    const result = expandRepeats(music);
+    const result = expandToLegacy(music);
 
     expect(result.notes).toHaveLength(4);
     expect(result.notes[0].pitches).toEqual([60]);
@@ -466,7 +477,7 @@ describe('expandRepeats', () => {
       { afterNoteNum: 2, type: 'end_repeat' },
     ];
 
-    const result = expandRepeats(music);
+    const result = expandToLegacy(music);
 
     expect(result.notes).toHaveLength(6);
     expect(result.originalIndices).toEqual([0, 1, 2, 0, 1, 2]);
@@ -480,7 +491,7 @@ describe('expandRepeats', () => {
     ];
     music.bars = [{ afterNoteNum: 1, type: 'end_repeat' }];
 
-    const result = expandRepeats(music);
+    const result = expandToLegacy(music);
 
     expect(result.notes).toHaveLength(4);
     expect(result.originalIndices).toEqual([0, 1, 0, 1]);
@@ -500,7 +511,7 @@ describe('expandRepeats', () => {
       { afterNoteNum: 3, type: 'end_repeat' },
     ];
 
-    const result = expandRepeats(music);
+    const result = expandToLegacy(music);
 
     // Section A played twice, then section B played twice
     expect(result.notes).toHaveLength(8);
@@ -522,7 +533,7 @@ describe('expandRepeats', () => {
       { afterNoteNum: 3, type: 'end_repeat' },
     ];
 
-    const result = expandRepeats(music);
+    const result = expandToLegacy(music);
 
     expect(result.notes).toHaveLength(8);
     expect(result.originalIndices).toEqual([0, 1, 0, 1, 2, 3, 2, 3]);
@@ -540,7 +551,7 @@ describe('expandRepeats', () => {
       { afterNoteNum: 1, type: 'end_repeat' },
     ];
 
-    const result = expandRepeats(music);
+    const result = expandToLegacy(music);
 
     expect(result.curves).toHaveLength(2);
     expect(result.curves[0]).toEqual([0, 1]);
@@ -561,7 +572,7 @@ describe('expandRepeats', () => {
       { afterNoteNum: 1, type: 'end_repeat' },
     ];
 
-    const result = expandRepeats(music);
+    const result = expandToLegacy(music);
 
     // The curve [1,2] only has the start inside the repeat, so it won't be
     // included for either pass (it's not fully contained in either segment).
@@ -582,7 +593,7 @@ describe('expandRepeats', () => {
       { afterNoteNum: 3, type: 'end_repeat' },
     ];
 
-    const result = expandRepeats(music);
+    const result = expandToLegacy(music);
 
     expect(result.originalIndices).toEqual([0, 1, 2, 3, 0, 1, 2, 3]);
   });
@@ -590,7 +601,7 @@ describe('expandRepeats', () => {
   it('integration: fromAbc → expandRepeats', () => {
     const music = fromAbc('X:1\nT:Test\nM:4/4\nL:1/4\nK:C\n|: C D E F :|');
 
-    const result = expandRepeats(music);
+    const result = expandToLegacy(music);
 
     expect(result.notes).toHaveLength(8);
     expect(result.notes[0].pitches).toEqual([60]);
@@ -600,7 +611,7 @@ describe('expandRepeats', () => {
 
   describe('volta brackets', () => {
     // Helper to get pitch from expanded note index
-    const p = (result: ReturnType<typeof expandRepeats>, i: number) =>
+    const p = (result: ReturnType<typeof expandToLegacy>, i: number) =>
       result.notes[i].pitches[0];
 
     it('|1 ... :|2 plays common+volta1 then common+volta2', () => {
@@ -609,7 +620,7 @@ describe('expandRepeats', () => {
       const music = fromAbc(
         'X:1\nT:Test\nM:4/4\nL:1/4\nK:C\n|: C D E F |1 G A B c :|2 d e f g |]'
       );
-      const result = expandRepeats(music);
+      const result = expandToLegacy(music);
       // Pass 1: C D E F G A B c  (8 notes)
       // Pass 2: C D E F d e f g  (8 notes)
       expect(result.notes).toHaveLength(16);
@@ -647,7 +658,7 @@ describe('expandRepeats', () => {
       const music = fromAbc(
         'X:1\nT:Test\nM:4/4\nL:1/4\nK:C\n|: C D E F [1 G A B c :|2 d e f g |]'
       );
-      const result = expandRepeats(music);
+      const result = expandToLegacy(music);
       expect(result.notes).toHaveLength(16);
       expect(p(result, 4)).toBe(67); // G in volta 1
       expect(p(result, 12)).toBe(74); // d in volta 2
@@ -673,7 +684,7 @@ describe('expandRepeats', () => {
       const music = fromAbc(
         'X:1\nT:Test\nM:2/4\nL:1/4\nK:C\n|: A B |1 C D | E F :|2 G |]'
       );
-      const result = expandRepeats(music);
+      const result = expandToLegacy(music);
       // notes: A(0) B(1) C(2) D(3) E(4) F(5) G(6)
       // Pass 1: A B (common) + C D E F (volta 1) = 6 notes
       // Pass 2: A B (common) + G (volta 2) = 3 notes → total 9
@@ -695,7 +706,7 @@ describe('expandRepeats', () => {
       // notes: C(0) D(1) | E(2) F(3) | G(4) A(5)
       // Add a curve within the common section
       music.curves = [[0, 1]];
-      const result = expandRepeats(music);
+      const result = expandToLegacy(music);
       // Pass 1: C D E F, Pass 2: C D G A
       // Curve [0,1] (C-D) is in common section → should appear in both passes
       expect(result.curves).toContainEqual([0, 1]); // pass 1 common
@@ -707,7 +718,7 @@ describe('expandRepeats', () => {
     it('!d.c.! plays the piece twice', () => {
       // C(60) D(62) E(64) !d.c.! on last note
       const music = fromAbc('X:1\nT:Test\nM:4/4\nL:1/4\nK:C\nC D !d.c.!E');
-      const result = expandRepeats(music);
+      const result = expandToLegacy(music);
       // First pass: C D E, second pass: C D E
       expect(result.notes).toHaveLength(6);
       expect(result.originalIndices).toEqual([0, 1, 2, 0, 1, 2]);
@@ -718,7 +729,7 @@ describe('expandRepeats', () => {
       const music = fromAbc(
         'X:1\nT:Test\nM:4/4\nL:1/4\nK:C\nC !fine!D E !d.c.alfine!F'
       );
-      const result = expandRepeats(music);
+      const result = expandToLegacy(music);
       // First pass: C D E F, return: C D (stops at fine, inclusive)
       expect(result.notes).toHaveLength(6);
       expect(result.originalIndices).toEqual([0, 1, 2, 3, 0, 1]);
@@ -729,7 +740,7 @@ describe('expandRepeats', () => {
       const music = fromAbc(
         'X:1\nT:Test\nM:4/4\nL:1/4\nK:C\n!coda!C D !d.c.alcoda!E !coda!F G'
       );
-      const result = expandRepeats(music);
+      const result = expandToLegacy(music);
       // First pass: C D E F G
       // Return from start: stop at first !coda! (C, index 0), inclusive
       // Jump to last !coda! (F, index 3), play to end: F G
@@ -741,7 +752,7 @@ describe('expandRepeats', () => {
       const music = fromAbc(
         'X:1\nT:Test\nM:4/4\nL:1/4\nK:C\nC !alcoda!D E !d.c.alcoda!F !coda!G A'
       );
-      const result = expandRepeats(music);
+      const result = expandToLegacy(music);
       // First pass: C D E F G A
       // Return: C D (stop at alcoda, index 1)
       // Jump to !coda! (G, index 4): G A
@@ -753,7 +764,7 @@ describe('expandRepeats', () => {
       const music = fromAbc(
         'X:1\nT:Test\nM:4/4\nL:1/4\nK:C\nA B !segno!C D !fine!E F !d.s.alfine!G'
       );
-      const result = expandRepeats(music);
+      const result = expandToLegacy(music);
       // First pass: A B C D E F G (indices 0-6)
       // Return to segno (C=index 2): C D E (stops at fine, index 4, inclusive)
       expect(result.originalIndices).toEqual([0, 1, 2, 3, 4, 5, 6, 2, 3, 4]);
@@ -764,7 +775,7 @@ describe('expandRepeats', () => {
       const music = fromAbc(
         'X:1\nT:Test\nM:4/4\nL:1/4\nK:C\nA !segno!B !alcoda!C D !d.s.alcoda!E !coda!F G'
       );
-      const result = expandRepeats(music);
+      const result = expandToLegacy(music);
       // First pass: A B C D E F G (indices 0-6)
       // Return to segno (B=1): B C (stop at alcoda=2)
       // Jump to coda (F=5): F G
@@ -776,7 +787,7 @@ describe('expandRepeats', () => {
       const music = fromAbc(
         'X:1\nT:Test\nM:4/4\nL:1/2\nK:C\n|: C D :| !d.c.!E z'
       );
-      const result = expandRepeats(music);
+      const result = expandToLegacy(music);
       // First pass: C D C D E z (indices 0 1 0 1 2 3)
       // Return (no repeat): C D E z (indices 0 1 2 3)
       expect(result.originalIndices).toEqual([0, 1, 0, 1, 2, 3, 0, 1, 2, 3]);
@@ -788,7 +799,7 @@ describe('expandRepeats', () => {
       const music = fromAbc(
         'X:1\nT:Test\nM:4/4\nL:1/4\nK:C\n|: C D z z |1 E z z z :|2 F z z z | !d.c.!G z z z'
       );
-      const result = expandRepeats(music);
+      const result = expandToLegacy(music);
       // First pass (with volta): C D z z E z z z (pass1) + C D z z F z z z (pass2) + G z z z
       // Return (no repeats, skip volta 1): C D z z F z z z G z z z
       const origIdx = result.originalIndices;
@@ -812,7 +823,7 @@ describe('expandRepeats', () => {
       const music = fromAbc(
         'X:1\nT:Test\nM:4/4\nL:1/4\nK:C\n|: C D z z :|2 E z z z | F z z z |]'
       );
-      const result = expandRepeats(music);
+      const result = expandToLegacy(music);
       const pitches = result.notes.map((n) => n.pitches[0] ?? null);
       // Pass 1: C D z z; pass 2: C D z z; volta 2: E z z z; then F z z z
       expect(pitches.filter((p) => p === 60).length).toBe(2); // C appears twice
@@ -845,26 +856,26 @@ describe('ticksToDuration', () => {
 });
 
 describe('findNearestExpandedIndex', () => {
+  const toEntries = (origs: number[]) =>
+    origs.map((originalIndex) => ({ note: new Note(), originalIndex }));
+
   it('returns the expanded index that maps to targetOrigIdx', () => {
-    const indices = [0, 1, 2, 0, 1, 2];
-    expect(findNearestExpandedIndex(indices, 1, 0)).toBe(1);
+    expect(findNearestExpandedIndex(toEntries([0, 1, 2, 0, 1, 2]), 1, 0)).toBe(
+      1
+    );
   });
 
   it('returns -1 when targetOrigIdx is not in originalIndices', () => {
-    const indices = [0, 1, 2];
-    expect(findNearestExpandedIndex(indices, 5, 0)).toBe(-1);
+    expect(findNearestExpandedIndex(toEntries([0, 1, 2]), 5, 0)).toBe(-1);
   });
 
   it('picks the occurrence closest to currentExpandedIdx', () => {
-    // orig index 1 appears at expanded positions 1 and 4
-    const indices = [0, 1, 2, 0, 1, 2];
-    // closest to expanded position 3 → position 4
-    expect(findNearestExpandedIndex(indices, 1, 3)).toBe(4);
-    // closest to expanded position 0 → position 1
-    expect(findNearestExpandedIndex(indices, 1, 0)).toBe(1);
+    const entries = toEntries([0, 1, 2, 0, 1, 2]);
+    expect(findNearestExpandedIndex(entries, 1, 3)).toBe(4);
+    expect(findNearestExpandedIndex(entries, 1, 0)).toBe(1);
   });
 
-  it('handles empty originalIndices array', () => {
+  it('handles empty entries array', () => {
     expect(findNearestExpandedIndex([], 0, 0)).toBe(-1);
   });
 });

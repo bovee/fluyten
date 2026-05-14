@@ -12,7 +12,10 @@ const meta = {
   },
   decorators: [
     (Story) => {
-      useStore.setState({ instrumentType: 'SOPRANO', isGerman: false });
+      useStore.setState({
+        instrumentType: 'SOPRANO',
+        fingeringSystem: 'baroque',
+      });
       return <Story />;
     },
   ],

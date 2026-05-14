@@ -56,6 +56,10 @@ interface EditorDrawerProps {
   voices: VoiceInfo[];
   selectedVoiceIdx: number;
   onVoiceChange: (idx: number) => void;
+  /** When set, an extra "grand staff" entry is shown at the top of the voice menu. */
+  grandStaffPair?: { trebleIdx: number; bassIdx: number };
+  grandStaffActive?: boolean;
+  onGrandStaffSelect?: () => void;
   parseError: string;
   onHeightChange?: (height: number) => void;
 }
@@ -68,6 +72,9 @@ export function EditorDrawer({
   voices,
   selectedVoiceIdx,
   onVoiceChange,
+  grandStaffPair,
+  grandStaffActive,
+  onGrandStaffSelect,
   parseError,
   onHeightChange,
 }: EditorDrawerProps) {
@@ -430,12 +437,16 @@ export function EditorDrawer({
             }}
           />
           <Box sx={{ display: 'flex', flexDirection: 'column' }}>
-            {voices.length > 1 && (
-              <Tooltip title={t('selectedVoice')}>
+            {(voices.length > 1 || grandStaffPair) && (
+              <Tooltip
+                title={grandStaffActive ? t('grandStaff') : t('selectedVoice')}
+              >
                 <IconButton
                   onMouseDown={(e) => e.preventDefault()}
                   onClick={(e) => setVoiceMenuAnchor(e.currentTarget)}
-                  aria-label={t('selectedVoice')}
+                  aria-label={
+                    grandStaffActive ? t('grandStaff') : t('selectedVoice')
+                  }
                   sx={{
                     fontSize: '0.75rem',
                     fontWeight: 'bold',
@@ -451,9 +462,11 @@ export function EditorDrawer({
                       lineHeight: 1,
                     }}
                   >
-                    {(voices[selectedVoiceIdx]?.name ||
-                      voices[selectedVoiceIdx]?.id ||
-                      '?')[0].toUpperCase()}
+                    {grandStaffActive
+                      ? '{'
+                      : (voices[selectedVoiceIdx]?.name ||
+                          voices[selectedVoiceIdx]?.id ||
+                          '?')[0].toUpperCase()}
                   </Box>
                   <Box
                     component="span"
@@ -548,10 +561,28 @@ export function EditorDrawer({
           open={!!voiceMenuAnchor}
           onClose={() => setVoiceMenuAnchor(null)}
         >
+          {grandStaffPair && (
+            <MenuItem
+              key="__grand__"
+              selected={!!grandStaffActive}
+              onClick={() => {
+                onGrandStaffSelect?.();
+                setVoiceMenuAnchor(null);
+              }}
+            >
+              <Box
+                component="span"
+                sx={{ fontFamily: 'serif', fontSize: '1.2em', mr: 1 }}
+              >
+                {'{'}
+              </Box>
+              {t('grandStaff')}
+            </MenuItem>
+          )}
           {voices.map((v, i) => (
             <MenuItem
               key={v.id}
-              selected={i === selectedVoiceIdx}
+              selected={!grandStaffActive && i === selectedVoiceIdx}
               onClick={() => {
                 onVoiceChange(i);
                 setVoiceMenuAnchor(null);

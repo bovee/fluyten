@@ -167,6 +167,7 @@ export interface NoteLayout {
   accidentals: Accidental[];
   decorations: Decoration[];
   annotations: Annotation[];
+  chord?: string;
   graceNotes: GraceNoteLayout[];
   lyrics: (string | undefined)[];
   isRest: boolean;

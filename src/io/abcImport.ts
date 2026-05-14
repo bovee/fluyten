@@ -532,6 +532,7 @@ interface ChordAccum {
   dots: number;
   decorations: Decoration[];
   annotations: Annotation[];
+  chord?: string;
 }
 
 export function parseScore(
@@ -715,6 +716,7 @@ export function parseScore(
             chordAccum.dots = note.dots;
             chordAccum.decorations = note.decorations;
             chordAccum.annotations = note.annotations;
+            chordAccum.chord = note.chord;
           }
           chordAccum.pitches.push(...note.pitches);
           chordAccum.accidentals.push(...note.accidentals);
@@ -858,6 +860,7 @@ export function parseScore(
             chordAccum.dots
           );
           chordNote.annotations = chordAccum.annotations;
+          chordNote.chord = chordAccum.chord;
           if (noteType === 'tuplet' && pendingTuplet) {
             chordNote.tuplet = { ...pendingTuplet };
             if (--tupletCounter === 0) {
@@ -1157,11 +1160,11 @@ export function parseHeaders(
               : music.clef === 'bass8va'
                 ? 'bass+8'
                 : music.clef;
-          const defaultMidi =
+          const defaultMid =
             DEFAULT_CLEF_MIDDLE[clefKey] ?? DEFAULT_CLEF_MIDDLE.treble;
-          const specifiedMidi = parseMidNote(middleMatch[1]);
-          if (specifiedMidi !== undefined) {
-            pitchShift = defaultMidi - specifiedMidi;
+          const specifiedMid = parseMidNote(middleMatch[1]);
+          if (specifiedMid !== undefined) {
+            pitchShift = defaultMid - specifiedMid;
           }
         }
       }
@@ -1204,12 +1207,122 @@ export function parseHeaders(
   };
 }
 
+// ---- %%MIDI voice directive -------------------------------------------------
+
+export interface MidiVoiceDirective {
+  voiceId?: string;
+  instrument?: number;
+  mute?: boolean;
+}
+
+/**
+ * Parses `%%MIDI voice [<id>] [instrument=<int>] [mute]`. Returns null for any
+ * other `%%MIDI` sub-directive (chordprog, etc.) or non-MIDI line. `bank=` is
+ * intentionally ignored — Fluyten only uses GM bank 1.
+ */
+export function parseMidiVoiceDirective(
+  line: string
+): MidiVoiceDirective | null {
+  const m = line.match(/^%%MIDI\s+voice\b\s*(.*)$/i);
+  if (!m) return null;
+  const rest = m[1].trim();
+  const tokens = rest.length ? rest.split(/\s+/) : [];
+  const result: MidiVoiceDirective = {};
+  for (const tok of tokens) {
+    if (/^instrument=/i.test(tok)) {
+      const n = parseInt(tok.split('=')[1], 10);
+      if (Number.isFinite(n)) result.instrument = n;
+    } else if (/^bank=/i.test(tok)) {
+      // ignored
+    } else if (/^mute$/i.test(tok)) {
+      result.mute = true;
+    } else if (result.voiceId === undefined) {
+      // First non-keyword token is the voice id.
+      result.voiceId = tok;
+    }
+  }
+  return result;
+}
+
 // ---- Public API -------------------------------------------------------------
+
+export interface ScoreGroup {
+  /** All voice ids appearing inside this `{...}` brace group, in source order. */
+  voices: string[];
+  /** Parenthesized sub-groups within the brace group (each = one staff). */
+  sameStaff: string[][];
+}
 
 export interface VoiceInfo {
   id: string;
   name: string;
   music: Music;
+  midiInstrument?: number;
+  /** The `{...}` brace group from `%%score`/`%%staves` that this voice belongs to, if any. */
+  braceGroup?: ScoreGroup;
+}
+
+/**
+ * Parse a `%%score` or `%%staves` directive line. Returns each `{...}`
+ * brace group (used to identify keyboard/piano voice pairs). Other
+ * grouping syntax (`[]`, `|`, `*`) is ignored.
+ */
+export function parseScoreDirective(line: string): ScoreGroup[] | null {
+  const m = line.match(/^%%(?:score|staves)\b\s*(.*)$/i);
+  if (!m) return null;
+  const body = m[1];
+  const groups: ScoreGroup[] = [];
+  let depth = 0;
+  let braceStart = -1;
+  for (let i = 0; i < body.length; i++) {
+    const ch = body[i];
+    if (ch === '{') {
+      if (depth === 0) braceStart = i + 1;
+      depth++;
+    } else if (ch === '}') {
+      depth--;
+      if (depth === 0 && braceStart !== -1) {
+        groups.push(parseScoreGroupBody(body.slice(braceStart, i)));
+        braceStart = -1;
+      }
+    }
+  }
+  return groups.length > 0 ? groups : null;
+}
+
+function parseScoreGroupBody(inner: string): ScoreGroup {
+  const voices: string[] = [];
+  const sameStaff: string[][] = [];
+  let i = 0;
+  while (i < inner.length) {
+    const ch = inner[i];
+    if (ch === '(') {
+      let depth = 1;
+      let j = i + 1;
+      while (j < inner.length && depth > 0) {
+        if (inner[j] === '(') depth++;
+        else if (inner[j] === ')') depth--;
+        if (depth > 0) j++;
+      }
+      const subVoices = inner.slice(i + 1, j).match(/[A-Za-z_]\w*/g) ?? [];
+      if (subVoices.length > 0) {
+        sameStaff.push(subVoices);
+        voices.push(...subVoices);
+      }
+      i = j + 1;
+    } else if (/[A-Za-z_]/.test(ch)) {
+      const m = inner.slice(i).match(/^[A-Za-z_]\w*/);
+      if (m) {
+        voices.push(m[0]);
+        i += m[0].length;
+      } else {
+        i++;
+      }
+    } else {
+      i++;
+    }
+  }
+  return { voices, sameStaff };
 }
 
 /**
@@ -1264,14 +1377,43 @@ export function voicesFromAbc(
 
   const firstVoiceId = voiceDefs.keys().next().value as string;
 
+  // Scan once for %%score / %%staves brace groups so we can tag voices later.
+  const allBraceGroups: ScoreGroup[] = [];
+  for (const line of lines) {
+    const groups = parseScoreDirective(line);
+    if (groups) allBraceGroups.push(...groups);
+  }
+  const voiceToBraceGroup = new Map<string, ScoreGroup>();
+  for (const g of allBraceGroups) {
+    for (const v of g.voices) {
+      if (!voiceToBraceGroup.has(v)) voiceToBraceGroup.set(v, g);
+    }
+  }
+
   // Collect global header lines and split score text per voice
   const globalHeaderLines: string[] = [];
   const voiceSegments = new Map<string, string[]>();
+  const voiceMidi = new Map<string, { instrument?: number; mute?: boolean }>();
   for (const id of voiceDefs.keys()) voiceSegments.set(id, []);
 
   let currentVoiceId = firstVoiceId;
 
   for (const line of lines) {
+    // %%MIDI voice directives bind to a voice (explicit id, else current).
+    // Pulled out of the score so they don't get duplicated into every voice's
+    // reconstructed ABC.
+    const midi = parseMidiVoiceDirective(line);
+    if (midi) {
+      const targetId =
+        midi.voiceId && voiceDefs.has(midi.voiceId)
+          ? midi.voiceId
+          : currentVoiceId;
+      const prev = voiceMidi.get(targetId) ?? {};
+      if (midi.instrument !== undefined) prev.instrument = midi.instrument;
+      if (midi.mute) prev.mute = true;
+      voiceMidi.set(targetId, prev);
+      continue;
+    }
     // Field line: second character is ':' and not starting with '|:'
     if (line.length >= 2 && line[1] === ':' && !line.startsWith('|:')) {
       if (line.startsWith('V:')) {
@@ -1322,7 +1464,17 @@ export function voicesFromAbc(
         middle ?? defaultMiddle
       );
       if (clef) music.clef = clef;
-      result.push({ id, name, music });
+      const midi = voiceMidi.get(id);
+      if (midi?.instrument !== undefined)
+        music.midiInstrument = midi.instrument;
+      if (midi?.mute) music.midiMute = true;
+      result.push({
+        id,
+        name,
+        music,
+        midiInstrument: midi?.instrument,
+        braceGroup: voiceToBraceGroup.get(id),
+      });
     } catch {
       // skip voices that fail to parse
     }
@@ -1644,6 +1796,16 @@ export function fromAbc(
 ): Music {
   const music = new Music();
   const lines = text.split(/\r?\n/).map(stripComment);
+
+  // Single-voice path: scan for `%%MIDI voice` directives anywhere and apply
+  // them to this Music. Voice IDs in the directive are ignored here — there's
+  // only one voice to attach to. Last directive wins.
+  for (const line of lines) {
+    const d = parseMidiVoiceDirective(line);
+    if (!d) continue;
+    if (d.instrument !== undefined) music.midiInstrument = d.instrument;
+    if (d.mute) music.midiMute = true;
+  }
 
   const { sections, headerLines, endLyricLines } = buildSections(lines);
 

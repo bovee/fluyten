@@ -21,11 +21,11 @@ export class MusicTimeline {
 
   constructor(music: Music, tempo: number, startTimeOffset: number = 0) {
     const beatValue = music.signatures[0].beatValue;
-    const { notes, originalIndices } = expandRepeats(music);
+    const { entries } = expandRepeats(music);
     const lengthToTime = (ticks: number) =>
       (60 / tempo) * (ticks / 1024) * (4 / beatValue);
 
-    this.expandedOriginalIndices = originalIndices;
+    this.expandedOriginalIndices = entries.map((e) => e.originalIndex);
     this.timeOffset = startTimeOffset;
 
     const timings: Array<{ noteIdx: number; time: number; endTime: number }> =
@@ -33,14 +33,14 @@ export class MusicTimeline {
     const expandedIdxToTime: number[] = [];
     let currentTime = 0;
 
-    for (let idx = 0; idx < notes.length; idx++) {
+    for (let idx = 0; idx < entries.length; idx++) {
       expandedIdxToTime.push(currentTime);
-      const note = notes[idx];
+      const { note, originalIndex } = entries[idx];
       const ticks = note.ticks();
       if (ticks === 0) continue; // grace notes have no duration
       const endTime = currentTime + lengthToTime(ticks);
       timings.push({
-        noteIdx: originalIndices[idx] ?? idx,
+        noteIdx: originalIndex,
         time: currentTime,
         endTime,
       });

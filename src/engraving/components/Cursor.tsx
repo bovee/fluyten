@@ -6,6 +6,8 @@ interface CursorProps {
   /** Fractional note index: floor = current note, fraction = interpolation to next. */
   noteIdx: number;
   layout: LayoutResult;
+  /** Extra vertical extent below the staff (used for grand-staff mode). */
+  extraBottom?: number;
 }
 
 /** Build a flat map from musicNoteIndex → {x, lineY, barRight} for all notes in the layout. */
@@ -24,7 +26,7 @@ function buildNotePosMap(
   return map;
 }
 
-export function Cursor({ noteIdx, layout }: CursorProps) {
+export function Cursor({ noteIdx, layout, extraBottom = 0 }: CursorProps) {
   const posMap = useMemo(() => buildNotePosMap(layout), [layout]);
 
   const floor = Math.floor(noteIdx);
@@ -45,7 +47,7 @@ export function Cursor({ noteIdx, layout }: CursorProps) {
   }
 
   const y1 = posA.lineY - 4;
-  const y2 = posA.lineY + STAFF_HEIGHT + 4;
+  const y2 = posA.lineY + STAFF_HEIGHT + 4 + extraBottom;
 
   return (
     <line

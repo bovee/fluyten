@@ -30,6 +30,13 @@ export class MidiTracker {
 
   constructor(_pollIntervalMs: number = 50) {}
 
+  /** Read-only view of currently-held MIDI notes. Useful for callers that
+   *  want to check per-voice subsets (e.g. "did the user hold all the bass
+   *  pitches?") without mirroring state. */
+  getHeldNotes(): ReadonlySet<number> {
+    return this.heldNotes;
+  }
+
   setTarget(midiPitch: number | number[], tuning: number = 1.0) {
     const arr = Array.isArray(midiPitch)
       ? midiPitch.filter((p) => p !== 0)

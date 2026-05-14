@@ -410,6 +410,11 @@ function scoreToAbc(
     for (const type of spanStartAt.get(noteIx) ?? [])
       part += SPAN_OPEN_MARKER[type];
 
+    // Chord symbol (unprefixed quoted string)
+    if (note.chord) {
+      part += `"${note.chord}"`;
+    }
+
     // Annotations
     const ANNOTATION_PREFIX: Record<string, string> = {
       above: '^',
@@ -522,6 +527,23 @@ function buildWLine(music: Music, verse: (string | undefined)[]): string {
   return parts.join('');
 }
 
+/**
+ * Returns the `%%MIDI voice` lines (zero, one, or two) implied by a Music's
+ * midiInstrument / midiMute. `voiceId` is included in the emitted line when
+ * provided (multi-voice export); omitted for single-voice tunes.
+ */
+export function emitMidiDirectives(music: Music, voiceId?: string): string[] {
+  const out: string[] = [];
+  const idPart = voiceId ? ` ${voiceId}` : '';
+  if (music.midiInstrument !== undefined) {
+    out.push(`%%MIDI voice${idPart} instrument=${music.midiInstrument}`);
+  }
+  if (music.midiMute) {
+    out.push(`%%MIDI voice${idPart} mute`);
+  }
+  return out;
+}
+
 export function toAbc(music: Music): string {
   const lines: string[] = [];
 
@@ -551,6 +573,8 @@ export function toAbc(music: Music): string {
       ? `K:${sig0.keySignature} clef=${clefName}`
       : `K:${sig0.keySignature}`
   );
+
+  lines.push(...emitMidiDirectives(music));
 
   lines.push(
     scoreToAbc(music, buildKeyAdjustment(sig0.keySignature), defaultDuration)
@@ -614,6 +638,7 @@ export function reflowAbc(abc: string): string {
   const parts: string[] = [...globalHeaders];
   for (const v of voices) {
     parts.push(`V:${v.id}`);
+    parts.push(...emitMidiDirectives(v.music, v.id));
     parts.push(notesToAbc(v.music, v.music.signatures[0].keySignature));
   }
   return parts.join('\n');

@@ -15,7 +15,6 @@ import Select from '@mui/material/Select';
 import MenuItem from '@mui/material/MenuItem';
 import Checkbox from '@mui/material/Checkbox';
 import FormControlLabel from '@mui/material/FormControlLabel';
-import Switch from '@mui/material/Switch';
 import Stepper from '@mui/material/Stepper';
 import Step from '@mui/material/Step';
 import StepLabel from '@mui/material/StepLabel';
@@ -28,7 +27,7 @@ import ChevronLeft from '@mui/icons-material/ChevronLeft';
 import ChevronRight from '@mui/icons-material/ChevronRight';
 import { useTranslation } from 'react-i18next';
 import TextField from '@mui/material/TextField';
-import { useStore } from './store';
+import { useStore, type FingeringSystem } from './store';
 import { RECORDER_TYPES } from './instrument';
 import { noteNameToMidi } from './audio/utils';
 import { METHODS_FOR_INSTRUMENT, METHOD_DISPLAY_NAMES } from './method';
@@ -187,8 +186,8 @@ export function SettingsDialog({ open, onClose }: SettingsDialogProps) {
   const setCustomHighNote = useStore((state) => state.setCustomHighNote);
   const tuning = useStore((state) => state.tuning);
   const setTuning = useStore((state) => state.setTuning);
-  const isGerman = useStore((state) => state.isGerman);
-  const setIsGerman = useStore((state) => state.setIsGerman);
+  const fingeringSystem = useStore((state) => state.fingeringSystem);
+  const setFingeringSystem = useStore((state) => state.setFingeringSystem);
   const language = useStore((state) => state.language);
   const setLanguage = useStore((state) => state.setLanguage);
   const colorMode = useStore((state) => state.colorMode);
@@ -233,7 +232,7 @@ export function SettingsDialog({ open, onClose }: SettingsDialogProps) {
         setDetectStep(1);
       },
       onSystemDetected: (isGerman) => {
-        setIsGerman(isGerman);
+        setFingeringSystem(isGerman ? 'german' : 'baroque');
         closeDetect();
       },
       onError: (err) => {
@@ -262,8 +261,9 @@ export function SettingsDialog({ open, onClose }: SettingsDialogProps) {
             scrollButtons="auto"
             sx={{ px: 3, borderBottom: 1, borderColor: 'divider' }}
           >
-            <Tab label={t('settingsTabGeneral')} />
+            <Tab label={t('settingsTabDisplay')} />
             <Tab label={t('settingsTabInstrument')} />
+            <Tab label={t('settingsTabPlayback')} />
             <Tab label={t('settingsTabPractice')} />
           </Tabs>
 
@@ -360,7 +360,166 @@ export function SettingsDialog({ open, onClose }: SettingsDialogProps) {
                   <MenuItem value="dark">{t('colorModeDark')}</MenuItem>
                 </Select>
               </FormControl>
+            </Box>
+          )}
 
+          {tab === 1 && (
+            <Box
+              sx={{
+                px: 3,
+                pt: 3,
+                pb: 1,
+                display: 'flex',
+                flexDirection: 'column',
+                gap: 2,
+              }}
+            >
+              <Box sx={{ display: 'flex', gap: 1, alignItems: 'flex-start' }}>
+                <FormControl fullWidth>
+                  <InputLabel id="instrument-type-label">
+                    {t('recorderType')}
+                  </InputLabel>
+                  <Select
+                    labelId="instrument-type-label"
+                    id="instrument-type-select"
+                    value={instrumentType ?? 'OTHER'}
+                    label={t('recorderType')}
+                    onChange={(e) => {
+                      const v = e.target.value as string;
+                      setInstrumentType(
+                        v === 'OTHER'
+                          ? null
+                          : (v as keyof typeof RECORDER_TYPES)
+                      );
+                      if (
+                        v !== 'OTHER' &&
+                        fingeringSystem !== 'baroque' &&
+                        fingeringSystem !== 'german'
+                      ) {
+                        setFingeringSystem('baroque');
+                      }
+                    }}
+                  >
+                    {Object.keys(RECORDER_TYPES).map((key) => (
+                      <MenuItem key={key} value={key}>
+                        {t(`recorderTypes.${key}`)}
+                      </MenuItem>
+                    ))}
+                    <MenuItem value="OTHER">
+                      {t('recorderTypes.OTHER')}
+                    </MenuItem>
+                  </Select>
+                </FormControl>
+                <Button
+                  variant="outlined"
+                  startIcon={<GraphicEq />}
+                  onClick={openDetect}
+                  sx={{
+                    whiteSpace: 'nowrap',
+                    height: 56,
+                    px: 2,
+                    '& .MuiButton-startIcon': { mr: 0.5 },
+                  }}
+                >
+                  {t('detect')}
+                </Button>
+              </Box>
+
+              {instrumentType === null && (
+                <Box sx={{ display: 'flex', gap: 2 }}>
+                  <TextField
+                    label={t('customBasePitch')}
+                    value={customBasePitchStr}
+                    onChange={(e) => setCustomBasePitch(e.target.value)}
+                    error={noteNameToMidi(customBasePitchStr) === null}
+                    size="small"
+                    fullWidth
+                  />
+                  <TextField
+                    label={t('customHighNote')}
+                    value={customHighNoteStr}
+                    onChange={(e) => setCustomHighNote(e.target.value)}
+                    error={
+                      noteNameToMidi(customHighNoteStr) === null ||
+                      (noteNameToMidi(customHighNoteStr) ?? 0) <=
+                        (noteNameToMidi(customBasePitchStr) ?? 0)
+                    }
+                    size="small"
+                    fullWidth
+                  />
+                </Box>
+              )}
+
+              <FormControl fullWidth>
+                <InputLabel id="fingering-label">{t('fingering')}</InputLabel>
+                <Select
+                  labelId="fingering-label"
+                  value={fingeringSystem}
+                  label={t('fingering')}
+                  onChange={(e) =>
+                    setFingeringSystem(e.target.value as FingeringSystem)
+                  }
+                >
+                  <MenuItem value="baroque">{t('fingeringBaroque')}</MenuItem>
+                  <MenuItem value="german">{t('fingeringGerman')}</MenuItem>
+                  {instrumentType === null && (
+                    <MenuItem value="whistle">{t('fingeringWhistle')}</MenuItem>
+                  )}
+                  {instrumentType === null && (
+                    <MenuItem value="piano">{t('fingeringPiano')}</MenuItem>
+                  )}
+                </Select>
+              </FormControl>
+
+              <Box>
+                <Typography id="tuning-slider" gutterBottom>
+                  {t('tuningRatio', { tuning: tuning.toFixed(2) })}
+                </Typography>
+                <Slider
+                  aria-labelledby="tuning-slider"
+                  value={tuning}
+                  onChange={(_, newValue) => setTuning(newValue as number)}
+                  valueLabelDisplay="auto"
+                  step={0.01}
+                  min={0.8}
+                  max={1.2}
+                />
+              </Box>
+
+              <FormControl fullWidth>
+                <InputLabel id="method-label">{t('method')}</InputLabel>
+                <Select
+                  labelId="method-label"
+                  value={method}
+                  label={t('method')}
+                  onChange={(e) => setMethod(e.target.value)}
+                >
+                  <MenuItem value="none">{t('methodNone')}</MenuItem>
+                  {(instrumentType
+                    ? METHODS_FOR_INSTRUMENT[instrumentType]
+                    : []
+                  ).map((m) => (
+                    <MenuItem key={m} value={m}>
+                      {METHOD_DISPLAY_NAMES[m]}
+                    </MenuItem>
+                  ))}
+                </Select>
+                <FormHelperText>{t('methodHelperText')}</FormHelperText>
+              </FormControl>
+            </Box>
+          )}
+
+          {tab === 2 && (
+            <Box
+              sx={{
+                px: 3,
+                pt: 3,
+                pb: 1,
+                display: 'flex',
+                flexDirection: 'column',
+                gap: 2,
+              }}
+            >
               <FormControl fullWidth>
                 <InputLabel id="playback-voices-label">
                   {t('playbackVoices')}
@@ -414,135 +573,7 @@ export function SettingsDialog({ open, onClose }: SettingsDialogProps) {
             </Box>
           )}
 
-          {tab === 1 && (
-            <Box
-              sx={{
-                px: 3,
-                pt: 3,
-                pb: 1,
-                display: 'flex',
-                flexDirection: 'column',
-                gap: 2,
-              }}
-            >
-              <Box sx={{ display: 'flex', gap: 1, alignItems: 'flex-start' }}>
-                <FormControl fullWidth>
-                  <InputLabel id="instrument-type-label">
-                    {t('recorderType')}
-                  </InputLabel>
-                  <Select
-                    labelId="instrument-type-label"
-                    id="instrument-type-select"
-                    value={instrumentType ?? 'OTHER'}
-                    label={t('recorderType')}
-                    onChange={(e) => {
-                      const v = e.target.value as string;
-                      setInstrumentType(
-                        v === 'OTHER'
-                          ? null
-                          : (v as keyof typeof RECORDER_TYPES)
-                      );
-                    }}
-                  >
-                    {Object.keys(RECORDER_TYPES).map((key) => (
-                      <MenuItem key={key} value={key}>
-                        {t(`recorderTypes.${key}`)}
-                      </MenuItem>
-                    ))}
-                    <MenuItem value="OTHER">
-                      {t('recorderTypes.OTHER')}
-                    </MenuItem>
-                  </Select>
-                </FormControl>
-                <Button
-                  variant="outlined"
-                  startIcon={<GraphicEq />}
-                  onClick={openDetect}
-                  sx={{
-                    whiteSpace: 'nowrap',
-                    height: 56,
-                    px: 2,
-                    '& .MuiButton-startIcon': { mr: 0.5 },
-                  }}
-                >
-                  {t('detect')}
-                </Button>
-              </Box>
-
-              {instrumentType === null && (
-                <Box sx={{ display: 'flex', gap: 2 }}>
-                  <TextField
-                    label={t('customBasePitch')}
-                    value={customBasePitchStr}
-                    onChange={(e) => setCustomBasePitch(e.target.value)}
-                    error={noteNameToMidi(customBasePitchStr) === null}
-                    size="small"
-                    fullWidth
-                  />
-                  <TextField
-                    label={t('customHighNote')}
-                    value={customHighNoteStr}
-                    onChange={(e) => setCustomHighNote(e.target.value)}
-                    error={
-                      noteNameToMidi(customHighNoteStr) === null ||
-                      (noteNameToMidi(customHighNoteStr) ?? 0) <=
-                        (noteNameToMidi(customBasePitchStr) ?? 0)
-                    }
-                    size="small"
-                    fullWidth
-                  />
-                </Box>
-              )}
-
-              <FormControlLabel
-                control={
-                  <Switch
-                    checked={isGerman}
-                    onChange={(e) => setIsGerman(e.target.checked)}
-                  />
-                }
-                label={t('germanFingering')}
-              />
-
-              <Box>
-                <Typography id="tuning-slider" gutterBottom>
-                  {t('tuningRatio', { tuning: tuning.toFixed(2) })}
-                </Typography>
-                <Slider
-                  aria-labelledby="tuning-slider"
-                  value={tuning}
-                  onChange={(_, newValue) => setTuning(newValue as number)}
-                  valueLabelDisplay="auto"
-                  step={0.01}
-                  min={0.8}
-                  max={1.2}
-                />
-              </Box>
-
-              <FormControl fullWidth>
-                <InputLabel id="method-label">{t('method')}</InputLabel>
-                <Select
-                  labelId="method-label"
-                  value={method}
-                  label={t('method')}
-                  onChange={(e) => setMethod(e.target.value)}
-                >
-                  <MenuItem value="none">{t('methodNone')}</MenuItem>
-                  {(instrumentType
-                    ? METHODS_FOR_INSTRUMENT[instrumentType]
-                    : []
-                  ).map((m) => (
-                    <MenuItem key={m} value={m}>
-                      {METHOD_DISPLAY_NAMES[m]}
-                    </MenuItem>
-                  ))}
-                </Select>
-                <FormHelperText>{t('methodHelperText')}</FormHelperText>
-              </FormControl>
-            </Box>
-          )}
-
-          {tab === 2 && (
+          {tab === 3 && (
             <Box
               sx={{
                 px: 3,
@@ -609,7 +640,7 @@ export function SettingsDialog({ open, onClose }: SettingsDialogProps) {
               <StepLabel>{t('recorderType')}</StepLabel>
             </Step>
             <Step>
-              <StepLabel>{t('germanFingering')}</StepLabel>
+              <StepLabel>{t('fingering')}</StepLabel>
             </Step>
           </Stepper>
           <Typography variant="body1" sx={{ mb: 3 }}>

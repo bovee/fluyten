@@ -6,7 +6,7 @@ describe('store', () => {
     useStore.setState({
       instrumentType: 'SOPRANO',
       tuning: 1.0,
-      isGerman: false,
+      fingeringSystem: 'baroque',
       language: '',
       songs: [],
     });
@@ -17,7 +17,7 @@ describe('store', () => {
       const state = useStore.getState();
       expect(state.instrumentType).toBe('SOPRANO');
       expect(state.tuning).toBe(1.0);
-      expect(state.isGerman).toBe(false);
+      expect(state.fingeringSystem).toBe('baroque');
       expect(state.language).toBe('');
       expect(state.songs).toEqual([]);
     });
@@ -34,9 +34,9 @@ describe('store', () => {
       expect(useStore.getState().tuning).toBe(0.95);
     });
 
-    it('setIsGerman updates fingering system', () => {
-      useStore.getState().setIsGerman(true);
-      expect(useStore.getState().isGerman).toBe(true);
+    it('setFingeringSystem updates fingering system', () => {
+      useStore.getState().setFingeringSystem('german');
+      expect(useStore.getState().fingeringSystem).toBe('german');
     });
 
     it('setLanguage updates language', () => {

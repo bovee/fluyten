@@ -215,6 +215,7 @@ export function layoutBar(
       accidentals: note.accidentals,
       decorations: note.decorations,
       annotations: note.annotations,
+      chord: note.chord,
       graceNotes: graceLayouts,
       lyrics: noteLyrics,
       isRest,

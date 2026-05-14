@@ -26,7 +26,7 @@ beforeEach(() => {
   useStore.setState({
     instrumentType: 'SOPRANO',
     tuning: 1.0,
-    isGerman: false,
+    fingeringSystem: 'baroque',
     language: 'en',
     songs: [],
   });
@@ -82,12 +82,12 @@ describe('SettingsDialog', () => {
     spy.mockRestore();
   });
 
-  it('Instrument tab shows recorder type, tuning slider, detect button, and german toggle', () => {
+  it('Instrument tab shows recorder type, tuning slider, detect button, and fingering select', () => {
     renderDialog();
     clickTab(/instrument/i);
     expect(screen.getByLabelText(/recorder type/i)).toBeInTheDocument();
     expect(screen.getByRole('slider', { name: /tuning/i })).toBeInTheDocument();
-    expect(screen.getByRole('switch')).toBeInTheDocument();
+    expect(screen.getByLabelText(/fingering/i)).toBeInTheDocument();
     expect(screen.getByRole('button', { name: /detect/i })).toBeInTheDocument();
   });
 
@@ -119,20 +119,39 @@ describe('SettingsDialog', () => {
     expect(screen.getAllByText(/0\.95/).length).toBeGreaterThan(0);
   });
 
-  it('german fingering toggle reflects store state', () => {
-    useStore.setState({ isGerman: true });
+  it('fingering select reflects store state', () => {
+    useStore.setState({ fingeringSystem: 'german' });
     renderDialog();
     clickTab(/instrument/i);
-    const toggle = screen.getByRole('switch');
-    expect((toggle as HTMLInputElement).checked).toBe(true);
+    const select = screen.getByLabelText(/fingering/i);
+    // MUI Select renders the chosen option's text as a child of the combobox
+    expect(select.textContent).toMatch(/german/i);
   });
 
-  it('toggling german fingering updates store', () => {
+  it('changing fingering select updates store', () => {
     renderDialog();
     clickTab(/instrument/i);
-    const toggle = screen.getByRole('switch');
-    fireEvent.click(toggle);
-    expect(useStore.getState().isGerman).toBe(true);
+    const select = screen.getByLabelText(/fingering/i);
+    fireEvent.mouseDown(select);
+    const germanOption = screen
+      .getAllByRole('option')
+      .find((o) => o.getAttribute('data-value') === 'german')!;
+    fireEvent.click(germanOption);
+    expect(useStore.getState().fingeringSystem).toBe('german');
+  });
+
+  it('fingering select offers baroque, german, and whistle', () => {
+    useStore.setState({ instrumentType: null });
+    renderDialog();
+    clickTab(/instrument/i);
+    const select = screen.getByLabelText(/fingering/i);
+    fireEvent.mouseDown(select);
+    const values = screen
+      .getAllByRole('option')
+      .map((o) => o.getAttribute('data-value'));
+    expect(values).toEqual(
+      expect.arrayContaining(['baroque', 'german', 'whistle'])
+    );
   });
 
   it('detect button opens detection dialog with stepper', async () => {

@@ -19,6 +19,8 @@ import {
   TOP_MARGIN,
   type BarData,
   type BarLayout,
+  type BarSizing,
+  type LinePlan,
   type BarlineEndType,
   type BarlineStartType,
   type LayoutResult,
@@ -34,10 +36,20 @@ import {
   STAFF_SPACE,
 } from './types';
 
+export interface ComputeLayoutOptions {
+  /** Pre-merged bar sizings (e.g. from a grand-staff pair). Length must match this voice's barData. */
+  sharedBarSizings?: BarSizing[];
+  /** Pre-computed line plans paired with sharedBarSizings. */
+  sharedLinePlans?: LinePlan[];
+  /** Override the per-line vertical spacing (used for grand-staff mode). */
+  customLineHeight?: number;
+}
+
 /** Entry point: convert a Music object and container width into a full LayoutResult. */
 export function computeLayout(
   music: Music,
-  containerWidth: number
+  containerWidth: number,
+  options?: ComputeLayoutOptions
 ): LayoutResult {
   const sig = music.signatures[0];
   const clef = music.clef as Clef;
@@ -49,12 +61,18 @@ export function computeLayout(
   const keyAccidentalType: 'sharp' | 'flat' | 'none' =
     fifths > 0 ? 'sharp' : fifths < 0 ? 'flat' : 'none';
 
-  const lineHeight = BAR_HEIGHT + music.lyrics.length * LYRICS_LINE_HEIGHT;
+  const lineHeight =
+    options?.customLineHeight ??
+    BAR_HEIGHT + music.lyrics.length * LYRICS_LINE_HEIGHT;
 
   // ---------------------------------------------------------------------------
   // Stage 1: Assign notes to bars
   // ---------------------------------------------------------------------------
-  const barData = assignNotesToBars(music, containerWidth);
+  let barData = assignNotesToBars(music, containerWidth);
+  // When sharing sizings/plans with a paired voice, clip to the shared range.
+  if (options?.sharedBarSizings) {
+    barData = barData.slice(0, options.sharedBarSizings.length);
+  }
   if (barData.length === 0) {
     return {
       width: containerWidth,
@@ -67,17 +85,21 @@ export function computeLayout(
   // ---------------------------------------------------------------------------
   // Stage 2: Size each bar
   // ---------------------------------------------------------------------------
-  const barSizings = computeBarSizings(barData, music.notes, numKeyAccidentals);
+  const barSizings =
+    options?.sharedBarSizings ??
+    computeBarSizings(barData, music.notes, numKeyAccidentals);
 
   // ---------------------------------------------------------------------------
   // Stage 3: Line breaking
   // ---------------------------------------------------------------------------
   const isFreeTime = music.bars.length === 0;
-  const linePlans = breakIntoLines(
-    barSizings,
-    containerWidth,
-    isFreeTime ? FREE_TIME_BAR_TARGET_WIDTH : undefined
-  );
+  const linePlans =
+    options?.sharedLinePlans ??
+    breakIntoLines(
+      barSizings,
+      containerWidth,
+      isFreeTime ? FREE_TIME_BAR_TARGET_WIDTH : undefined
+    );
 
   // ---------------------------------------------------------------------------
   // Stage 4: Build per-bar note layouts
@@ -335,6 +357,71 @@ export function computeLayout(
   const height = TOP_MARGIN + totalLines * lineHeight;
 
   return { width: containerWidth, height, lineHeight, lines };
+}
+
+export interface GrandStaffLayout {
+  treble: LayoutResult;
+  bass: LayoutResult;
+}
+
+/**
+ * Lay out two voices that share bar boundaries (grand staff). Bar widths are
+ * the max of each voice's natural width per bar, so vertical bar lines line up
+ * across the staves. Each LayoutResult is otherwise independent and rendered
+ * separately, stacked by the caller.
+ */
+export function computeGrandStaffLayout(
+  treble: Music,
+  bass: Music,
+  containerWidth: number
+): GrandStaffLayout {
+  const tFifths = KEYS[treble.signatures[0]?.keySignature ?? 'C'] ?? 0;
+  const bFifths = KEYS[bass.signatures[0]?.keySignature ?? 'C'] ?? 0;
+  const tKeyCount = (FIFTHS_TO_ACCIDENTALS[tFifths] ?? []).length;
+  const bKeyCount = (FIFTHS_TO_ACCIDENTALS[bFifths] ?? []).length;
+
+  const tBarData = assignNotesToBars(treble, containerWidth);
+  const bBarData = assignNotesToBars(bass, containerWidth);
+  const tSizings = computeBarSizings(tBarData, treble.notes, tKeyCount);
+  const bSizings = computeBarSizings(bBarData, bass.notes, bKeyCount);
+
+  // Merge per-bar widths over the shared range. If bar counts differ (rare for
+  // grand-staff music), the extra bars are dropped from this view; the user can
+  // still inspect the longer voice individually.
+  const n = Math.min(tSizings.length, bSizings.length);
+  const merged: BarSizing[] = [];
+  for (let i = 0; i < n; i++) {
+    const t = tSizings[i];
+    const b = bSizings[i];
+    merged.push({
+      preambleIfFirst: Math.max(t.preambleIfFirst, b.preambleIfFirst),
+      preambleIfNotFirst: Math.max(t.preambleIfNotFirst, b.preambleIfNotFirst),
+      timeSigChanged: t.timeSigChanged || b.timeSigChanged,
+      minNoteAreaWidth: Math.max(t.minNoteAreaWidth, b.minNoteAreaWidth),
+      totalTicks: Math.max(t.totalTicks, b.totalTicks),
+    });
+  }
+
+  const isFreeTime = treble.bars.length === 0 && bass.bars.length === 0;
+  const sharedLinePlans = breakIntoLines(
+    merged,
+    containerWidth,
+    isFreeTime ? FREE_TIME_BAR_TARGET_WIDTH : undefined
+  );
+
+  // Double the per-line height so the bass staff has room below the treble.
+  const customLineHeight = BAR_HEIGHT * 2;
+  const tLayout = computeLayout(treble, containerWidth, {
+    sharedBarSizings: merged,
+    sharedLinePlans,
+    customLineHeight,
+  });
+  const bLayout = computeLayout(bass, containerWidth, {
+    sharedBarSizings: merged,
+    sharedLinePlans,
+    customLineHeight,
+  });
+  return { treble: tLayout, bass: bLayout };
 }
 
 // ---------------------------------------------------------------------------

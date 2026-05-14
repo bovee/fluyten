@@ -22,6 +22,10 @@ interface NoteGroupProps {
   isWrong?: boolean;
   /** Per-verse horizontal nudge for lyric text (to avoid overlap with neighbors). */
   lyricNudges?: number[];
+  /** True if this is the first note of its bar — pulls the chord symbol
+   *  leftward into the empty space after the barline so the stem doesn't
+   *  collide with the chord text. */
+  isFirstInBar?: boolean;
   onClick?: (noteIdx: number, x: number, y: number) => void;
 }
 
@@ -209,6 +213,7 @@ export function NoteGroup({
   isBeamed = false,
   isWrong = false,
   lyricNudges,
+  isFirstInBar = false,
   onClick,
 }: NoteGroupProps) {
   const {
@@ -379,6 +384,25 @@ export function NoteGroup({
 
       {/* Annotations */}
       {renderAnnotations(note.annotations, x, note.y, stemEndY, staffTopY)}
+
+      {/* Chord symbol — sits above the staff at a fixed height so symbols
+          align horizontally across notes regardless of stem direction.
+          Shifted left of the notehead so the stem doesn't run through the
+          text; pulled further toward the preceding barline on the first
+          note of a bar where empty space is available. */}
+      {note.chord && (
+        <text
+          x={x - (isFirstInBar ? 18 : 6)}
+          y={staffTopY - 8}
+          textAnchor="start"
+          fontSize={13}
+          fontFamily="'EB Garamond', Georgia, serif"
+          fontWeight="bold"
+          fill="currentColor"
+        >
+          {note.chord}
+        </text>
+      )}
 
       {/* Wrong-note X mark */}
       {isWrong && (

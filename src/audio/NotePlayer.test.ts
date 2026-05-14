@@ -93,7 +93,9 @@ describe('NotePlayer', () => {
       // At 120 BPM, each quarter note = 0.5s, lookForward=1s covers both
       player.scheduleNotes(120, music);
 
-      expect(createOscSpy).toHaveBeenCalledTimes(6); // 3 harmonics per pitched note × 2 notes
+      // Default profile folds its partials into a PeriodicWave, so each
+      // pitched note allocates one oscillator (not one per harmonic).
+      expect(createOscSpy).toHaveBeenCalledTimes(2);
     });
 
     it('sets active=false when called after all notes have been scheduled', () => {
@@ -192,10 +194,10 @@ describe('NotePlayer', () => {
       music.curves = [[0, 1]]; // tie
 
       setupExpanded(player, music);
-      player.enqueueNote(120, 4); // note 0 — should create 3 oscillators
+      player.enqueueNote(120, 4); // note 0 — one oscillator (PeriodicWave)
       player.enqueueNote(120, 4); // note 1 — tie continuation, no oscillators
 
-      expect(createOscSpy).toHaveBeenCalledTimes(3); // 3 harmonics for note 0 only
+      expect(createOscSpy).toHaveBeenCalledTimes(1);
     });
 
     it('schedules the tie-start oscillator for the combined duration', () => {
@@ -266,8 +268,8 @@ describe('NotePlayer', () => {
     // must survive expansion so note 1 is treated as a continuation.
     player.scheduleNotes(120, music);
 
-    // Only 3 oscillators (1 pitch × 3 harmonics), not 6
-    expect(createOscSpy).toHaveBeenCalledTimes(3);
+    // One oscillator for the tie-start; continuation produces nothing.
+    expect(createOscSpy).toHaveBeenCalledTimes(1);
   });
 
   it('handles ties parsed from ABC notation', () => {
@@ -286,8 +288,8 @@ describe('NotePlayer', () => {
     player.enqueueNote(120, 4);
     player.enqueueNote(120, 4);
 
-    // Only 3 oscillators (1 pitch × 3 harmonics), not 6
-    expect(createOscSpy).toHaveBeenCalledTimes(3);
+    // One oscillator for the tie-start; continuation produces nothing.
+    expect(createOscSpy).toHaveBeenCalledTimes(1);
   });
 
   describe('repeat expansion in playback', () => {
@@ -331,8 +333,8 @@ describe('NotePlayer', () => {
 
       player.scheduleNotes(120, music);
 
-      // 4 expanded notes, but tied pairs → 3 harmonics per attack × 2 passes = 6
-      expect(createOscSpy).toHaveBeenCalledTimes(6);
+      // 4 expanded notes, but tied pairs → 1 attack × 2 passes = 2
+      expect(createOscSpy).toHaveBeenCalledTimes(2);
     });
   });
 
@@ -353,8 +355,8 @@ describe('NotePlayer', () => {
       player.enqueueNote(120, 4);
       player.enqueueNote(120, 4);
 
-      // Both notes should produce oscillators: 3 harmonics × 2 notes = 6
-      expect(createOscSpy).toHaveBeenCalledTimes(6);
+      // Both notes should produce one oscillator each (PeriodicWave).
+      expect(createOscSpy).toHaveBeenCalledTimes(2);
     });
   });
 });

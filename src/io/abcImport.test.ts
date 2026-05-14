@@ -1,5 +1,10 @@
 import { describe, it, expect } from 'vitest';
-import { fromAbc, splitTunes, voicesFromAbc } from './abcImport';
+import {
+  fromAbc,
+  splitTunes,
+  voicesFromAbc,
+  parseScoreDirective,
+} from './abcImport';
 import { Duration, Music, Note } from '../music';
 import { toAbc } from './abcExport';
 
@@ -469,6 +474,40 @@ describe('fromAbc', () => {
       expect(music.notes[0].annotations).toEqual([
         { placement: 'below', text: 'chord' },
       ]);
+    });
+  });
+
+  describe('chord symbols', () => {
+    it('parses unprefixed quoted strings as chord symbols', () => {
+      const abc = `T:Test\nM:4/4\nL:1/4\nK:C\n"Am" A B G E`;
+      const music = fromAbc(abc);
+      expect(music.notes[0].chord).toBe('Am');
+      expect(music.notes[0].annotations).toEqual([]);
+      expect(music.notes[1].chord).toBeUndefined();
+    });
+
+    it('keeps annotation and chord on the same note separate', () => {
+      const abc = `T:Test\nM:4/4\nL:1/4\nK:C\n"Cmaj7""^accent"C2`;
+      const music = fromAbc(abc);
+      expect(music.notes[0].chord).toBe('Cmaj7');
+      expect(music.notes[0].annotations).toEqual([
+        { placement: 'above', text: 'accent' },
+      ]);
+    });
+
+    it('attaches chord symbol to a chord wrapper', () => {
+      const abc = `T:Test\nM:4/4\nL:1/4\nK:C\n"G7"[GBd]2`;
+      const music = fromAbc(abc);
+      expect(music.notes[0].pitches).toHaveLength(3);
+      expect(music.notes[0].chord).toBe('G7');
+    });
+
+    it('supports bass-note slash chords and accidentals', () => {
+      const abc = `T:Test\nM:4/4\nL:1/4\nK:C\n"C/E"C "Bb"B, "F#m7"F2`;
+      const music = fromAbc(abc);
+      expect(music.notes[0].chord).toBe('C/E');
+      expect(music.notes[1].chord).toBe('Bb');
+      expect(music.notes[2].chord).toBe('F#m7');
     });
   });
 
@@ -1476,5 +1515,129 @@ describe('lyrics — round-trip', () => {
     const reimported = fromAbc(exported);
     expect(reimported.lyrics[0][0]).toBe('hel-');
     expect(reimported.lyrics[0][1]).toBe('lo');
+  });
+});
+
+describe('%%MIDI voice directive', () => {
+  it('attaches instrument to single-voice tune (no V: fields)', () => {
+    const abc = `T:Test\nM:4/4\nL:1/4\n%%MIDI voice instrument=73\nK:C\nC D E F`;
+    const music = fromAbc(abc);
+    expect(music.midiInstrument).toBe(73);
+    expect(music.midiMute).toBeUndefined();
+  });
+
+  it('attaches mute flag', () => {
+    const abc = `T:Test\nM:4/4\nL:1/4\n%%MIDI voice mute\nK:C\nC D E F`;
+    const music = fromAbc(abc);
+    expect(music.midiMute).toBe(true);
+  });
+
+  it('ignores bank= (only instrument matters)', () => {
+    const abc = `T:Test\nM:4/4\nL:1/4\n%%MIDI voice instrument=53 bank=2\nK:C\nC`;
+    const music = fromAbc(abc);
+    expect(music.midiInstrument).toBe(53);
+  });
+
+  it('ignores unsupported %%MIDI sub-directives (chordprog)', () => {
+    const abc = `T:Test\nM:4/4\nL:1/4\n%%MIDI chordprog 20\nK:C\nC D E F`;
+    const music = fromAbc(abc);
+    expect(music.midiInstrument).toBeUndefined();
+    expect(music.midiMute).toBeUndefined();
+  });
+
+  it('routes per-voice directives by explicit voice id', () => {
+    const abc = [
+      'T:Test',
+      'M:4/4',
+      'L:1/4',
+      '%%MIDI voice Tb instrument=59',
+      'V:Sop',
+      'V:Tb',
+      'K:C',
+      '[V:Sop] C D E F',
+      '[V:Tb] G, A, B, C',
+    ].join('\n');
+    const voices = voicesFromAbc(abc);
+    const sop = voices.find((v) => v.id === 'Sop');
+    const tb = voices.find((v) => v.id === 'Tb');
+    expect(sop?.music.midiInstrument).toBeUndefined();
+    expect(tb?.music.midiInstrument).toBe(59);
+  });
+
+  it('routes per-voice directives by current-voice context when id omitted', () => {
+    const abc = [
+      'X:1',
+      'M:C',
+      'L:1/8',
+      'Q:1/4=66',
+      'K:C',
+      'V:Rueckpos',
+      '%%MIDI voice instrument=53 bank=2',
+      'A3B c2c2 |',
+      'V:Organo',
+      '%%MIDI voice instrument=73 bank=2',
+      'z2E2- E2AG |',
+    ].join('\n');
+    const voices = voicesFromAbc(abc);
+    const r = voices.find((v) => v.id === 'Rueckpos');
+    const o = voices.find((v) => v.id === 'Organo');
+    expect(r?.music.midiInstrument).toBe(53);
+    expect(o?.music.midiInstrument).toBe(73);
+  });
+});
+
+describe('parseScoreDirective', () => {
+  it('returns null for non-score lines', () => {
+    expect(parseScoreDirective('K:C')).toBeNull();
+    expect(parseScoreDirective('%%MIDI voice instrument=1')).toBeNull();
+  });
+
+  it('parses a simple brace group', () => {
+    const r = parseScoreDirective('%%score {RH LH}');
+    expect(r).not.toBeNull();
+    expect(r!).toHaveLength(1);
+    expect(r![0].voices).toEqual(['RH', 'LH']);
+    expect(r![0].sameStaff).toEqual([]);
+  });
+
+  it('parses %%staves the same as %%score', () => {
+    const r = parseScoreDirective('%%staves {RH LH}');
+    expect(r![0].voices).toEqual(['RH', 'LH']);
+  });
+
+  it('captures parenthesized same-staff sub-groups', () => {
+    const r = parseScoreDirective('%%score {(RH1 RH2) LH}');
+    expect(r![0].voices).toEqual(['RH1', 'RH2', 'LH']);
+    expect(r![0].sameStaff).toEqual([['RH1', 'RH2']]);
+  });
+
+  it('returns null when no brace group is present', () => {
+    expect(parseScoreDirective('%%score [S A T B]')).toBeNull();
+    expect(parseScoreDirective('%%score V1 V2')).toBeNull();
+  });
+
+  it('handles bar-separator and floating markers without choking', () => {
+    const r = parseScoreDirective('%%score {RH *M| LH}');
+    expect(r![0].voices).toEqual(['RH', 'M', 'LH']);
+  });
+
+  it('attaches braceGroup metadata to VoiceInfo', () => {
+    const abc = [
+      'X:1',
+      'T:Test',
+      'M:4/4',
+      'L:1/4',
+      'K:C',
+      '%%score {RH LH}',
+      'V:RH clef=treble',
+      'V:LH clef=bass',
+      '[V:RH] CDEF |',
+      '[V:LH] C,D,E,F, |',
+    ].join('\n');
+    const voices = voicesFromAbc(abc);
+    const rh = voices.find((v) => v.id === 'RH');
+    const lh = voices.find((v) => v.id === 'LH');
+    expect(rh?.braceGroup?.voices).toEqual(['RH', 'LH']);
+    expect(lh?.braceGroup).toBe(rh?.braceGroup);
   });
 });

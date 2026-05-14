@@ -22,7 +22,7 @@ vi.stubGlobal('fetch', mockFetch);
 beforeEach(() => {
   useStore.setState({
     instrumentType: 'SOPRANO',
-    isGerman: false,
+    fingeringSystem: 'baroque',
     language: 'en',
   });
   mockFetch.mockClear();
@@ -98,8 +98,8 @@ describe('OnboardingDialog', () => {
       expect(screen.getByLabelText(/recorder type/i)).toBeInTheDocument();
     });
 
-    it('shows the German fingering toggle', () => {
-      expect(screen.getByText(/german system/i)).toBeInTheDocument();
+    it('shows the fingering selector', () => {
+      expect(screen.getByLabelText(/fingering/i)).toBeInTheDocument();
     });
 
     it('shows the Detect button', () => {
@@ -127,9 +127,14 @@ describe('OnboardingDialog', () => {
       expect(onComplete).toHaveBeenCalled();
     });
 
-    it('toggling German fingering updates the store', () => {
-      fireEvent.click(screen.getByText(/german system/i));
-      expect(useStore.getState().isGerman).toBe(true);
+    it('changing fingering select updates the store', () => {
+      const select = screen.getByLabelText(/fingering/i);
+      fireEvent.mouseDown(select);
+      const whistleOption = screen
+        .getAllByRole('option')
+        .find((o) => o.getAttribute('data-value') === 'whistle')!;
+      fireEvent.click(whistleOption);
+      expect(useStore.getState().fingeringSystem).toBe('whistle');
     });
   });
 });

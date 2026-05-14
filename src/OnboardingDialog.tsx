@@ -7,7 +7,6 @@ import DialogActions from '@mui/material/DialogActions';
 import DialogContent from '@mui/material/DialogContent';
 import DialogTitle from '@mui/material/DialogTitle';
 import FormControl from '@mui/material/FormControl';
-import FormControlLabel from '@mui/material/FormControlLabel';
 import InputLabel from '@mui/material/InputLabel';
 import MenuItem from '@mui/material/MenuItem';
 import Select from '@mui/material/Select';
@@ -15,7 +14,6 @@ import Slider from '@mui/material/Slider';
 import Step from '@mui/material/Step';
 import StepLabel from '@mui/material/StepLabel';
 import Stepper from '@mui/material/Stepper';
-import Switch from '@mui/material/Switch';
 import Typography from '@mui/material/Typography';
 import GraphicEq from '@mui/icons-material/GraphicEq';
 
@@ -26,7 +24,7 @@ import { RECORDER_TYPES, getStarterBookUrl } from './instrument';
 import { noteNameToMidi } from './audio/utils';
 import { FingeringDiagram } from './FingeringDiagram';
 import { RecorderDetector } from './audio/RecorderDetector';
-import { useStore, type UserSong } from './store';
+import { useStore, type FingeringSystem, type UserSong } from './store';
 import i18n from './i18n';
 
 interface OnboardingDialogProps {
@@ -46,8 +44,8 @@ export function OnboardingDialog({ open, onComplete }: OnboardingDialogProps) {
   const setCustomBasePitch = useStore((state) => state.setCustomBasePitch);
   const customHighNoteStr = useStore((state) => state.customHighNoteStr);
   const setCustomHighNote = useStore((state) => state.setCustomHighNote);
-  const isGerman = useStore((state) => state.isGerman);
-  const setIsGerman = useStore((state) => state.setIsGerman);
+  const fingeringSystem = useStore((state) => state.fingeringSystem);
+  const setFingeringSystem = useStore((state) => state.setFingeringSystem);
   const setTuning = useStore((state) => state.setTuning);
   const addSongs = useStore((state) => state.addSongs);
 
@@ -73,7 +71,7 @@ export function OnboardingDialog({ open, onComplete }: OnboardingDialogProps) {
       },
       onStep2Started: () => setDetectStep(1),
       onSystemDetected: (detected) => {
-        setIsGerman(detected);
+        setFingeringSystem(detected ? 'german' : 'baroque');
         closeDetect();
       },
       onError: (err) => {
@@ -272,15 +270,24 @@ export function OnboardingDialog({ open, onComplete }: OnboardingDialogProps) {
                   />
                 </Box>
               )}
-              <FormControlLabel
-                control={
-                  <Switch
-                    checked={isGerman}
-                    onChange={(e) => setIsGerman(e.target.checked)}
-                  />
-                }
-                label={t('germanFingering')}
-              />
+              <FormControl fullWidth>
+                <InputLabel id="onboarding-fingering-label">
+                  {t('fingering')}
+                </InputLabel>
+                <Select
+                  labelId="onboarding-fingering-label"
+                  value={fingeringSystem}
+                  label={t('fingering')}
+                  onChange={(e) =>
+                    setFingeringSystem(e.target.value as FingeringSystem)
+                  }
+                >
+                  <MenuItem value="baroque">{t('fingeringBaroque')}</MenuItem>
+                  <MenuItem value="german">{t('fingeringGerman')}</MenuItem>
+                  <MenuItem value="whistle">{t('fingeringWhistle')}</MenuItem>
+                  <MenuItem value="piano">{t('fingeringPiano')}</MenuItem>
+                </Select>
+              </FormControl>
             </Box>
           )}
         </DialogContent>
@@ -306,7 +313,7 @@ export function OnboardingDialog({ open, onComplete }: OnboardingDialogProps) {
               <StepLabel>{t('recorderType')}</StepLabel>
             </Step>
             <Step>
-              <StepLabel>{t('germanFingering')}</StepLabel>
+              <StepLabel>{t('fingering')}</StepLabel>
             </Step>
           </Stepper>
           <Typography variant="body1" sx={{ mb: 3 }}>

@@ -351,6 +351,7 @@ export const Bar = memo(function Bar({
               isBeamed={beamed.has(i)}
               isWrong={wrongNotes?.has(note.musicNoteIndex)}
               lyricNudges={lyricNudges[i]}
+              isFirstInBar={i === 0}
               onClick={onNoteClick}
             />
           </g>

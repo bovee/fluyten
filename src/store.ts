@@ -18,6 +18,7 @@ export type PracticeMode =
   | 'correct-then-advance'
   | 'in-tempo'
   | 'metronome-only';
+export type FingeringSystem = 'baroque' | 'german' | 'whistle' | 'piano';
 
 export interface UserSet {
   id: string;
@@ -63,8 +64,8 @@ interface SettingsState {
   setCustomHighNote: (str: string) => void;
   tuning: number;
   setTuning: (tuning: number) => void;
-  isGerman: boolean;
-  setIsGerman: (isGerman: boolean) => void;
+  fingeringSystem: FingeringSystem;
+  setFingeringSystem: (system: FingeringSystem) => void;
   language: string;
   setLanguage: (language: string) => void;
   colorMode: 'system' | 'light' | 'dark';
@@ -118,8 +119,8 @@ export const useStore = create<SettingsState>()(
       setCustomHighNote: (customHighNoteStr) => set({ customHighNoteStr }),
       tuning: 1.0,
       setTuning: (tuning) => set({ tuning }),
-      isGerman: false,
-      setIsGerman: (isGerman) => set({ isGerman }),
+      fingeringSystem: 'baroque',
+      setFingeringSystem: (fingeringSystem) => set({ fingeringSystem }),
       language: '',
       setLanguage: (language) => set({ language }),
       colorMode: 'system',
@@ -250,7 +251,7 @@ export const useStore = create<SettingsState>()(
     }),
     {
       name: 'fluyten-settings',
-      version: 3,
+      version: 4,
       migrate: (persistedState: unknown, version: number) => {
         const state = persistedState as Record<string, unknown>;
         if (version === 0 && Array.isArray(state.userBooks)) {
@@ -271,6 +272,11 @@ export const useStore = create<SettingsState>()(
           (state.songs as UserSong[]).forEach((s) => {
             s.composer = voicesFromAbc(s.abc)[0]?.music.composer;
           });
+        }
+        if (version < 4) {
+          state.fingeringSystem =
+            state.isGerman === true ? 'german' : 'baroque';
+          delete state.isGerman;
         }
         return state;
       },

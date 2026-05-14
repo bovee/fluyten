@@ -317,6 +317,16 @@ describe('toAbc', () => {
     });
   });
 
+  describe('chord symbols', () => {
+    it('round-trips an unprefixed chord symbol', () => {
+      const music = fromAbc(`T:Test\nM:4/4\nL:1/4\nK:C\n"Am"A B G E`);
+      const abc = toAbc(music);
+      expect(abc).toContain('"Am"');
+      const reparsed = fromAbc(abc);
+      expect(reparsed.notes[0].chord).toBe('Am');
+    });
+  });
+
   describe('chords', () => {
     it('exports chord with [ and ] brackets', () => {
       const music = new Music();
@@ -576,5 +586,41 @@ G A B c |]`;
     expect(music.signatures[0].keySignature).toBe('G');
     expect(music.notes).toHaveLength(4);
     expect(music.notes[0].pitches).toEqual([67]); // G
+  });
+});
+
+describe('%%MIDI voice round-trip', () => {
+  it('emits %%MIDI voice instrument on toAbc', () => {
+    const abc = `T:Test\nM:4/4\nL:1/4\n%%MIDI voice instrument=73\nK:C\nC D E F`;
+    const exported = toAbc(fromAbc(abc));
+    expect(exported).toMatch(/%%MIDI voice instrument=73/);
+    // Survives a second round-trip
+    const reimported = fromAbc(exported);
+    expect(reimported.midiInstrument).toBe(73);
+  });
+
+  it('emits %%MIDI voice mute on toAbc', () => {
+    const abc = `T:Test\nM:4/4\nL:1/4\n%%MIDI voice mute\nK:C\nC D E F`;
+    const exported = toAbc(fromAbc(abc));
+    expect(exported).toMatch(/%%MIDI voice mute/);
+    expect(fromAbc(exported).midiMute).toBe(true);
+  });
+
+  it('emits per-voice MIDI directives via reflowAbc', () => {
+    const abc = [
+      'T:Two',
+      'M:4/4',
+      'L:1/4',
+      'K:C',
+      'V:Sop',
+      '%%MIDI voice Sop instrument=57',
+      'C D E F |',
+      'V:Tb',
+      '%%MIDI voice Tb instrument=59',
+      'C, D, E, F, |',
+    ].join('\n');
+    const result = reflowAbc(abc);
+    expect(result).toMatch(/V:Sop\n%%MIDI voice Sop instrument=57/);
+    expect(result).toMatch(/V:Tb\n%%MIDI voice Tb instrument=59/);
   });
 });
